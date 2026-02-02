@@ -12,7 +12,6 @@
 
 - **Zero dependencies** - Uses only native Node.js modules
 - **Promise-based API** - Modern async/await support
-- **TCP optimizations** - TCP_NODELAY and keep-alive applied by default (~2.5 MB/s transfer speeds)
 - **Auto-create directories** - Upload files to nested paths automatically
 - **Streaming support** - Memory-efficient downloads for large files
 - **Full FTP support** - Upload, download, list, delete, rename, chmod, stat, and more
