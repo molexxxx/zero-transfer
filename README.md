@@ -177,6 +177,24 @@ console.log(`Last modified: ${date.toISOString()}`);
 
 Returns: `Promise<Date>`
 
+#### `uploadFile(data, remotePath, ensureDir)`
+
+Upload file and optionally ensure parent directory exists.
+
+```javascript
+// Upload with automatic directory creation
+await client.uploadFile('data', '/deep/nested/path/file.txt', true);
+
+// Upload without directory creation (default behavior)
+await client.uploadFile('data', '/file.txt');
+```
+
+- `data` (string|Buffer): File content
+- `remotePath` (string): Remote file path
+- `ensureDir` (boolean): Create parent directories if needed (default: false)
+
+Returns: `Promise<void>`
+
 ### Directory Operations
 
 #### `list(path)`
@@ -217,6 +235,35 @@ Create directory.
 
 ```javascript
 await client.mkdir('/remote/newdir');
+```
+
+Returns: `Promise<void>`
+
+#### `ensureDir(dirPath, recursive)`
+
+Ensure directory exists, creating it (and parent directories) if necessary.
+
+```javascript
+// Create nested directories recursively
+await client.ensureDir('/deep/nested/path');
+
+// Create single directory (no parent creation)
+await client.ensureDir('/newdir', false);
+```
+
+- `dirPath` (string): Directory path to ensure exists
+- `recursive` (boolean): Create parent directories if needed (default: true)
+
+Returns: `Promise<void>`
+
+#### `ensureParentDir(filePath)`
+
+Ensure the parent directory exists for a given file path.
+
+```javascript
+// Ensures /path/to exists before uploading
+await client.ensureParentDir('/path/to/file.txt');
+await client.upload('data', '/path/to/file.txt');
 ```
 
 Returns: `Promise<void>`
