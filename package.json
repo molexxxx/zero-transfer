@@ -22,12 +22,12 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tonywied17/molex-ftp"
+    "url": "https://github.com/tonywied17/molex-ftp-npm"
   },
   "bugs": {
-    "url": "https://github.com/tonywied17/molex-ftp/issues"
+    "url": "https://github.com/tonywied17/molex-ftp-npm/issues"
   },
-  "homepage": "https://github.com/tonywied17/molex-ftp#readme",
+  "homepage": "https://github.com/tonywied17/molex-ftp-npm#readme",
   "engines": {
     "node": ">=12.0.0"
   },

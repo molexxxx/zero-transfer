@@ -2,6 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/molex-ftp.svg)](https://www.npmjs.com/package/molex-ftp)
 [![npm downloads](https://img.shields.io/npm/dm/molex-ftp.svg)](https://www.npmjs.com/package/molex-ftp)
+[![GitHub](https://img.shields.io/badge/GitHub-molex--ftp--npm-blue.svg)](https://github.com/tonywied17/molex-ftp-npm)
 [![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D14-brightgreen.svg)](https://nodejs.org)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-success.svg)](package.json)
