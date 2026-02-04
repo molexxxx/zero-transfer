@@ -1,4 +1,4 @@
-# molex-ftp
+# molex-ftp-npm
 
 [![npm version](https://img.shields.io/npm/v/molex-ftp.svg)](https://www.npmjs.com/package/molex-ftp)
 [![npm downloads](https://img.shields.io/npm/dm/molex-ftp.svg)](https://www.npmjs.com/package/molex-ftp)
