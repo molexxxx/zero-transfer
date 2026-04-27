@@ -10,6 +10,12 @@ import { ParseError } from "../../../errors/ZeroTransferError";
 import type { RemoteEntry, RemoteEntryType } from "../../../types/public";
 import { joinRemotePath } from "../../../utils/path";
 
+const UNIX_LIST_MONTHS = new Map(
+  ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].map(
+    (month, index) => [month, index],
+  ),
+);
+
 /**
  * Parses an MLSD directory listing into normalized remote entries.
  *
@@ -25,6 +31,70 @@ export function parseMlsdList(input: string, directory = "."): RemoteEntry[] {
     .filter((line) => line.length > 0)
     .map((line) => parseMlsdLine(line, directory))
     .filter((entry) => entry.name !== "." && entry.name !== "..");
+}
+
+/**
+ * Parses a Unix-style FTP `LIST` response into normalized remote entries.
+ *
+ * This parser covers the common `ls -l` shape returned by classic FTP daemons and
+ * is used as a compatibility fallback when a server does not support MLSD.
+ *
+ * @param input - Raw LIST response body.
+ * @param directory - Parent remote directory used to build entry paths.
+ * @param now - Reference date used when LIST entries include time but omit year.
+ * @returns Remote entries excluding `.` and `..` pseudo entries.
+ * @throws {@link ParseError} When any non-summary listing line is malformed.
+ */
+export function parseUnixList(input: string, directory = ".", now = new Date()): RemoteEntry[] {
+  return input
+    .split(/\r?\n/)
+    .map((line) => line.trimEnd())
+    .filter((line) => line.length > 0 && !line.toLowerCase().startsWith("total "))
+    .map((line) => parseUnixListLine(line, directory, now))
+    .filter((entry) => entry.name !== "." && entry.name !== "..");
+}
+
+/**
+ * Parses one Unix-style FTP `LIST` line.
+ *
+ * @param line - Raw listing line in an `ls -l` compatible format.
+ * @param directory - Parent remote directory used to build the entry path.
+ * @param now - Reference date used when the line omits a year.
+ * @returns Normalized remote entry with raw LIST metadata retained.
+ * @throws {@link ParseError} When the line is not a supported Unix LIST entry.
+ */
+export function parseUnixListLine(line: string, directory = ".", now = new Date()): RemoteEntry {
+  const match =
+    /^(\S{10})\s+\d+\s+(\S+)\s+(\S+)\s+(\d+)\s+([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4}|\d{1,2}:\d{2})\s+(.+)$/.exec(
+      line,
+    );
+
+  if (match === null) {
+    throw new ParseError({
+      details: { line },
+      message: `Malformed Unix LIST line: ${line}`,
+      retryable: false,
+    });
+  }
+
+  const [, mode = "", owner, group, sizeText, monthText, dayText, yearOrTime, rawName] = match;
+  const { name, symlinkTarget } = parseUnixListName(rawName, mode);
+  const entry: RemoteEntry = {
+    name,
+    path: joinRemotePath(directory, name),
+    permissions: { raw: mode },
+    raw: { line },
+    type: mapUnixListType(mode),
+  };
+  const modifiedAt = parseUnixListTimestamp(monthText, dayText, yearOrTime, now);
+
+  if (owner !== undefined) entry.owner = owner;
+  if (group !== undefined) entry.group = group;
+  if (sizeText !== undefined) entry.size = Number(sizeText);
+  if (modifiedAt !== undefined) entry.modifiedAt = modifiedAt;
+  if (symlinkTarget !== undefined) entry.symlinkTarget = symlinkTarget;
+
+  return entry;
 }
 
 /**
@@ -153,4 +223,103 @@ function mapMlsdType(input: string | undefined): RemoteEntryType {
     default:
       return "unknown";
   }
+}
+
+/**
+ * Maps a Unix LIST mode string to a normalized remote entry kind.
+ *
+ * @param mode - Permission and file-type mode string from a LIST line.
+ * @returns Normalized entry kind.
+ */
+function mapUnixListType(mode: string): RemoteEntryType {
+  switch (mode[0]) {
+    case "-":
+      return "file";
+    case "d":
+      return "directory";
+    case "l":
+      return "symlink";
+    default:
+      return "unknown";
+  }
+}
+
+/**
+ * Parses a Unix LIST timestamp into a UTC date when possible.
+ *
+ * @param monthText - Three-letter English month name.
+ * @param dayText - Day of month text.
+ * @param yearOrTime - Four-digit year or `HH:mm` time field.
+ * @param now - Reference date used when the year is omitted.
+ * @returns UTC date when the timestamp fields are valid, otherwise `undefined`.
+ */
+function parseUnixListTimestamp(
+  monthText: string | undefined,
+  dayText: string | undefined,
+  yearOrTime: string | undefined,
+  now: Date,
+): Date | undefined {
+  if (monthText === undefined || dayText === undefined || yearOrTime === undefined) {
+    return undefined;
+  }
+
+  const month = UNIX_LIST_MONTHS.get(monthText.toLowerCase());
+  const day = Number(dayText);
+
+  if (month === undefined || !Number.isInteger(day) || day < 1 || day > 31) {
+    return undefined;
+  }
+
+  if (/^\d{4}$/.test(yearOrTime)) {
+    return new Date(Date.UTC(Number(yearOrTime), month, day));
+  }
+
+  const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(yearOrTime);
+
+  if (timeMatch === null) {
+    return undefined;
+  }
+
+  const [, hourText, minuteText] = timeMatch;
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+
+  if (hour > 23 || minute > 59) {
+    return undefined;
+  }
+
+  return new Date(Date.UTC(now.getUTCFullYear(), month, day, hour, minute));
+}
+
+/**
+ * Splits a Unix LIST entry name from a symlink target when present.
+ *
+ * @param rawName - Name field from the LIST line.
+ * @param mode - Permission and file-type mode string from the LIST line.
+ * @returns Entry name and optional symbolic-link target.
+ */
+function parseUnixListName(
+  rawName: string | undefined,
+  mode: string,
+): {
+  name: string;
+  symlinkTarget?: string;
+} {
+  const name = rawName ?? "";
+
+  if (!mode.startsWith("l")) {
+    return { name };
+  }
+
+  const separator = " -> ";
+  const separatorIndex = name.indexOf(separator);
+
+  if (separatorIndex < 0) {
+    return { name };
+  }
+
+  return {
+    name: name.slice(0, separatorIndex),
+    symlinkTarget: name.slice(separatorIndex + separator.length),
+  };
 }

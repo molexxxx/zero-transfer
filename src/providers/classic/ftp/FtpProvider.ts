@@ -44,7 +44,7 @@ import {
   basenameRemotePath,
   normalizeRemotePath,
 } from "../../../utils/path";
-import { parseMlsdLine, parseMlsdList } from "./FtpListParser";
+import { parseMlsdLine, parseMlsdList, parseUnixList } from "./FtpListParser";
 import { FtpResponseParser, type FtpResponse } from "./FtpResponseParser";
 
 const FTP_PROVIDER_ID = "ftp";
@@ -394,8 +394,8 @@ class FtpFileSystem implements RemoteFileSystem {
   async list(path: string): Promise<RemoteEntry[]> {
     const remotePath = normalizeFtpPath(path);
     await expectCompletion(this.control, "TYPE I", remotePath);
-    const payload = await readPassiveDataCommand(this.control, `MLSD ${remotePath}`, remotePath);
-    return parseMlsdList(payload.toString("utf8"), remotePath).sort(compareEntries);
+    const entries = await readDirectoryEntries(this.control, remotePath);
+    return entries.sort(compareEntries);
   }
 
   async stat(path: string): Promise<RemoteStat> {
@@ -857,6 +857,30 @@ async function readPassiveDataCommand(
     dataConnection.close();
     throw error;
   }
+}
+
+/**
+ * Reads directory entries with MLSD first and Unix LIST as an unsupported-command fallback.
+ *
+ * @param control - Active FTP-family control connection.
+ * @param path - Normalized remote directory path.
+ * @returns Parsed remote directory entries.
+ */
+async function readDirectoryEntries(
+  control: FtpControlConnection,
+  path: string,
+): Promise<RemoteEntry[]> {
+  try {
+    const payload = await readPassiveDataCommand(control, `MLSD ${path}`, path);
+    return parseMlsdList(payload.toString("utf8"), path);
+  } catch (error) {
+    if (!isUnsupportedFtpCommandError(error, "MLSD")) {
+      throw error;
+    }
+  }
+
+  const payload = await readPassiveDataCommand(control, `LIST ${path}`, path);
+  return parseUnixList(payload.toString("utf8"), path);
 }
 
 async function openPassiveDataCommand(
@@ -1402,6 +1426,31 @@ function isExtendedPassiveUnsupported(response: FtpResponse): boolean {
     response.code === 504 ||
     response.code === 522
   );
+}
+
+/**
+ * Checks whether an FTP command failed with an unsupported-command response.
+ *
+ * @param error - Error thrown while waiting for a command response.
+ * @param commandName - FTP command name that may be unsupported.
+ * @returns `true` when the server rejected the command as unavailable.
+ */
+function isUnsupportedFtpCommandError(error: unknown, commandName: string): boolean {
+  return (
+    error instanceof ProtocolError &&
+    error.command?.startsWith(commandName) === true &&
+    isUnsupportedFtpCommandCode(error.ftpCode)
+  );
+}
+
+/**
+ * Checks whether an FTP status code usually means a command is unsupported.
+ *
+ * @param code - FTP status code from a failed command.
+ * @returns `true` for permanent unsupported-command responses.
+ */
+function isUnsupportedFtpCommandCode(code: number | undefined): boolean {
+  return code === 500 || code === 501 || code === 502 || code === 504;
 }
 
 /**

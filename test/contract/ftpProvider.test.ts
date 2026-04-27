@@ -207,6 +207,54 @@ describe("createFtpProviderFactory", () => {
     }
   });
 
+  it("falls back to Unix LIST when MLSD is not supported", async () => {
+    await server.stop();
+    server = new FakeFtpServer({
+      passiveData(command) {
+        if (command === "LIST /incoming") {
+          return ["total 8", "-rw-r--r-- 1 deploy staff 14 Apr 27 2026 report.csv"].join("\r\n");
+        }
+
+        return undefined;
+      },
+      responder(command) {
+        if (command === "USER tester") return "331 Password required\r\n";
+        if (command === "PASS secret") return "230 Logged in\r\n";
+        if (command === "TYPE I") return "200 Type set\r\n";
+        if (command === "MLSD /incoming") return "502 MLSD unavailable\r\n";
+        if (command === "QUIT") return "221 Bye\r\n";
+        return "502 Unexpected command\r\n";
+      },
+    });
+    const port = await server.start();
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      password: "secret",
+      port,
+      provider: "ftp",
+      username: "tester",
+    });
+
+    try {
+      const entries = await session.fs.list("/incoming");
+
+      expect(entries).toEqual([
+        expect.objectContaining({
+          modifiedAt: new Date("2026-04-27T00:00:00.000Z"),
+          name: "report.csv",
+          path: "/incoming/report.csv",
+          permissions: { raw: "-rw-r--r--" },
+          size: 14,
+          type: "file",
+        }),
+      ]);
+      expect(server.commands).toEqual(expect.arrayContaining(["MLSD /incoming", "LIST /incoming"]));
+    } finally {
+      await session.disconnect();
+    }
+  });
+
   it("raises typed protocol errors for malformed EPSV responses", async () => {
     await server.stop();
     server = new FakeFtpServer({

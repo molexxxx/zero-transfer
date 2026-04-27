@@ -13,7 +13,13 @@ export {
   type FtpsProviderOptions,
 } from "./FtpProvider";
 export { parseFtpFeatures, type FtpFeatures } from "./FtpFeatureParser";
-export { parseMlsdLine, parseMlsdList, parseMlstTimestamp } from "./FtpListParser";
+export {
+  parseMlsdLine,
+  parseMlsdList,
+  parseMlstTimestamp,
+  parseUnixList,
+  parseUnixListLine,
+} from "./FtpListParser";
 export {
   FtpResponseParser,
   parseFtpResponseLines,

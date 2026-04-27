@@ -479,7 +479,7 @@ export class FakeFtpServer {
 }
 
 function isPassiveDownloadCommand(command: string): boolean {
-  return command.startsWith("MLSD") || command.startsWith("RETR");
+  return command.startsWith("LIST") || command.startsWith("MLSD") || command.startsWith("RETR");
 }
 
 function createDefaultPassiveResponse(port: number): string {

@@ -126,6 +126,8 @@ export {
   parseMlsdLine,
   parseMlsdList,
   parseMlstTimestamp,
+  parseUnixList,
+  parseUnixListLine,
   type FtpPassiveHostStrategy,
   type FtpProviderOptions,
   type FtpsDataProtection,
