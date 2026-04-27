@@ -15,5 +15,6 @@ export {
 export {
   resolveConnectionProfileSecrets,
   type ResolvedConnectionProfile,
+  type ResolvedSshProfile,
   type ResolvedTlsProfile,
 } from "./resolveConnectionProfileSecrets";

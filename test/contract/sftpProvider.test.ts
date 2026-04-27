@@ -1,4 +1,5 @@
 import { Buffer } from "node:buffer";
+import { utils } from "ssh2";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   AuthenticationError,
@@ -35,7 +36,7 @@ afterEach(async () => {
 describeProviderContract("sftp", {
   createProviderFactory: () => createSftpProviderFactory(),
   expectedCapabilities: {
-    authentication: ["password"],
+    authentication: ["password", "private-key"],
     list: true,
     provider: "sftp",
     readStream: false,
@@ -75,7 +76,7 @@ describe("createSftpProviderFactory", () => {
     expect(() => createSftpProviderFactory({ readyTimeoutMs: 0 })).toThrow(ConfigurationError);
   });
 
-  it("requires non-empty SFTP username and password credentials", async () => {
+  it("requires non-empty SFTP username and at least one credential", async () => {
     const client = createTransferClient({ providers: [createSftpProviderFactory()] });
     const missingUsernameProfile: ConnectionProfile = {
       host: "127.0.0.1",
@@ -84,8 +85,18 @@ describe("createSftpProviderFactory", () => {
       provider: "sftp",
       timeoutMs: 5_000,
     };
+    const missingCredentialProfile: ConnectionProfile = {
+      host: "127.0.0.1",
+      port: getProfilePort(),
+      provider: "sftp",
+      timeoutMs: 5_000,
+      username: { value: "tester" },
+    };
 
     await expect(client.connect(missingUsernameProfile)).rejects.toBeInstanceOf(ConfigurationError);
+    await expect(client.connect(missingCredentialProfile)).rejects.toBeInstanceOf(
+      ConfigurationError,
+    );
     await expect(client.connect({ ...profile, password: "" })).rejects.toBeInstanceOf(
       ConfigurationError,
     );
@@ -141,6 +152,37 @@ describe("createSftpProviderFactory", () => {
     try {
       await expect(session.fs.stat("/incoming/report.csv")).resolves.toMatchObject({
         path: "/incoming/report.csv",
+      });
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("authenticates with encrypted private-key profile material", async () => {
+    const keyPair = utils.generateKeyPairSync("ed25519", {
+      cipher: "aes256-ctr",
+      passphrase: "key-passphrase",
+      rounds: 16,
+    });
+
+    await restartServer({ publicKey: keyPair.public });
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      port: getProfilePort(),
+      provider: "sftp",
+      ssh: {
+        passphrase: { value: "key-passphrase" },
+        privateKey: { value: keyPair.private },
+      },
+      timeoutMs: 5_000,
+      username: { value: "tester" },
+    });
+
+    try {
+      await expect(session.fs.stat("/incoming/report.csv")).resolves.toMatchObject({
+        path: "/incoming/report.csv",
+        type: "file",
       });
     } finally {
       await session.disconnect();

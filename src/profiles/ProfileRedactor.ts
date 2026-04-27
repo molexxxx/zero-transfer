@@ -3,7 +3,7 @@
  *
  * @module profiles/ProfileRedactor
  */
-import type { ConnectionProfile, TlsProfile, TlsSecretSource } from "../types/public";
+import type { ConnectionProfile, SshProfile, TlsProfile, TlsSecretSource } from "../types/public";
 import { REDACTED, redactObject } from "../logging/redaction";
 import { redactSecretSource } from "./SecretSource";
 
@@ -14,14 +14,31 @@ import { redactSecretSource } from "./SecretSource";
  * @returns Plain object safe to include in logs, traces, or validation reports.
  */
 export function redactConnectionProfile(profile: ConnectionProfile): Record<string, unknown> {
-  const { logger, password, signal, tls, username, ...rest } = profile;
+  const { logger, password, signal, ssh, tls, username, ...rest } = profile;
   const redacted = redactObject(rest);
 
   if (username !== undefined) redacted.username = redactSecretSource(username);
   if (password !== undefined) redacted.password = redactSecretSource(password);
+  if (ssh !== undefined) redacted.ssh = redactSshProfile(ssh);
   if (tls !== undefined) redacted.tls = redactTlsProfile(tls);
   if (signal !== undefined) redacted.signal = "[AbortSignal]";
   if (logger !== undefined) redacted.logger = REDACTED;
+
+  return redacted;
+}
+
+/**
+ * Redacts SSH private-key profile fields while preserving non-sensitive policy settings.
+ *
+ * @param profile - SSH profile to sanitize.
+ * @returns Plain object safe to include in diagnostics.
+ */
+function redactSshProfile(profile: SshProfile): Record<string, unknown> {
+  const { passphrase, privateKey, ...rest } = profile;
+  const redacted = redactObject(rest);
+
+  if (privateKey !== undefined) redacted.privateKey = redactSecretSource(privateKey);
+  if (passphrase !== undefined) redacted.passphrase = redactSecretSource(passphrase);
 
   return redacted;
 }

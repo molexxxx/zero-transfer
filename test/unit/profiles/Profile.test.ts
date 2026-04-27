@@ -148,6 +148,10 @@ describe("connection profile secrets", () => {
       host: "sftp.example.test",
       password: { env: "ZT_PASSWORD" },
       provider: "sftp",
+      ssh: {
+        passphrase: { env: "ZT_SSH_PASSPHRASE" },
+        privateKey: { base64Env: "ZT_SSH_KEY" },
+      },
       tls: {
         ca: [{ env: "ZT_CA" }, { path: "ca.pem" }],
         cert: { env: "ZT_CERT" },
@@ -166,6 +170,8 @@ describe("connection profile secrets", () => {
         ZT_KEY: Buffer.from("private-key").toString("base64"),
         ZT_PASSWORD: "super-secret",
         ZT_PASSPHRASE: "key-passphrase",
+        ZT_SSH_KEY: Buffer.from("ssh-private-key").toString("base64"),
+        ZT_SSH_PASSPHRASE: "ssh-key-passphrase",
       },
       readFile: () => Buffer.from("file-ca"),
     });
@@ -174,6 +180,10 @@ describe("connection profile secrets", () => {
       host: "sftp.example.test",
       password: "super-secret",
       provider: "sftp",
+      ssh: {
+        passphrase: "ssh-key-passphrase",
+        privateKey: Buffer.from("ssh-private-key"),
+      },
       tls: {
         ca: ["inline-ca", "file-ca"],
         cert: "client-cert",
@@ -185,6 +195,7 @@ describe("connection profile secrets", () => {
       username: "deploy",
     });
     expect(profile.password).toEqual({ env: "ZT_PASSWORD" });
+    expect(profile.ssh?.privateKey).toEqual({ base64Env: "ZT_SSH_KEY" });
     expect(profile.tls?.key).toEqual({ base64Env: "ZT_KEY" });
   });
 
@@ -202,6 +213,10 @@ describe("connection profile secrets", () => {
         password: { env: "ZT_PASSWORD" },
         provider: "ftp",
         signal: new AbortController().signal,
+        ssh: {
+          passphrase: { env: "ZT_SSH_KEY_PASS" },
+          privateKey: { path: "id_ed25519" },
+        },
         tls: {
           ca: [{ env: "ZT_CA" }],
           cert: { path: "client.pem" },
@@ -220,6 +235,10 @@ describe("connection profile secrets", () => {
       password: { env: "[REDACTED]" },
       provider: "ftp",
       signal: "[AbortSignal]",
+      ssh: {
+        passphrase: { env: "[REDACTED]" },
+        privateKey: { encoding: undefined, path: "[REDACTED]" },
+      },
       tls: {
         ca: [{ env: "[REDACTED]" }],
         cert: { encoding: undefined, path: "[REDACTED]" },

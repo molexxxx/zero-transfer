@@ -1,9 +1,9 @@
 /**
  * SSH2-backed SFTP provider.
  *
- * This initial SFTP slice supports password-authenticated sessions plus provider-neutral
+ * This initial SFTP slice supports password/private-key authenticated sessions plus provider-neutral
  * directory listing and metadata reads. Transfer streaming, host-key policy helpers,
- * and key/agent authentication can layer on this foundation in later slices.
+ * and agent authentication can layer on this foundation in later slices.
  *
  * @module providers/classic/sftp/SftpProvider
  */
@@ -51,7 +51,7 @@ const SFTP_PROVIDER_ID = "sftp";
 const SFTP_DEFAULT_PORT = 22;
 const SFTP_PROVIDER_CAPABILITIES: CapabilitySet = {
   provider: SFTP_PROVIDER_ID,
-  authentication: ["password"],
+  authentication: ["password", "private-key"],
   list: true,
   stat: true,
   readStream: false,
@@ -67,7 +67,9 @@ const SFTP_PROVIDER_CAPABILITIES: CapabilitySet = {
   symlink: true,
   metadata: ["accessedAt", "group", "modifiedAt", "owner", "permissions"],
   maxConcurrency: 8,
-  notes: ["Initial ssh2-backed SFTP provider with password authentication and metadata reads"],
+  notes: [
+    "Initial ssh2-backed SFTP provider with password/private-key authentication and metadata reads",
+  ],
 };
 
 /** Options used to create an SFTP provider factory. */
@@ -113,8 +115,8 @@ class SftpProvider implements TransferProvider<SftpTransferSession> {
   async connect(profile: ConnectionProfile): Promise<SftpTransferSession> {
     const resolvedProfile = await resolveConnectionProfileSecrets(profile);
     const username = requireTextCredential(resolvedProfile.username, "username");
-    const password = requireTextCredential(resolvedProfile.password, "password");
-    const client = await connectSshClient(resolvedProfile, this.options, username, password);
+    const authentication = resolveSftpAuthentication(resolvedProfile);
+    const client = await connectSshClient(resolvedProfile, this.options, username, authentication);
 
     try {
       const sftp = await openSftpSession(client, resolvedProfile);
@@ -205,14 +207,21 @@ interface SftpErrorBase {
   sftpCode?: number;
 }
 
+interface SftpAuthenticationConfig {
+  authHandler: NonNullable<ConnectConfig["authHandler"]>;
+  password?: string;
+  privateKey?: SecretValue;
+  passphrase?: SecretValue;
+}
+
 function connectSshClient(
   profile: ResolvedConnectionProfile,
   options: SftpProviderOptions,
   username: string,
-  password: string,
+  authentication: SftpAuthenticationConfig,
 ): Promise<Client> {
   const client = new Client();
-  const config = createConnectConfig(profile, options, username, password);
+  const config = createConnectConfig(profile, options, username, authentication);
 
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -283,12 +292,11 @@ function createConnectConfig(
   profile: ResolvedConnectionProfile,
   options: SftpProviderOptions,
   username: string,
-  password: string,
+  authentication: SftpAuthenticationConfig,
 ): ConnectConfig {
   const config: ConnectConfig = {
-    authHandler: ["password"],
+    authHandler: authentication.authHandler,
     host: profile.host,
-    password,
     port: profile.port ?? SFTP_DEFAULT_PORT,
     username,
   };
@@ -301,8 +309,43 @@ function createConnectConfig(
 
   if (options.hostHash !== undefined) config.hostHash = options.hostHash;
   if (options.hostVerifier !== undefined) config.hostVerifier = options.hostVerifier;
+  if (authentication.password !== undefined) config.password = authentication.password;
+  if (authentication.privateKey !== undefined) config.privateKey = authentication.privateKey;
+  if (authentication.passphrase !== undefined) config.passphrase = authentication.passphrase;
 
   return config;
+}
+
+function resolveSftpAuthentication(profile: ResolvedConnectionProfile): SftpAuthenticationConfig {
+  const password = resolveOptionalTextCredential(profile.password, "password");
+  const privateKey = profile.ssh?.privateKey;
+  const passphrase = profile.ssh?.passphrase;
+  const authHandler: Array<"password" | "publickey"> = [];
+
+  if (privateKey !== undefined) {
+    authHandler.push("publickey");
+  }
+
+  if (password !== undefined) {
+    authHandler.push("password");
+  }
+
+  if (authHandler.length === 0) {
+    throw new ConfigurationError({
+      details: { provider: SFTP_PROVIDER_ID },
+      message: "SFTP profiles require a password or ssh.privateKey",
+      protocol: "sftp",
+      retryable: false,
+    });
+  }
+
+  const authentication: SftpAuthenticationConfig = { authHandler };
+
+  if (password !== undefined) authentication.password = password;
+  if (privateKey !== undefined) authentication.privateKey = privateKey;
+  if (passphrase !== undefined) authentication.passphrase = passphrase;
+
+  return authentication;
 }
 
 function openSftpSession(client: Client, profile: ResolvedConnectionProfile): Promise<SFTPWrapper> {
@@ -421,13 +464,26 @@ function requireTextCredential(
   value: SecretValue | undefined,
   field: "password" | "username",
 ): string {
-  if (value === undefined) {
+  const text = resolveOptionalTextCredential(value, field);
+
+  if (text === undefined) {
     throw new ConfigurationError({
       details: { field, provider: SFTP_PROVIDER_ID },
       message: `SFTP profiles require a ${field}`,
       protocol: "sftp",
       retryable: false,
     });
+  }
+
+  return text;
+}
+
+function resolveOptionalTextCredential(
+  value: SecretValue | undefined,
+  field: "password" | "username",
+): string | undefined {
+  if (value === undefined) {
+    return undefined;
   }
 
   const text = Buffer.isBuffer(value) ? value.toString("utf8") : value;

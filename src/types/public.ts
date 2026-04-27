@@ -111,6 +111,19 @@ export interface TlsProfile {
 }
 
 /**
+ * SSH authentication material for SFTP-style providers.
+ *
+ * Secret-bearing fields accept inline values, environment-backed values, or file-backed values,
+ * and are resolved by providers before opening SSH sessions.
+ */
+export interface SshProfile {
+  /** Private key material used for public-key authentication. */
+  privateKey?: SecretSource;
+  /** Passphrase used to decrypt an encrypted private key. */
+  passphrase?: SecretSource;
+}
+
+/**
  * Connection settings accepted by facade and adapter implementations.
  */
 export interface ConnectionProfile {
@@ -130,6 +143,8 @@ export interface ConnectionProfile {
   secure?: boolean;
   /** TLS settings for encrypted providers such as FTPS. */
   tls?: TlsProfile;
+  /** SSH settings for SFTP providers. */
+  ssh?: SshProfile;
   /** Operation or connection timeout in milliseconds. */
   timeoutMs?: number;
   /** Abort signal used to cancel connection setup or long-running operations. */

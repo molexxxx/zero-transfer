@@ -3,8 +3,16 @@
  *
  * @module profiles/resolveConnectionProfileSecrets
  */
-import type { ConnectionProfile, TlsProfile, TlsSecretSource } from "../types/public";
+import type { ConnectionProfile, SshProfile, TlsProfile, TlsSecretSource } from "../types/public";
 import { resolveSecret, type ResolveSecretOptions, type SecretValue } from "./SecretSource";
+
+/** SSH profile with private-key material resolved. */
+export interface ResolvedSshProfile extends Omit<SshProfile, "passphrase" | "privateKey"> {
+  /** Resolved private key material. */
+  privateKey?: SecretValue;
+  /** Resolved private-key passphrase. */
+  passphrase?: SecretValue;
+}
 
 /** TLS profile with certificate-bearing secret sources resolved. */
 export interface ResolvedTlsProfile extends Omit<
@@ -23,10 +31,10 @@ export interface ResolvedTlsProfile extends Omit<
   pfx?: SecretValue;
 }
 
-/** Connection profile with username, password, and TLS material sources resolved. */
+/** Connection profile with username, password, TLS, and SSH material sources resolved. */
 export interface ResolvedConnectionProfile extends Omit<
   ConnectionProfile,
-  "password" | "tls" | "username"
+  "password" | "ssh" | "tls" | "username"
 > {
   /** Resolved username or account identifier. */
   username?: SecretValue;
@@ -34,6 +42,8 @@ export interface ResolvedConnectionProfile extends Omit<
   password?: SecretValue;
   /** Resolved TLS profile when certificate material is configured. */
   tls?: ResolvedTlsProfile;
+  /** Resolved SSH profile when private-key material is configured. */
+  ssh?: ResolvedSshProfile;
 }
 
 /**
@@ -41,13 +51,13 @@ export interface ResolvedConnectionProfile extends Omit<
  *
  * @param profile - Profile containing optional secret sources.
  * @param options - Optional env and file-reader overrides.
- * @returns Profile copy with username, password, and TLS material resolved when present.
+ * @returns Profile copy with username, password, TLS material, and SSH material resolved when present.
  */
 export async function resolveConnectionProfileSecrets(
   profile: ConnectionProfile,
   options: ResolveSecretOptions = {},
 ): Promise<ResolvedConnectionProfile> {
-  const { password, tls, username, ...rest } = profile;
+  const { password, ssh, tls, username, ...rest } = profile;
   const resolved: ResolvedConnectionProfile = { ...rest };
 
   if (username !== undefined) {
@@ -61,6 +71,30 @@ export async function resolveConnectionProfileSecrets(
   if (tls !== undefined) {
     resolved.tls = await resolveTlsProfile(tls, options);
   }
+
+  if (ssh !== undefined) {
+    resolved.ssh = await resolveSshProfile(ssh, options);
+  }
+
+  return resolved;
+}
+
+/**
+ * Resolves SSH private-key material and passphrase source descriptors.
+ *
+ * @param profile - SSH profile containing optional secret-backed material.
+ * @param options - Optional env and file-reader overrides.
+ * @returns SSH profile copy with private-key material resolved.
+ */
+async function resolveSshProfile(
+  profile: SshProfile,
+  options: ResolveSecretOptions,
+): Promise<ResolvedSshProfile> {
+  const { passphrase, privateKey, ...rest } = profile;
+  const resolved: ResolvedSshProfile = { ...rest };
+
+  if (privateKey !== undefined) resolved.privateKey = await resolveSecret(privateKey, options);
+  if (passphrase !== undefined) resolved.passphrase = await resolveSecret(passphrase, options);
 
   return resolved;
 }

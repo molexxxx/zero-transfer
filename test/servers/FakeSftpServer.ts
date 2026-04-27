@@ -3,13 +3,13 @@
  *
  * The server uses `ssh2`'s real SSH and SFTP protocol machinery while keeping the
  * backing filesystem in memory. It intentionally implements only the request surface
- * needed by current provider contracts: password authentication, directory listing,
+ * needed by current provider contracts: password/private-key authentication, directory listing,
  * metadata reads, and clean close handling.
  *
  * @module test/servers/FakeSftpServer
  */
 import { Server as SshServer, utils } from "ssh2";
-import type { Attributes, Connection, FileEntry, SFTPWrapper } from "ssh2";
+import type { Attributes, Connection, FileEntry, ParsedKey, SFTPWrapper } from "ssh2";
 
 const DEFAULT_USERNAME = "tester";
 const DEFAULT_PASSWORD = "secret";
@@ -48,6 +48,8 @@ export interface FakeSftpServerOptions {
   username?: string;
   /** Accepted password for password authentication. */
   password?: string;
+  /** Accepted public key for public-key authentication. */
+  publicKey?: Buffer | string;
   /** In-memory entries exposed by the SFTP subsystem. */
   entries?: Iterable<FakeSftpEntry>;
   /** Paths that should return SFTP permission-denied for OPENDIR, STAT, and LSTAT. */
@@ -72,6 +74,7 @@ interface FakeSftpDirectoryHandle {
 export class FakeSftpServer {
   private readonly entries: Map<string, FakeSftpNode>;
   private readonly password: string;
+  private readonly publicKey: ParsedKey | undefined;
   private readonly deniedPaths: Set<string>;
   private readonly requests: string[] = [];
   private readonly rejectSftp: boolean;
@@ -87,6 +90,8 @@ export class FakeSftpServer {
   constructor(options: FakeSftpServerOptions = {}) {
     this.username = options.username ?? DEFAULT_USERNAME;
     this.password = options.password ?? DEFAULT_PASSWORD;
+    this.publicKey =
+      options.publicKey === undefined ? undefined : parseFakeSftpPublicKey(options.publicKey);
     this.entries = createEntryMap(options.entries ?? createDefaultEntries());
     this.deniedPaths = new Set(Array.from(options.deniedPaths ?? [], normalizeFakeSftpPath));
     this.rejectSftp = options.rejectSftp ?? false;
@@ -156,6 +161,15 @@ export class FakeSftpServer {
           return;
         }
 
+        if (
+          context.method === "publickey" &&
+          context.username === this.username &&
+          this.acceptsPublicKey(context)
+        ) {
+          context.accept();
+          return;
+        }
+
         context.reject();
       })
       .on("ready", () => {
@@ -174,6 +188,33 @@ export class FakeSftpServer {
       .on("close", () => {
         this.sessions.delete(client);
       });
+  }
+
+  private acceptsPublicKey(context: {
+    blob?: Buffer;
+    hashAlgo?: string;
+    key: { algo: string; data: Buffer };
+    signature?: Buffer;
+  }): boolean {
+    if (this.publicKey === undefined) {
+      return false;
+    }
+
+    if (
+      context.key.algo !== this.publicKey.type ||
+      !context.key.data.equals(this.publicKey.getPublicSSH())
+    ) {
+      return false;
+    }
+
+    if (context.signature === undefined) {
+      return true;
+    }
+
+    return (
+      context.blob !== undefined &&
+      this.publicKey.verify(context.blob, context.signature, context.hashAlgo)
+    );
   }
 
   private handleSftp(sftp: SFTPWrapper): void {
@@ -296,6 +337,16 @@ function createDefaultEntries(): FakeSftpEntry[] {
       type: "file",
     },
   ];
+}
+
+function parseFakeSftpPublicKey(publicKey: Buffer | string): ParsedKey {
+  const parsed = utils.parseKey(publicKey);
+
+  if (parsed instanceof Error) {
+    throw parsed;
+  }
+
+  return parsed;
 }
 
 function createEntryMap(entries: Iterable<FakeSftpEntry>): Map<string, FakeSftpNode> {
