@@ -22,7 +22,7 @@ The current foundation includes:
 - Vitest coverage gates at 90% across statements, branches, functions, and lines.
 - ESLint, Prettier, typecheck, build, package dry-run, and CI scripts.
 - Typed error classes, safe remote argument validation, structured logging redaction helpers, and FTP parser tests.
-- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers, and profile secret utilities.
+- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers, profile secret utilities, and initial transfer engine primitives.
 - Verbose JSDoc across the public TypeScript API for future generated documentation.
 - Initial GitHub Actions scaffolding for CI, CodeQL, and npmjs release provenance.
 
@@ -119,6 +119,30 @@ const safeForLogs = redactConnectionProfile(profile);
 ```
 
 Protocol adapters are intentionally being added incrementally. Early releases focus on the package foundation, deterministic tests, parser correctness, typed errors, logging, and transfer-service primitives before the FTP/FTPS/SFTP implementations are ported and broader provider families are added.
+
+The first transfer-engine foundation is available for adapters and higher-level workflows that need abort-aware execution, progress callbacks, retry hooks, and audit receipts around a concrete transfer operation:
+
+```ts
+import { TransferEngine, type TransferJob } from "@zero-transfer/sdk";
+
+const engine = new TransferEngine();
+const job: TransferJob = {
+  id: "upload-1",
+  operation: "upload",
+  source: { provider: "local", path: "./dist/app.zip" },
+  destination: { provider: "memory", path: "/releases/app.zip" },
+  totalBytes: 1024,
+};
+
+const receipt = await engine.execute(
+  job,
+  (context) => {
+    context.reportProgress(1024);
+    return { bytesTransferred: 1024, verified: true };
+  },
+  { retry: { maxAttempts: 2 } },
+);
+```
 
 ## Development
 

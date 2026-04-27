@@ -119,6 +119,22 @@ export {
   type ProgressEventInput,
   type TransferResultInput,
 } from "./services/TransferService";
+export {
+  TransferEngine,
+  type TransferAttempt,
+  type TransferAttemptError,
+  type TransferEndpoint,
+  type TransferEngineExecuteOptions,
+  type TransferEngineOptions,
+  type TransferExecutionContext,
+  type TransferExecutionResult,
+  type TransferExecutor,
+  type TransferJob,
+  type TransferOperation,
+  type TransferReceipt,
+  type TransferRetryDecisionInput,
+  type TransferRetryPolicy,
+} from "./transfers";
 export type {
   ConnectionProfile,
   ListOptions,
