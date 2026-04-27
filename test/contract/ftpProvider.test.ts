@@ -142,6 +142,7 @@ describe("createFtpProviderFactory", () => {
         source: { path: "/incoming/report.csv", provider: "ftp" },
         totalBytes: reportContent.length,
       });
+      expect(server.commands).toContain("EPSV");
       expect(server.commands).toContain("REST 3");
       expect(server.commands).toContain("REST 5");
       expect(
@@ -154,6 +155,82 @@ describe("createFtpProviderFactory", () => {
     } finally {
       await session.disconnect();
       await copySession.disconnect();
+    }
+  });
+
+  it("falls back from EPSV to loosely formatted PASV responses", async () => {
+    await server.stop();
+    server = new FakeFtpServer({
+      extendedPassive: false,
+      passiveData(command) {
+        if (command === "MLSD /incoming") {
+          return `${reportFact}\r\n`;
+        }
+
+        return undefined;
+      },
+      passiveResponse(port) {
+        const highByte = Math.floor(port / 256);
+        const lowByte = port % 256;
+        return `227 Passive address: 127,0,0,1,${highByte},${lowByte}\r\n`;
+      },
+      responder(command) {
+        if (command === "USER tester") return "331 Password required\r\n";
+        if (command === "PASS secret") return "230 Logged in\r\n";
+        if (command === "TYPE I") return "200 Type set\r\n";
+        if (command === "EPSV") return "502 EPSV not implemented\r\n";
+        if (command === "QUIT") return "221 Bye\r\n";
+        return "502 Unexpected command\r\n";
+      },
+    });
+    const port = await server.start();
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      password: "secret",
+      port,
+      provider: "ftp",
+      username: "tester",
+    });
+
+    try {
+      const entries = await session.fs.list("/incoming");
+
+      expect(entries.map((entry) => entry.path)).toEqual(["/incoming/report.csv"]);
+      expect(server.commands).toContain("EPSV");
+      expect(server.commands).toContain("PASV");
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("raises typed protocol errors for malformed EPSV responses", async () => {
+    await server.stop();
+    server = new FakeFtpServer({
+      responder(command) {
+        if (command === "USER tester") return "331 Password required\r\n";
+        if (command === "PASS secret") return "230 Logged in\r\n";
+        if (command === "TYPE I") return "200 Type set\r\n";
+        if (command === "EPSV") return "229 Entering Extended Passive Mode (|||not-a-port|)\r\n";
+        if (command === "QUIT") return "221 Bye\r\n";
+        return "502 Unexpected command\r\n";
+      },
+    });
+    const port = await server.start();
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      password: "secret",
+      port,
+      provider: "ftp",
+      username: "tester",
+    });
+
+    try {
+      await expect(session.fs.list("/incoming")).rejects.toBeInstanceOf(ProtocolError);
+      expect(server.commands).not.toContain("PASV");
+    } finally {
+      await session.disconnect();
     }
   });
 

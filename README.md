@@ -22,7 +22,7 @@ The current foundation includes:
 - Vitest coverage gates at 90% across statements, branches, functions, and lines.
 - ESLint, Prettier, typecheck, build, package dry-run, and CI scripts.
 - Typed error classes, safe remote argument validation, structured logging redaction helpers, FTP parser tests, and an initial classic FTP provider contract slice.
-- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers with read/write transfer operations, an MLST/MLSD/PASV-based FTP provider with streaming read/write transfer operations, profile secret utilities, transfer plans, transfer queue primitives, and the initial transfer engine.
+- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers with read/write transfer operations, an MLST/MLSD/EPSV/PASV-based FTP provider with streaming read/write transfer operations, profile secret utilities, transfer plans, transfer queue primitives, and the initial transfer engine.
 - Verbose JSDoc across the public TypeScript API for future generated documentation.
 - Initial GitHub Actions scaffolding for CI, CodeQL, and npmjs release provenance.
 
@@ -61,7 +61,7 @@ const client = createTransferClient();
 const capabilities = client.getCapabilities();
 ```
 
-Provider factories can be registered with `createTransferClient({ providers: [...] })`. Classic network providers are being added incrementally; the first FTP provider slice supports login, `fs.stat()` through MLST, `fs.list()` through PASV/MLSD, and streaming provider transfer reads/writes through PASV `RETR`/`STOR` with REST offsets, while FTPS/SFTP remain later alpha work.
+Provider factories can be registered with `createTransferClient({ providers: [...] })`. Classic network providers are being added incrementally; the first FTP provider slice supports login, `fs.stat()` through MLST, `fs.list()` through EPSV/PASV MLSD, and streaming provider transfer reads/writes through EPSV/PASV `RETR`/`STOR` with REST offsets, while FTPS/SFTP remain later alpha work.
 
 ```ts
 import { createFtpProviderFactory, createTransferClient } from "@zero-transfer/sdk";

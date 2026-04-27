@@ -59,7 +59,7 @@ const FTP_PROVIDER_CAPABILITIES: CapabilitySet = {
   metadata: ["modifiedAt", "permissions", "uniqueId"],
   maxConcurrency: 1,
   notes: [
-    "Classic FTP provider foundation with MLST/MLSD metadata and RETR/STOR streaming support",
+    "Classic FTP provider foundation with MLST/MLSD metadata, EPSV/PASV passive mode, and RETR/STOR streaming support",
   ],
 };
 
@@ -285,6 +285,10 @@ class FtpControlConnection {
     });
   }
 
+  get passiveHost(): string {
+    return this.host;
+  }
+
   static async connect(options: FtpConnectOptions): Promise<FtpControlConnection> {
     const socket = createConnection({ host: options.host, port: options.port });
     const control = new FtpControlConnection(socket, options.host);
@@ -440,9 +444,8 @@ async function openPassiveDataCommand(
     await sendRestartOffset(control, offset, path);
   }
 
-  const passiveResponse = await control.sendCommand("PASV");
-  assertPathCommandSucceeded(passiveResponse, "PASV", path);
-  const dataConnection = openPassiveDataConnection(parsePassiveEndpoint(passiveResponse));
+  const passiveEndpoint = await openPassiveEndpoint(control, path);
+  const dataConnection = openPassiveDataConnection(passiveEndpoint);
 
   try {
     await dataConnection.ready;
@@ -464,6 +467,25 @@ async function openPassiveDataCommand(
     dataConnection.close();
     throw error;
   }
+}
+
+async function openPassiveEndpoint(
+  control: FtpControlConnection,
+  path: string,
+): Promise<PassiveEndpoint> {
+  const extendedPassiveResponse = await control.sendCommand("EPSV");
+
+  if (extendedPassiveResponse.completion) {
+    return parseExtendedPassiveEndpoint(extendedPassiveResponse, control.passiveHost);
+  }
+
+  if (!isExtendedPassiveUnsupported(extendedPassiveResponse)) {
+    assertPathCommandSucceeded(extendedPassiveResponse, "EPSV", path);
+  }
+
+  const passiveResponse = await control.sendCommand("PASV");
+  assertPathCommandSucceeded(passiveResponse, "PASV", path);
+  return parsePassiveEndpoint(passiveResponse);
 }
 
 async function writePassiveDataCommand(
@@ -679,7 +701,7 @@ function cloneVerification(verification: TransferVerificationResult): TransferVe
 }
 
 function parsePassiveEndpoint(response: FtpResponse): PassiveEndpoint {
-  const endpointMatch = /\((\d+),(\d+),(\d+),(\d+),(\d+),(\d+)\)/.exec(response.message);
+  const endpointMatch = /(\d+),(\d+),(\d+),(\d+),(\d+),(\d+)/.exec(response.message);
 
   if (endpointMatch === null) {
     throw createProtocolError(
@@ -704,6 +726,40 @@ function parsePassiveEndpoint(response: FtpResponse): PassiveEndpoint {
     host: `${parts[0]}.${parts[1]}.${parts[2]}.${parts[3]}`,
     port: parts[4]! * 256 + parts[5]!,
   };
+}
+
+function parseExtendedPassiveEndpoint(response: FtpResponse, host: string): PassiveEndpoint {
+  const endpointMatch = /\((.+)\)/.exec(response.message);
+
+  if (endpointMatch === null) {
+    throw createProtocolError("EPSV", "FTP EPSV response did not include a port", response);
+  }
+
+  const endpointText = endpointMatch[1] ?? "";
+  const delimiter = endpointText[0];
+
+  if (delimiter === undefined) {
+    throw createProtocolError("EPSV", "FTP EPSV response did not include a delimiter", response);
+  }
+
+  const parts = endpointText.split(delimiter);
+  const port = Number(parts[3]);
+
+  if (!Number.isInteger(port) || port <= 0 || port > 65_535) {
+    throw createProtocolError("EPSV", "FTP EPSV response included an invalid port", response);
+  }
+
+  return { host, port };
+}
+
+function isExtendedPassiveUnsupported(response: FtpResponse): boolean {
+  return (
+    response.code === 500 ||
+    response.code === 501 ||
+    response.code === 502 ||
+    response.code === 504 ||
+    response.code === 522
+  );
 }
 
 async function authenticateFtpSession(

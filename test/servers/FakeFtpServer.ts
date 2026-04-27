@@ -28,6 +28,9 @@ export type FakeFtpResponder = (command: string) => string | string[] | undefine
  */
 export type FakeFtpDataResponder = (command: string) => string | Uint8Array | undefined;
 
+/** Callback that formats a passive-mode control response for a data socket port. */
+export type FakeFtpPassiveResponseFactory = (port: number) => string;
+
 /** Passive upload captured by the fake FTP data server. */
 export interface FakeFtpUpload {
   /** Command that opened the passive upload, such as `STOR /path`. */
@@ -44,8 +47,12 @@ export interface FakeFtpServerOptions {
   greeting?: string;
   /** Scripted responder used for each received command. */
   responder?: FakeFtpResponder;
-  /** Scripted data responder used after PASV for transfer commands. */
+  /** Scripted data responder used after passive-mode negotiation for transfer commands. */
   passiveData?: FakeFtpDataResponder;
+  /** Whether EPSV should be handled by the fake server when passive data is configured. */
+  extendedPassive?: boolean;
+  /** Custom PASV response formatter for parser compatibility tests. */
+  passiveResponse?: FakeFtpPassiveResponseFactory;
 }
 
 interface PassiveDataChannel {
@@ -59,7 +66,9 @@ interface PassiveDataChannel {
  */
 export class FakeFtpServer {
   private readonly greeting: string;
+  private readonly extendedPassive: boolean;
   private readonly passiveData: FakeFtpDataResponder | undefined;
+  private readonly passiveResponse: FakeFtpPassiveResponseFactory;
   private readonly responder: FakeFtpResponder;
   private readonly server: Server;
   private readonly passiveUploads: FakeFtpUpload[] = [];
@@ -74,7 +83,9 @@ export class FakeFtpServer {
    */
   constructor(options: FakeFtpServerOptions = {}) {
     this.greeting = options.greeting ?? "220 ZeroFTP fake server ready\r\n";
+    this.extendedPassive = options.extendedPassive ?? true;
     this.passiveData = options.passiveData;
+    this.passiveResponse = options.passiveResponse ?? createDefaultPassiveResponse;
     this.responder = options.responder ?? (() => "200 OK\r\n");
     this.server = createServer((socket) => this.handleSocket(socket));
   }
@@ -184,11 +195,15 @@ export class FakeFtpServer {
   }
 
   private async handleCommand(socket: Socket, command: string): Promise<void> {
+    if (command === "EPSV" && this.passiveData !== undefined && this.extendedPassive) {
+      const port = await this.openPassiveDataChannel();
+      socket.write(`229 Entering Extended Passive Mode (|||${port}|)\r\n`);
+      return;
+    }
+
     if (command === "PASV" && this.passiveData !== undefined) {
       const port = await this.openPassiveDataChannel();
-      const highByte = Math.floor(port / 256);
-      const lowByte = port % 256;
-      socket.write(`227 Entering Passive Mode (127,0,0,1,${highByte},${lowByte})\r\n`);
+      socket.write(this.passiveResponse(port));
       return;
     }
 
@@ -304,6 +319,12 @@ export class FakeFtpServer {
 
 function isPassiveDownloadCommand(command: string): boolean {
   return command.startsWith("MLSD") || command.startsWith("RETR");
+}
+
+function createDefaultPassiveResponse(port: number): string {
+  const highByte = Math.floor(port / 256);
+  const lowByte = port % 256;
+  return `227 Entering Passive Mode (127,0,0,1,${highByte},${lowByte})\r\n`;
 }
 
 async function closeServer(server: Server): Promise<void> {
