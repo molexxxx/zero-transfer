@@ -31,6 +31,7 @@
     "prepack": "npm run build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:integration:ftp": "vitest run test/integration/ftpProvider.docker.test.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },

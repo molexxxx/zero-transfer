@@ -234,6 +234,16 @@ npm run pack:dry
 
 Use `npm run ci` to run the same local quality gate used by the CI workflow.
 
+Docker-backed FTP integration coverage is opt-in because it pulls and runs a real `pure-ftpd`
+container. With Docker running locally, use:
+
+```bash
+npm run test:integration:ftp
+```
+
+The script starts the FTP service from `test/servers/docker-compose.yml`, runs the provider
+metadata and transfer round-trip coverage, and tears the container down afterward.
+
 ## Publishing
 
 ZeroTransfer publishes only to the public npm registry as `@zero-transfer/sdk`.

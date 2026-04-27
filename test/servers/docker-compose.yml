@@ -8,7 +8,7 @@ services:
       FTP_USER_NAME: "zero"
       FTP_USER_PASS: "zero-pass"
       FTP_USER_HOME: "/home/zero"
-      ADDED_FLAGS: "--tls=0"
+      ADDED_FLAGS: "--tls=0 -p 30000:30009"
     ports:
       - "2121:21"
       - "30000-30009:30000-30009"
@@ -20,10 +20,10 @@ services:
       FTP_USER_NAME: "zero"
       FTP_USER_PASS: "zero-pass"
       FTP_USER_HOME: "/home/zero"
-      ADDED_FLAGS: "--tls=1"
+      ADDED_FLAGS: "--tls=1 -p 30010:30019"
     ports:
       - "2990:21"
-      - "30010-30019:30000-30009"
+      - "30010-30019:30010-30019"
     profiles:
       - integration
 
