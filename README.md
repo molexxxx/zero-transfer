@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/zero-ftp-logo.svg" alt="ZeroFTP SDK" width="720">
+  <img src="assets/zero-ftp-logo.svg" alt="ZeroTransfer SDK" width="720">
 </p>
 
 # ZeroFTP

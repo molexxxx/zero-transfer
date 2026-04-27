@@ -1,282 +1,155 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
-  <title id="title">ZeroFTP SDK logo</title>
-  <desc id="desc">A transparent animated ZeroFTP wordmark with flowing file-transfer paths.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 360" role="img" aria-labelledby="title desc">
+  <title id="title">ZeroTransfer SDK logo</title>
+  <desc id="desc">A sleek transparent ZeroTransfer wordmark with abstract transfer lanes.</desc>
   <style>
-    .halo-shell {
-      fill: none;
-      stroke: #ffffff;
-      stroke-width: 31;
-      stroke-linecap: round;
-      stroke-dasharray: 260 990;
-      opacity: 0.8;
-      animation: orbit 8s linear infinite;
-      transform-origin: 246px 210px;
+    :root {
+      --ink: #0b1020;
+      --muted: #536173;
+      --edge: #ffffff;
+      --ghost: rgba(15, 23, 42, 0.1);
+      --accent-a: #2563eb;
+      --accent-b: #7c3aed;
+      --dot-edge: #ffffff;
     }
 
-    .halo-edge {
-      fill: none;
-      stroke: #07111f;
-      stroke-width: 20;
-      stroke-linecap: round;
-      stroke-dasharray: 260 990;
-      opacity: 0.72;
-      animation: orbit 8s linear infinite;
-      transform-origin: 246px 210px;
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink: #f8fafc;
+        --muted: #9aa7b8;
+        --edge: #0d1117;
+        --ghost: rgba(248, 250, 252, 0.12);
+        --accent-a: #60a5fa;
+        --accent-b: #a78bfa;
+        --dot-edge: #0d1117;
+      }
     }
 
-    .halo {
-      fill: none;
-      stroke: url(#haloGradient);
-      stroke-width: 13;
-      stroke-linecap: round;
-      stroke-dasharray: 260 990;
-      animation: orbit 8s linear infinite;
-      transform-origin: 246px 210px;
-    }
-
-    .path-shell {
-      fill: none;
-      stroke: #ffffff;
-      stroke-width: 22;
-      stroke-linecap: round;
-      stroke-dasharray: 35 28;
-      opacity: 0.88;
-      animation: flow 2.4s linear infinite;
-    }
-
-    .path-edge {
-      fill: none;
-      stroke: #07111f;
-      stroke-width: 14;
-      stroke-linecap: round;
-      stroke-dasharray: 35 28;
-      opacity: 0.78;
-      animation: flow 2.4s linear infinite;
-    }
-
-    .path {
-      fill: none;
-      stroke: url(#pathGradient);
-      stroke-width: 8;
-      stroke-linecap: round;
-      stroke-dasharray: 35 28;
-      animation: flow 2.4s linear infinite;
-    }
-
-    .node-halo {
-      fill: #ffffff;
-      opacity: 0.9;
-    }
-
-    .node-edge {
-      fill: #07111f;
-    }
-
-    .node {
-      fill: url(#nodeGradient);
-      stroke: #ffffff;
-      stroke-width: 3;
-    }
-
-    .node-glyph {
-      fill: #07111f;
-      opacity: 0.92;
-    }
-
-    .packet-shell {
-      fill: #ffffff;
-      opacity: 0.92;
-      filter: url(#softGlow);
-    }
-
-    .packet {
-      fill: #ffd166;
-      stroke: #07111f;
-      stroke-width: 3;
-      filter: url(#packetGlow);
-    }
-
-    .wordmark-base,
-    .tagline-base {
+    .wordmark,
+    .tagline {
       font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       letter-spacing: 0;
       paint-order: stroke fill;
-    }
-
-    .wordmark-base {
-      font-size: 112px;
-      font-weight: 820;
-    }
-
-    .tagline-base {
-      font-size: 28px;
-      font-weight: 620;
-      letter-spacing: 4px;
-    }
-
-    .wordmark-shell {
-      fill: none;
-      stroke: #ffffff;
-      stroke-width: 22;
+      stroke: var(--edge);
       stroke-linejoin: round;
-      opacity: 0.94;
-    }
-
-    .wordmark-edge {
-      fill: none;
-      stroke: #07111f;
-      stroke-width: 12;
-      stroke-linejoin: round;
-      opacity: 0.92;
     }
 
     .wordmark {
-      fill: url(#wordGradient);
+      fill: var(--ink);
+      font-size: 96px;
+      font-weight: 760;
+      stroke-width: 7px;
     }
 
-    .tagline-shell {
-      fill: none;
-      stroke: #ffffff;
-      stroke-width: 10;
-      stroke-linejoin: round;
-      opacity: 0.9;
-    }
-
-    .tagline-edge {
-      fill: none;
-      stroke: #07111f;
-      stroke-width: 5;
-      stroke-linejoin: round;
-      opacity: 0.9;
+    .wordmark-accent {
+      fill: url(#accentGradient);
     }
 
     .tagline {
-      fill: #14b8a6;
+      fill: var(--muted);
+      font-size: 24px;
+      font-weight: 620;
+      letter-spacing: 4px;
+      stroke-width: 5px;
     }
 
-    .slash {
-      fill: url(#accentGradient);
-      stroke: #07111f;
-      stroke-width: 3;
+    .mark-ghost {
+      fill: none;
+      stroke: var(--ghost);
+      stroke-linecap: round;
       stroke-linejoin: round;
-      animation: pulse 3.4s ease-in-out infinite;
+      stroke-width: 34px;
     }
 
-    @keyframes flow {
+    .lane-base {
+      fill: none;
+      stroke: var(--ink);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 16px;
+      opacity: 0.92;
+    }
+
+    .lane-accent {
+      fill: none;
+      stroke: url(#accentGradient);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 16px;
+      stroke-dasharray: 44 30;
+      animation: laneFlow 5.5s linear infinite;
+    }
+
+    .node {
+      fill: var(--edge);
+      stroke: var(--ink);
+      stroke-width: 8px;
+    }
+
+    .node-accent {
+      fill: url(#accentGradient);
+      stroke: var(--dot-edge);
+      stroke-width: 6px;
+    }
+
+    .spark {
+      fill: url(#accentGradient);
+      stroke: var(--dot-edge);
+      stroke-width: 5px;
+      filter: url(#sparkGlow);
+    }
+
+    @keyframes laneFlow {
       to {
-        stroke-dashoffset: -63;
-      }
-    }
-
-    @keyframes orbit {
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    @keyframes pulse {
-      0%,
-      100% {
-        opacity: 0.84;
-      }
-      50% {
-        opacity: 1;
+        stroke-dashoffset: -148;
       }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .halo-shell,
-      .halo-edge,
-      .halo,
-      .path-shell,
-      .path-edge,
-      .path,
-      .slash {
+      .lane-accent,
+      .motion-spark {
         animation: none;
       }
 
-      .motion-packet {
+      .motion-spark {
         display: none;
       }
     }
   </style>
   <defs>
-    <linearGradient id="pathGradient" x1="150" x2="520" y1="132" y2="286" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#14b8a6" />
-      <stop offset="0.52" stop-color="#38bdf8" />
-      <stop offset="1" stop-color="#f59e0b" />
+    <linearGradient id="accentGradient" x1="92" x2="1130" y1="80" y2="276" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="var(--accent-a)" />
+      <stop offset="1" stop-color="var(--accent-b)" />
     </linearGradient>
-    <linearGradient id="haloGradient" x1="130" x2="370" y1="82" y2="338" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#14b8a6" stop-opacity="0.2" />
-      <stop offset="0.5" stop-color="#38bdf8" stop-opacity="0.9" />
-      <stop offset="1" stop-color="#f59e0b" stop-opacity="0.3" />
-    </linearGradient>
-    <linearGradient id="nodeGradient" x1="112" x2="560" y1="170" y2="252" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#5eead4" />
-      <stop offset="0.5" stop-color="#7dd3fc" />
-      <stop offset="1" stop-color="#fde68a" />
-    </linearGradient>
-    <linearGradient id="wordGradient" x1="620" x2="1076" y1="96" y2="218" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#0f766e" />
-      <stop offset="0.44" stop-color="#0284c7" />
-      <stop offset="1" stop-color="#f59e0b" />
-    </linearGradient>
-    <linearGradient id="accentGradient" x1="690" x2="785" y1="108" y2="285" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#14b8a6" />
-      <stop offset="1" stop-color="#f59e0b" />
-    </linearGradient>
-    <filter id="softGlow" x="-70%" y="-70%" width="240%" height="240%">
-      <feGaussianBlur stdDeviation="5" result="blur" />
+    <filter id="sparkGlow" x="-120%" y="-120%" width="340%" height="340%">
+      <feGaussianBlur stdDeviation="7" result="blur" />
+      <feColorMatrix
+        in="blur"
+        result="glow"
+        type="matrix"
+        values="0 0 0 0 0.25 0 0 0 0 0.45 0 0 0 0 1 0 0 0 0.55 0"
+      />
       <feMerge>
-        <feMergeNode in="blur" />
+        <feMergeNode in="glow" />
         <feMergeNode in="SourceGraphic" />
       </feMerge>
     </filter>
-    <filter id="packetGlow" x="-80%" y="-80%" width="260%" height="260%">
-      <feGaussianBlur stdDeviation="4" result="blur" />
-      <feMerge>
-        <feMergeNode in="blur" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
-    </filter>
+    <path id="transferLane" d="M98 94H310L156 180H368L214 266H426" />
   </defs>
-  <g>
-    <path class="halo-shell" d="M246 76a134 134 0 1 1 0 268a134 134 0 1 1 0-268" />
-    <path class="halo-edge" d="M246 76a134 134 0 1 1 0 268a134 134 0 1 1 0-268" />
-    <path class="halo" d="M246 76a134 134 0 1 1 0 268a134 134 0 1 1 0-268" />
-    <path class="path-shell" d="M165 207 C210 132 291 132 337 207 S459 282 505 207" />
-    <path class="path-edge" d="M165 207 C210 132 291 132 337 207 S459 282 505 207" />
-    <path class="path" d="M165 207 C210 132 291 132 337 207 S459 282 505 207" />
-    <circle class="node-halo" cx="150" cy="210" r="47" />
-    <circle class="node-halo" cx="336" cy="210" r="47" />
-    <circle class="node-halo" cx="522" cy="210" r="47" />
-    <circle class="node-edge" cx="150" cy="210" r="42" />
-    <circle class="node-edge" cx="336" cy="210" r="42" />
-    <circle class="node-edge" cx="522" cy="210" r="42" />
-    <circle class="node" cx="150" cy="210" r="35" />
-    <circle class="node" cx="336" cy="210" r="35" />
-    <circle class="node" cx="522" cy="210" r="35" />
-    <path class="node-glyph" d="M134 194h32v32h-32zM320 194h32v32h-32zM506 194h32v32h-32z" />
-    <g class="motion-packet">
-      <circle class="packet-shell" r="13">
-        <animateMotion dur="3.2s" repeatCount="indefinite" path="M165 207 C210 132 291 132 337 207 S459 282 505 207" />
-      </circle>
-      <circle class="packet" r="8">
-        <animateMotion dur="3.2s" repeatCount="indefinite" path="M165 207 C210 132 291 132 337 207 S459 282 505 207" />
-      </circle>
-      <circle class="packet-shell" r="9">
-        <animateMotion dur="3.2s" repeatCount="indefinite" begin="-1.15s" path="M165 207 C210 132 291 132 337 207 S459 282 505 207" />
-      </circle>
-      <circle class="packet" r="5">
-        <animateMotion dur="3.2s" repeatCount="indefinite" begin="-1.15s" path="M165 207 C210 132 291 132 337 207 S459 282 505 207" />
-      </circle>
-    </g>
-    <text class="wordmark-base wordmark-shell" x="620" y="205">ZeroFTP</text>
-    <text class="wordmark-base wordmark-edge" x="620" y="205">ZeroFTP</text>
-    <text class="wordmark-base wordmark" x="620" y="205">ZeroFTP</text>
-    <path class="slash" d="M770 242h36l-70 78h-36z" />
-    <text class="tagline-base tagline-shell" x="624" y="284">TYPE-SAFE FILE TRANSFER SDK</text>
-    <text class="tagline-base tagline-edge" x="624" y="284">TYPE-SAFE FILE TRANSFER SDK</text>
-    <text class="tagline-base tagline" x="624" y="284">TYPE-SAFE FILE TRANSFER SDK</text>
+
+  <g transform="translate(58 0)">
+    <use href="#transferLane" class="mark-ghost" />
+    <path class="lane-base" d="M98 94H310" />
+    <path class="lane-base" d="M156 180H368" />
+    <path class="lane-base" d="M214 266H426" />
+    <path class="lane-accent" d="M310 94L156 180L368 180L214 266" />
+    <circle class="node" cx="98" cy="94" r="18" />
+    <circle class="node" cx="426" cy="266" r="18" />
+    <circle class="node-accent" cx="368" cy="180" r="16" />
+    <circle class="spark motion-spark" r="10">
+      <animateMotion dur="4.8s" repeatCount="indefinite" path="M98 94H310L156 180H368L214 266H426" />
+    </circle>
   </g>
+
+  <text class="wordmark" x="530" y="168">Zero<tspan class="wordmark-accent">Transfer</tspan></text>
+  <text class="tagline" x="536" y="222">SECURE FILE TRANSFER SDK</text>
 </svg>
