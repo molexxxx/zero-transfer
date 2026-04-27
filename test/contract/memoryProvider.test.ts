@@ -1,10 +1,20 @@
+import { Buffer } from "node:buffer";
 import { describe, expect, it } from "vitest";
 import {
   ConfigurationError,
   PathNotFoundError,
+  TransferEngine,
+  createProgressEvent,
   createMemoryProviderFactory,
+  createProviderTransferExecutor,
   createTransferClient,
   type MemoryProviderEntry,
+  type ProviderTransferOperations,
+  type ProviderTransferReadRequest,
+  type ProviderTransferWriteRequest,
+  type TransferDataSource,
+  type TransferVerificationResult,
+  type TransferSession,
 } from "../../src/index";
 import { describeProviderContract } from "./providerContract";
 
@@ -53,6 +63,17 @@ describeProviderContract("memory", {
 });
 
 describe("createMemoryProviderFactory", () => {
+  it("can expose an empty memory provider", async () => {
+    const client = createTransferClient({ providers: [createMemoryProviderFactory()] });
+    const session = await client.connect({ host: "memory.local", provider: "memory" });
+
+    try {
+      await expect(session.fs.list("/")).resolves.toEqual([]);
+    } finally {
+      await session.disconnect();
+    }
+  });
+
   it("connects through an explicitly registered memory provider", async () => {
     const provider = createMemoryProviderFactory({ entries: fixtureEntries });
     const client = createTransferClient({ providers: [provider] });
@@ -143,5 +164,226 @@ describe("createMemoryProviderFactory", () => {
         ],
       }),
     ).toThrow(ConfigurationError);
+    expect(() =>
+      createMemoryProviderFactory({
+        entries: [{ content: "not-a-file", path: "/directory", type: "directory" }],
+      }),
+    ).toThrow(ConfigurationError);
+  });
+
+  it("reads, writes, and copies memory transfer content", async () => {
+    const client = createTransferClient({
+      providers: [
+        createMemoryProviderFactory({
+          entries: [{ content: "abcdef", path: "/source.txt", type: "file" }],
+        }),
+      ],
+    });
+    const session = await client.connect({ host: "memory.local", provider: "memory" });
+
+    try {
+      const transfers = requireTransfers(session);
+      const rangeRead = await transfers.read(
+        createReadRequest("/source.txt", { length: 3, offset: 1 }),
+      );
+
+      expect(rangeRead).toMatchObject({ bytesRead: 1, totalBytes: 3 });
+      await expect(readText(rangeRead.content)).resolves.toBe("bcd");
+
+      const writeResult = await transfers.write(
+        createWriteRequest("/written/out.txt", textContent("done")),
+      );
+
+      expect(writeResult).toMatchObject({ bytesTransferred: 4, totalBytes: 4 });
+      await expect(session.fs.stat("/written/out.txt")).resolves.toMatchObject({
+        path: "/written/out.txt",
+        size: 4,
+        type: "file",
+      });
+
+      const executor = createProviderTransferExecutor({ resolveSession: () => session });
+      const receipt = await new TransferEngine().execute(
+        {
+          destination: { path: "/copy.txt", provider: "memory" },
+          id: "memory-copy",
+          operation: "copy",
+          source: { path: "/source.txt", provider: "memory" },
+        },
+        executor,
+      );
+      const copied = await transfers.read(createReadRequest("/copy.txt"));
+
+      expect(receipt).toMatchObject({ bytesTransferred: 6, totalBytes: 6 });
+      await expect(readText(copied.content)).resolves.toBe("abcdef");
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("handles memory transfer ranges, resumed writes, verification, and errors", async () => {
+    const verification: TransferVerificationResult = {
+      actualChecksum: "abc123",
+      checksum: "abc123",
+      details: { algorithm: "fixture" },
+      expectedChecksum: "abc123",
+      method: "checksum",
+      verified: true,
+    };
+    const client = createTransferClient({
+      providers: [
+        createMemoryProviderFactory({
+          entries: [
+            { content: Buffer.from("abcdef", "utf8"), path: "/source.txt", type: "file" },
+            { path: "/folder", type: "directory" },
+          ],
+        }),
+      ],
+    });
+    const session = await client.connect({ host: "memory.local", provider: "memory" });
+
+    try {
+      const transfers = requireTransfers(session);
+      const offsetRead = await transfers.read(createReadRequest("/source.txt", { offset: 2 }));
+      const emptyRead = await transfers.read(
+        createReadRequest("/source.txt", { length: 5, offset: 99 }),
+      );
+
+      expect(offsetRead).toMatchObject({ bytesRead: 2, totalBytes: 4 });
+      await expect(readText(offsetRead.content)).resolves.toBe("cdef");
+      expect(emptyRead).toMatchObject({ bytesRead: 6, totalBytes: 0 });
+      await expect(readText(emptyRead.content)).resolves.toBe("");
+
+      const resumed = await transfers.write(
+        createWriteRequest("/source.txt", textContent("XY"), { offset: 2, verification }),
+      );
+
+      expect(resumed).toMatchObject({
+        bytesTransferred: 2,
+        resumed: true,
+        totalBytes: 6,
+        verification,
+        verified: true,
+      });
+      expect(resumed.verification).not.toBe(verification);
+      expect(resumed.verification?.details).not.toBe(verification.details);
+
+      const updated = await transfers.read(createReadRequest("/source.txt"));
+      await expect(readText(updated.content)).resolves.toBe("abXYef");
+
+      await expect(transfers.read(createReadRequest("/missing.txt"))).rejects.toBeInstanceOf(
+        PathNotFoundError,
+      );
+      await expect(transfers.read(createReadRequest("/folder"))).rejects.toBeInstanceOf(
+        PathNotFoundError,
+      );
+      await expect(
+        transfers.write(createWriteRequest("/folder", textContent("x"))),
+      ).rejects.toBeInstanceOf(ConfigurationError);
+      await expect(
+        transfers.write(
+          createWriteRequest("/invalid-offset.txt", textContent("x"), {
+            offset: -1,
+          }),
+        ),
+      ).rejects.toBeInstanceOf(ConfigurationError);
+    } finally {
+      await session.disconnect();
+    }
   });
 });
+
+function requireTransfers(session: TransferSession): ProviderTransferOperations {
+  if (session.transfers === undefined) {
+    throw new Error("Expected memory provider transfer operations");
+  }
+
+  return session.transfers;
+}
+
+function createReadRequest(
+  path: string,
+  range?: ProviderTransferReadRequest["range"],
+): ProviderTransferReadRequest {
+  const request: ProviderTransferReadRequest = {
+    attempt: 1,
+    endpoint: { path, provider: "memory" },
+    job: { id: "memory-direct-read", operation: "download" },
+    reportProgress: (bytesTransferred, totalBytes) =>
+      createTestProgressEvent("memory-direct-read", bytesTransferred, totalBytes),
+    throwIfAborted: () => undefined,
+  };
+
+  if (range !== undefined) {
+    request.range = range;
+  }
+
+  return request;
+}
+
+function createWriteRequest(
+  path: string,
+  content: TransferDataSource,
+  options: TestWriteOptions = {},
+): ProviderTransferWriteRequest {
+  const request: ProviderTransferWriteRequest = {
+    attempt: 1,
+    content,
+    endpoint: { path, provider: "memory" },
+    job: { id: "memory-direct-write", operation: "upload" },
+    reportProgress: (bytesTransferred, totalBytes) =>
+      createTestProgressEvent("memory-direct-write", bytesTransferred, totalBytes),
+    throwIfAborted: () => undefined,
+  };
+
+  if (options.offset !== undefined) {
+    request.offset = options.offset;
+  }
+
+  if (options.totalBytes !== undefined) {
+    request.totalBytes = options.totalBytes;
+  }
+
+  if (options.verification !== undefined) {
+    request.verification = options.verification;
+  }
+
+  return request;
+}
+
+interface TestWriteOptions {
+  offset?: number;
+  totalBytes?: number;
+  verification?: TransferVerificationResult;
+}
+
+function createTestProgressEvent(
+  transferId: string,
+  bytesTransferred: number,
+  totalBytes: number | undefined,
+) {
+  const input = {
+    bytesTransferred,
+    now: new Date(0),
+    startedAt: new Date(0),
+    transferId,
+  };
+
+  return totalBytes === undefined
+    ? createProgressEvent(input)
+    : createProgressEvent({ ...input, totalBytes });
+}
+
+async function* textContent(value: string): AsyncGenerator<Uint8Array> {
+  await Promise.resolve();
+  yield Buffer.from(value, "utf8");
+}
+
+async function readText(content: TransferDataSource): Promise<string> {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of content) {
+    chunks.push(Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks).toString("utf8");
+}

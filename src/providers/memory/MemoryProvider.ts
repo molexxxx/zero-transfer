@@ -3,11 +3,20 @@
  *
  * @module providers/memory/MemoryProvider
  */
+import { Buffer } from "node:buffer";
 import type { CapabilitySet } from "../../core/CapabilitySet";
 import type { TransferSession } from "../../core/TransferSession";
 import { ConfigurationError, PathNotFoundError } from "../../errors/ZeroFTPError";
+import type { TransferVerificationResult } from "../../transfers/TransferJob";
 import type { ProviderFactory } from "../ProviderFactory";
 import type { TransferProvider } from "../Provider";
+import type {
+  ProviderTransferOperations,
+  ProviderTransferReadRequest,
+  ProviderTransferReadResult,
+  ProviderTransferWriteRequest,
+  ProviderTransferWriteResult,
+} from "../ProviderTransferOperations";
 import type { RemoteFileSystem } from "../RemoteFileSystem";
 import type { RemoteEntry, RemotePermissions, RemoteStat } from "../../types/public";
 import { basenameRemotePath, normalizeRemotePath } from "../../utils/path";
@@ -19,12 +28,12 @@ const MEMORY_PROVIDER_CAPABILITIES: CapabilitySet = {
   authentication: ["anonymous"],
   list: true,
   stat: true,
-  readStream: false,
-  writeStream: false,
+  readStream: true,
+  writeStream: true,
   serverSideCopy: false,
   serverSideMove: false,
-  resumeDownload: false,
-  resumeUpload: false,
+  resumeDownload: true,
+  resumeUpload: true,
   checksum: [],
   atomicRename: false,
   chmod: false,
@@ -48,6 +57,8 @@ const MEMORY_PROVIDER_CAPABILITIES: CapabilitySet = {
 export interface MemoryProviderEntry extends Omit<RemoteEntry, "name"> {
   /** Entry basename. When omitted, it is derived from `path`. */
   name?: string;
+  /** Optional byte content for file entries. Strings are encoded as UTF-8. */
+  content?: string | Uint8Array;
 }
 
 /** Options used to create a deterministic memory provider factory. */
@@ -57,18 +68,18 @@ export interface MemoryProviderOptions {
 }
 
 /**
- * Creates a provider factory backed by immutable in-memory fixture entries.
+ * Creates a provider factory backed by deterministic in-memory fixture entries.
  *
  * @param options - Optional fixture entries to expose through the memory provider.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
  */
 export function createMemoryProviderFactory(options: MemoryProviderOptions = {}): ProviderFactory {
-  const entries = createMemoryState(options.entries ?? []);
+  const state = createMemoryState(options.entries ?? []);
 
   return {
     id: MEMORY_PROVIDER_ID,
     capabilities: MEMORY_PROVIDER_CAPABILITIES,
-    create: () => new MemoryProvider(entries),
+    create: () => new MemoryProvider(state),
   };
 }
 
@@ -76,10 +87,10 @@ class MemoryProvider implements TransferProvider {
   readonly id = MEMORY_PROVIDER_ID;
   readonly capabilities = MEMORY_PROVIDER_CAPABILITIES;
 
-  constructor(private readonly entries: ReadonlyMap<string, RemoteStat>) {}
+  constructor(private readonly state: MemoryProviderState) {}
 
   connect(): Promise<TransferSession> {
-    return Promise.resolve(new MemoryTransferSession(this.entries));
+    return Promise.resolve(new MemoryTransferSession(this.state));
   }
 }
 
@@ -87,9 +98,11 @@ class MemoryTransferSession implements TransferSession {
   readonly provider = MEMORY_PROVIDER_ID;
   readonly capabilities = MEMORY_PROVIDER_CAPABILITIES;
   readonly fs: RemoteFileSystem;
+  readonly transfers: ProviderTransferOperations;
 
-  constructor(entries: ReadonlyMap<string, RemoteStat>) {
-    this.fs = new MemoryFileSystem(entries);
+  constructor(state: MemoryProviderState) {
+    this.fs = new MemoryFileSystem(state);
+    this.transfers = new MemoryTransferOperations(state);
   }
 
   disconnect(): Promise<void> {
@@ -97,8 +110,13 @@ class MemoryTransferSession implements TransferSession {
   }
 }
 
+interface MemoryProviderState {
+  entries: Map<string, RemoteStat>;
+  content: Map<string, Uint8Array>;
+}
+
 class MemoryFileSystem implements RemoteFileSystem {
-  constructor(private readonly entries: ReadonlyMap<string, RemoteStat>) {}
+  constructor(private readonly state: MemoryProviderState) {}
 
   list(path: string): Promise<RemoteEntry[]> {
     return Promise.resolve().then(() => {
@@ -112,7 +130,7 @@ class MemoryFileSystem implements RemoteFileSystem {
         );
       }
 
-      return [...this.entries.values()]
+      return [...this.state.entries.values()]
         .filter(
           (entry) => entry.path !== normalizedPath && getParentPath(entry.path) === normalizedPath,
         )
@@ -128,7 +146,7 @@ class MemoryFileSystem implements RemoteFileSystem {
   }
 
   private requireEntry(path: string): RemoteStat {
-    const entry = this.entries.get(path);
+    const entry = this.state.entries.get(path);
 
     if (entry === undefined) {
       throw createPathNotFoundError(path, `Memory path not found: ${path}`);
@@ -138,20 +156,86 @@ class MemoryFileSystem implements RemoteFileSystem {
   }
 }
 
-function createMemoryState(
-  entries: Iterable<MemoryProviderEntry>,
-): ReadonlyMap<string, RemoteStat> {
-  const state = new Map<string, RemoteStat>([["/", createDirectoryEntry("/")]]);
+class MemoryTransferOperations implements ProviderTransferOperations {
+  constructor(private readonly state: MemoryProviderState) {}
+
+  read(request: ProviderTransferReadRequest): Promise<ProviderTransferReadResult> {
+    return Promise.resolve().then(() => {
+      request.throwIfAborted();
+      const path = normalizeMemoryPath(request.endpoint.path);
+      const entry = requireFileEntry(this.state, path);
+      const content = this.state.content.get(path) ?? new Uint8Array(entry.size ?? 0);
+      const range = resolveByteRange(content.byteLength, request.range);
+      const chunk = content.slice(range.offset, range.offset + range.length);
+      const result: ProviderTransferReadResult = {
+        content: createMemoryContentSource(chunk),
+        totalBytes: chunk.byteLength,
+      };
+
+      if (range.offset > 0) {
+        result.bytesRead = range.offset;
+      }
+
+      return result;
+    });
+  }
+
+  async write(request: ProviderTransferWriteRequest): Promise<ProviderTransferWriteResult> {
+    request.throwIfAborted();
+    const path = normalizeMemoryPath(request.endpoint.path);
+    const existing = this.state.entries.get(path);
+
+    if (existing?.type === "directory") {
+      throw createInvalidFixtureError(path, `Memory path is a directory: ${path}`);
+    }
+
+    const writtenContent = await collectTransferContent(request);
+    const offset = normalizeOptionalByteCount(request.offset, "offset");
+    const previousContent = this.state.content.get(path) ?? new Uint8Array(0);
+    const content =
+      offset === undefined
+        ? writtenContent
+        : mergeContentAtOffset(previousContent, writtenContent, offset);
+
+    ensureParentDirectories(this.state.entries, path);
+    this.state.entries.set(path, createWrittenFileEntry(path, content.byteLength));
+    this.state.content.set(path, content);
+
+    const result: ProviderTransferWriteResult = {
+      bytesTransferred: writtenContent.byteLength,
+      resumed: offset !== undefined && offset > 0,
+      totalBytes: content.byteLength,
+      verified: request.verification?.verified ?? false,
+    };
+
+    if (request.verification !== undefined) {
+      result.verification = cloneVerification(request.verification);
+    }
+
+    return result;
+  }
+}
+
+function createMemoryState(entries: Iterable<MemoryProviderEntry>): MemoryProviderState {
+  const state: MemoryProviderState = {
+    content: new Map(),
+    entries: new Map([["/", createDirectoryEntry("/")]]),
+  };
 
   for (const input of entries) {
     const entry = createMemoryEntry(input);
+    const content = createMemoryContent(input, entry);
 
     if (entry.path === "/" && entry.type !== "directory") {
       throw createInvalidFixtureError(entry.path, "Memory provider root must be a directory");
     }
 
-    ensureParentDirectories(state, entry.path);
-    state.set(entry.path, entry);
+    ensureParentDirectories(state.entries, entry.path);
+    state.entries.set(entry.path, entry);
+
+    if (content !== undefined) {
+      state.content.set(entry.path, content);
+    }
   }
 
   return state;
@@ -167,9 +251,58 @@ function createMemoryEntry(input: MemoryProviderEntry): RemoteStat {
 
   copyOptionalEntryFields(entry, input);
 
+  const content = normalizeMemoryContent(input.content);
+
+  if (content !== undefined) {
+    entry.size = content.byteLength;
+  }
+
   return {
     ...entry,
     exists: true,
+  };
+}
+
+function createMemoryContent(
+  input: MemoryProviderEntry,
+  entry: RemoteStat,
+): Uint8Array | undefined {
+  const content = normalizeMemoryContent(input.content);
+
+  if (content !== undefined) {
+    if (entry.type !== "file") {
+      throw createInvalidFixtureError(
+        entry.path,
+        `Memory fixture content requires a file: ${entry.path}`,
+      );
+    }
+
+    return content;
+  }
+
+  if (entry.type === "file") {
+    return new Uint8Array(entry.size ?? 0);
+  }
+
+  return undefined;
+}
+
+function normalizeMemoryContent(content: string | Uint8Array | undefined): Uint8Array | undefined {
+  if (content === undefined) {
+    return undefined;
+  }
+
+  return typeof content === "string" ? Buffer.from(content) : new Uint8Array(content);
+}
+
+function createWrittenFileEntry(path: string, size: number): RemoteStat {
+  return {
+    exists: true,
+    modifiedAt: new Date(),
+    name: basenameRemotePath(path),
+    path,
+    size,
+    type: "file",
   };
 }
 
@@ -228,6 +361,110 @@ function getParentPath(path: string): string | undefined {
 
   const parentEnd = path.lastIndexOf("/");
   return parentEnd <= 0 ? "/" : path.slice(0, parentEnd);
+}
+
+function requireFileEntry(state: MemoryProviderState, path: string): RemoteStat {
+  const entry = state.entries.get(path);
+
+  if (entry === undefined) {
+    throw createPathNotFoundError(path, `Memory path not found: ${path}`);
+  }
+
+  if (entry.type !== "file") {
+    throw createPathNotFoundError(path, `Memory path is not a file: ${path}`);
+  }
+
+  return entry;
+}
+
+function resolveByteRange(
+  size: number,
+  range: ProviderTransferReadRequest["range"],
+): { offset: number; length: number } {
+  if (range === undefined) {
+    return { length: size, offset: 0 };
+  }
+
+  const requestedOffset = normalizeByteCount(range.offset, "offset");
+  const requestedLength =
+    range.length === undefined
+      ? size - Math.min(requestedOffset, size)
+      : normalizeByteCount(range.length, "length");
+  const offset = Math.min(requestedOffset, size);
+  const length = Math.max(0, Math.min(requestedLength, size - offset));
+
+  return { length, offset };
+}
+
+async function collectTransferContent(request: ProviderTransferWriteRequest): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  let byteLength = 0;
+
+  for await (const chunk of request.content) {
+    request.throwIfAborted();
+    const clonedChunk = new Uint8Array(chunk);
+    chunks.push(clonedChunk);
+    byteLength += clonedChunk.byteLength;
+    request.reportProgress(byteLength, request.totalBytes);
+  }
+
+  return concatChunks(chunks, byteLength);
+}
+
+function concatChunks(chunks: Uint8Array[], byteLength: number): Uint8Array {
+  const content = new Uint8Array(byteLength);
+  let offset = 0;
+
+  for (const chunk of chunks) {
+    content.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return content;
+}
+
+function mergeContentAtOffset(
+  previousContent: Uint8Array,
+  writtenContent: Uint8Array,
+  offset: number,
+): Uint8Array {
+  const content = new Uint8Array(
+    Math.max(previousContent.byteLength, offset + writtenContent.byteLength),
+  );
+  content.set(previousContent);
+  content.set(writtenContent, offset);
+  return content;
+}
+
+async function* createMemoryContentSource(content: Uint8Array): AsyncGenerator<Uint8Array> {
+  await Promise.resolve();
+  yield new Uint8Array(content);
+}
+
+function normalizeOptionalByteCount(value: number | undefined, field: string): number | undefined {
+  return value === undefined ? undefined : normalizeByteCount(value, field);
+}
+
+function normalizeByteCount(value: number, field: string): number {
+  if (!Number.isFinite(value) || value < 0) {
+    throw createInvalidFixtureError("/", `Memory provider ${field} must be a non-negative number`);
+  }
+
+  return Math.floor(value);
+}
+
+function cloneVerification(verification: TransferVerificationResult): TransferVerificationResult {
+  const clone: TransferVerificationResult = { verified: verification.verified };
+
+  if (verification.method !== undefined) clone.method = verification.method;
+  if (verification.checksum !== undefined) clone.checksum = verification.checksum;
+  if (verification.expectedChecksum !== undefined) {
+    clone.expectedChecksum = verification.expectedChecksum;
+  }
+  if (verification.actualChecksum !== undefined) clone.actualChecksum = verification.actualChecksum;
+  if (verification.details !== undefined) clone.details = { ...verification.details };
+
+  return clone;
 }
 
 function cloneRemoteEntry(entry: RemoteEntry): RemoteEntry {

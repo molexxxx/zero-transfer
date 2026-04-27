@@ -22,7 +22,7 @@ The current foundation includes:
 - Vitest coverage gates at 90% across statements, branches, functions, and lines.
 - ESLint, Prettier, typecheck, build, package dry-run, and CI scripts.
 - Typed error classes, safe remote argument validation, structured logging redaction helpers, and FTP parser tests.
-- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers, profile secret utilities, transfer plans, transfer queue primitives, and the initial transfer engine.
+- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers with read/write transfer operations, profile secret utilities, transfer plans, transfer queue primitives, and the initial transfer engine.
 - Verbose JSDoc across the public TypeScript API for future generated documentation.
 - Initial GitHub Actions scaffolding for CI, CodeQL, and npmjs release provenance.
 
@@ -82,7 +82,7 @@ const report = await session.fs.stat("/fixtures/report.csv");
 await session.disconnect();
 ```
 
-The memory provider is intentionally narrow: it supports connection lifecycle, capability discovery, `fs.list()`, `fs.stat()`, and typed missing-path errors over in-memory fixture state.
+The memory provider is intentionally test-focused: it supports connection lifecycle, capability discovery, `fs.list()`, `fs.stat()`, typed missing-path errors, and deterministic in-memory transfer reads/writes over fixture state.
 
 The local provider exposes a configured local root as `/` for local-only tests and early provider contract coverage:
 
@@ -97,6 +97,8 @@ const session = await client.connect({ provider: "local", host: "local" });
 const files = await session.fs.list("/");
 await session.disconnect();
 ```
+
+The local provider also exposes provider transfer reads/writes under `session.transfers` for local-only workflow tests and early transfer-engine coverage.
 
 Profile helpers are also available for validating connection profiles, resolving deferred secret sources, and redacting diagnostics:
 
@@ -151,7 +153,7 @@ const receipt = await engine.execute(
 );
 ```
 
-Provider sessions that can stream content may expose `session.transfers.read()` and `session.transfers.write()`. The SDK also exports `createProviderTransferExecutor()` to bridge those provider operations into `TransferEngine` without hard-coding a concrete FTP, SFTP, local, or cloud implementation:
+Provider sessions that can stream content expose `session.transfers.read()` and `session.transfers.write()`. The memory and local providers implement that surface now, and the SDK exports `createProviderTransferExecutor()` to bridge provider operations into `TransferEngine` without hard-coding a concrete FTP, SFTP, or cloud implementation:
 
 ```ts
 import { createProviderTransferExecutor } from "@zero-transfer/sdk";

@@ -3,8 +3,10 @@
  *
  * @module providers/local/LocalProvider
  */
-import { lstat, readdir, readlink } from "node:fs/promises";
+import { createReadStream } from "node:fs";
+import { lstat, mkdir, open, readdir, readlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import type { Buffer } from "node:buffer";
 import type { Stats } from "node:fs";
 import type { CapabilitySet } from "../../core/CapabilitySet";
 import type { TransferSession } from "../../core/TransferSession";
@@ -13,6 +15,7 @@ import {
   PathNotFoundError,
   PermissionDeniedError,
 } from "../../errors/ZeroFTPError";
+import type { TransferVerificationResult } from "../../transfers/TransferJob";
 import type {
   ConnectionProfile,
   RemoteEntry,
@@ -22,6 +25,13 @@ import type {
 import { basenameRemotePath, joinRemotePath, normalizeRemotePath } from "../../utils/path";
 import type { TransferProvider } from "../Provider";
 import type { ProviderFactory } from "../ProviderFactory";
+import type {
+  ProviderTransferOperations,
+  ProviderTransferReadRequest,
+  ProviderTransferReadResult,
+  ProviderTransferWriteRequest,
+  ProviderTransferWriteResult,
+} from "../ProviderTransferOperations";
 import type { RemoteFileSystem } from "../RemoteFileSystem";
 
 const LOCAL_PROVIDER_ID = "local";
@@ -31,12 +41,12 @@ const LOCAL_PROVIDER_CAPABILITIES: CapabilitySet = {
   authentication: ["anonymous"],
   list: true,
   stat: true,
-  readStream: false,
-  writeStream: false,
+  readStream: true,
+  writeStream: true,
   serverSideCopy: false,
   serverSideMove: false,
-  resumeDownload: false,
-  resumeUpload: false,
+  resumeDownload: true,
+  resumeUpload: true,
   checksum: [],
   atomicRename: false,
   chmod: false,
@@ -85,13 +95,69 @@ class LocalTransferSession implements TransferSession {
   readonly provider = LOCAL_PROVIDER_ID;
   readonly capabilities = LOCAL_PROVIDER_CAPABILITIES;
   readonly fs: RemoteFileSystem;
+  readonly transfers: ProviderTransferOperations;
 
   constructor(rootPath: string) {
     this.fs = new LocalFileSystem(rootPath);
+    this.transfers = new LocalTransferOperations(rootPath);
   }
 
   disconnect(): Promise<void> {
     return Promise.resolve();
+  }
+}
+
+class LocalTransferOperations implements ProviderTransferOperations {
+  constructor(private readonly rootPath: string) {}
+
+  async read(request: ProviderTransferReadRequest): Promise<ProviderTransferReadResult> {
+    request.throwIfAborted();
+    const remotePath = normalizeLocalProviderPath(request.endpoint.path);
+    const entry = await readLocalEntry(this.rootPath, remotePath);
+
+    if (entry.type !== "file") {
+      throw createPathNotFoundError(remotePath, `Local provider path is not a file: ${remotePath}`);
+    }
+
+    const range = resolveReadRange(entry.size ?? 0, request.range);
+    const result: ProviderTransferReadResult = {
+      content: createLocalReadSource(resolveLocalPath(this.rootPath, remotePath), range),
+      totalBytes: range.length,
+    };
+
+    if (range.offset > 0) {
+      result.bytesRead = range.offset;
+    }
+
+    return result;
+  }
+
+  async write(request: ProviderTransferWriteRequest): Promise<ProviderTransferWriteResult> {
+    request.throwIfAborted();
+    const remotePath = normalizeLocalProviderPath(request.endpoint.path);
+    const localPath = resolveLocalPath(this.rootPath, remotePath);
+    const content = await collectTransferContent(request);
+    const offset = normalizeOptionalByteCount(request.offset, "offset", remotePath);
+
+    await ensureLocalParentDirectory(localPath, remotePath);
+    await writeLocalContent(localPath, remotePath, content, offset);
+
+    const stat = await readLocalEntry(this.rootPath, remotePath);
+    const result: ProviderTransferWriteResult = {
+      bytesTransferred: content.byteLength,
+      resumed: offset !== undefined && offset > 0,
+      verified: request.verification?.verified ?? false,
+    };
+
+    if (stat.size !== undefined) {
+      result.totalBytes = stat.size;
+    }
+
+    if (request.verification !== undefined) {
+      result.verification = cloneVerification(request.verification);
+    }
+
+    return result;
   }
 }
 
@@ -121,6 +187,154 @@ class LocalFileSystem implements RemoteFileSystem {
   async stat(path: string): Promise<RemoteStat> {
     return readLocalEntry(this.rootPath, normalizeLocalProviderPath(path));
   }
+}
+
+interface ResolvedReadRange {
+  offset: number;
+  length: number;
+}
+
+function resolveReadRange(
+  size: number,
+  range: ProviderTransferReadRequest["range"],
+): ResolvedReadRange {
+  if (range === undefined) {
+    return { length: size, offset: 0 };
+  }
+
+  const requestedOffset = normalizeByteCount(range.offset, "offset", "/");
+  const requestedLength =
+    range.length === undefined
+      ? size - Math.min(requestedOffset, size)
+      : normalizeByteCount(range.length, "length", "/");
+  const offset = Math.min(requestedOffset, size);
+  const length = Math.max(0, Math.min(requestedLength, size - offset));
+
+  return { length, offset };
+}
+
+async function* createLocalReadSource(
+  localPath: string,
+  range: ResolvedReadRange,
+): AsyncGenerator<Uint8Array> {
+  if (range.length <= 0) {
+    return;
+  }
+
+  const stream = createReadStream(localPath, {
+    end: range.offset + range.length - 1,
+    start: range.offset,
+  }) as AsyncIterable<Buffer>;
+
+  for await (const chunk of stream) {
+    yield new Uint8Array(chunk);
+  }
+}
+
+async function collectTransferContent(request: ProviderTransferWriteRequest): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  let byteLength = 0;
+
+  for await (const chunk of request.content) {
+    request.throwIfAborted();
+    const clonedChunk = new Uint8Array(chunk);
+    chunks.push(clonedChunk);
+    byteLength += clonedChunk.byteLength;
+    request.reportProgress(byteLength, request.totalBytes);
+  }
+
+  return concatChunks(chunks, byteLength);
+}
+
+function concatChunks(chunks: Uint8Array[], byteLength: number): Uint8Array {
+  const content = new Uint8Array(byteLength);
+  let offset = 0;
+
+  for (const chunk of chunks) {
+    content.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  return content;
+}
+
+async function ensureLocalParentDirectory(localPath: string, remotePath: string): Promise<void> {
+  try {
+    await mkdir(path.dirname(localPath), { recursive: true });
+  } catch (error) {
+    throw mapLocalFileSystemError(error, remotePath);
+  }
+}
+
+async function writeLocalContent(
+  localPath: string,
+  remotePath: string,
+  content: Uint8Array,
+  offset: number | undefined,
+): Promise<void> {
+  try {
+    if (offset === undefined) {
+      await writeFile(localPath, content);
+      return;
+    }
+
+    const handle = await openLocalFileForOffsetWrite(localPath);
+
+    try {
+      await handle.write(content, 0, content.byteLength, offset);
+    } finally {
+      await handle.close();
+    }
+  } catch (error) {
+    throw mapLocalFileSystemError(error, remotePath);
+  }
+}
+
+async function openLocalFileForOffsetWrite(localPath: string) {
+  try {
+    return await open(localPath, "r+");
+  } catch (error) {
+    if (getErrorCode(error) === "ENOENT") {
+      return open(localPath, "w+");
+    }
+
+    throw error;
+  }
+}
+
+function normalizeOptionalByteCount(
+  value: number | undefined,
+  field: string,
+  remotePath: string,
+): number | undefined {
+  return value === undefined ? undefined : normalizeByteCount(value, field, remotePath);
+}
+
+function normalizeByteCount(value: number, field: string, remotePath: string): number {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new ConfigurationError({
+      details: { field, provider: LOCAL_PROVIDER_ID },
+      message: `Local provider ${field} must be a non-negative number`,
+      path: remotePath,
+      retryable: false,
+    });
+  }
+
+  return Math.floor(value);
+}
+
+function cloneVerification(verification: TransferVerificationResult): TransferVerificationResult {
+  const clone: TransferVerificationResult = { verified: verification.verified };
+
+  if (verification.method !== undefined) clone.method = verification.method;
+  if (verification.checksum !== undefined) clone.checksum = verification.checksum;
+  if (verification.expectedChecksum !== undefined) {
+    clone.expectedChecksum = verification.expectedChecksum;
+  }
+  if (verification.actualChecksum !== undefined) clone.actualChecksum = verification.actualChecksum;
+  if (verification.details !== undefined) clone.details = { ...verification.details };
+
+  return clone;
 }
 
 async function readLocalDirectory(localPath: string, remotePath: string): Promise<string[]> {
