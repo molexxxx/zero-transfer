@@ -2,13 +2,13 @@
 
 Date: 2026-04-27
 
-Current repo/package state: `@zero-transfer/sdk` / `ZeroTransfer` after the Phase 0 and Phase 1 foundation work. `ZeroFTP` remains available as a temporary compatibility export while the provider-neutral API is established.
+Current repo/package state: `@zero-transfer/sdk` / `ZeroTransfer` in the `tonywied17/zero-transfer` repository after the Phase 0 and Phase 1 foundation work. The `zero-transfer` npm organization exists, package metadata and lockfile are scoped to `@zero-transfer/sdk`, and the release workflow is ready to publish to npmjs with a repository secret named `NPM_TOKEN`. `ZeroFTP` remains available as a temporary compatibility export while the provider-neutral API is established.
 
 New product direction: a protocol-neutral, TypeScript-first file transfer SDK. FTP, FTPS, and SFTP are important provider adapters, not the identity of the whole project.
 
-Working brand: `ZeroTransfer` with npm organization scope `@zero-transfer` and first package `@zero-transfer/sdk`, pending deeper domain and trademark checks. If that name becomes nonviable, keep the architecture and choose another broad file-transfer name before public alpha.
+Chosen working brand: `ZeroTransfer` with npm organization scope `@zero-transfer` and first package `@zero-transfer/sdk`, still subject to normal domain and trademark diligence before 1.0.
 
-This document replaces the prior FTP-first remake plan. Do not start the next implementation phase until the naming and public API direction below are accepted or deliberately narrowed.
+This document replaces the prior FTP-first remake plan. The naming and package-scope decision is accepted; the next implementation phase should start with provider-neutral contracts, memory/local providers, profile/secret handling, and contract tests.
 
 ## 1. Hard Pivot Decision
 
@@ -22,14 +22,15 @@ The new plan is:
 - Preserve protocol escape hatches for advanced users without letting raw FTP/SFTP concepts dominate the main API.
 - Design profiles and secrets around real GUI-client needs, including WinSCP, FileZilla, OpenSSH, TLS certificates, PFX/P12 bundles, known_hosts, proxies, jump hosts, and cloud credentials.
 
-Recommendation:
+Decision:
 
-- Rename before public alpha if we are serious about this broader scope.
-- Preferred package/repo: `@zero-transfer/sdk` in the `tonywied17/zero-transfer` repository.
+- Public package/repo: `@zero-transfer/sdk` in the `tonywied17/zero-transfer` repository.
+- Public scope owner: npm organization `zero-transfer`.
 - Preferred public class/factory: `ZeroTransfer` and `createTransferClient()`.
-- Keep `zero-ftp` only if we intentionally decide this repo is a focused classic-protocol adapter package.
+- Legacy package names `molex-ftp` and `zero-ftp` are migration history, not the forward product identity.
+- Keep `ZeroFTP` only as a short-term compatibility export while the provider-neutral core is introduced.
 
-Name candidates checked quickly on npm metadata on 2026-04-27 returned not found or unavailable for `zero-transfer`, `zero-file-transfer`, `zero-mft`, `zero-files`, `zero-file-sdk`, and `@zero-transfer/sdk`. This is only a first-pass availability signal, not ownership or legal clearance.
+The first scoped publish should claim `@zero-transfer/sdk` before deeper package splitting begins.
 
 ## 2. Product Goal
 
@@ -106,6 +107,15 @@ Start as one scoped package until the contracts prove themselves:
 ```
 
 The `zero-transfer` npm organization has been created. The first package claims the scope with a batteries-included SDK that can include core contracts plus classic providers. Split later only when package size, optional dependencies, or provider cadence justify it.
+
+### First Publish Path
+
+- Publish `@zero-transfer/sdk` to the public npm registry only.
+- Keep `publishConfig.registry` set to `https://registry.npmjs.org/`.
+- Keep `publishConfig.access` set to `public` for the scoped package.
+- Prefer GitHub Actions release publishing with provenance.
+- Use the repository secret `NPM_TOKEN` for token-based test publishing; never commit npm tokens or put them in local npm config.
+- Do not publish an unscoped `zero-transfer` package unless there is a deliberate compatibility or discoverability reason later.
 
 ### Future Monorepo Shape
 
@@ -328,7 +338,7 @@ This structure intentionally keeps classic protocols under `providers/classic/`.
 ### Primary Client
 
 ```ts
-import { createTransferClient } from "zero-transfer";
+import { createTransferClient } from "@zero-transfer/sdk";
 
 const client = createTransferClient();
 
@@ -726,7 +736,7 @@ Required docs:
 - Diagnostics guide.
 - Security guide.
 - MFT workflows guide.
-- Migration from `molex-ftp` / `zero-ftp` if renamed.
+- Migration from `molex-ftp` and `zero-ftp` to `@zero-transfer/sdk`.
 - Generated API docs from JSDoc/TypeDoc.
 
 Example files:
@@ -744,24 +754,36 @@ Example files:
 
 ## 13. New Phase Plan
 
-### Phase 0B: Hard Rename And Contract Reframe
+### Phase 0B: Scoped Identity And Contract Reframe
 
-- Decide whether to rename to `zero-transfer` before public alpha.
-- If yes, update package name, repo URLs, README, logo, public class names, errors, docs, and TypeDoc output from ZeroFTP to ZeroTransfer.
-- Rename `ZeroFTP` facade to `TransferClient` or `ZeroTransfer`.
-- Replace `RemoteFileAdapter` with provider-neutral `TransferProvider` and `RemoteFileSystem` contracts.
-- Replace `ConnectionProfile.protocol` with `ConnectionProfile.provider`.
-- Keep classic protocol parser code under `providers/classic/ftp` instead of top-level protocol architecture.
+Status: done enough to start the next implementation phase.
+
+- Package metadata and lockfile use `@zero-transfer/sdk`.
+- GitHub metadata points at `tonywied17/zero-transfer`.
+- README, npm badges, package docs, and logo use ZeroTransfer language.
+- Release workflow publishes the public scoped package with provenance and `NPM_TOKEN`.
+- Public exports include `ZeroTransfer` as the preferred facade.
+- `ZeroFTP` remains as a temporary compatibility export.
+- Remaining rename cleanup should happen as part of the provider-neutral core refactor, not as isolated churn.
+
+### Phase 0C: First Scoped npm Release
+
+- Add the npm automation token as GitHub secret `NPM_TOKEN`, or configure trusted publishing if replacing token-based release.
+- Run the release workflow or publish from an explicit test release to claim `@zero-transfer/sdk`.
+- Confirm the npm package page resolves and shows the scoped package metadata.
+- Rotate any token that has been pasted into chat or local terminals.
+- Keep the initial release honest: alpha foundation, provider-neutral direction, compatibility facade, no claim of production-ready remote providers yet.
 
 ### Phase 1B: Provider-Neutral Foundation
 
-- Build `ProviderRegistry`.
-- Build `CapabilitySet`.
-- Build `SecretSource` and secret resolution.
-- Build profile validation and redaction.
-- Build provider contract test harness.
+- Add `src/core/ProviderId.ts`, `CapabilitySet.ts`, `ProviderRegistry.ts`, `TransferSession.ts`, `TransferClient.ts`, and `createTransferClient.ts`.
+- Add provider contracts under `src/providers/Provider.ts`, `ProviderCapabilities.ts`, `ProviderFactory.ts`, and `RemoteFileSystem.ts`.
+- Replace the current adapter-first concept with provider-neutral contracts while keeping `RemoteFileAdapter` compatibility where it reduces churn.
+- Introduce `ConnectionProfile.provider` while temporarily accepting `ConnectionProfile.protocol` for compatibility.
+- Build `SecretSource`, secret resolution, profile validation, and profile redaction.
+- Build the provider contract test harness.
 - Add memory and local providers for deterministic tests.
-- Update README to sell the broad product direction.
+- Export `createTransferClient()` and make `ZeroTransfer` use the new client path when the contracts are ready.
 
 ### Phase 2: Transfer Core, Not FTP Core
 
@@ -819,7 +841,7 @@ Alpha should not claim every provider. It should prove the platform shape.
 
 Alpha is ready when:
 
-- Naming is final enough to publish.
+- Scoped package identity is claimed or ready to claim as `@zero-transfer/sdk`.
 - Public API is provider-neutral.
 - Memory and local providers pass provider contracts.
 - At least one classic remote provider passes provider contracts.
@@ -848,13 +870,11 @@ Alpha is ready when:
 
 ## 16. Immediate Next Actions
 
-1. Decide final brand: `zero-transfer`/`ZeroTransfer` unless a stronger name wins quickly.
-2. If broad direction is accepted, rename package metadata and README before writing Phase 2 code.
-3. Rename public facade from `ZeroFTP` to `ZeroTransfer` or `TransferClient`.
-4. Refactor `src/` toward the provider-neutral structure.
-5. Add memory and local providers so contract tests do not depend on FTP first.
-6. Add `SecretSource`, profile validation, and redaction before adding more auth-heavy providers.
+1. Claim the package on npm by publishing the first scoped alpha as `@zero-transfer/sdk`, preferably through the GitHub Release workflow.
+2. Start Phase 1B by adding provider-neutral core contracts without deleting the current tested facade.
+3. Add a memory provider and local file-system provider first so provider contracts can run without FTP servers.
+4. Add `SecretSource`, profile validation, and redaction before adding more auth-heavy providers.
+5. Introduce `createTransferClient()` and `TransferClient` while keeping `ZeroTransfer` as the friendly public entry point.
+6. Move FTP parser work under `providers/classic/ftp` only after the provider contracts and tests exist.
 7. Build the transfer engine and provider contracts before deep FTP/FTPS/SFTP implementation.
-8. Move FTP parser work under `providers/classic/ftp` and continue it as one provider implementation.
-9. Rework README and logo language around ZeroTransfer if the rename is chosen.
-10. Only then continue into the next implementation phase.
+8. Expand README examples only for APIs that exist in the current alpha surface.
