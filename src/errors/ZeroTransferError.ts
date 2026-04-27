@@ -291,9 +291,3 @@ export class ConfigurationError extends ZeroTransferError {
     super(withDefaultCode(details, "ZERO_TRANSFER_CONFIGURATION_ERROR"));
   }
 }
-
-/** @deprecated Use {@link ZeroTransferErrorDetails}. */
-export type ZeroFTPErrorDetails = ZeroTransferErrorDetails;
-
-/** @deprecated Use {@link ZeroTransferError}. */
-export { ZeroTransferError as ZeroFTPError };

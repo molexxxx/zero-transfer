@@ -14,7 +14,6 @@ import {
   TransferError,
   UnsupportedFeatureError,
   VerificationError,
-  ZeroFTPError,
   ZeroTransferError,
   type SpecializedErrorDetails,
 } from "../../../src/errors/ZeroTransferError";
@@ -90,13 +89,5 @@ describe("ZeroTransferError", () => {
       "ZERO_TRANSFER_CONFIGURATION_ERROR",
     ]);
     expect(specializedErrors.every((error) => error.name.endsWith("Error"))).toBe(true);
-  });
-
-  it("keeps the ZeroFTPError export as a compatibility alias", () => {
-    const error = new ConnectionError({ message: "boom", retryable: true });
-
-    expect(ZeroFTPError).toBe(ZeroTransferError);
-    expect(error).toBeInstanceOf(ZeroTransferError);
-    expect(error).toBeInstanceOf(ZeroFTPError);
   });
 });

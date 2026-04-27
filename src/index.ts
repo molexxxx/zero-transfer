@@ -96,10 +96,8 @@ export {
   TransferError,
   UnsupportedFeatureError,
   VerificationError,
-  ZeroFTPError,
   ZeroTransferError,
   type SpecializedErrorDetails,
-  type ZeroFTPErrorDetails,
   type ZeroTransferErrorDetails,
 } from "./errors/ZeroTransferError";
 export {
