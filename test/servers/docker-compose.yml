@@ -1,0 +1,36 @@
+name: zero-ftp-integration
+
+services:
+  ftp:
+    image: stilliard/pure-ftpd:hardened
+    environment:
+      PUBLICHOST: "localhost"
+      FTP_USER_NAME: "zero"
+      FTP_USER_PASS: "zero-pass"
+      FTP_USER_HOME: "/home/zero"
+      ADDED_FLAGS: "--tls=0"
+    ports:
+      - "2121:21"
+      - "30000-30009:30000-30009"
+
+  ftps:
+    image: stilliard/pure-ftpd:hardened
+    environment:
+      PUBLICHOST: "localhost"
+      FTP_USER_NAME: "zero"
+      FTP_USER_PASS: "zero-pass"
+      FTP_USER_HOME: "/home/zero"
+      ADDED_FLAGS: "--tls=1"
+    ports:
+      - "2990:21"
+      - "30010-30019:30000-30009"
+    profiles:
+      - integration
+
+  sftp:
+    image: atmoz/sftp:latest
+    command: zero:zero-pass:::upload
+    ports:
+      - "2222:22"
+    profiles:
+      - integration

@@ -1,0 +1,6 @@
+node_modules/
+dist/
+coverage/
+docs/api/
+package-lock.json
+zero-ftp-remake.md

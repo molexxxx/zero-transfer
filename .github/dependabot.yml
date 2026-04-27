@@ -1,0 +1,25 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      test-and-build-tooling:
+        patterns:
+          - "@eslint/*"
+          - "@types/*"
+          - "@vitest/*"
+          - eslint
+          - prettier
+          - tsup
+          - typedoc
+          - typescript
+          - typescript-eslint
+          - vitest
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

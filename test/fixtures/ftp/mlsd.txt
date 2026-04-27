@@ -1,0 +1,5 @@
+type=cdir;modify=20260427010101; .
+type=pdir;modify=20260427010101; ..
+type=file;size=1024;modify=20260427010203.123;perm=adfr;unique=801U1F4; release.zip
+type=dir;modify=20260427010204;perm=el; builds
+type=OS.unix=slink;modify=20260427010205; target-link

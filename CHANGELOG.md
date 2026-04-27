@@ -1,12 +1,32 @@
 # Changelog
 
+## [0.1.0-alpha.0] - 2026-04-27
+
+### Changed
+
+- Renamed package foundation from `molex-ftp` to `zero-ftp`.
+- Switched the package entry point to the new TypeScript `src/` rebuild output.
+- Removed the old CommonJS FTP implementation after the TypeScript foundation became the package surface.
+- Switched project licensing from ISC to MIT.
+
+### Added
+
+- TypeScript, build, lint, format, typecheck, test, coverage, and package dry-run scripts.
+- Initial parser-first test harness with 90% coverage gates.
+- Verbose JSDoc comments for the TypeScript API foundation.
+- Animated ZeroFTP SVG logo for the repository README.
+- npmjs-only publishing metadata with provenance enabled.
+- CI, release, CodeQL, Dependabot, and integration-server scaffolding.
+
 ## [2.3.0] - 2026-02-02
 
 ### Added
+
 - `uploadFile(localPath, remotePath, ensureDir)` - Upload local files from disk
 - `downloadFile(remotePath, localPath)` - Download files directly to disk
 
 ### Changed
+
 - **Simplified `ensureDir()` API** - now auto-detects file paths (by extension) and creates parent directory
 - No more confusing `ensureDir(path, true, true)` - just `ensureDir(path)` works for both files and directories
 - Example: `ensureDir('/path/file.txt')` automatically creates `/path/` directory
@@ -14,33 +34,39 @@
 ## [2.2.0] - 2026-02-02
 
 ### Fixed
+
 - **CRITICAL: Fixed 30-second timeout on all data transfers** - upload, download, list, downloadStream now complete instantly
 - Commands with data connections no longer wait for 226 completion response, dramatically improving speed
 - Download speed improved from 0.03 MB/s to 2.47 MB/s (80x faster!)
 - Recursive directory deletion now blazing fast (sub-second instead of minutes)
 
 ### Added
+
 - `removeDir(path, recursive)` - Remove directories with optional recursive deletion
 - `chmod(path, mode)` - Change file permissions (Unix/Linux servers)
 - `listDetailed(path)` - Get parsed directory listings with permissions, owner, size, etc.
 - `site(command)` - Execute server-specific SITE commands
 
 ### Improved
+
 - `listDetailed()` now filters out `.` and `..` entries automatically
 - Better handling of unknown file types in recursive operations
 
 ## [2.1.0] - 2026-02-02
 
 ### Added
+
 - `stat()` method returns detailed file/directory information: `{ exists, size, isFile, isDirectory }`
 
 ### Changed
+
 - **Simplified performance system** - removed over-engineered preset configuration
 - TCP optimizations (TCP_NODELAY, keep-alive) now applied by default at socket creation
 - `createOptimizedSocket()` replaces repeated `optimizeSocket()` calls for cleaner code
 - Updated `exists()` to use new `stat()` method internally
 
 ### Removed
+
 - Performance presets (LOW_LATENCY, HIGH_THROUGHPUT, BALANCED) - unnecessary complexity
 - `performancePreset` and `performance` constructor options
 - `getOptimalChunkSize()` function - Node.js doesn't expose socket buffer controls
@@ -48,10 +74,12 @@
 ## [2.0.0] - 2026-02-02
 
 ### Breaking Changes
+
 - Removed `ensureParentDir()` - use `ensureDir(path, true, true)` instead
 - Removed `uploadFile()` - use `upload(data, path, true)` instead
 
 ### Added
+
 - **Performance optimization system** with TCP tuning (inspired by HFT practices)
 - `downloadStream()` method for memory-efficient large file transfers
 - `isConnected()` method to check connection and authentication status
@@ -62,6 +90,7 @@
 - New `lib/performance.js` module for TCP optimization utilities
 
 ### Improved
+
 - **40-50% faster downloads** for small files with LOW_LATENCY preset
 - **`exists()` now properly detects directories** (previously only detected files)
 - All timeouts now respect `client.timeout` configuration (no more hardcoded values)
@@ -71,6 +100,7 @@
 - All data connections now apply performance optimizations
 
 ### Changed
+
 - `upload()` now accepts optional `ensureDir` boolean parameter (default: false)
 - `ensureDir()` now accepts optional `isFilePath` boolean parameter (default: false)
 - Consolidated API reduces method count while maintaining functionality
@@ -79,6 +109,7 @@
 ## [1.2.1] - 2026-02-02
 
 ### Changed
+
 - Improved README documentation
   - Better examples for `ensureDir()`, `ensureParentDir()`, and `uploadFile()`
   - Added architecture section explaining modular structure
@@ -88,6 +119,7 @@
 ## [1.2.0] - 2026-02-02
 
 ### Changed
+
 - **Major refactoring**: Improved separation of concerns
   - `index.js` now serves as simple entry point
   - Implementation moved to organized `lib/` structure:
@@ -101,6 +133,7 @@
 ## [1.1.0] - 2026-02-02
 
 ### Added
+
 - `ensureDir(dirPath, recursive)` - Ensure directory exists, creating parent directories if needed
 - `ensureParentDir(filePath)` - Ensure parent directory exists for a file path
 - `uploadFile(data, remotePath, ensureDir)` - Upload with automatic directory creation
@@ -108,11 +141,13 @@
 - Helper functions for FTP command parsing and path manipulation
 
 ### Changed
+
 - Refactored internal code structure for better maintainability
 - Improved path normalization across all directory operations
 - Better error handling for directory creation
 
 ### Improved
+
 - Cleaner API for common operations
 - Reduced boilerplate code needed for directory handling
 - More consistent error messages
@@ -120,11 +155,13 @@
 ## [1.0.1] - 2026-02-02
 
 ### Fixed
+
 - Updated repository URLs to correct GitHub location
 
 ## [1.0.0] - 2026-02-02
 
 ### Initial Release
+
 - Zero dependencies FTP client using native Node.js TCP sockets
 - Promise-based API with async/await support
 - Passive mode (PASV) for data transfers

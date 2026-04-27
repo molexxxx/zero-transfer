@@ -1,335 +1,76 @@
-# molex-ftp-npm
+<p align="center">
+  <img src="assets/zero-ftp-logo.svg" alt="ZeroFTP SDK" width="720">
+</p>
 
-[![npm version](https://img.shields.io/npm/v/molex-ftp.svg)](https://www.npmjs.com/package/molex-ftp)
-[![npm downloads](https://img.shields.io/npm/dm/molex-ftp.svg)](https://www.npmjs.com/package/molex-ftp)
-[![GitHub](https://img.shields.io/badge/GitHub-molex--ftp--npm-blue.svg)](https://github.com/tonywied17/molex-ftp-npm)
-[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D14-brightgreen.svg)](https://nodejs.org)
-[![Dependencies](https://img.shields.io/badge/dependencies-0-success.svg)](package.json)
+# ZeroFTP
 
-> **Lightweight FTP client built with native Node.js TCP sockets. Zero dependencies, optimized for performance.**
+[![npm version](https://img.shields.io/npm/v/zero-ftp.svg)](https://www.npmjs.com/package/zero-ftp)
+[![npm downloads](https://img.shields.io/npm/dm/zero-ftp.svg)](https://www.npmjs.com/package/zero-ftp)
+[![CI](https://github.com/tonywied17/zero-ftp/actions/workflows/ci.yml/badge.svg)](https://github.com/tonywied17/zero-ftp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
 
-## Features
+ZeroFTP is a TypeScript-first Node.js SDK for FTP, FTPS, and SFTP clients. The project is being rebuilt from the original `molex-ftp` implementation into a safer, typed, observable file-transfer library with parser-first tests, npmjs-only publishing, and generated API documentation in mind.
 
-- **Zero dependencies** - Uses only native Node.js modules
-- **Promise-based API** - Modern async/await support
-- **Streaming support** - Memory-efficient downloads for large files
-- **Full FTP support** - Upload, download, list, delete, rename, chmod, stat, and more
-- **Debug mode** - See all FTP commands and responses in real-time
+## Status
+
+This repository is in the ZeroFTP remake phase. The old CommonJS package surface has been removed so the project can move forward around the TypeScript `src/` foundation and generated `dist/` output.
+
+The current foundation includes:
+
+- TypeScript source, declarations, and dual ESM/CJS package output.
+- Vitest coverage gates at 90% across statements, branches, functions, and lines.
+- ESLint, Prettier, typecheck, build, package dry-run, and CI scripts.
+- Typed error classes, safe FTP argument validation, structured logging redaction helpers, and FTP parser tests.
+- Verbose JSDoc across the public TypeScript API for future generated documentation.
+- Initial GitHub Actions scaffolding for CI, CodeQL, and npmjs release provenance.
 
 ## Installation
 
 ```bash
-npm install molex-ftp
+npm install zero-ftp
 ```
 
-## Quick Start
+## Intended API Direction
 
-```javascript
-const FTPClient = require('molex-ftp');
+```ts
+import { ZeroFTP } from "zero-ftp";
 
-const client = new FTPClient();
-
-await client.connect({
-  host: 'ftp.example.com',
-  user: 'username',
-  password: 'password'
+const client = await ZeroFTP.connect({
+  protocol: "ftps",
+  host: "ftp.example.com",
+  username: "deploy",
+  password: process.env.FTP_PASSWORD,
+  secure: true,
 });
 
-// Upload content (string or Buffer)
-await client.upload('Hello World!', '/path/to/file.txt', true);
-
-// Upload local file to FTP server
-await client.uploadFile('./local.txt', '/remote/file.txt');
-
-// Download to memory
-const data = await client.download('/path/to/file.txt');
-console.log(data.toString());
-
-// Download to local file
-await client.downloadFile('/remote/file.txt', './local.txt');
-
-await client.close();
+const entries = await client.list("/releases");
+await client.downloadFile("/releases/app.zip", "./app.zip");
+await client.disconnect();
 ```
 
-## Constructor Options
+Protocol adapters are intentionally being added incrementally. Early releases focus on the package foundation, deterministic tests, parser correctness, typed errors, logging, and transfer-service primitives before the FTP/FTPS/SFTP implementations are ported.
 
-```javascript
-const client = new FTPClient({
-  debug: false,       // Enable debug logging
-  timeout: 30000,     // Command timeout in milliseconds (default: 30000)
-  logger: console.log // Custom logger function
-});
+## Development
+
+```bash
+npm install
+npm run lint
+npm run format:check
+npm run typecheck
+npm run test:coverage
+npm run build
+npm run pack:dry
 ```
 
-## API Reference
+Use `npm run ci` to run the same local quality gate used by the CI workflow.
 
-### Connection Methods
+## Publishing
 
-#### `connect(options)`
-```javascript
-await client.connect({
-  host: 'ftp.example.com',    // Required
-  port: 21,                    // Default: 21
-  user: 'username',            // Default: 'anonymous'
-  password: 'password'         // Default: 'anonymous@'
-});
-```
+ZeroFTP publishes only to the public npm registry as `zero-ftp`.
 
-#### `close()`
-```javascript
-await client.close();
-```
-
-### File Methods
-
-#### `upload(data, remotePath, ensureDir)`
-```javascript
-await client.upload('content', '/path/file.txt');           // Basic upload
-await client.upload(buffer, '/path/file.bin');              // Upload Buffer
-await client.upload('content', '/deep/path/file.txt', true); // Auto-create parent dirs
-```
-
-#### `uploadFile(localPath, remotePath, ensureDir)`
-Upload local file from disk to FTP server.
-```javascript
-await client.uploadFile('./local.txt', '/remote/file.txt');           // Upload local file
-await client.uploadFile('./docs/report.pdf', '/reports/2026.pdf');   // Auto-creates parent dirs
-```
-
-#### `download(remotePath)` → `Buffer`
-Download file into memory as a Buffer.
-```javascript
-const data = await client.download('/path/file.txt');
-console.log(data.toString());
-```
-
-#### `downloadFile(remotePath, localPath)` → `number`
-Download file from FTP server to local disk.
-```javascript
-const bytes = await client.downloadFile('/backup.zip', './local-backup.zip');
-console.log(`Downloaded ${bytes} bytes`);
-```
-
-#### `downloadStream(remotePath, writeStream)` → `number`
-Stream download directly to a writable stream (for custom processing).
-```javascript
-const fs = require('fs');
-const fileStream = fs.createWriteStream('./local-file.bin');
-const bytes = await client.downloadStream('/remote.bin', fileStream);
-console.log(`Saved ${bytes} bytes to disk`);
-```
-
-#### `delete(path)`
-```javascript
-await client.delete('/path/file.txt');
-```
-
-#### `removeDir(path, recursive)`
-Remove directory, optionally with all contents.
-```javascript
-await client.removeDir('/path/emptydir');           // Remove empty directory
-await client.removeDir('/path/dir', true);          // Delete recursively with contents
-```
-
-#### `rename(from, to)`
-```javascript
-await client.rename('/old.txt', '/new.txt');
-```
-
-#### `exists(path)` → `boolean`
-```javascript
-const exists = await client.exists('/path/file.txt');
-```
-
-#### `stat(path)` → `Object`
-Get detailed file/directory information.
-```javascript
-const info = await client.stat('/path/file.txt');
-// { exists: true, size: 1024, isFile: true, isDirectory: false }
-```
-
-#### `size(path)` → `number`
-```javascript
-const bytes = await client.size('/path/file.txt');
-```
-
-#### `modifiedTime(path)` → `Date`
-```javascript
-const date = await client.modifiedTime('/path/file.txt');
-```
-
-#### `chmod(path, mode)`
-Change file permissions (Unix/Linux servers only).
-```javascript
-await client.chmod('/path/file.txt', '755');    // String format
-await client.chmod('/path/script.sh', 0755);    // Octal format
-```
-
-### Directory Methods
-
-#### `list(path)` → `string`
-Raw directory listing.
-```javascript
-const listing = await client.list('/path');
-```
-
-#### `listDetailed(path)` → `Array`
-Parsed directory listing with permissions, owner, size, etc.
-```javascript
-const files = await client.listDetailed('/path');
-// [
-//   { name: 'file.txt', type: 'file', permissions: '-rw-r--r--', 
-//     owner: 'user', group: 'group', size: 1024, date: 'Jan 15 10:30' },
-//   { name: 'subdir', type: 'directory', permissions: 'drwxr-xr-x', ... }
-// ]
-```
-
-#### `mkdir(path)`
-```javascript
-await client.mkdir('/path/newdir');
-```
-
-#### `cd(path)`
-```javascript
-await client.cd('/path/to/directory');
-```
-
-#### `pwd()` → `string`
-```javascript
-const currentDir = await client.pwd();
-```
-
-#### `ensureDir(path, recursive)`
-Create directory if it doesn't exist. Auto-detects file paths (with extensions) and creates parent directory.
-```javascript
-await client.ensureDir('/deep/nested/path');       // Create directory path
-await client.ensureDir('/path/to/file.txt');       // Auto-detects file, creates /path/to/
-await client.ensureDir('/single', false);          // Non-recursive, parent must exist
-```
-
-### Utility Methods
-
-#### `getState()` → `Object`
-Get current client state for debugging.
-```javascript
-const state = client.getState();
-// {
-//   connected: true,
-//   authenticated: true,
-//   host: 'ftp.example.com',
-//   ...
-// }
-```
-
-#### `setDebug(enabled)`
-Toggle debug mode at runtime.
-```javascript
-client.setDebug(true);
-```
-
-#### `site(command)` → `Object`
-Execute server-specific SITE commands.
-```javascript
-await client.site('CHMOD 755 /path/file.txt');  // Alternative chmod
-const response = await client.site('HELP');      // Get server help
-```
-
-## Events
-
-```javascript
-client.on('connected', () => console.log('TCP connection established'));
-client.on('response', (line) => console.log('FTP:', line));
-client.on('error', (err) => console.error('Error:', err));
-client.on('close', () => console.log('Connection closed'));
-```
-
-## Debugging
-
-Enable debug mode to see all FTP commands and responses:
-
-```javascript
-const client = new FTPClient({ debug: true });
-
-await client.connect({ host: 'ftp.example.com', user: 'user', password: 'pass' });
-// [FTP Debug] Connecting to ftp.example.com:21 as user
-// [FTP Debug] TCP connection established
-// [FTP Debug] <<< 220 Welcome to FTP server
-// [FTP Debug] >>> USER user
-// [FTP Debug] <<< 331 Password required
-// [FTP Debug] >>> PASS ********
-// [FTP Debug] <<< 230 Login successful
-```
-
-## Performance
-
-TCP optimizations are automatically applied:
-- **TCP_NODELAY** - Disables Nagle's algorithm for lower latency
-- **Keep-alive** - Detects dead connections (10s interval)
-
-**Typical transfer speeds:** ~2.5 MB/s for 1MB files over standard internet connections.
-
-For large files, use `downloadFile()` or `downloadStream()` to save directly to disk without buffering in memory:
-
-```javascript
-// Download directly to disk (recommended for large files)
-const bytes = await client.downloadFile('/backup.zip', './local-backup.zip');
-console.log(`Saved ${bytes} bytes`);
-
-// Or use downloadStream for custom processing
-const fs = require('fs');
-const fileStream = fs.createWriteStream('./large-backup.zip');
-const bytes = await client.downloadStream('/backup.zip', fileStream);
-console.log(`Saved ${bytes} bytes to disk`);
-```
-
-## Error Handling
-
-```javascript
-try {
-  await client.upload('data', '/readonly/file.txt');
-} catch (err) {
-  if (err.message.includes('FTP Error 550')) {
-    console.error('Permission denied');
-  }
-}
-```
-
-## Example
-
-```javascript
-const FTPClient = require('molex-ftp');
-
-async function main() {
-  const client = new FTPClient({ debug: true });
-
-  try {
-    await client.connect({
-      host: 'ftp.example.com',
-      user: 'admin',
-      password: 'secret'
-    });
-
-    // Check file info
-    const info = await client.stat('/backup/data.json');
-    if (info.exists) {
-      console.log(`File size: ${info.size} bytes`);
-      const data = await client.download('/backup/data.json');
-      console.log('Downloaded:', data.toString());
-    }
-
-    // Upload new file
-    await client.upload('new data', '/backup/updated.json', true);
-    
-    await client.close();
-  } catch (err) {
-    console.error('FTP Error:', err.message);
-  }
-}
-
-main();
-```
+Publishing is configured for npm provenance through GitHub Actions trusted publishing. There is no GitHub Packages release target.
 
 ## License
 
-ISC License
+MIT License
