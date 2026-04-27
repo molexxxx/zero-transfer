@@ -3,7 +3,8 @@
  *
  * The harness accepts TCP connections, sends a configurable greeting, records received
  * commands, and delegates each command to a scripted responder. It can also open a
- * passive data socket for deterministic MLSD-style listing tests. It is intentionally
+ * passive data socket for deterministic MLSD-style listing tests, including explicit
+ * FTPS control upgrades and protected passive data sockets. It is intentionally
  * minimal so tests can exercise parser and command-lifecycle behavior without a real
  * FTP daemon.
  *
@@ -75,7 +76,7 @@ interface PassiveDataChannel {
 }
 
 /**
- * Small TCP FTP control server for deterministic protocol tests.
+ * Small TCP FTP/explicit-FTPS control server for deterministic protocol tests.
  */
 export class FakeFtpServer {
   private readonly greeting: string;
@@ -198,6 +199,11 @@ export class FakeFtpServer {
     this.wireCommandSocket(socket);
   }
 
+  /**
+   * Parses CRLF-delimited commands from a plain or TLS-wrapped control socket.
+   *
+   * @param socket - Active command socket.
+   */
   private wireCommandSocket(socket: Socket): void {
     socket.setEncoding("utf8");
 
@@ -219,6 +225,12 @@ export class FakeFtpServer {
     });
   }
 
+  /**
+   * Handles a single received command, including built-in passive and FTPS commands.
+   *
+   * @param socket - Active control socket that should receive responses.
+   * @param command - Command text without CRLF.
+   */
   private async handleCommand(socket: Socket, command: string): Promise<void> {
     if (command === "AUTH TLS" && this.tls !== undefined) {
       socket.write("234 AUTH TLS successful\r\n", () => this.upgradeControlSocket(socket));
@@ -288,6 +300,11 @@ export class FakeFtpServer {
     socket.write(Array.isArray(response) ? response.join("") : response);
   }
 
+  /**
+   * Wraps the control socket in TLS after a successful AUTH TLS response.
+   *
+   * @param socket - Plain control socket to upgrade in place.
+   */
   private upgradeControlSocket(socket: Socket): void {
     if (this.tls === undefined) {
       return;
@@ -301,6 +318,11 @@ export class FakeFtpServer {
     this.wireCommandSocket(tlsSocket);
   }
 
+  /**
+   * Reads a passive upload into the server's captured upload list.
+   *
+   * @param command - Upload command associated with the passive socket.
+   */
   private async readPassiveUpload(command: string): Promise<void> {
     const channel = this.passiveDataChannel;
 
@@ -322,6 +344,11 @@ export class FakeFtpServer {
     await closeServer(channel.server);
   }
 
+  /**
+   * Opens a one-shot passive data listener for the next transfer command.
+   *
+   * @returns Bound passive data port.
+   */
   private async openPassiveDataChannel(): Promise<number> {
     await this.closePassiveDataChannel();
 
@@ -353,6 +380,12 @@ export class FakeFtpServer {
     return address.port;
   }
 
+  /**
+   * Applies TLS to a passive data socket when PROT P is active.
+   *
+   * @param socket - Accepted passive data socket.
+   * @returns Plain or TLS-wrapped passive data socket.
+   */
   private createPassiveDataSocket(socket: Socket): Socket {
     if (!this.protectPassiveData || this.tls === undefined) {
       return socket;
@@ -363,6 +396,12 @@ export class FakeFtpServer {
     return tlsSocket;
   }
 
+  /**
+   * Creates a TLS server socket using the fake server certificate options.
+   *
+   * @param socket - Underlying TCP socket to wrap.
+   * @returns TLS server socket used for the control or data channel.
+   */
   private createTlsServerSocket(socket: Socket): TLSSocket {
     if (this.tls === undefined) {
       throw new Error("Fake FTP TLS options are not configured");

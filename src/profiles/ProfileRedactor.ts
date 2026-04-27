@@ -26,6 +26,12 @@ export function redactConnectionProfile(profile: ConnectionProfile): Record<stri
   return redacted;
 }
 
+/**
+ * Redacts certificate-bearing TLS profile fields while preserving non-sensitive policy settings.
+ *
+ * @param profile - TLS profile to sanitize.
+ * @returns Plain object safe to include in diagnostics.
+ */
 function redactTlsProfile(profile: TlsProfile): Record<string, unknown> {
   const { ca, cert, checkServerIdentity, key, passphrase, pfx, ...rest } = profile;
   const redacted = redactObject(rest);
@@ -40,6 +46,12 @@ function redactTlsProfile(profile: TlsProfile): Record<string, unknown> {
   return redacted;
 }
 
+/**
+ * Redacts a TLS material source, preserving array shape for CA bundle diagnostics.
+ *
+ * @param source - Single secret source or ordered source array.
+ * @returns Redacted source descriptor.
+ */
 function redactTlsSecretSource(source: TlsSecretSource): unknown {
   if (Array.isArray(source)) {
     return source.map((item) => redactSecretSource(item));

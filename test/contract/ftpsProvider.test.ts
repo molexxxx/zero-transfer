@@ -135,6 +135,11 @@ describe("createFtpsProviderFactory", () => {
   });
 });
 
+/**
+ * Creates the explicit-FTPS fake server used by provider contract coverage.
+ *
+ * @returns Fake FTPS server with deterministic login, MLST, and MLSD responses.
+ */
 function createContractFtpsServer(): FakeFtpServer {
   return new FakeFtpServer({
     passiveData(command) {

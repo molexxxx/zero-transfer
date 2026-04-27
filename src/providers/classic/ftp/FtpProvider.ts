@@ -1,5 +1,5 @@
 /**
- * Classic FTP provider backed by MLST/MLSD metadata commands.
+ * Classic FTP and FTPS providers backed by MLST/MLSD metadata commands.
  *
  * @module providers/classic/ftp/FtpProvider
  */
@@ -56,6 +56,13 @@ const FTPS_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTPS_PROVIDER_ID
   "Explicit FTPS provider foundation with AUTH TLS, PBSZ/PROT setup, TLS profile support, MLST/MLSD metadata, EPSV/PASV passive mode, and RETR/STOR streaming support",
 ]);
 
+/**
+ * Builds the shared classic-provider capability snapshot for FTP-family providers.
+ *
+ * @param provider - Provider id represented by the capability snapshot.
+ * @param notes - Human-readable caveats exposed through capability discovery.
+ * @returns Provider capabilities advertised before and after connection.
+ */
 function createClassicFtpCapabilities(provider: ClassicProviderId, notes: string[]): CapabilitySet {
   return {
     provider,
@@ -82,22 +89,40 @@ function createClassicFtpCapabilities(provider: ClassicProviderId, notes: string
   };
 }
 
+/** Internal configuration used to instantiate an FTP-family provider implementation. */
 interface ClassicFtpProviderConfig {
+  /** Provider id exposed by the created provider and sessions. */
   providerId: ClassicProviderId;
+  /** Capability snapshot associated with this provider variant. */
   capabilities: CapabilitySet;
+  /** Control-channel port used when the profile omits one. */
   defaultPort: number;
+  /** Optional FTPS negotiation settings. Omitted for plain FTP. */
   security?: FtpsSecurityConfig;
 }
 
+/** FTPS-specific security settings derived from provider factory options. */
 interface FtpsSecurityConfig {
+  /** Control-channel TLS mode for the connection. */
   mode: FtpsMode;
+  /** Data-channel protection level requested through PROT. */
   dataProtection: FtpsDataProtection;
 }
 
-/** FTPS control-channel TLS mode. */
+/**
+ * FTPS control-channel TLS mode.
+ *
+ * `explicit` connects on a plain FTP control socket and upgrades with `AUTH TLS`;
+ * `implicit` starts TLS immediately, typically on port 990.
+ */
 export type FtpsMode = "explicit" | "implicit";
 
-/** FTPS data-channel protection level requested after TLS negotiation. */
+/**
+ * FTPS data-channel protection level requested after TLS negotiation.
+ *
+ * `private` sends `PROT P` and wraps passive data sockets in TLS. `clear` sends
+ * `PROT C`, keeping the control channel encrypted while leaving data sockets plain.
+ */
 export type FtpsDataProtection = "clear" | "private";
 
 /** Options used to create the classic FTP provider factory. */
@@ -136,6 +161,9 @@ export function createFtpProviderFactory(options: FtpProviderOptions = {}): Prov
 /**
  * Creates a provider factory for explicit or implicit FTPS connections.
  *
+ * The factory resolves TLS material from each connection profile, upgrades explicit
+ * sessions with `AUTH TLS`, and applies the configured `PROT` data-channel policy.
+ *
  * @param options - Optional provider defaults.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
  */
@@ -160,15 +188,29 @@ export function createFtpsProviderFactory(options: FtpsProviderOptions = {}): Pr
   };
 }
 
+/** Provider implementation shared by plain FTP and FTPS factory variants. */
 class FtpProvider implements TransferProvider {
+  /** Stable provider id registered in the transfer client. */
   readonly id: ClassicProviderId;
+  /** Provider capability snapshot exposed without opening a connection. */
   readonly capabilities: CapabilitySet;
 
+  /**
+   * Creates a provider instance for a single connection attempt.
+   *
+   * @param config - Provider id, defaults, capabilities, and optional FTPS settings.
+   */
   constructor(private readonly config: ClassicFtpProviderConfig) {
     this.id = config.providerId;
     this.capabilities = config.capabilities;
   }
 
+  /**
+   * Opens an FTP-family transfer session from a provider-neutral connection profile.
+   *
+   * @param profile - Connection profile containing host, credentials, timeout, and optional TLS settings.
+   * @returns Connected transfer session with filesystem and transfer operations.
+   */
   async connect(profile: ConnectionProfile): Promise<TransferSession> {
     const resolvedProfile = await resolveConnectionProfileSecrets(profile);
     const port = resolvedProfile.port ?? this.config.defaultPort;
@@ -214,12 +256,23 @@ class FtpProvider implements TransferProvider {
   }
 }
 
+/** Transfer session backed by one FTP-family control connection. */
 class FtpTransferSession implements TransferSession {
+  /** Provider id selected for this session. */
   readonly provider: ClassicProviderId;
+  /** Capability snapshot for this connected session. */
   readonly capabilities: CapabilitySet;
+  /** Remote file-system operations backed by FTP metadata/data commands. */
   readonly fs: RemoteFileSystem;
+  /** Stream-oriented provider transfer operations. */
   readonly transfers: ProviderTransferOperations;
 
+  /**
+   * Creates session facades over an authenticated control connection.
+   *
+   * @param control - Authenticated FTP-family control connection.
+   * @param capabilities - Capability snapshot to expose through the session.
+   */
   constructor(
     private readonly control: FtpControlConnection,
     capabilities: CapabilitySet,
@@ -230,6 +283,7 @@ class FtpTransferSession implements TransferSession {
     this.transfers = new FtpTransferOperations(control);
   }
 
+  /** Disconnects the control connection, swallowing QUIT cleanup noise. */
   async disconnect(): Promise<void> {
     try {
       await this.control.sendCommand("QUIT");
@@ -347,30 +401,47 @@ class FtpFileSystem implements RemoteFileSystem {
   }
 }
 
+/** Socket-level connection settings used by the FTP-family control connection. */
 interface FtpConnectOptions {
+  /** Remote control endpoint host. */
   host: string;
+  /** Remote control endpoint port. */
   port: number;
+  /** Provider id used in errors and session metadata. */
   providerId: ClassicProviderId;
+  /** Optional FTPS negotiation settings. */
   security?: FtpConnectSecurity;
+  /** Abort signal used during initial socket setup. */
   signal?: AbortSignal;
+  /** Operation timeout applied to connection and control reads. */
   timeoutMs?: number;
 }
 
+/** Resolved FTPS settings including Node TLS connection options. */
 interface FtpConnectSecurity extends FtpsSecurityConfig {
+  /** TLS options derived from the resolved connection profile. */
   tlsOptions: TlsConnectionOptions;
 }
 
+/** Pending control-response reader waiting for the next parsed FTP reply. */
 interface ResponseWaiter {
+  /** Resolves the waiter with the next parsed response. */
   resolve(response: FtpResponse): void;
+  /** Rejects the waiter when the control connection fails. */
   reject(error: Error): void;
 }
 
+/** Context used to create timeout diagnostics for control and data operations. */
 interface FtpTimeoutContext {
+  /** Human-readable operation phase, such as `greeting` or `passive data transfer`. */
   operation: string;
+  /** FTP command associated with the wait, when one exists. */
   command?: string;
+  /** Remote path associated with the operation, when one exists. */
   path?: string;
 }
 
+/** Stateful FTP-family control connection with optional explicit TLS upgrade support. */
 class FtpControlConnection {
   private readonly parser = new FtpResponseParser();
   private readonly responses: FtpResponse[] = [];
@@ -393,6 +464,15 @@ class FtpControlConnection {
     );
   };
 
+  /**
+   * Creates a control connection around an already-open socket.
+   *
+   * @param socket - Plain TCP or TLS socket connected to the server.
+   * @param host - Host used for diagnostics and passive endpoint defaults.
+   * @param providerId - Provider id used for errors and sessions.
+   * @param timeoutMs - Optional timeout applied to control reads.
+   * @param security - Optional FTPS settings, omitted for plain FTP.
+   */
   private constructor(
     socket: Socket,
     private readonly host: string,
@@ -404,18 +484,27 @@ class FtpControlConnection {
     this.attachSocket(socket);
   }
 
+  /** Host used for EPSV passive data connections. */
   get passiveHost(): string {
     return this.host;
   }
 
+  /** Timeout inherited by command waits and passive data operations. */
   get operationTimeoutMs(): number | undefined {
     return this.timeoutMs;
   }
 
+  /** TLS options for encrypted passive data sockets when FTPS requested PROT P. */
   get dataTlsOptions(): TlsConnectionOptions | undefined {
     return this.security?.dataProtection === "private" ? this.security.tlsOptions : undefined;
   }
 
+  /**
+   * Opens a new control connection, reads the greeting, and negotiates FTPS when configured.
+   *
+   * @param options - Socket and provider connection options.
+   * @returns Connected control connection ready for authentication.
+   */
   static async connect(options: FtpConnectOptions): Promise<FtpControlConnection> {
     const socket = createControlSocket(options);
     const control = new FtpControlConnection(
@@ -454,15 +543,32 @@ class FtpControlConnection {
     }
   }
 
+  /**
+   * Writes one raw FTP command line to the control socket.
+   *
+   * @param command - Command text without CRLF.
+   */
   writeCommand(command: string): void {
     this.socket.write(`${command}\r\n`);
   }
 
+  /**
+   * Sends a command and waits for the final non-preliminary response.
+   *
+   * @param command - Command text without CRLF.
+   * @returns Final FTP response for the command.
+   */
   async sendCommand(command: string): Promise<FtpResponse> {
     this.writeCommand(command);
     return this.readFinalResponse({ command, operation: "command response" });
   }
 
+  /**
+   * Reads responses until a final response is reached.
+   *
+   * @param context - Timeout diagnostic context for the wait.
+   * @returns Final FTP response, skipping any preliminary 1xx replies.
+   */
   async readFinalResponse(
     context: FtpTimeoutContext = { operation: "response" },
   ): Promise<FtpResponse> {
@@ -475,6 +581,12 @@ class FtpControlConnection {
     return response;
   }
 
+  /**
+   * Reads the next parsed control-channel response.
+   *
+   * @param context - Timeout diagnostic context for the wait.
+   * @returns Next parsed response from the control channel.
+   */
   readResponse(context: FtpTimeoutContext = { operation: "response" }): Promise<FtpResponse> {
     const response = this.responses.shift();
 
@@ -524,6 +636,7 @@ class FtpControlConnection {
     });
   }
 
+  /** Closes the current control socket. */
   close(): void {
     if (!this.socket.destroyed) {
       this.socket.end();
@@ -531,6 +644,11 @@ class FtpControlConnection {
     }
   }
 
+  /**
+   * Upgrades an explicit-FTPS control connection from plain TCP to TLS.
+   *
+   * @param tlsOptions - Node TLS options resolved from the connection profile.
+   */
   async upgradeToTls(tlsOptions: TlsConnectionOptions): Promise<void> {
     const plainSocket = this.socket;
     this.detachSocket(plainSocket);
@@ -552,18 +670,33 @@ class FtpControlConnection {
     await waitForSocketConnect(tlsSocket, connectOptions, "secureConnect", "TLS negotiation");
   }
 
+  /**
+   * Attaches shared parser and failure handlers to the active control socket.
+   *
+   * @param socket - Socket that should feed control-channel responses.
+   */
   private attachSocket(socket: Socket): void {
     socket.on("data", this.handleSocketData);
     socket.on("error", this.handleSocketError);
     socket.on("close", this.handleSocketClose);
   }
 
+  /**
+   * Detaches shared parser and failure handlers before replacing a control socket.
+   *
+   * @param socket - Socket being removed from the control connection.
+   */
   private detachSocket(socket: Socket): void {
     socket.off("data", this.handleSocketData);
     socket.off("error", this.handleSocketError);
     socket.off("close", this.handleSocketClose);
   }
 
+  /**
+   * Parses inbound control-channel bytes into queued responses.
+   *
+   * @param chunk - Socket data chunk from the control channel.
+   */
   private handleData(chunk: Buffer | string): void {
     try {
       for (const response of this.parser.push(chunk)) {
@@ -576,6 +709,11 @@ class FtpControlConnection {
     }
   }
 
+  /**
+   * Delivers a parsed response to a waiter or queues it for the next read.
+   *
+   * @param response - Parsed FTP response.
+   */
   private enqueueResponse(response: FtpResponse): void {
     const waiter = this.waiters.shift();
 
@@ -587,6 +725,11 @@ class FtpControlConnection {
     waiter.resolve(response);
   }
 
+  /**
+   * Fails outstanding waits and records the first terminal connection error.
+   *
+   * @param error - Error that closed or invalidated the control connection.
+   */
   private failPending(error: Error): void {
     if (this.closedError !== undefined) {
       return;
@@ -600,24 +743,37 @@ class FtpControlConnection {
   }
 }
 
+/** Host and port returned by EPSV or PASV negotiation. */
 interface PassiveEndpoint {
+  /** Data socket host to connect to. */
   host: string;
+  /** Data socket port to connect to. */
   port: number;
 }
 
+/** Passive data connection opened before issuing a transfer command. */
 interface PassiveDataConnection {
+  /** Endpoint used for diagnostics and timeout errors. */
   endpoint: PassiveEndpoint;
+  /** Resolves when the data socket is connected and ready. */
   ready: Promise<void>;
+  /** Plain or TLS data socket for the transfer. */
   socket: Socket;
+  /** Closes the data socket. */
   close(): void;
 }
 
+/** Transfer options applied before opening the passive data command. */
 interface PassiveTransferOptions {
+  /** Restart offset sent via REST before the data command. */
   offset?: number;
 }
 
+/** Normalized byte range requested for a provider read operation. */
 interface ResolvedReadRange {
+  /** Starting byte offset. */
   offset: number;
+  /** Maximum number of bytes to emit, when bounded. */
   length?: number;
 }
 
@@ -786,6 +942,15 @@ async function sendRestartOffset(
   assertPathCommandSucceeded(response, "REST", path, control.providerId);
 }
 
+/**
+ * Opens a passive data socket, using TLS when FTPS data protection is private.
+ *
+ * @param endpoint - Passive endpoint advertised by EPSV or PASV.
+ * @param timeoutMs - Optional timeout for the data socket connection.
+ * @param path - Remote path associated with the transfer for diagnostics.
+ * @param control - Control connection that owns provider id and TLS settings.
+ * @returns Passive data connection wrapper with a readiness promise.
+ */
 function openPassiveDataConnection(
   endpoint: PassiveEndpoint,
   timeoutMs: number | undefined,
@@ -1064,6 +1229,13 @@ function cloneVerification(verification: TransferVerificationResult): TransferVe
   return clone;
 }
 
+/**
+ * Parses a PASV response into a concrete data endpoint.
+ *
+ * @param response - Successful PASV response from the server.
+ * @param providerId - Provider id used in protocol diagnostics.
+ * @returns Host and port for the passive data socket.
+ */
 function parsePassiveEndpoint(
   response: FtpResponse,
   providerId: ClassicProviderId,
@@ -1097,6 +1269,14 @@ function parsePassiveEndpoint(
   };
 }
 
+/**
+ * Parses an EPSV response into a data endpoint using the control host.
+ *
+ * @param response - Successful EPSV response from the server.
+ * @param host - Host from the control connection.
+ * @param providerId - Provider id used in protocol diagnostics.
+ * @returns Host and port for the passive data socket.
+ */
 function parseExtendedPassiveEndpoint(
   response: FtpResponse,
   host: string,
@@ -1140,6 +1320,12 @@ function parseExtendedPassiveEndpoint(
   return { host, port };
 }
 
+/**
+ * Checks whether an EPSV response should fall back to PASV.
+ *
+ * @param response - Final response from the EPSV command.
+ * @returns `true` when the server reports EPSV as unsupported.
+ */
 function isExtendedPassiveUnsupported(response: FtpResponse): boolean {
   return (
     response.code === 500 ||
@@ -1150,6 +1336,12 @@ function isExtendedPassiveUnsupported(response: FtpResponse): boolean {
   );
 }
 
+/**
+ * Creates the initial control socket for plain FTP, explicit FTPS, or implicit FTPS.
+ *
+ * @param options - Connection options including FTPS mode and TLS settings.
+ * @returns Connected socket instance in progress; callers wait for the appropriate ready event.
+ */
 function createControlSocket(options: FtpConnectOptions): Socket {
   if (options.security?.mode === "implicit") {
     return connectTls({
@@ -1162,6 +1354,13 @@ function createControlSocket(options: FtpConnectOptions): Socket {
   return createConnection({ host: options.host, port: options.port });
 }
 
+/**
+ * Performs explicit FTPS negotiation on a connected plain control socket.
+ *
+ * @param control - Control connection that has received a successful server greeting.
+ * @param security - Resolved FTPS mode and data-channel protection settings.
+ * @returns A promise that resolves after AUTH TLS, PBSZ, and PROT setup complete.
+ */
 async function negotiateExplicitFtps(
   control: FtpControlConnection,
   security: FtpConnectSecurity,
@@ -1182,6 +1381,12 @@ async function negotiateExplicitFtps(
   await expectCompletion(control, security.dataProtection === "private" ? "PROT P" : "PROT C", "/");
 }
 
+/**
+ * Converts a resolved connection profile into Node TLS connection options.
+ *
+ * @param profile - Connection profile with credential and TLS secrets already resolved.
+ * @returns TLS options for control and protected data sockets.
+ */
 function createTlsConnectionOptions(profile: ResolvedConnectionProfile): TlsConnectionOptions {
   const tlsProfile = profile.tls;
   const options: TlsConnectionOptions = {
@@ -1213,6 +1418,12 @@ function createTlsConnectionOptions(profile: ResolvedConnectionProfile): TlsConn
   return options;
 }
 
+/**
+ * Clones resolved TLS material into the shape expected by Node TLS APIs.
+ *
+ * @param value - Resolved single TLS value or ordered CA bundle array.
+ * @returns String, Buffer, or array accepted by `tls.connect()`.
+ */
 function normalizeTlsSecretValue(
   value: NonNullable<ResolvedTlsProfile["ca"]> | NonNullable<ResolvedTlsProfile["cert"]>,
 ): string | Buffer | Array<string | Buffer> {

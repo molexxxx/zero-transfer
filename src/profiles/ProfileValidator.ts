@@ -7,6 +7,7 @@ import { ConfigurationError } from "../errors/ZeroFTPError";
 import type { ConnectionProfile, TlsProfile } from "../types/public";
 import { resolveProviderId } from "../core/ProviderId";
 
+/** TLS protocol versions accepted by Node's `SecureVersion` option. */
 const TLS_VERSIONS = new Set(["TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"]);
 
 /**
@@ -54,6 +55,12 @@ export function validateConnectionProfile(profile: ConnectionProfile): Connectio
   return profile;
 }
 
+/**
+ * Validates TLS profile policy fields that can be checked without resolving secrets.
+ *
+ * @param profile - TLS profile to validate.
+ * @throws {@link ConfigurationError} When server name, boolean, or TLS-version fields are invalid.
+ */
 function validateTlsProfile(profile: TlsProfile): void {
   if (profile.servername !== undefined && profile.servername.trim().length === 0) {
     throw new ConfigurationError({
@@ -74,6 +81,13 @@ function validateTlsProfile(profile: TlsProfile): void {
   validateTlsVersion(profile.maxVersion, "maxVersion");
 }
 
+/**
+ * Validates a configured TLS protocol version string.
+ *
+ * @param value - TLS version value from the profile, if provided.
+ * @param field - Profile field name used in diagnostics.
+ * @throws {@link ConfigurationError} When the value is not one of Node's supported TLS versions.
+ */
 function validateTlsVersion(value: TlsProfile["minVersion"], field: string): void {
   if (value === undefined) {
     return;

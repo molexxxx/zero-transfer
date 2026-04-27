@@ -71,11 +71,19 @@ export interface RemoteStat extends RemoteEntry {
   exists: true;
 }
 
-/** TLS material source accepted by certificate-aware connection profiles. */
+/**
+ * TLS material source accepted by certificate-aware connection profiles.
+ *
+ * A single source is used for most fields; `ca` may use an array to preserve an
+ * ordered certificate authority bundle.
+ */
 export type TlsSecretSource = SecretSource | SecretSource[];
 
 /**
  * TLS settings shared by certificate-aware providers such as FTPS and future HTTPS/WebDAV adapters.
+ *
+ * Secret-bearing fields accept inline values, environment-backed values, or file-backed values,
+ * and are resolved by providers before opening TLS sockets.
  */
 export interface TlsProfile {
   /** Certificate authority bundle used to validate private or self-signed endpoints. */

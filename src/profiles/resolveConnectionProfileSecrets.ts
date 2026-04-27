@@ -23,7 +23,7 @@ export interface ResolvedTlsProfile extends Omit<
   pfx?: SecretValue;
 }
 
-/** Connection profile with username and password sources resolved. */
+/** Connection profile with username, password, and TLS material sources resolved. */
 export interface ResolvedConnectionProfile extends Omit<
   ConnectionProfile,
   "password" | "tls" | "username"
@@ -37,11 +37,11 @@ export interface ResolvedConnectionProfile extends Omit<
 }
 
 /**
- * Resolves username and password secret sources without mutating the original profile.
+ * Resolves credential and TLS material secret sources without mutating the original profile.
  *
  * @param profile - Profile containing optional secret sources.
  * @param options - Optional env and file-reader overrides.
- * @returns Profile copy with username and password resolved when present.
+ * @returns Profile copy with username, password, and TLS material resolved when present.
  */
 export async function resolveConnectionProfileSecrets(
   profile: ConnectionProfile,
@@ -65,6 +65,13 @@ export async function resolveConnectionProfileSecrets(
   return resolved;
 }
 
+/**
+ * Resolves TLS certificate, key, PFX, passphrase, and CA source descriptors.
+ *
+ * @param profile - TLS profile containing optional secret-backed material.
+ * @param options - Optional env and file-reader overrides.
+ * @returns TLS profile copy with material sources resolved.
+ */
 async function resolveTlsProfile(
   profile: TlsProfile,
   options: ResolveSecretOptions,
@@ -81,6 +88,13 @@ async function resolveTlsProfile(
   return resolved;
 }
 
+/**
+ * Resolves a TLS material source while preserving ordered CA bundle arrays.
+ *
+ * @param source - Single secret source or source array.
+ * @param options - Optional env and file-reader overrides.
+ * @returns Resolved secret value or resolved value array.
+ */
 async function resolveTlsSecretSource(
   source: TlsSecretSource,
   options: ResolveSecretOptions,
