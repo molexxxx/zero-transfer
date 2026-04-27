@@ -75,12 +75,14 @@ describe("createFtpProviderFactory", () => {
   it("exposes FTP read, write, resume, and provider-executor transfer operations", async () => {
     const client = createTransferClient({ providers: [createFtpProviderFactory()] });
     const session = await client.connect(profile);
+    const copySession = await client.connect(profile);
     const transfers = requireTransfers(session);
 
     try {
       const rangeRead = await transfers.read(
         createReadRequest("/incoming/report.csv", { length: 4, offset: 3 }),
       );
+      const rangeText = await readText(rangeRead.content);
       const verification: TransferVerificationResult = {
         actualChecksum: "sha256:source",
         checksum: "sha256:source",
@@ -90,13 +92,19 @@ describe("createFtpProviderFactory", () => {
         verified: true,
       };
       const writeResult = await transfers.write(
-        createWriteRequest("/out/upload.txt", createTextContent("hello"), {
+        createWriteRequest("/out/upload.txt", createTextContent("hello", 2), {
           totalBytes: 5,
           verification,
         }),
       );
       const executor = createProviderTransferExecutor({
-        resolveSession: ({ endpoint }) => (endpoint.provider === "ftp" ? session : undefined),
+        resolveSession: ({ endpoint, role }) => {
+          if (endpoint.provider !== "ftp") {
+            return undefined;
+          }
+
+          return role === "source" ? session : copySession;
+        },
       });
       const receipt = await new TransferEngine().execute(
         {
@@ -115,7 +123,7 @@ describe("createFtpProviderFactory", () => {
       );
 
       expect(rangeRead).toMatchObject({ bytesRead: 3, totalBytes: 4 });
-      await expect(readText(rangeRead.content)).resolves.toBe("name");
+      expect(rangeText).toBe("name");
       expect(writeResult).toMatchObject({
         bytesTransferred: 5,
         resumed: false,
@@ -145,6 +153,7 @@ describe("createFtpProviderFactory", () => {
       ]);
     } finally {
       await session.disconnect();
+      await copySession.disconnect();
     }
   });
 
@@ -548,9 +557,16 @@ function createWriteRequest(
   return request;
 }
 
-async function* createTextContent(text: string): AsyncGenerator<Uint8Array> {
+async function* createTextContent(
+  text: string,
+  chunkSize = text.length,
+): AsyncGenerator<Uint8Array> {
   await Promise.resolve();
-  yield Buffer.from(text, "utf8");
+  const content = Buffer.from(text, "utf8");
+
+  for (let offset = 0; offset < content.byteLength; offset += chunkSize) {
+    yield content.subarray(offset, offset + chunkSize);
+  }
 }
 
 async function readText(content: TransferDataSource): Promise<string> {

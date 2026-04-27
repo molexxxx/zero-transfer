@@ -58,7 +58,9 @@ const FTP_PROVIDER_CAPABILITIES: CapabilitySet = {
   symlink: true,
   metadata: ["modifiedAt", "permissions", "uniqueId"],
   maxConcurrency: 1,
-  notes: ["Classic FTP provider foundation with MLST/MLSD metadata support"],
+  notes: [
+    "Classic FTP provider foundation with MLST/MLSD metadata and RETR/STOR streaming support",
+  ],
 };
 
 /** Options used to create the classic FTP provider factory. */
@@ -155,19 +157,29 @@ class FtpTransferOperations implements ProviderTransferOperations {
     const range = resolveReadRange(request.range);
 
     await expectCompletion(this.control, "TYPE I", remotePath);
-    const payload = await readPassiveDataCommand(this.control, `RETR ${remotePath}`, remotePath, {
-      offset: range.offset,
-    });
+    const dataConnection = await openPassiveDataCommand(
+      this.control,
+      `RETR ${remotePath}`,
+      remotePath,
+      {
+        offset: range.offset,
+      },
+    );
     request.throwIfAborted();
-
-    const content =
-      range.length === undefined
-        ? payload
-        : payload.subarray(0, Math.min(payload.byteLength, range.length));
     const result: ProviderTransferReadResult = {
-      content: createBufferContentSource(content),
-      totalBytes: content.byteLength,
+      content: createPassiveReadSource(
+        this.control,
+        dataConnection,
+        `RETR ${remotePath}`,
+        remotePath,
+        range,
+        request,
+      ),
     };
+
+    if (range.length !== undefined) {
+      result.totalBytes = range.length;
+    }
 
     if (range.offset > 0) {
       result.bytesRead = range.offset;
@@ -179,22 +191,21 @@ class FtpTransferOperations implements ProviderTransferOperations {
   async write(request: ProviderTransferWriteRequest): Promise<ProviderTransferWriteResult> {
     request.throwIfAborted();
     const remotePath = normalizeFtpPath(request.endpoint.path);
-    const content = await collectTransferContent(request);
     const offset = normalizeOptionalByteCount(request.offset, "offset", remotePath);
 
     await expectCompletion(this.control, "TYPE I", remotePath);
-    await writePassiveDataCommand(
+    const bytesTransferred = await writePassiveDataCommand(
       this.control,
       `STOR ${remotePath}`,
       remotePath,
-      content,
+      request,
       offset === undefined ? {} : { offset },
     );
 
     const result: ProviderTransferWriteResult = {
-      bytesTransferred: content.byteLength,
+      bytesTransferred,
       resumed: offset !== undefined && offset > 0,
-      totalBytes: request.totalBytes ?? (offset ?? 0) + content.byteLength,
+      totalBytes: request.totalBytes ?? (offset ?? 0) + bytesTransferred,
       verified: request.verification?.verified ?? false,
     };
 
@@ -376,8 +387,7 @@ interface PassiveEndpoint {
 
 interface PassiveDataConnection {
   ready: Promise<void>;
-  data: Promise<Buffer>;
-  write(payload: Uint8Array): Promise<void>;
+  socket: Socket;
   close(): void;
 }
 
@@ -405,6 +415,25 @@ async function readPassiveDataCommand(
   path: string,
   options: PassiveTransferOptions = {},
 ): Promise<Buffer> {
+  const dataConnection = await openPassiveDataCommand(control, command, path, options);
+
+  try {
+    const payload = await collectPassiveData(dataConnection);
+    const finalResponse = await control.readFinalResponse();
+    assertPathCommandSucceeded(finalResponse, command, path);
+    return payload;
+  } catch (error) {
+    dataConnection.close();
+    throw error;
+  }
+}
+
+async function openPassiveDataCommand(
+  control: FtpControlConnection,
+  command: string,
+  path: string,
+  options: PassiveTransferOptions = {},
+): Promise<PassiveDataConnection> {
   const offset = normalizeOptionalByteCount(options.offset, "offset", path);
 
   if (offset !== undefined && offset > 0) {
@@ -430,10 +459,7 @@ async function readPassiveDataCommand(
       );
     }
 
-    const payload = await dataConnection.data;
-    const finalResponse = await control.readFinalResponse();
-    assertPathCommandSucceeded(finalResponse, command, path);
-    return payload;
+    return dataConnection;
   } catch (error) {
     dataConnection.close();
     throw error;
@@ -444,37 +470,25 @@ async function writePassiveDataCommand(
   control: FtpControlConnection,
   command: string,
   path: string,
-  content: Uint8Array,
+  request: ProviderTransferWriteRequest,
   options: PassiveTransferOptions = {},
-): Promise<void> {
-  const offset = normalizeOptionalByteCount(options.offset, "offset", path);
-
-  if (offset !== undefined && offset > 0) {
-    await sendRestartOffset(control, offset, path);
-  }
-
-  const passiveResponse = await control.sendCommand("PASV");
-  assertPathCommandSucceeded(passiveResponse, "PASV", path);
-  const dataConnection = openPassiveDataConnection(parsePassiveEndpoint(passiveResponse));
+): Promise<number> {
+  const dataConnection = await openPassiveDataCommand(control, command, path, options);
+  let bytesTransferred = 0;
 
   try {
-    await dataConnection.ready;
-    control.writeCommand(command);
-    const initialResponse = await control.readResponse();
-
-    if (!initialResponse.preliminary) {
-      dataConnection.close();
-      assertPathCommandSucceeded(initialResponse, command, path);
-      throw createProtocolError(
-        command,
-        "FTP data command did not open a data transfer",
-        initialResponse,
-      );
+    for await (const chunk of request.content) {
+      request.throwIfAborted();
+      const output = new Uint8Array(chunk);
+      await writeSocketChunk(dataConnection.socket, output);
+      bytesTransferred += output.byteLength;
+      request.reportProgress(bytesTransferred, request.totalBytes);
     }
 
-    await dataConnection.write(content);
+    await endSocket(dataConnection.socket);
     const finalResponse = await control.readFinalResponse();
     assertPathCommandSucceeded(finalResponse, command, path);
+    return bytesTransferred;
   } catch (error) {
     dataConnection.close();
     throw error;
@@ -497,31 +511,119 @@ async function sendRestartOffset(
 
 function openPassiveDataConnection(endpoint: PassiveEndpoint): PassiveDataConnection {
   const socket = createConnection({ host: endpoint.host, port: endpoint.port });
-  const chunks: Buffer[] = [];
   const ready = new Promise<void>((resolve, reject) => {
     socket.once("connect", resolve);
-    socket.once("error", reject);
-  });
-  const data = new Promise<Buffer>((resolve, reject) => {
-    socket.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
-    socket.once("end", () => resolve(Buffer.concat(chunks)));
     socket.once("error", reject);
   });
 
   return {
     ready,
-    data,
-    write(payload: Uint8Array) {
-      return new Promise<void>((resolve, reject) => {
-        socket.once("error", reject);
-        socket.end(payload, resolve);
-      });
-    },
+    socket,
     close() {
-      void data.catch(() => undefined);
       socket.destroy();
     },
   };
+}
+
+async function collectPassiveData(dataConnection: PassiveDataConnection): Promise<Buffer> {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of dataConnection.socket as AsyncIterable<Buffer>) {
+    chunks.push(Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks);
+}
+
+async function* createPassiveReadSource(
+  control: FtpControlConnection,
+  dataConnection: PassiveDataConnection,
+  command: string,
+  path: string,
+  range: ResolvedReadRange,
+  request: ProviderTransferReadRequest,
+): AsyncGenerator<Uint8Array> {
+  let bytesEmitted = 0;
+  let completed = false;
+  const closeOnAbort = () => dataConnection.close();
+
+  request.signal?.addEventListener("abort", closeOnAbort, { once: true });
+
+  try {
+    for await (const chunk of dataConnection.socket as AsyncIterable<Buffer>) {
+      request.throwIfAborted();
+      const buffer = Buffer.from(chunk);
+
+      if (range.length === undefined) {
+        bytesEmitted += buffer.byteLength;
+        yield new Uint8Array(buffer);
+        continue;
+      }
+
+      const remaining = range.length - bytesEmitted;
+
+      if (remaining <= 0) {
+        continue;
+      }
+
+      const output = buffer.subarray(0, Math.min(remaining, buffer.byteLength));
+      bytesEmitted += output.byteLength;
+
+      if (output.byteLength > 0) {
+        yield new Uint8Array(output);
+      }
+    }
+
+    const finalResponse = await control.readFinalResponse();
+    assertPathCommandSucceeded(finalResponse, command, path);
+    completed = true;
+  } finally {
+    request.signal?.removeEventListener("abort", closeOnAbort);
+
+    if (!completed) {
+      dataConnection.close();
+    }
+  }
+}
+
+function writeSocketChunk(socket: Socket, chunk: Uint8Array): Promise<void> {
+  if (chunk.byteLength === 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const handleError = (error: Error) => {
+      socket.off("error", handleError);
+      reject(error);
+    };
+
+    socket.once("error", handleError);
+    socket.write(chunk, (error?: Error | null) => {
+      socket.off("error", handleError);
+
+      if (error != null) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
+function endSocket(socket: Socket): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const handleError = (error: Error) => {
+      socket.off("error", handleError);
+      reject(error);
+    };
+
+    socket.once("error", handleError);
+    socket.end(() => {
+      socket.off("error", handleError);
+      resolve();
+    });
+  });
 }
 
 function resolveReadRange(range: ProviderTransferReadRequest["range"]): ResolvedReadRange {
@@ -538,38 +640,6 @@ function resolveReadRange(range: ProviderTransferReadRequest["range"]): Resolved
   }
 
   return resolved;
-}
-
-async function collectTransferContent(request: ProviderTransferWriteRequest): Promise<Uint8Array> {
-  const chunks: Uint8Array[] = [];
-  let byteLength = 0;
-
-  for await (const chunk of request.content) {
-    request.throwIfAborted();
-    const clonedChunk = new Uint8Array(chunk);
-    chunks.push(clonedChunk);
-    byteLength += clonedChunk.byteLength;
-    request.reportProgress(byteLength, request.totalBytes);
-  }
-
-  return concatChunks(chunks, byteLength);
-}
-
-function concatChunks(chunks: Uint8Array[], byteLength: number): Uint8Array {
-  const content = new Uint8Array(byteLength);
-  let offset = 0;
-
-  for (const chunk of chunks) {
-    content.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  return content;
-}
-
-async function* createBufferContentSource(content: Uint8Array): AsyncGenerator<Uint8Array> {
-  await Promise.resolve();
-  yield new Uint8Array(content);
 }
 
 function normalizeOptionalByteCount(

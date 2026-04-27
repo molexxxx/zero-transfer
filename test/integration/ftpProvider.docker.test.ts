@@ -39,12 +39,13 @@ describeDockerFtp("FTP provider Docker integration", () => {
   it("runs FTP metadata and transfer operations against pure-ftpd", async () => {
     const client = createTransferClient({ providers: [createFtpProviderFactory()] });
     const session = await client.connect(createDockerFtpProfile());
+    const copySession = await client.connect(createDockerFtpProfile());
     const transfers = requireTransfers(session);
     const content = "docker ftp integration\n";
 
     try {
       await transfers.write(
-        createWriteRequest("/report.txt", createTextContent(content), {
+        createWriteRequest("/report.txt", createTextContent(content, 5), {
           totalBytes: Buffer.byteLength(content),
         }),
       );
@@ -52,11 +53,19 @@ describeDockerFtp("FTP provider Docker integration", () => {
       const stat = await session.fs.stat("/report.txt");
       const entries = await session.fs.list("/");
       const readResult = await transfers.read(createReadRequest("/report.txt"));
+      const readTextResult = await readText(readResult.content);
       const rangedReadResult = await transfers.read(
         createReadRequest("/report.txt", { length: 3, offset: 7 }),
       );
+      const rangeTextResult = await readText(rangedReadResult.content);
       const executor = createProviderTransferExecutor({
-        resolveSession: ({ endpoint }) => (endpoint.provider === "ftp" ? session : undefined),
+        resolveSession: ({ endpoint, role }) => {
+          if (endpoint.provider !== "ftp") {
+            return undefined;
+          }
+
+          return role === "source" ? session : copySession;
+        },
       });
       const receipt = await new TransferEngine().execute(
         {
@@ -68,6 +77,7 @@ describeDockerFtp("FTP provider Docker integration", () => {
         executor,
       );
       const copiedReadResult = await transfers.read(createReadRequest("/copy.txt"));
+      const copiedTextResult = await readText(copiedReadResult.content);
 
       expect(stat).toMatchObject({
         path: "/report.txt",
@@ -75,16 +85,17 @@ describeDockerFtp("FTP provider Docker integration", () => {
         type: "file",
       });
       expect(entries.map((entry) => entry.path)).toContain("/report.txt");
-      await expect(readText(readResult.content)).resolves.toBe(content);
-      await expect(readText(rangedReadResult.content)).resolves.toBe(content.slice(7, 10));
+      expect(readTextResult).toBe(content);
+      expect(rangeTextResult).toBe(content.slice(7, 10));
       expect(receipt).toMatchObject({
         bytesTransferred: Buffer.byteLength(content),
         destination: { path: "/copy.txt", provider: "ftp" },
         source: { path: "/report.txt", provider: "ftp" },
       });
-      await expect(readText(copiedReadResult.content)).resolves.toBe(content);
+      expect(copiedTextResult).toBe(content);
     } finally {
       await session.disconnect();
+      await copySession.disconnect();
     }
   }, 60_000);
 });
@@ -192,9 +203,16 @@ function createWriteRequest(
   return request;
 }
 
-async function* createTextContent(text: string): AsyncGenerator<Uint8Array> {
+async function* createTextContent(
+  text: string,
+  chunkSize = text.length,
+): AsyncGenerator<Uint8Array> {
   await Promise.resolve();
-  yield Buffer.from(text, "utf8");
+  const content = Buffer.from(text, "utf8");
+
+  for (let offset = 0; offset < content.byteLength; offset += chunkSize) {
+    yield content.subarray(offset, offset + chunkSize);
+  }
 }
 
 async function readText(content: TransferDataSource): Promise<string> {
