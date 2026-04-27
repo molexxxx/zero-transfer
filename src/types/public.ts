@@ -104,6 +104,8 @@ export interface TlsProfile {
   minVersion?: SecureVersion;
   /** Maximum TLS protocol version accepted by the client. */
   maxVersion?: SecureVersion;
+  /** Expected server certificate SHA-256 fingerprint or fingerprints, using hex with optional colons. */
+  pinnedFingerprint256?: string | readonly string[];
   /** Optional custom server identity checker for private PKI or certificate pinning. */
   checkServerIdentity?: (host: string, cert: PeerCertificate) => Error | undefined;
 }

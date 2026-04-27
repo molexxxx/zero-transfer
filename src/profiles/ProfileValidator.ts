@@ -9,6 +9,8 @@ import { resolveProviderId } from "../core/ProviderId";
 
 /** TLS protocol versions accepted by Node's `SecureVersion` option. */
 const TLS_VERSIONS = new Set(["TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"]);
+/** Hex characters in a SHA-256 certificate fingerprint after separators are removed. */
+const SHA256_FINGERPRINT_HEX_LENGTH = 64;
 
 /**
  * Validates provider-neutral connection profile fields before provider lookup.
@@ -79,6 +81,57 @@ function validateTlsProfile(profile: TlsProfile): void {
 
   validateTlsVersion(profile.minVersion, "minVersion");
   validateTlsVersion(profile.maxVersion, "maxVersion");
+  validatePinnedFingerprint256(profile.pinnedFingerprint256);
+}
+
+/**
+ * Validates SHA-256 certificate fingerprint pinning values.
+ *
+ * @param value - Single fingerprint or allowed fingerprint set from the TLS profile.
+ * @throws {@link ConfigurationError} When a fingerprint is empty or not SHA-256 hex.
+ */
+function validatePinnedFingerprint256(value: TlsProfile["pinnedFingerprint256"]): void {
+  if (value === undefined) {
+    return;
+  }
+
+  const fingerprints = Array.isArray(value) ? value : [value];
+
+  if (fingerprints.length === 0) {
+    throw createPinnedFingerprintError(value);
+  }
+
+  for (const fingerprint of fingerprints) {
+    if (typeof fingerprint !== "string" || !isSha256Fingerprint(fingerprint)) {
+      throw createPinnedFingerprintError(value);
+    }
+  }
+}
+
+/**
+ * Checks whether a string is a supported SHA-256 certificate fingerprint.
+ *
+ * @param value - Candidate fingerprint string.
+ * @returns `true` when the value is 64 hex characters after optional colons are removed.
+ */
+function isSha256Fingerprint(value: string): boolean {
+  const normalized = value.trim().replace(/:/g, "");
+  return normalized.length === SHA256_FINGERPRINT_HEX_LENGTH && /^[a-f0-9]+$/i.test(normalized);
+}
+
+/**
+ * Creates a consistent validation error for invalid certificate pin values.
+ *
+ * @param value - Invalid profile value included in diagnostics.
+ * @returns Configuration error describing the supported fingerprint format.
+ */
+function createPinnedFingerprintError(value: unknown): ConfigurationError {
+  return new ConfigurationError({
+    details: { pinnedFingerprint256: value },
+    message:
+      "Connection profile tls.pinnedFingerprint256 must be a SHA-256 hex fingerprint or non-empty array of fingerprints",
+    retryable: false,
+  });
 }
 
 /**

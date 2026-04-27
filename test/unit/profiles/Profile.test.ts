@@ -10,6 +10,9 @@ import {
   type ConnectionProfile,
 } from "../../../src/index";
 
+const validFingerprint256 =
+  "11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11";
+
 describe("profile validation", () => {
   it("accepts provider-neutral and compatibility profiles", () => {
     const providerProfile: ConnectionProfile = { host: "memory.local", provider: "memory" };
@@ -60,6 +63,30 @@ describe("profile validation", () => {
         tls: { rejectUnauthorized: "yes" as never },
       }),
     ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        tls: { pinnedFingerprint256: "not-a-sha256-fingerprint" },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        tls: { pinnedFingerprint256: [] },
+      }),
+    ).toThrow(ConfigurationError);
+  });
+
+  it("accepts SHA-256 certificate pinning profile fields", () => {
+    const profile: ConnectionProfile = {
+      host: "ftps.example.test",
+      provider: "ftps",
+      tls: { pinnedFingerprint256: [validFingerprint256] },
+    };
+
+    expect(validateConnectionProfile(profile)).toBe(profile);
   });
 });
 
@@ -181,6 +208,7 @@ describe("connection profile secrets", () => {
           checkServerIdentity: () => undefined,
           key: { path: "client.key" },
           passphrase: { env: "ZT_KEY_PASS" },
+          pinnedFingerprint256: validFingerprint256,
           rejectUnauthorized: true,
           servername: "files.example.test",
         },
@@ -198,6 +226,7 @@ describe("connection profile secrets", () => {
         checkServerIdentity: "[REDACTED]",
         key: { encoding: undefined, path: "[REDACTED]" },
         passphrase: { env: "[REDACTED]" },
+        pinnedFingerprint256: validFingerprint256,
         rejectUnauthorized: true,
         servername: "files.example.test",
       },

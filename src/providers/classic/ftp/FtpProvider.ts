@@ -1,11 +1,15 @@
 /**
  * Classic FTP and FTPS providers backed by MLST/MLSD metadata commands.
- *
  * @module providers/classic/ftp/FtpProvider
  */
 import { Buffer } from "node:buffer";
 import { createConnection, isIP, type Socket } from "node:net";
-import { connect as connectTls, type ConnectionOptions as TlsConnectionOptions } from "node:tls";
+import {
+  connect as connectTls,
+  type ConnectionOptions as TlsConnectionOptions,
+  type PeerCertificate,
+  type TLSSocket,
+} from "node:tls";
 import type { CapabilitySet } from "../../../core/CapabilitySet";
 import type { ClassicProviderId } from "../../../core/ProviderId";
 import type { TransferSession } from "../../../core/TransferSession";
@@ -221,8 +225,11 @@ class FtpProvider implements TransferProvider {
     };
 
     if (this.config.security !== undefined) {
+      const pinnedFingerprint256 = createTlsPinnedFingerprints(resolvedProfile);
+
       connectOptions.security = {
         ...this.config.security,
+        ...(pinnedFingerprint256 === undefined ? {} : { pinnedFingerprint256 }),
         tlsOptions: createTlsConnectionOptions(resolvedProfile),
       };
     }
@@ -421,6 +428,8 @@ interface FtpConnectOptions {
 interface FtpConnectSecurity extends FtpsSecurityConfig {
   /** TLS options derived from the resolved connection profile. */
   tlsOptions: TlsConnectionOptions;
+  /** Normalized SHA-256 certificate fingerprints accepted for server pinning. */
+  pinnedFingerprint256?: readonly string[];
 }
 
 /** Pending control-response reader waiting for the next parsed FTP reply. */
@@ -494,9 +503,9 @@ class FtpControlConnection {
     return this.timeoutMs;
   }
 
-  /** TLS options for encrypted passive data sockets when FTPS requested PROT P. */
-  get dataTlsOptions(): TlsConnectionOptions | undefined {
-    return this.security?.dataProtection === "private" ? this.security.tlsOptions : undefined;
+  /** FTPS security settings for encrypted passive data sockets. */
+  get dataTlsSecurity(): FtpConnectSecurity | undefined {
+    return this.security?.dataProtection === "private" ? this.security : undefined;
   }
 
   /**
@@ -521,6 +530,11 @@ class FtpControlConnection {
         options,
         options.security?.mode === "implicit" ? "secureConnect" : "connect",
       );
+
+      if (options.security?.mode === "implicit") {
+        assertPinnedTlsCertificate(socket, options.security, options.host, options.providerId);
+      }
+
       const greeting = await control.readFinalResponse({ operation: "greeting" });
 
       if (!greeting.completion) {
@@ -649,12 +663,12 @@ class FtpControlConnection {
   /**
    * Upgrades an explicit-FTPS control connection from plain TCP to TLS.
    *
-   * @param tlsOptions - Node TLS options resolved from the connection profile.
+   * @param security - Resolved FTPS security settings and TLS options.
    */
-  async upgradeToTls(tlsOptions: TlsConnectionOptions): Promise<void> {
+  async upgradeToTls(security: FtpConnectSecurity): Promise<void> {
     const plainSocket = this.socket;
     this.detachSocket(plainSocket);
-    const tlsSocket = connectTls({ ...tlsOptions, socket: plainSocket });
+    const tlsSocket = connectTls({ ...security.tlsOptions, socket: plainSocket });
 
     this.socket = tlsSocket;
     this.attachSocket(tlsSocket);
@@ -670,6 +684,7 @@ class FtpControlConnection {
     }
 
     await waitForSocketConnect(tlsSocket, connectOptions, "secureConnect", "TLS negotiation");
+    assertPinnedTlsCertificate(tlsSocket, security, this.host, this.providerId);
   }
 
   /**
@@ -959,16 +974,16 @@ function openPassiveDataConnection(
   path: string,
   control: FtpControlConnection,
 ): PassiveDataConnection {
-  const tlsOptions = control.dataTlsOptions;
+  const dataSecurity = control.dataTlsSecurity;
   const socket =
-    tlsOptions === undefined
+    dataSecurity === undefined
       ? createConnection({ host: endpoint.host, port: endpoint.port })
-      : connectTls({ ...tlsOptions, host: endpoint.host, port: endpoint.port });
+      : connectTls({ ...dataSecurity.tlsOptions, host: endpoint.host, port: endpoint.port });
   socket.on("error", () => undefined);
   const ready = new Promise<void>((resolve, reject) => {
     let settled = false;
     let timeout: NodeJS.Timeout | undefined;
-    const readyEvent = tlsOptions === undefined ? "connect" : "secureConnect";
+    const readyEvent = dataSecurity === undefined ? "connect" : "secureConnect";
 
     const cleanup = () => {
       socket.off(readyEvent, handleConnect);
@@ -993,9 +1008,21 @@ function openPassiveDataConnection(
         return;
       }
 
-      settled = true;
-      cleanup();
-      resolve();
+      try {
+        if (dataSecurity !== undefined) {
+          assertPinnedTlsCertificate(socket, dataSecurity, endpoint.host, control.providerId);
+        }
+
+        settled = true;
+        cleanup();
+        resolve();
+      } catch (error) {
+        rejectOnce(
+          error instanceof Error
+            ? error
+            : createConnectionError(endpoint.host, error, control.providerId),
+        );
+      }
     };
     const handleError = (error: Error) => {
       rejectOnce(
@@ -1378,7 +1405,7 @@ async function negotiateExplicitFtps(
     );
   }
 
-  await control.upgradeToTls(security.tlsOptions);
+  await control.upgradeToTls(security);
   await configureFtpsProtection(control, security);
 }
 
@@ -1432,6 +1459,122 @@ function createTlsConnectionOptions(profile: ResolvedConnectionProfile): TlsConn
   }
 
   return options;
+}
+
+/**
+ * Normalizes SHA-256 certificate pinning values from a resolved profile.
+ *
+ * @param profile - Connection profile with TLS policy fields already resolved.
+ * @returns Normalized lowercase fingerprint pins, or `undefined` when no pins are configured.
+ */
+function createTlsPinnedFingerprints(
+  profile: ResolvedConnectionProfile,
+): readonly string[] | undefined {
+  const pinnedFingerprint256 = profile.tls?.pinnedFingerprint256;
+
+  if (pinnedFingerprint256 === undefined) {
+    return undefined;
+  }
+
+  const fingerprints = Array.isArray(pinnedFingerprint256)
+    ? pinnedFingerprint256
+    : [pinnedFingerprint256];
+
+  if (fingerprints.length === 0) {
+    throw new ConfigurationError({
+      details: { pinnedFingerprint256 },
+      message: "FTPS tls.pinnedFingerprint256 must include at least one SHA-256 fingerprint",
+      protocol: FTPS_PROVIDER_ID,
+      retryable: false,
+    });
+  }
+
+  return fingerprints.map(normalizePinnedFingerprint256);
+}
+
+/**
+ * Normalizes one SHA-256 certificate fingerprint pin.
+ *
+ * @param fingerprint - Fingerprint string using hex with optional colon separators.
+ * @returns Lowercase hex fingerprint without separators.
+ * @throws {@link ConfigurationError} When the fingerprint is not valid SHA-256 hex.
+ */
+function normalizePinnedFingerprint256(fingerprint: string): string {
+  const normalized = fingerprint.trim().replace(/:/g, "").toLowerCase();
+
+  if (!/^[a-f0-9]{64}$/.test(normalized)) {
+    throw new ConfigurationError({
+      details: { pinnedFingerprint256: fingerprint },
+      message: "FTPS tls.pinnedFingerprint256 must be a SHA-256 hex fingerprint",
+      protocol: FTPS_PROVIDER_ID,
+      retryable: false,
+    });
+  }
+
+  return normalized;
+}
+
+/**
+ * Verifies a TLS peer certificate against configured SHA-256 pins.
+ *
+ * @param socket - TLS socket with a completed handshake.
+ * @param security - FTPS security settings containing normalized certificate pins.
+ * @param host - Host used for connection diagnostics.
+ * @param providerId - Provider id used for typed connection errors.
+ * @throws {@link ConnectionError} When the server certificate fingerprint is not pinned.
+ */
+function assertPinnedTlsCertificate(
+  socket: Socket,
+  security: FtpConnectSecurity,
+  host: string,
+  providerId: ClassicProviderId,
+): void {
+  const pinnedFingerprint256 = security.pinnedFingerprint256;
+
+  if (pinnedFingerprint256 === undefined) {
+    return;
+  }
+
+  if (!isTlsSocket(socket)) {
+    throw createConnectionError(
+      host,
+      new Error("FTPS certificate pinning requires a TLS socket"),
+      providerId,
+    );
+  }
+
+  const certificate = socket.getPeerCertificate();
+  const actualFingerprint = normalizeCertificateFingerprint256(certificate);
+
+  if (pinnedFingerprint256.includes(actualFingerprint)) {
+    return;
+  }
+
+  throw createConnectionError(
+    host,
+    new Error("FTPS server certificate SHA-256 fingerprint did not match tls.pinnedFingerprint256"),
+    providerId,
+  );
+}
+
+/**
+ * Checks whether a socket exposes TLS peer-certificate inspection.
+ *
+ * @param socket - Socket created for a control or data connection.
+ * @returns `true` when the socket is a TLS socket.
+ */
+function isTlsSocket(socket: Socket): socket is TLSSocket {
+  return typeof (socket as Partial<TLSSocket>).getPeerCertificate === "function";
+}
+
+/**
+ * Normalizes the SHA-256 fingerprint reported by a TLS peer certificate.
+ *
+ * @param certificate - Peer certificate returned by Node's TLS socket APIs.
+ * @returns Lowercase SHA-256 hex fingerprint without separators.
+ */
+function normalizeCertificateFingerprint256(certificate: PeerCertificate): string {
+  return certificate.fingerprint256.replace(/:/g, "").toLowerCase();
 }
 
 /**

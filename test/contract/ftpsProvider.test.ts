@@ -1,7 +1,9 @@
+import { X509Certificate } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  ConnectionError,
   ProtocolError,
   createFtpsProviderFactory,
   createTransferClient,
@@ -12,6 +14,11 @@ import { describeProviderContract } from "./providerContract";
 
 const certificatePath = path.join(process.cwd(), "test/fixtures/ftp/localhost-cert.pem");
 const privateKeyPath = path.join(process.cwd(), "test/fixtures/ftp/localhost-key.pem");
+const certificatePem = readFileSync(certificatePath);
+const privateKeyPem = readFileSync(privateKeyPath);
+const certificateFingerprint256 = new X509Certificate(certificatePem).fingerprint256;
+const mismatchedFingerprint256 =
+  "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00";
 const reportFact =
   "type=file;size=14;modify=20260427010203;perm=adfr;unique=file:report; report.csv";
 
@@ -150,6 +157,39 @@ describe("createFtpsProviderFactory", () => {
     );
   });
 
+  it("accepts pinned SHA-256 fingerprints for FTPS control and protected data sockets", async () => {
+    const client = createTransferClient({ providers: [createFtpsProviderFactory()] });
+    const session = await client.connect({
+      ...profile,
+      tls: {
+        ...profile.tls,
+        pinnedFingerprint256: certificateFingerprint256,
+      },
+    });
+
+    try {
+      await expect(session.fs.list("/incoming")).resolves.toHaveLength(1);
+    } finally {
+      await session.disconnect();
+    }
+
+    expect(server.commands).toEqual(expect.arrayContaining(["PROT P", "MLSD /incoming"]));
+  });
+
+  it("rejects FTPS sessions when pinned SHA-256 fingerprints do not match", async () => {
+    const client = createTransferClient({ providers: [createFtpsProviderFactory()] });
+
+    await expect(
+      client.connect({
+        ...profile,
+        tls: {
+          ...profile.tls,
+          pinnedFingerprint256: mismatchedFingerprint256,
+        },
+      }),
+    ).rejects.toBeInstanceOf(ConnectionError);
+  });
+
   it("raises typed protocol errors when AUTH TLS is rejected", async () => {
     await server.stop();
     server = new FakeFtpServer({
@@ -203,8 +243,8 @@ function createContractFtpsServer(options: { implicitTls?: boolean } = {}): Fake
       return "502 Unexpected command\r\n";
     },
     tls: {
-      cert: readFileSync(certificatePath),
-      key: readFileSync(privateKeyPath),
+      cert: certificatePem,
+      key: privateKeyPem,
     },
   });
 }
