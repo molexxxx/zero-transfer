@@ -8,6 +8,7 @@
  */
 import type { ZeroFTPLogger } from "../logging/Logger";
 import type { ClassicProviderId, ProviderId } from "../core/ProviderId";
+import type { SecretSource } from "../profiles/SecretSource";
 
 /** Supported remote file-transfer protocols. */
 export type RemoteProtocol = ClassicProviderId;
@@ -81,10 +82,10 @@ export interface ConnectionProfile {
   host: string;
   /** Remote port; adapters should apply protocol defaults when omitted. */
   port?: number;
-  /** Username or account identifier for authentication. */
-  username?: string;
-  /** Password for password-based authentication. */
-  password?: string;
+  /** Username, account identifier, or deferred secret source for authentication. */
+  username?: SecretSource;
+  /** Password or deferred secret source for password-based authentication. */
+  password?: SecretSource;
   /** Whether encrypted transport should be requested for protocols that support it. */
   secure?: boolean;
   /** Operation or connection timeout in milliseconds. */

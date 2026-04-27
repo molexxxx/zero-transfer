@@ -5,6 +5,7 @@
  */
 import { ConfigurationError } from "../errors/ZeroFTPError";
 import { emitLog, noopLogger, type LogRecordInput, type ZeroFTPLogger } from "../logging/Logger";
+import { validateConnectionProfile } from "../profiles/ProfileValidator";
 import type { ProviderFactory } from "../providers/ProviderFactory";
 import type { ConnectionProfile } from "../types/public";
 import type { CapabilitySet } from "./CapabilitySet";
@@ -85,7 +86,8 @@ export class TransferClient {
    * @throws {@link ConfigurationError} When neither provider nor protocol is present.
    */
   async connect(profile: ConnectionProfile): Promise<TransferSession> {
-    const providerId = resolveProviderId(profile);
+    const validProfile = validateConnectionProfile(profile);
+    const providerId = resolveProviderId(validProfile);
 
     if (providerId === undefined) {
       throw new ConfigurationError({
@@ -97,7 +99,7 @@ export class TransferClient {
     const providerFactory = this.registry.require(providerId);
     const provider = providerFactory.create();
     const normalizedProfile: ConnectionProfile = {
-      ...profile,
+      ...validProfile,
       provider: providerId,
     };
 

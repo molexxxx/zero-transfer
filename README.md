@@ -22,7 +22,7 @@ The current foundation includes:
 - Vitest coverage gates at 90% across statements, branches, functions, and lines.
 - ESLint, Prettier, typecheck, build, package dry-run, and CI scripts.
 - Typed error classes, safe remote argument validation, structured logging redaction helpers, and FTP parser tests.
-- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, and a deterministic memory provider for contract tests.
+- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers, and profile secret utilities.
 - Verbose JSDoc across the public TypeScript API for future generated documentation.
 - Initial GitHub Actions scaffolding for CI, CodeQL, and npmjs release provenance.
 
@@ -41,7 +41,7 @@ const client = await ZeroTransfer.connect({
   provider: "ftps",
   host: "ftp.example.com",
   username: "deploy",
-  password: process.env.FTP_PASSWORD,
+  password: { env: "FTP_PASSWORD" },
   secure: true,
 });
 
@@ -83,6 +83,40 @@ await session.disconnect();
 ```
 
 The memory provider is intentionally narrow: it supports connection lifecycle, capability discovery, `fs.list()`, `fs.stat()`, and typed missing-path errors over in-memory fixture state.
+
+The local provider exposes a configured local root as `/` for local-only tests and early provider contract coverage:
+
+```ts
+import { createLocalProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+
+const client = createTransferClient({
+  providers: [createLocalProviderFactory({ rootPath: process.cwd() })],
+});
+
+const session = await client.connect({ provider: "local", host: "local" });
+const files = await session.fs.list("/");
+await session.disconnect();
+```
+
+Profile helpers are also available for validating connection profiles, resolving deferred secret sources, and redacting diagnostics:
+
+```ts
+import {
+  redactConnectionProfile,
+  resolveConnectionProfileSecrets,
+  validateConnectionProfile,
+} from "@zero-transfer/sdk";
+
+const profile = validateConnectionProfile({
+  provider: "sftp",
+  host: "files.example.com",
+  username: { env: "ZT_USER" },
+  password: { env: "ZT_PASSWORD" },
+});
+
+const resolved = await resolveConnectionProfileSecrets(profile);
+const safeForLogs = redactConnectionProfile(profile);
+```
 
 Protocol adapters are intentionally being added incrementally. Early releases focus on the package foundation, deterministic tests, parser correctness, typed errors, logging, and transfer-service primitives before the FTP/FTPS/SFTP implementations are ported and broader provider families are added.
 

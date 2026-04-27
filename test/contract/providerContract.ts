@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   PathNotFoundError,
   createTransferClient,
+  type CapabilitySet,
   type ConnectionProfile,
   type ProviderFactory,
+  type RemoteStat,
   type TransferSession,
 } from "../../src/index";
 
@@ -13,6 +15,8 @@ export interface ProviderContractOptions {
   listPath: string;
   expectedListPaths: readonly string[];
   statPath: string;
+  expectedCapabilities?: Partial<CapabilitySet>;
+  expectedStat?: Partial<RemoteStat>;
   missingPath: string;
 }
 
@@ -27,6 +31,12 @@ export function describeProviderContract(
       try {
         expect(session.provider).toBe(factory.id);
         expect(session.capabilities).toEqual(factory.capabilities);
+        expect(session.capabilities).toMatchObject({
+          list: true,
+          provider: factory.id,
+          stat: true,
+          ...options.expectedCapabilities,
+        });
       } finally {
         await session.disconnect();
       }
@@ -51,6 +61,7 @@ export function describeProviderContract(
         await expect(session.fs.stat(options.statPath)).resolves.toMatchObject({
           exists: true,
           path: options.statPath,
+          ...options.expectedStat,
         });
       } finally {
         await session.disconnect();

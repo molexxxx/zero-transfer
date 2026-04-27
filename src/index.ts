@@ -40,11 +40,28 @@ export type {
 } from "./providers/ProviderCapabilities";
 export type { ProviderFactory } from "./providers/ProviderFactory";
 export type { RemoteFileSystem } from "./providers/RemoteFileSystem";
+export { createLocalProviderFactory, type LocalProviderOptions } from "./providers/local";
 export {
   createMemoryProviderFactory,
   type MemoryProviderEntry,
   type MemoryProviderOptions,
 } from "./providers/memory";
+export {
+  redactConnectionProfile,
+  redactSecretSource,
+  resolveConnectionProfileSecrets,
+  resolveSecret,
+  validateConnectionProfile,
+  type Base64EnvSecretSource,
+  type EnvSecretSource,
+  type FileSecretSource,
+  type ResolveSecretOptions,
+  type ResolvedConnectionProfile,
+  type SecretProvider,
+  type SecretSource,
+  type SecretValue,
+  type ValueSecretSource,
+} from "./profiles";
 /** Preferred high-level SDK facade for new ZeroTransfer code. */
 export const ZeroTransfer = Object.assign(ZeroFTP, { createTransferClient });
 /** Preferred options type for the ZeroTransfer facade. */
