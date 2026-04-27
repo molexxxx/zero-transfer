@@ -6,7 +6,7 @@
 
 - Prepared the package to publish under the `zero-transfer` npm organization as `@zero-transfer/sdk`.
 - Updated repository metadata and documentation for the `tonywied17/zero-transfer` GitHub repository.
-- Renamed package foundation from `molex-ftp` to `zero-ftp`.
+- Renamed package foundation from legacy FTP-first naming to `@zero-transfer/sdk`.
 - Switched the package entry point to the new TypeScript `src/` rebuild output.
 - Removed the old CommonJS FTP implementation after the TypeScript foundation became the package surface.
 - Switched project licensing from ISC to MIT.

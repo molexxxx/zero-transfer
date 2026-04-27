@@ -99,7 +99,7 @@ export class FakeFtpServer {
    * @param options - Optional greeting and command responder.
    */
   constructor(options: FakeFtpServerOptions = {}) {
-    this.greeting = options.greeting ?? "220 ZeroFTP fake server ready\r\n";
+    this.greeting = options.greeting ?? "220 ZeroTransfer fake server ready\r\n";
     this.extendedPassive = options.extendedPassive ?? true;
     this.passiveData = options.passiveData;
     this.passiveFinalResponse =

@@ -24,7 +24,7 @@ describe("FakeFtpServer", () => {
 
     const transcript = await runClientTranscript(port, ["USER zero\r\n", "PASS secret\r\n"]);
 
-    expect(transcript).toContain("220 ZeroFTP fake server ready");
+    expect(transcript).toContain("220 ZeroTransfer fake server ready");
     expect(transcript).toContain("331 Password required");
     expect(transcript).toContain("230 Logged in");
     expect(server.commands).toEqual(["USER zero", "PASS secret"]);

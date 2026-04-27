@@ -9,7 +9,7 @@
  */
 import { EventEmitter } from "node:events";
 import { UnsupportedFeatureError } from "../errors/ZeroTransferError";
-import { emitLog, noopLogger, type ZeroFTPLogger } from "../logging/Logger";
+import { emitLog, noopLogger, type ZeroTransferLogger } from "../logging/Logger";
 import type { RemoteFileAdapter } from "../protocols/RemoteFileAdapter";
 import { isClassicProviderId } from "../core/ProviderId";
 import type {
@@ -33,7 +33,7 @@ export interface ZeroFTPOptions {
   /** Protocol used when the connection profile does not provide one. */
   protocol?: RemoteProtocol;
   /** Structured logger used for lifecycle and operation records. */
-  logger?: ZeroFTPLogger;
+  logger?: ZeroTransferLogger;
   /** Protocol adapter that performs concrete remote file operations. */
   adapter?: RemoteFileAdapter;
 }
@@ -63,7 +63,7 @@ export class ZeroFTP extends EventEmitter {
   /** Protocol selected for this client instance. */
   readonly protocol: RemoteProtocol;
 
-  private readonly logger: ZeroFTPLogger;
+  private readonly logger: ZeroTransferLogger;
   private readonly adapter: RemoteFileAdapter | undefined;
   private connected = false;
 

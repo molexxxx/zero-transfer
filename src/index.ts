@@ -107,7 +107,7 @@ export {
   type LogRecord,
   type LoggerMethod,
   type LogRecordInput,
-  type ZeroFTPLogger,
+  type ZeroTransferLogger,
 } from "./logging/Logger";
 export {
   REDACTED,

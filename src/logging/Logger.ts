@@ -1,16 +1,16 @@
 /**
- * Structured logging contracts and helpers for ZeroFTP.
+ * Structured logging contracts and helpers for ZeroTransfer.
  *
  * The logger shape is intentionally compatible with popular structured loggers while
  * staying small enough for applications to implement directly.
  *
  * @module logging/Logger
  */
-/** Supported ZeroFTP log levels. */
+/** Supported ZeroTransfer log levels. */
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error";
 
 /**
- * Complete structured log record emitted by ZeroFTP helpers.
+ * Complete structured log record emitted by ZeroTransfer helpers.
  */
 export interface LogRecord {
   /** Severity level for the record. */
@@ -56,9 +56,9 @@ export interface LogRecordInput extends Omit<LogRecord, "level"> {
 export type LoggerMethod = (record: LogRecord, message?: string) => void;
 
 /**
- * Partial structured logger accepted by ZeroFTP.
+ * Partial structured logger accepted by ZeroTransfer.
  */
-export interface ZeroFTPLogger {
+export interface ZeroTransferLogger {
   /** Receives highly detailed diagnostic records. */
   trace?: LoggerMethod;
   /** Receives development/debugging records. */
@@ -74,7 +74,7 @@ export interface ZeroFTPLogger {
 /**
  * Logger implementation that intentionally drops every record.
  */
-export const noopLogger: Required<ZeroFTPLogger> = {
+export const noopLogger: Required<ZeroTransferLogger> = {
   trace() {},
   debug() {},
   info() {},
@@ -90,7 +90,7 @@ export const noopLogger: Required<ZeroFTPLogger> = {
  * @param record - Log record fields without the level property.
  * @returns Nothing; missing logger methods are ignored.
  */
-export function emitLog(logger: ZeroFTPLogger, level: LogLevel, record: LogRecordInput): void {
+export function emitLog(logger: ZeroTransferLogger, level: LogLevel, record: LogRecordInput): void {
   const method = logger[level];
 
   if (method === undefined) {

@@ -4,7 +4,12 @@
  * @module core/TransferClient
  */
 import { ConfigurationError } from "../errors/ZeroTransferError";
-import { emitLog, noopLogger, type LogRecordInput, type ZeroFTPLogger } from "../logging/Logger";
+import {
+  emitLog,
+  noopLogger,
+  type LogRecordInput,
+  type ZeroTransferLogger,
+} from "../logging/Logger";
 import { validateConnectionProfile } from "../profiles/ProfileValidator";
 import type { ProviderFactory } from "../providers/ProviderFactory";
 import type { ConnectionProfile } from "../types/public";
@@ -21,7 +26,7 @@ export interface TransferClientOptions {
   /** Provider factories to register with the client registry. */
   providers?: ProviderFactory[];
   /** Structured logger used for client lifecycle records. */
-  logger?: ZeroFTPLogger;
+  logger?: ZeroTransferLogger;
 }
 
 /** Small provider-neutral client that owns provider lookup and connection setup. */
@@ -29,7 +34,7 @@ export class TransferClient {
   /** Provider registry used by this client. */
   readonly registry: ProviderRegistry;
 
-  private readonly logger: ZeroFTPLogger;
+  private readonly logger: ZeroTransferLogger;
 
   /**
    * Creates a transfer client without opening any provider connections.

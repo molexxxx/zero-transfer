@@ -1,5 +1,5 @@
 /**
- * Shared protocol adapter contract used by the ZeroFTP facade.
+ * Shared protocol adapter contract used by the ZeroTransfer facade.
  *
  * Protocol-specific implementations for FTP, FTPS, and SFTP should conform to this
  * interface so high-level client code can remain protocol-neutral.

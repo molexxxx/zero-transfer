@@ -1,4 +1,4 @@
-name: zero-ftp-integration
+name: zero-transfer-integration
 
 services:
   ftp:

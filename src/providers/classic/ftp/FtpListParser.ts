@@ -2,7 +2,7 @@
  * FTP MLSD and MLST metadata parsers.
  *
  * The helpers in this module convert machine-readable FTP listing facts into the
- * protocol-neutral {@link RemoteEntry} model used by the rest of ZeroFTP.
+ * protocol-neutral {@link RemoteEntry} model used by the rest of ZeroTransfer.
  *
  * @module providers/classic/ftp/FtpListParser
  */

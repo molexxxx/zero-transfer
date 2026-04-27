@@ -1,5 +1,5 @@
 /**
- * Public data contracts shared by the ZeroFTP facade, adapters, and services.
+ * Public data contracts shared by the ZeroTransfer facade, adapters, and services.
  *
  * These types are intentionally protocol-neutral so FTP, FTPS, and SFTP adapters can
  * report the same metadata, transfer, and connection shapes to application code.
@@ -7,7 +7,7 @@
  * @module types/public
  */
 import type { PeerCertificate, SecureVersion } from "node:tls";
-import type { ZeroFTPLogger } from "../logging/Logger";
+import type { ZeroTransferLogger } from "../logging/Logger";
 import type { ClassicProviderId, ProviderId } from "../core/ProviderId";
 import type { SecretSource } from "../profiles/SecretSource";
 
@@ -133,7 +133,7 @@ export interface ConnectionProfile {
   /** Abort signal used to cancel connection setup or long-running operations. */
   signal?: AbortSignal;
   /** Per-profile logger override. */
-  logger?: ZeroFTPLogger;
+  logger?: ZeroTransferLogger;
 }
 
 /**
