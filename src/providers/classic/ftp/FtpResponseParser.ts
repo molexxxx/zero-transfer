@@ -4,9 +4,9 @@
  * The parser accepts arbitrary chunks from a socket and produces complete FTP
  * responses, including multi-line replies defined by RFC 959.
  *
- * @module protocols/ftp/FtpResponseParser
+ * @module providers/classic/ftp/FtpResponseParser
  */
-import { ParseError } from "../../errors/ZeroFTPError";
+import { ParseError } from "../../../errors/ZeroFTPError";
 
 /** FTP response status family derived from the first digit of the reply code. */
 export type FtpResponseStatus =

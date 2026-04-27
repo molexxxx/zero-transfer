@@ -799,7 +799,9 @@ Status: in progress. Phase 2 now has provider-neutral transfer job and endpoint 
 
 ### Phase 3: Classic Provider Pack
 
-- Implement FTP provider using the existing parser-first work.
+Status: started. The existing FTP response, FEAT, and MLSD/MLST parser work now lives under `src/providers/classic/ftp`, with public root exports preserved for compatibility. The first classic FTP provider slice now connects, logs in, lists through PASV/MLSD, stats through MLST, maps missing paths/auth/protocol failures into typed errors, and runs behind the provider contract harness. FTP transfers, FTPS, SFTP, Docker-backed integration coverage, and production hardening remain future Phase 3 work.
+
+- Implement FTP provider using the existing parser-first work. Initial metadata contract slice is in place; transfer commands and broader server compatibility remain.
 - Implement FTPS provider with full TLS profile support.
 - Implement SFTP provider with SSH key, known_hosts, and permission mapping support.
 - Add classic provider contract tests and Docker integration servers.
@@ -876,6 +878,7 @@ Alpha is ready when:
 
 1. Claim the package on npm by publishing the first scoped alpha as `@zero-transfer/sdk`, preferably through the GitHub Release workflow.
 2. Keep `ZeroFTP` compatibility while gradually moving new examples and docs to `ZeroTransfer` and `createTransferClient()`.
-3. Move FTP parser work under `providers/classic/ftp` only after the transfer/provider contracts are stable enough to host real adapters.
-4. Add the first classic remote provider behind the contract harness after the transfer engine has a minimal shape.
-5. Expand README examples only for APIs that exist in the current alpha surface.
+3. Extend the FTP provider from metadata contracts to download/upload transfer operations behind the provider transfer contracts.
+4. Add Docker-backed FTP integration coverage for the classic provider in addition to the fake-server contract harness.
+5. Begin FTPS TLS profile support only after the FTP provider contract is stable.
+6. Expand README examples only for APIs that exist in the current alpha surface.

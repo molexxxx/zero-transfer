@@ -2,7 +2,8 @@
  * Deterministic fake FTP control server for unit and integration-style tests.
  *
  * The harness accepts TCP connections, sends a configurable greeting, records received
- * commands, and delegates each command to a scripted responder. It is intentionally
+ * commands, and delegates each command to a scripted responder. It can also open a
+ * passive data socket for deterministic MLSD-style listing tests. It is intentionally
  * minimal so tests can exercise parser and command-lifecycle behavior without a real
  * FTP daemon.
  *
@@ -19,6 +20,14 @@ import { createServer, type Server, type Socket } from "node:net";
 export type FakeFtpResponder = (command: string) => string | string[] | undefined;
 
 /**
+ * Callback that returns passive data payloads for transfer commands such as MLSD.
+ *
+ * @param command - Command text without a trailing CRLF delimiter.
+ * @returns Data payload to send over the passive data socket, or `undefined`.
+ */
+export type FakeFtpDataResponder = (command: string) => string | Uint8Array | undefined;
+
+/**
  * Configuration for a {@link FakeFtpServer} instance.
  */
 export interface FakeFtpServerOptions {
@@ -26,6 +35,14 @@ export interface FakeFtpServerOptions {
   greeting?: string;
   /** Scripted responder used for each received command. */
   responder?: FakeFtpResponder;
+  /** Scripted data responder used after PASV for transfer commands. */
+  passiveData?: FakeFtpDataResponder;
+}
+
+interface PassiveDataChannel {
+  server: Server;
+  socket?: Socket;
+  socketPromise: Promise<Socket>;
 }
 
 /**
@@ -33,9 +50,12 @@ export interface FakeFtpServerOptions {
  */
 export class FakeFtpServer {
   private readonly greeting: string;
+  private readonly passiveData: FakeFtpDataResponder | undefined;
   private readonly responder: FakeFtpResponder;
   private readonly server: Server;
   private readonly receivedCommands: string[] = [];
+  private readonly sockets = new Set<Socket>();
+  private passiveDataChannel: PassiveDataChannel | undefined;
 
   /**
    * Creates a fake server without binding a port.
@@ -44,6 +64,7 @@ export class FakeFtpServer {
    */
   constructor(options: FakeFtpServerOptions = {}) {
     this.greeting = options.greeting ?? "220 ZeroFTP fake server ready\r\n";
+    this.passiveData = options.passiveData;
     this.responder = options.responder ?? (() => "200 OK\r\n");
     this.server = createServer((socket) => this.handleSocket(socket));
   }
@@ -67,6 +88,12 @@ export class FakeFtpServer {
    * @returns A promise that resolves after the server is closed.
    */
   async stop(): Promise<void> {
+    await this.closePassiveDataChannel();
+
+    for (const socket of this.sockets) {
+      socket.destroy();
+    }
+
     if (!this.server.listening) {
       return;
     }
@@ -115,8 +142,10 @@ export class FakeFtpServer {
    * @returns Nothing.
    */
   private handleSocket(socket: Socket): void {
+    this.sockets.add(socket);
     socket.setEncoding("utf8");
     socket.write(this.greeting);
+    socket.on("close", () => this.sockets.delete(socket));
 
     let buffer = "";
 
@@ -131,14 +160,115 @@ export class FakeFtpServer {
         }
 
         this.receivedCommands.push(line);
-        const response = this.responder(line);
-
-        if (response === undefined) {
-          continue;
-        }
-
-        socket.write(Array.isArray(response) ? response.join("") : response);
+        void this.handleCommand(socket, line);
       }
     });
   }
+
+  private async handleCommand(socket: Socket, command: string): Promise<void> {
+    if (command === "PASV" && this.passiveData !== undefined) {
+      const port = await this.openPassiveDataChannel();
+      const highByte = Math.floor(port / 256);
+      const lowByte = port % 256;
+      socket.write(`227 Entering Passive Mode (127,0,0,1,${highByte},${lowByte})\r\n`);
+      return;
+    }
+
+    if (command.startsWith("MLSD") && this.passiveDataChannel !== undefined) {
+      const payload = this.passiveData?.(command);
+
+      if (payload !== undefined) {
+        socket.write("150 Opening passive data connection\r\n");
+        await this.writePassiveData(payload);
+        socket.write("226 Transfer complete\r\n");
+        return;
+      }
+
+      await this.closePassiveDataChannel();
+    }
+
+    const response = this.responder(command);
+
+    if (response === undefined) {
+      return;
+    }
+
+    socket.write(Array.isArray(response) ? response.join("") : response);
+  }
+
+  private async openPassiveDataChannel(): Promise<number> {
+    await this.closePassiveDataChannel();
+
+    let resolveSocket: (socket: Socket) => void;
+    const socketPromise = new Promise<Socket>((resolve) => {
+      resolveSocket = resolve;
+    });
+    const server = createServer((socket) => {
+      if (this.passiveDataChannel !== undefined) {
+        this.passiveDataChannel.socket = socket;
+      }
+
+      resolveSocket(socket);
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(0, "127.0.0.1", resolve);
+    });
+
+    this.passiveDataChannel = { server, socketPromise };
+    const address = server.address();
+
+    if (address === null || typeof address === "string") {
+      throw new Error("Fake FTP passive data server is not listening on a TCP port");
+    }
+
+    return address.port;
+  }
+
+  private async writePassiveData(payload: string | Uint8Array): Promise<void> {
+    const channel = this.passiveDataChannel;
+
+    if (channel === undefined) {
+      return;
+    }
+
+    this.passiveDataChannel = undefined;
+    const socket = await channel.socketPromise;
+
+    await new Promise<void>((resolve, reject) => {
+      socket.once("error", reject);
+      socket.end(payload, resolve);
+    });
+
+    await closeServer(channel.server);
+  }
+
+  private async closePassiveDataChannel(): Promise<void> {
+    const channel = this.passiveDataChannel;
+
+    if (channel === undefined) {
+      return;
+    }
+
+    this.passiveDataChannel = undefined;
+    channel.socket?.destroy();
+    await closeServer(channel.server);
+  }
+}
+
+async function closeServer(server: Server): Promise<void> {
+  if (!server.listening) {
+    return;
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => {
+      if (error !== undefined) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
 }

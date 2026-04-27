@@ -116,14 +116,19 @@ export {
   redactValue,
 } from "./logging/redaction";
 export type { RemoteFileAdapter } from "./protocols/RemoteFileAdapter";
-export { parseFtpFeatures, type FtpFeatures } from "./protocols/ftp/FtpFeatureParser";
-export { parseMlsdLine, parseMlsdList, parseMlstTimestamp } from "./protocols/ftp/FtpListParser";
 export {
   FtpResponseParser,
+  createFtpProviderFactory,
+  parseFtpFeatures,
   parseFtpResponseLines,
+  parseMlsdLine,
+  parseMlsdList,
+  parseMlstTimestamp,
+  type FtpProviderOptions,
+  type FtpFeatures,
   type FtpResponse,
   type FtpResponseStatus,
-} from "./protocols/ftp/FtpResponseParser";
+} from "./providers/classic/ftp";
 export {
   createProgressEvent,
   createTransferResult,

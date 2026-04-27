@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ParseError } from "../../../../src/errors/ZeroFTPError";
-import {
-  FtpResponseParser,
-  parseFtpResponseLines,
-} from "../../../../src/protocols/ftp/FtpResponseParser";
+import { ParseError } from "../../../../../src/errors/ZeroFTPError";
+import { FtpResponseParser, parseFtpResponseLines } from "../../../../../src/providers/classic/ftp";
 
 describe("FtpResponseParser", () => {
   it("parses a single-line completion response", () => {

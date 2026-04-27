@@ -1,8 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseFtpFeatures } from "../../../../src/protocols/ftp/FtpFeatureParser";
-import { parseFtpResponseLines } from "../../../../src/protocols/ftp/FtpResponseParser";
+import { parseFtpFeatures, parseFtpResponseLines } from "../../../../../src/providers/classic/ftp";
 
 const featureFixture = readFileSync(join(process.cwd(), "test/fixtures/ftp/features.txt"), "utf8");
 

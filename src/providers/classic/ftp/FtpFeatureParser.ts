@@ -4,7 +4,7 @@
  * This module extracts advertised server capabilities and MLST facts from a parsed
  * FTP response, raw response string, or pre-split response lines.
  *
- * @module protocols/ftp/FtpFeatureParser
+ * @module providers/classic/ftp/FtpFeatureParser
  */
 import type { FtpResponse } from "./FtpResponseParser";
 

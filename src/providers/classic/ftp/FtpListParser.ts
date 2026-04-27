@@ -4,11 +4,11 @@
  * The helpers in this module convert machine-readable FTP listing facts into the
  * protocol-neutral {@link RemoteEntry} model used by the rest of ZeroFTP.
  *
- * @module protocols/ftp/FtpListParser
+ * @module providers/classic/ftp/FtpListParser
  */
-import { ParseError } from "../../errors/ZeroFTPError";
-import type { RemoteEntry, RemoteEntryType } from "../../types/public";
-import { joinRemotePath } from "../../utils/path";
+import { ParseError } from "../../../errors/ZeroFTPError";
+import type { RemoteEntry, RemoteEntryType } from "../../../types/public";
+import { joinRemotePath } from "../../../utils/path";
 
 /**
  * Parses an MLSD directory listing into normalized remote entries.

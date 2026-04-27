@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ParseError } from "../../../../src/errors/ZeroFTPError";
+import { ParseError } from "../../../../../src/errors/ZeroFTPError";
 import {
   parseMlsdLine,
   parseMlsdList,
   parseMlstTimestamp,
-} from "../../../../src/protocols/ftp/FtpListParser";
+} from "../../../../../src/providers/classic/ftp";
 
 const mlsdFixture = readFileSync(join(process.cwd(), "test/fixtures/ftp/mlsd.txt"), "utf8");
 
