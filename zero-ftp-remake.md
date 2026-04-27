@@ -1,555 +1,641 @@
-# ZeroFTP Remake Plan
+# ZeroTransfer Hard Replan
 
 Date: 2026-04-27
-Current package: `molex-ftp`
-Target package and repo name: `zero-ftp`
-Target public brand/class name: `ZeroFTP`
 
-## 1. Product Goal
+Current repo/package state: `zero-ftp` / `ZeroFTP` after the Phase 0 and Phase 1 foundation work.
 
-ZeroFTP should become a professional Node.js file-transfer SDK for building real FTP, FTPS, and SFTP clients. The library should not just expose raw protocol commands. It should provide a safe, typed, observable, well-tested, and ergonomic foundation for apps that need to browse, upload, download, sync, resume, inspect, and manage remote files at scale.
+New product direction: a protocol-neutral, TypeScript-first file transfer SDK. FTP, FTPS, and SFTP are important provider adapters, not the identity of the whole project.
 
-Primary goals:
+Working brand recommendation: `ZeroTransfer` with npm package `zero-transfer`, pending deeper npm, GitHub, domain, and trademark checks. If that name is not viable, keep the architecture and choose another broad file-transfer name before public alpha.
 
-- Publish only to npmjs as `zero-ftp`.
-- Rename repository/package references from `molex-ftp` to `zero-ftp`.
-- Support FTP, FTPS, and SFTP through a consistent high-level API.
-- Provide first-class TypeScript support and generated API docs.
-- Reach 90%+ test coverage with unit, integration, and protocol fixture tests.
-- Provide verbose, structured errors, logging, debugging, metrics, and progress events.
-- Use a cleaner OOP design with explicit protocol adapters and separation of concerns.
-- Support QOL workflows needed by full FTP/SFTP client applications.
-- Be secure by default: encrypted modes, host verification, redaction, safe path handling, timeouts, aborts, and no credential leaks.
-- Be performant by default: streams, backpressure, queueing, retries, resume support, and no avoidable full-file buffering.
+This document replaces the prior FTP-first remake plan. Do not start the next implementation phase until the naming and public API direction below are accepted or deliberately narrowed.
 
-### Strategic Scope Note Before Phase 2
+## 1. Hard Pivot Decision
 
-The immediate Phase 2 recommendation is to keep the repo and npm package focused as `zero-ftp` while building the FTP core correctly. FTP/FTPS/SFTP are still a large enough surface area to prove the parser, command queue, transfer lifecycle, security, profile, and adapter architecture. Renaming again before Phase 2 would create churn unless the product direction is intentionally expanded now.
+The previous plan still treated the project as an FTP/FTPS/SFTP SDK with future expansion notes. That is too narrow for the product we want developers to notice.
 
-However, the architecture should not paint the project into an FTP-only corner. The `RemoteFileAdapter`, `ConnectionProfile`, transfer services, error model, logging, and profile system should be protocol-neutral enough to support a future umbrella SDK for managed file transfer, HTTP(S), WebDAV, S3-compatible object storage, Google Drive, Dropbox, OneDrive, Azure Blob, and other provider APIs.
+The new plan is:
 
-Possible broader positioning:
+- Build a universal file transfer SDK around providers, profiles, transfer jobs, remote file-system semantics, security policy, diagnostics, and MFT-style workflows.
+- Treat FTP, FTPS, SFTP, HTTP(S), WebDAV, S3-compatible object storage, cloud drives, and local file systems as adapters behind one core model.
+- Make the public API read like a modern transfer platform, not a protocol wrapper.
+- Preserve protocol escape hatches for advanced users without letting raw FTP/SFTP concepts dominate the main API.
+- Design profiles and secrets around real GUI-client needs, including WinSCP, FileZilla, OpenSSH, TLS certificates, PFX/P12 bundles, known_hosts, proxies, jump hosts, and cloud credentials.
 
-- Focused package now: `zero-ftp`, `ZeroFTP`, best-in-class FTP/FTPS/SFTP SDK.
-- Umbrella later: `ZeroTransfer`, `Zero File Transfer SDK`, or `ZeroMFT` as a multi-protocol file-transfer platform.
-- Monorepo later if the scope expands: `@zero-transfer/core`, `@zero-transfer/ftp`, `@zero-transfer/sftp`, `@zero-transfer/http`, `@zero-transfer/webdav`, `@zero-transfer/s3`, `@zero-transfer/google-drive`, `@zero-transfer/dropbox`.
+Recommendation:
 
-Package-name sniff on 2026-04-27 returned not found or unavailable for `zero-transfer`, `zero-file-transfer`, `zero-mft`, `zero-files`, `zero-file-sdk`, and `@zero-transfer/sdk`. That is not a guarantee of ownership or trademark safety, but it means those names are worth researching if we decide to broaden before first public release.
+- Rename before public alpha if we are serious about this broader scope.
+- Preferred package/repo: `zero-transfer`.
+- Preferred public class/factory: `ZeroTransfer` and `createTransferClient()`.
+- Keep `zero-ftp` only if we intentionally decide this repo is a focused classic-protocol adapter package.
 
-## 2. Current Repository Snapshot
+Name candidates checked quickly on npm metadata on 2026-04-27 returned not found or unavailable for `zero-transfer`, `zero-file-transfer`, `zero-mft`, `zero-files`, `zero-file-sdk`, and `@zero-transfer/sdk`. This is only a first-pass availability signal, not ownership or legal clearance.
 
-Files currently present:
+## 2. Product Goal
 
-- `package.json`
-- `index.js`
-- `README.md`
-- `CHANGELOG.md`
-- `.npmignore`
-- `test-comprehensive.js`
-- `lib/FTPClient.js`
-- `lib/connection.js`
-- `lib/commands.js`
-- `lib/performance.js`
-- `lib/utils.js`
+ZeroTransfer should become a professional Node.js SDK for moving, syncing, inspecting, auditing, and automating files across many storage and transfer systems.
 
-Current strengths:
+The library should help developers build:
 
-- Small codebase and easy to understand.
-- No runtime dependencies for basic FTP.
-- Promise-based API.
-- Passive-mode FTP transfer basics exist.
-- Basic event emission exists.
-- Good instincts around streaming downloads, debug logging, and simple directory helpers.
-- The existing README already documents the intended user-facing value fairly well.
+- Deployment pipelines.
+- File browsers and admin UIs.
+- Backup and sync tools.
+- Managed file transfer workflows.
+- Data ingestion and export jobs.
+- Cross-provider copy/move tools.
+- Release artifact uploaders.
+- Secure partner exchange systems.
 
-Current critical gaps:
+North-star value:
 
-- FTP only. No FTPS and no SFTP.
-- CommonJS only, no TypeScript source, no `.d.ts`, no export map.
-- No automated unit tests, no coverage, no CI, no release automation.
-- `package.json` test script points to `node test.js`, but the repo has `test-comprehensive.js` instead.
-- Package metadata still points at the old GitHub repo and package name.
-- README says Node >=14, while `package.json` says Node >=12.
-- No linting, formatting, type checking, security scanning, or package dry-run gate.
-- No clear separation between protocol parsing, control channel, data channel, transfer orchestration, filesystem operations, logging, metrics, and high-level client behavior.
+- One typed API for many file-transfer backends.
+- Secure profile handling across passwords, SSH keys, PEMs, certificates, tokens, service accounts, and cloud credential chains.
+- Streaming transfers with backpressure, resumability, verification, and progress events.
+- Dry-run plans before destructive changes.
+- Provider capability discovery so developers know what each backend supports.
+- Strong diagnostics that explain whether DNS, TCP, TLS, SSH, OAuth, login, permissions, passive mode, API quota, or metadata parsing failed.
+- Audit-friendly transfer receipts and structured logs.
 
-## 3. npm Ecosystem Research Snapshot
+## 3. Scope Model
 
-Checked packages from npm metadata on 2026-04-27:
+### Core SDK
 
-- `basic-ftp` 5.3.0: FTP/FTPS, TLS, IPv6, async/await, TypeScript types. Strongest FTP competitor.
-- `ssh2-sftp-client` 12.1.1: SFTP wrapper around `ssh2`. Good SFTP competitor, separate from FTP/FTPS.
-- `ftp` 0.3.10: older FTP client with old dependencies.
-- `promise-ftp` 1.3.5: promise wrapper around older FTP packages, dependency-heavy and dated.
-- `zero-ftp`: npm returned 404 from this environment, so the name appears publicly unclaimed or unavailable only due to registry/account permissions.
+The core SDK owns provider-neutral behavior:
 
-Opportunity:
+- Public client API.
+- Provider registry.
+- Connection profiles.
+- Secret and credential resolution.
+- Capability model.
+- Remote file-system contracts.
+- Transfer engine.
+- Transfer queues.
+- Planning and sync diffing.
+- Retry and resume policy.
+- Logging, tracing, metrics, and audit records.
+- Typed errors.
+- Security policies.
 
-- Most users must choose separate packages for FTP/FTPS and SFTP.
-- Older packages often expose protocol details without modern diagnostics, typed errors, robust metadata, or production-grade workflow helpers.
-- A polished unified SDK with professional observability, strong TypeScript, predictable metadata, and client-building utilities can stand out.
+### Provider Families
 
-Positioning:
+Provider families implement concrete systems behind the core contracts:
 
-- `basic-ftp` is a serious benchmark for FTP/FTPS correctness and TypeScript ergonomics.
-- `ssh2-sftp-client` is a practical benchmark for SFTP coverage.
-- ZeroFTP should compete by combining protocols, better DX, richer metadata, safer defaults, fuller client-building QOL features, and deeper diagnostics.
+- Classic transfer: FTP, explicit FTPS, implicit FTPS, SFTP.
+- Web transfer: HTTP(S), signed URLs, WebDAV.
+- Object storage: AWS S3, S3-compatible APIs, MinIO, Cloudflare R2, Backblaze B2 S3, Wasabi, DigitalOcean Spaces.
+- Cloud storage: Google Drive, Dropbox, OneDrive/SharePoint, Azure Blob, Google Cloud Storage.
+- Local and virtual: local file system, memory provider for tests, archive provider later if useful.
+- MFT workflows: inbox/outbox, routes, schedules, approvals, retention, webhooks, receipts, audit trails.
 
-## 4. Audit Findings By Area
+### What Not To Do First
 
-### 4.1 Package And Distribution
+- Do not implement every provider at once.
+- Do not let cloud APIs block the classic protocol rewrite.
+- Do not make FTP the public architecture center.
+- Do not make MFT enterprise workflow features required for the first alpha.
+- Do not expose provider-specific settings as random top-level options.
 
-Problems:
+## 4. Package Strategy
 
-- Package name is still `molex-ftp`.
-- No `types` field.
-- No `exports` map.
-- No ESM build.
-- No CJS/ESM dual package strategy.
-- No `files` allowlist for npm publishing.
-- `.npmignore` excludes `test.js`, but no `test.js` exists.
-- No `prepack` or package validation.
-- No npm provenance or trusted publishing workflow.
+### Recommended Path
 
-Recommended target:
+Start as one package until the contracts prove themselves:
 
-- TypeScript source in `src/`.
-- Build to `dist/` with dual ESM/CJS output.
-- Use an explicit `exports` map.
-- Publish only to npmjs.
-- Use an npm `files` allowlist instead of relying on `.npmignore`.
-- Add npm provenance and trusted publishing through GitHub Actions.
-
-Example target package fields:
-
-```json
-{
-  "name": "zero-ftp",
-  "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  },
-  "files": ["dist", "README.md", "LICENSE", "CHANGELOG.md"],
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "provenance": true
-  },
-  "sideEffects": false,
-  "engines": {
-    "node": ">=20"
-  }
-}
+```text
+zero-transfer
 ```
 
-Node version recommendation:
+The first package can include core contracts plus classic providers. Split later only when package size, optional dependencies, or provider cadence justify it.
 
-- Prefer Node >=20 for modern streams, stable AbortController behavior, current TLS defaults, and less compatibility drag.
-- If adoption pressure requires it, consider Node >=18 as the lowest supported version, but only if CI and integration tests cover it.
+### Future Monorepo Shape
 
-### 4.2 Public API Design
+If the SDK expands, use scoped packages:
 
-Problems:
-
-- Boolean parameters such as `ensureDir` and `recursive` are not self-documenting.
-- Methods mix low-level FTP concepts with high-level file-management workflows.
-- `delete(path)` is a problematic name because `delete` is a JavaScript operator and does not distinguish file vs directory.
-- `cd()` mutates session state, which can surprise callers and makes concurrent operations risky.
-- `stat()` returns incomplete and inconsistent metadata.
-- `list()` returns raw strings, while `listDetailed()` uses brittle parsing.
-- No AbortSignal support.
-- No retry options.
-- No progress callback/event shape.
-- No transfer verification options.
-- No capability discovery exposed to users.
-
-Recommended API direction:
-
-- Keep method names boring, explicit, and consistent.
-- Use options objects instead of booleans.
-- Make remote operations path-based and avoid changing working directory internally where possible.
-- Return stable typed metadata objects.
-- Support `AbortSignal` in every network or filesystem operation.
-- Support progress callbacks and typed events.
-- Keep raw protocol commands available under an advanced namespace, not the primary API.
-
-Potential high-level API:
-
-```ts
-import { ZeroFTP } from "zero-ftp";
-
-const client = await ZeroFTP.connect({
-  protocol: "ftps",
-  host: "ftp.example.com",
-  username: "deploy",
-  password: process.env.FTP_PASSWORD,
-  secure: true,
-  logger,
-});
-
-const entries = await client.list("/releases", {
-  recursive: false,
-  includeHidden: true,
-});
-
-await client.uploadFile("./dist/app.zip", "/releases/app.zip", {
-  createParents: true,
-  overwrite: true,
-  atomic: true,
-  preserveModifiedTime: true,
-  onProgress: (event) => logger.info(event),
-});
-
-const info = await client.stat("/releases/app.zip");
-
-await client.disconnect();
+```text
+@zero-transfer/core
+@zero-transfer/classic
+@zero-transfer/ftp
+@zero-transfer/ftps
+@zero-transfer/sftp
+@zero-transfer/http
+@zero-transfer/webdav
+@zero-transfer/s3
+@zero-transfer/google-drive
+@zero-transfer/dropbox
+@zero-transfer/azure-blob
+@zero-transfer/mft
 ```
 
-Recommended method families:
+Keep the top-level package as a batteries-included distribution only if users prefer one install:
 
-- Connection: `connect`, `disconnect`, `reconnect`, `noop`, `isConnected`, `getCapabilities`.
-- Metadata: `stat`, `exists`, `list`, `walk`, `pwd`, `realpath`.
-- Reads: `download`, `downloadFile`, `downloadStream`, `createReadStream`.
-- Writes: `upload`, `uploadFile`, `uploadStream`, `createWriteStream`, `append`, `resumeUpload`.
-- Management: `mkdir`, `ensureDir`, `removeFile`, `removeDir`, `remove`, `rename`, `move`, `chmod`, `chown`, `utimes` where supported.
-- Workflows: `sync`, `mirror`, `copyFromLocal`, `copyToLocal`, `emptyDir`, `glob`, `compare`.
-- Advanced: `raw.ftpCommand`, `raw.site`, `raw.sftpClient` where safe and documented.
+```text
+zero-transfer
+```
 
-High-appeal method families worth designing early:
+### Dependency Policy
 
-- Profiles: `profiles.create`, `profiles.validate`, `profiles.redact`, `profiles.test`, `profiles.fromEnv`, `profiles.fromOpenSshConfig`, `profiles.fromKnownHosts`, `profiles.fromFileZilla`, and possibly `profiles.fromWinScp` when format support is practical.
-- Diagnostics: `diagnoseConnection`, `probeCapabilities`, `explainCapabilities`, `testAuth`, `testPathAccess`, and structured handshake traces that redact secrets but tell developers whether DNS, TCP, TLS, SSH, login, passive mode, or listing failed.
-- Planning and dry runs: `planUpload`, `planDownload`, `planSync`, `diff`, `compareTrees`, `previewDelete`, and `applyPlan` so users can build deployment tools and UIs that show exactly what will change before execution.
-- Transfer jobs: `queue.add`, `queue.pause`, `queue.resume`, `queue.cancel`, `queue.retry`, `queue.onProgress`, `queue.setConcurrency`, and `queue.setBandwidthLimit` for client apps that need real transfer managers.
-- Integrity and manifests: `hash`, `checksum`, `verify`, `writeManifest`, `readManifest`, `compareManifest`, and `receipt` for auditable transfers and release verification.
-- Policies: `policy.requireTls`, `policy.requireHostKey`, `policy.preventOverwrite`, `policy.allowPaths`, `policy.denyPaths`, `policy.maxFileSize`, and `policy.sandboxLocalPath` for safer automation.
-- Watch and sync: `watchLocal`, `watchRemote`, `syncOnce`, `syncContinuous`, `mirrorToRemote`, `mirrorToLocal`, and conflict strategies such as `preferLocal`, `preferRemote`, `newerWins`, and `manual`.
-- Remote browser helpers: `tree`, `search`, `breadcrumb`, `sortEntries`, `filterEntries`, `openPreviewStream`, and `getIconMetadata` for developers building full file-manager UIs.
-- Atomic deploy workflows: `stage`, `promote`, `rollback`, `releaseDirectory`, and `uploadAtomic` for deployment pipelines that must avoid half-published releases.
-- MFT workflows if the scope expands: `inbox`, `outbox`, `route`, `transform`, `approve`, `schedule`, `retention`, `auditLog`, and `webhook` primitives for managed file-transfer style systems.
+- Core should stay lean and avoid provider dependencies.
+- FTP/FTPS can use Node built-ins first.
+- SFTP should use `ssh2` or a mature SSH implementation. Do not hand-roll SSH/SFTP.
+- Cloud providers may need official SDKs or lightweight HTTP clients. Keep them isolated in provider packages or optional imports.
+- If optional providers are missing dependencies, fail with clear setup errors.
 
-### 4.3 Architecture And OOP Design
+## 5. Target Repository Structure
 
-Current issue:
-
-The current `FTPClient` delegates to `FTPConnection` and `FTPCommands`, but the design still revolves around a shared mutable client object. Sockets, buffers, state, commands, and stats all live on the facade. That makes it hard to reason about lifecycle, concurrency, errors, and testability.
-
-Recommended target architecture:
+The next source layout should represent a transfer platform, not an FTP client.
 
 ```text
 src/
   index.ts
-  client/
-    ZeroFTP.ts
-    RemoteFileClient.ts
+
+  core/
+    TransferClient.ts
+    createTransferClient.ts
+    ProviderRegistry.ts
+    TransferSession.ts
     ConnectionProfile.ts
-  protocols/
-    ftp/
-      FtpAdapter.ts
-      FtpControlConnection.ts
-      FtpDataConnection.ts
-      FtpCommandQueue.ts
-      FtpResponseParser.ts
-      FtpFeatureParser.ts
-      FtpListParser.ts
-    ftps/
-      FtpsAdapter.ts
-    sftp/
-      SftpAdapter.ts
-  services/
-    TransferService.ts
-    DirectoryService.ts
-    MetadataService.ts
-    SyncService.ts
-    RetryPolicy.ts
-  streams/
-    ProgressTransform.ts
-    ByteCounter.ts
-  errors/
-    ZeroFTPError.ts
-    errorFactory.ts
-  logging/
+    CapabilitySet.ts
+    ProviderId.ts
+    OperationContext.ts
+
+  profiles/
+    ProfileStore.ts
+    ProfileValidator.ts
+    ProfileRedactor.ts
+    SecretSource.ts
+    CredentialSource.ts
+    CertificateSource.ts
+    ProxyProfile.ts
+    importers/
+      OpenSshConfigImporter.ts
+      KnownHostsParser.ts
+      FileZillaImporter.ts
+      WinScpImporter.ts
+
+  auth/
+    secrets/
+      resolveSecret.ts
+      redactSecret.ts
+      SecretResolver.ts
+    tls/
+      TlsProfile.ts
+      CertificateLoader.ts
+      FingerprintVerifier.ts
+    ssh/
+      SshProfile.ts
+      PrivateKeyLoader.ts
+      KnownHostsVerifier.ts
+      SshAgentResolver.ts
+    oauth/
+      OAuthProfile.ts
+      TokenProvider.ts
+      TokenRefreshPolicy.ts
+    cloud/
+      AwsCredentialSource.ts
+      AzureCredentialSource.ts
+      GoogleCredentialSource.ts
+
+  providers/
+    Provider.ts
+    ProviderCapabilities.ts
+    ProviderFactory.ts
+    classic/
+      ftp/
+        FtpProvider.ts
+        FtpControlConnection.ts
+        FtpDataConnection.ts
+        FtpCommandQueue.ts
+        FtpResponseParser.ts
+        FtpFeatureParser.ts
+        FtpListParser.ts
+      ftps/
+        FtpsProvider.ts
+        FtpsTlsNegotiator.ts
+      sftp/
+        SftpProvider.ts
+        SftpMetadataMapper.ts
+    web/
+      http/
+        HttpProvider.ts
+        SignedUrlProvider.ts
+      webdav/
+        WebDavProvider.ts
+    object-storage/
+      s3/
+        S3Provider.ts
+        S3MultipartTransfer.ts
+      azure-blob/
+        AzureBlobProvider.ts
+      gcs/
+        GcsProvider.ts
+    cloud-drive/
+      dropbox/
+        DropboxProvider.ts
+      google-drive/
+        GoogleDriveProvider.ts
+      one-drive/
+        OneDriveProvider.ts
+    local/
+      LocalFileSystemProvider.ts
+      MemoryProvider.ts
+
+  filesystem/
+    RemotePath.ts
+    RemoteEntry.ts
+    RemoteStat.ts
+    MetadataMapper.ts
+    PathPolicy.ts
+    GlobMatcher.ts
+    TreeWalker.ts
+
+  transfers/
+    TransferEngine.ts
+    TransferJob.ts
+    TransferQueue.ts
+    TransferPlanner.ts
+    TransferPlan.ts
+    TransferReceipt.ts
+    TransferProgress.ts
+    TransferPipeline.ts
+    ResumeStore.ts
+    IntegrityVerifier.ts
+    ChecksumService.ts
+    BandwidthLimiter.ts
+
+  sync/
+    SyncPlanner.ts
+    SyncExecutor.ts
+    ConflictResolver.ts
+    ManifestService.ts
+    DirectoryDiff.ts
+
+  mft/
+    Route.ts
+    Schedule.ts
+    Inbox.ts
+    Outbox.ts
+    Approval.ts
+    RetentionPolicy.ts
+    AuditLog.ts
+    WebhookEmitter.ts
+
+  diagnostics/
+    ConnectionDiagnostic.ts
+    CapabilityProbe.ts
+    HandshakeTrace.ts
+    TroubleshootingHint.ts
+
+  observability/
     Logger.ts
     redaction.ts
-  types/
-    public.ts
-    internal.ts
+    Metrics.ts
+    Tracing.ts
+    EventBus.ts
+
+  errors/
+    ZeroTransferError.ts
+    errorFactory.ts
+    providerErrors.ts
+
   utils/
-    path.ts
-    time.ts
+    abort.ts
     byteSize.ts
     deferred.ts
-    abort.ts
+    time.ts
+    ids.ts
+
 test/
   unit/
+  contract/
   integration/
   fixtures/
+    ftp/
+    sftp/
+    webdav/
+    s3/
+    profiles/
   servers/
+    FakeFtpServer.ts
+    FakeSftpServer.ts
+    FakeHttpStorageServer.ts
+    docker-compose.yml
 ```
 
-Core design principles:
+This structure intentionally keeps classic protocols under `providers/classic/`. FTP internals can be deep and serious without becoming the top-level architecture.
 
-- The public client should be a facade, not the protocol implementation.
-- FTP, FTPS, and SFTP should implement a shared `RemoteFileAdapter` interface.
-- Protocol-specific details should be isolated behind adapters.
-- FTP command execution should be serialized through a command queue.
-- Data transfers should be represented as explicit transfer jobs with lifecycle state.
-- Parsers should be pure functions/classes with fixture-heavy tests.
-- Logging and metrics should be injected, not hard-coded to console.
-- Errors should be first-class objects with consistent fields.
+## 6. Public API Direction
 
-Potential core interfaces:
+### Primary Client
 
 ```ts
-export interface RemoteFileClient {
-  connect(options?: ConnectOptions): Promise<void>;
-  disconnect(options?: DisconnectOptions): Promise<void>;
-  list(path: string, options?: ListOptions): Promise<RemoteEntry[]>;
-  stat(path: string, options?: StatOptions): Promise<RemoteStat>;
-  exists(path: string, options?: ExistsOptions): Promise<boolean>;
-  downloadFile(
-    remotePath: string,
-    localPath: string,
-    options?: DownloadOptions,
-  ): Promise<TransferResult>;
-  uploadFile(
-    localPath: string,
-    remotePath: string,
-    options?: UploadOptions,
-  ): Promise<TransferResult>;
-  downloadStream(remotePath: string, options?: DownloadOptions): Promise<NodeJS.ReadableStream>;
-  uploadStream(
-    stream: NodeJS.ReadableStream,
-    remotePath: string,
-    options?: UploadOptions,
-  ): Promise<TransferResult>;
-  mkdir(path: string, options?: MkdirOptions): Promise<void>;
-  remove(path: string, options?: RemoveOptions): Promise<void>;
-  rename(sourcePath: string, targetPath: string, options?: RenameOptions): Promise<void>;
+import { createTransferClient } from "zero-transfer";
+
+const client = createTransferClient();
+
+const session = await client.connect({
+  provider: "sftp",
+  host: "files.example.com",
+  username: { env: "SFTP_USER" },
+  password: { env: "SFTP_PASSWORD" },
+  ssh: {
+    knownHosts: { path: "./known_hosts" },
+    strictHostKeyChecking: true,
+  },
+});
+
+const plan = await session.plan.sync({
+  from: { localPath: "./dist" },
+  to: { remotePath: "/releases/app" },
+  deleteExtra: false,
+});
+
+await session.transfers.applyPlan(plan, {
+  concurrency: 4,
+  verify: "size-and-checksum-when-supported",
+  onProgress: (event) => console.info(event),
+});
+
+await session.disconnect();
+```
+
+### Method Families
+
+Connection and profiles:
+
+- `client.connect(profile)`
+- `client.profiles.create(input)`
+- `client.profiles.validate(profile)`
+- `client.profiles.redact(profile)`
+- `client.profiles.test(profile)`
+- `client.profiles.fromEnv(prefix)`
+- `client.profiles.fromOpenSshConfig(path)`
+- `client.profiles.fromKnownHosts(path)`
+- `client.profiles.fromFileZilla(path)`
+- `client.profiles.fromWinScp(path)` where format support is practical
+
+Remote filesystem:
+
+- `session.fs.list(path, options)`
+- `session.fs.stat(path)`
+- `session.fs.exists(path)`
+- `session.fs.walk(path)`
+- `session.fs.glob(pattern)`
+- `session.fs.mkdir(path)`
+- `session.fs.ensureDir(path)`
+- `session.fs.remove(path)`
+- `session.fs.rename(from, to)`
+- `session.fs.copy(from, to)` when provider supports server-side copy
+- `session.fs.chmod(path, mode)` when supported
+- `session.fs.realpath(path)` when supported
+
+Transfers:
+
+- `session.transfers.uploadFile(localPath, remotePath, options)`
+- `session.transfers.downloadFile(remotePath, localPath, options)`
+- `session.transfers.uploadStream(stream, remotePath, options)`
+- `session.transfers.downloadStream(remotePath, options)`
+- `session.transfers.copyBetween(sourceSession, targetSession, options)`
+- `session.transfers.resume(jobId)`
+- `session.transfers.verify(result)`
+- `session.transfers.receipt(result)`
+
+Planning and sync:
+
+- `session.plan.upload(input)`
+- `session.plan.download(input)`
+- `session.plan.sync(input)`
+- `session.plan.delete(input)`
+- `session.plan.compareTrees(input)`
+- `session.plan.apply(plan)`
+- `session.sync.once(input)`
+- `session.sync.continuous(input)`
+- `session.sync.manifest(input)`
+
+Queues:
+
+- `client.queue.create(options)`
+- `queue.add(job)`
+- `queue.pause()`
+- `queue.resume()`
+- `queue.cancel(jobId)`
+- `queue.retry(jobId)`
+- `queue.setConcurrency(count)`
+- `queue.setBandwidthLimit(bytesPerSecond)`
+- `queue.on("progress", handler)`
+
+Diagnostics:
+
+- `client.diagnoseConnection(profile)`
+- `client.probeCapabilities(profile)`
+- `session.diagnostics.traceHandshake()`
+- `session.diagnostics.testPathAccess(path)`
+- `session.diagnostics.explain(error)`
+
+MFT workflows:
+
+- `client.mft.route(input)`
+- `client.mft.schedule(input)`
+- `client.mft.inbox(name)`
+- `client.mft.outbox(name)`
+- `client.mft.auditLog(query)`
+- `client.mft.retention(policy)`
+- `client.mft.webhook(target)`
+
+Provider escape hatches:
+
+- `session.raw()` returns a provider-specific advanced interface.
+- Raw operations must still apply timeout, abort, logging, and redaction rules where possible.
+
+## 7. Capability Model
+
+Every provider must advertise what it can do. The core should never guess.
+
+Example capabilities:
+
+```ts
+interface ProviderCapabilities {
+  provider: string;
+  authentication: string[];
+  list: boolean;
+  stat: boolean;
+  readStream: boolean;
+  writeStream: boolean;
+  serverSideCopy: boolean;
+  serverSideMove: boolean;
+  resumeDownload: boolean;
+  resumeUpload: boolean;
+  checksum: string[];
+  atomicRename: boolean;
+  chmod: boolean;
+  chown: boolean;
+  symlink: boolean;
+  metadata: string[];
+  maxConcurrency?: number;
+  notes?: string[];
 }
 ```
 
-### 4.4 FTP Protocol Correctness
+Capability-driven behavior:
 
-High-risk current issues:
+- If S3 supports multipart upload, use multipart-specific resume.
+- If FTP supports `REST`, enable FTP resume.
+- If a provider cannot preserve modified time, report that in the plan.
+- If server-side copy is unavailable, fall back to stream-through-copy only when the caller allows it.
+- If checksum support is unavailable, use size/time verification or local hash only.
 
-- The control-channel parser does not fully handle multi-line FTP replies.
-- Multiple command listeners can observe the same response line.
-- Transfers write `STOR`, `RETR`, and `LIST` directly to the socket instead of going through a command lifecycle.
-- Transfers resolve when the data socket closes, not when the server returns final `226` or an equivalent completion status.
-- Failed transfers can appear successful if the data socket closes before the control response is checked.
-- The code uses a fixed `setTimeout(..., 10)` as a synchronization hack.
-- `allowPreliminary` has timeout/lifecycle risks and is not used by the transfer commands.
-- No `TYPE I` binary mode is set before binary transfers, which can corrupt binary data on some servers.
-- Only `PASV` is supported. No `EPSV`, IPv6-aware behavior, active mode, or NAT fallback.
-- No `FEAT` capability discovery.
-- No `MLSD`/`MLST`, which are more reliable than `LIST` for structured metadata.
-- No encoding handling for non-UTF-8 server listings.
+## 8. Connection Profiles, Keys, Certs, And Credentials
 
-Required FTP fixes:
+Profiles are a first-class product feature. This is where the SDK can feel better than raw protocol packages.
 
-- Implement a real `FtpResponseParser` that supports single-line and multi-line replies.
-- Add a serialized `FtpCommandQueue` so exactly one command owns each response lifecycle.
-- Model FTP data transfers as `preliminary response -> data stream -> final completion response`.
-- Default to `TYPE I` for binary-safe transfers.
-- Support `EPSV` first, then `PASV` fallback for IPv4 servers.
-- Add optional passive host override or NAT strategy for bad PASV addresses.
-- Use `FEAT` to detect `MLST`, `MLSD`, `UTF8`, `MDTM`, `SIZE`, `REST`, `HASH`, `MFMT`, and other extensions.
-- Use `MLST` for `stat()` where available.
-- Use `MLSD` for `list()` where available.
-- Keep `LIST` as a fallback with robust parsers for Unix, Windows/DOS, symlink, and unusual spacing formats.
-- Never rely on arbitrary delays for protocol correctness.
-
-### 4.5 SFTP And FTPS Support
-
-FTPS:
-
-- Build on Node's `tls` module.
-- Support explicit FTPS (`AUTH TLS`) and implicit FTPS.
-- Support `PBSZ 0` and `PROT P` for protected data connections.
-- Expose TLS options such as CA, cert, key, PFX/P12, passphrase, servername, rejectUnauthorized, min TLS version, max TLS version, ciphers, ALPN where useful, and custom certificate identity checks.
-- Default to secure certificate verification.
-
-WinSCP-grade FTPS profile coverage should include:
-
-- Explicit TLS (`ftpExplicitTls`) and implicit TLS (`ftpImplicitTls`) connection modes.
-- TLS minimum/maximum version controls with secure defaults.
-- CA bundles from inline PEM, Buffer, file path, environment variable, or async provider.
-- Client certificate authentication with PEM `cert` plus `key`, encrypted private-key passphrase, or PFX/P12 bundle plus passphrase.
-- Server certificate validation with SNI/servername, `rejectUnauthorized`, custom `checkServerIdentity`, and optional pinned fingerprint for private infrastructure.
-- Data channel protection controls: default `PROT P`, optional `PROT C` only when explicitly requested, and `PBSZ 0` handling.
-- Passive mode options: EPSV first, PASV fallback, active mode if later supported, passive host override, NAT workaround strategy, IPv4/IPv6 preferences, and configurable data-port timeouts.
-- Encoding, keepalive, reconnect, proxy, and initial remote-directory settings that match real-world GUI client profiles.
-
-SFTP:
-
-- Do not hand-roll SSH/SFTP. Use `ssh2` or a similarly mature protocol implementation under a thin adapter.
-- Support password, private key, agent, passphrase, keyboard-interactive where reasonable.
-- Support host key verification by default or provide a clear secure setup path.
-- Map SFTP status codes into ZeroFTP error classes.
-- Normalize SFTP stats into the same `RemoteStat` shape used by FTP/FTPS.
-
-WinSCP/OpenSSH-grade SFTP profile coverage should include:
-
-- Password authentication.
-- Private key authentication from inline PEM/OpenSSH text, Buffer, file path, environment variable, async provider, or ssh-agent/Pageant-compatible agent socket when available.
-- Encrypted private key passphrases from the same secret-source system used by FTPS.
-- Keyboard-interactive authentication for servers that require MFA-like prompts.
-- Strict host key verification with OpenSSH `known_hosts` parsing, pinned SHA256/MD5 fingerprints, custom verifier callbacks, and documented insecure bypass for throwaway local tests only.
-- SSH algorithm controls for ciphers, KEX, host key algorithms, MACs, compression, and legacy compatibility opt-ins.
-- Bastion and proxy support: SOCKS/HTTP CONNECT proxy, SSH jump host, custom socket factory, and connection tunneling hooks.
-- Keepalive interval/count, ready timeout, compression, initial directory, environment variables if supported, and remote path encoding behavior.
-- Mapping for SFTP permissions, uid/gid, symlinks, realpath, lstat/stat, rename semantics, and atomic rename support.
-
-Credential and certificate loading plan:
-
-- Introduce a reusable `SecretInput` or `CredentialSource` type before adapters grow: raw string, Buffer, `{ path }`, `{ env }`, `{ base64Env }`, `{ command }` if safe, or async provider callback.
-- Never log resolved secrets. Redact both source descriptors and resolved values where appropriate.
-- Resolve file/env/provider secrets at connection time so credentials can rotate without rebuilding clients.
-- Support PEM, OpenSSH private key, PPK only if conversion is reliable or delegated, PFX/P12, CA bundles, OpenSSH `known_hosts`, and fingerprint pinning.
-- Add tests that prove secret values do not appear in logs, errors, events, snapshots, or thrown validation failures.
-
-Potential connection-profile shape, with `ProxyProfile` and `SshAlgorithmPolicy` representing future public contracts:
+### Common Profile Fields
 
 ```ts
-type SecretInput =
+interface ConnectionProfile {
+  id?: string;
+  name?: string;
+  provider: ProviderId;
+  host?: string;
+  port?: number;
+  username?: SecretSource;
+  password?: SecretSource;
+  initialDirectory?: string;
+  timeoutMs?: number;
+  keepAlive?: KeepAlivePolicy;
+  proxy?: ProxyProfile;
+  retry?: RetryPolicy;
+  tags?: string[];
+  security?: SecurityPolicy;
+}
+```
+
+### Secret Sources
+
+```ts
+type SecretSource =
   | string
   | Buffer
   | { path: string }
   | { env: string }
   | { base64Env: string }
+  | { command: string; args?: string[] }
   | (() => Promise<string | Buffer> | string | Buffer);
-
-interface SecureConnectionProfile {
-  protocol: "ftp" | "ftps" | "sftp";
-  host: string;
-  port?: number;
-  username?: SecretInput;
-  password?: SecretInput;
-  initialDirectory?: string;
-  timeoutMs?: number;
-  keepAlive?: { intervalMs: number; count?: number };
-  proxy?: ProxyProfile;
-  tls?: {
-    mode?: "explicit" | "implicit";
-    ca?: SecretInput | SecretInput[];
-    cert?: SecretInput;
-    key?: SecretInput;
-    pfx?: SecretInput;
-    passphrase?: SecretInput;
-    servername?: string;
-    rejectUnauthorized?: boolean;
-    pinnedFingerprint?: string;
-    minVersion?: "TLSv1.2" | "TLSv1.3";
-    maxVersion?: "TLSv1.2" | "TLSv1.3";
-    dataProtection?: "private" | "clear";
-  };
-  ssh?: {
-    privateKey?: SecretInput;
-    passphrase?: SecretInput;
-    agent?: string;
-    keyboardInteractive?: boolean;
-    knownHosts?: SecretInput;
-    pinnedHostKey?: string;
-    strictHostKeyChecking?: boolean;
-    algorithms?: SshAlgorithmPolicy;
-    jumpHost?: SecureConnectionProfile;
-  };
-}
 ```
 
-Dependency stance:
+Rules:
 
-- Zero runtime dependencies is attractive for FTP-only, but SFTP is not realistic to implement safely from scratch.
-- Consider `ssh2` as a runtime dependency or optional peer dependency for SFTP.
-- If optional, fail with a clear setup error when users request `protocol: "sftp"` without the dependency installed.
+- Resolve secrets at connection time.
+- Redact source descriptors and resolved values in logs, errors, traces, docs examples, and tests.
+- Allow async providers so users can integrate vaults, keychains, KMS, CI secrets, and credential brokers.
+- Never include secret values in thrown validation messages.
 
-### 4.6 Metadata, Listing, And Stat Accuracy
+### FTPS Settings
 
-Current issues:
+Support WinSCP-grade FTPS settings:
 
-- `stat()` first tries `SIZE`, then `CWD`, then parent `LIST` substring search.
-- Directory checks mutate the current working directory.
-- Parent `LIST` matching can return false positives when names are substrings of other names.
-- `listDetailed()` uses one Unix-like regex and returns raw `date` strings.
-- No stable modified time, created time, access time, permissions, owner/group, symlink target, unique id, or raw facts shape.
-- File size is not consistently represented as verified bytes from server facts.
+- Explicit TLS and implicit TLS.
+- TLS min/max version.
+- CA bundle from inline PEM, Buffer, file path, env var, or provider callback.
+- Client cert and key as PEM.
+- Encrypted private-key passphrase.
+- PFX/P12 bundle and passphrase.
+- SNI/servername.
+- `rejectUnauthorized` with secure default `true`.
+- Custom server identity check.
+- Pinned certificate fingerprint for private infrastructure.
+- `PBSZ 0` and data channel protection with default `PROT P`.
+- Optional `PROT C` only with explicit insecure opt-in.
+- EPSV/PASV/active-mode strategy, passive host override, NAT workaround strategy, data-port range and timeouts.
+- Proxy support through SOCKS, HTTP CONNECT, or custom socket factory.
+- Encoding, keepalive, initial directory, reconnect behavior, and server compatibility flags.
 
-Target metadata shape:
+### SFTP Settings
+
+Support WinSCP/OpenSSH-grade SFTP settings:
+
+- Password authentication.
+- Private key authentication from inline OpenSSH/PEM text, Buffer, file path, env var, async provider, or agent.
+- Encrypted private-key passphrase.
+- ssh-agent and Pageant-compatible agent sockets where supported by platform and dependency.
+- Keyboard-interactive auth for MFA-like prompts.
+- Strict host key verification by default.
+- OpenSSH `known_hosts` parsing.
+- Pinned SHA256/MD5 host-key fingerprints.
+- Custom host-key verifier callback.
+- Documented insecure bypass for local throwaway tests only.
+- SSH algorithm controls for ciphers, KEX, host key algorithms, MACs, compression, and legacy opt-ins.
+- Jump host and bastion support.
+- SOCKS/HTTP CONNECT proxy and custom socket factory.
+- Keepalive interval/count, ready timeout, compression, initial directory, environment variables if supported, and path encoding behavior.
+- Correct mapping for uid/gid, permissions, symlinks, realpath, lstat/stat, atomic rename, and SFTP status codes.
+
+### HTTP(S), WebDAV, And API Settings
+
+Support web-transfer settings:
+
+- Basic auth, bearer tokens, API keys, custom headers, cookies when explicitly enabled, and signed URLs.
+- mTLS with the same PEM/PFX/P12 certificate sources used by FTPS.
+- Range requests, resumable downloads, upload chunking where supported, ETag verification, `If-Match`, and `If-None-Match` controls.
+- HTTP proxy, SOCKS proxy, custom agent, retry-after handling, rate limit handling, redirect policy, and user-agent controls.
+- WebDAV depth, lock/unlock support where practical, PROPFIND metadata mapping, MKCOL, MOVE, COPY, and server capability discovery.
+
+### Object Storage Settings
+
+Support S3-compatible and object-storage settings:
+
+- Access key and secret key.
+- Session token.
+- Credential provider chain.
+- AWS profile and region.
+- STS assume role and web identity where practical.
+- Custom endpoint.
+- Force path style and virtual-hosted style.
+- Bucket root mapping.
+- Prefix root mapping.
+- Multipart upload settings.
+- Server-side encryption options.
+- ETag, version id, storage class, metadata, tags, and checksum mapping.
+
+### Cloud Drive Settings
+
+Support cloud-drive settings:
+
+- OAuth token provider.
+- Refresh token provider.
+- Service account or app credentials where supported.
+- Shared drive, team drive, tenant, site, drive id, folder id, and namespace roots.
+- Provider pagination, delta tokens, conflict behavior, and rate limit strategy.
+- Capability maps for provider-specific constraints such as filename rules, path length, revision history, and server-side copy limits.
+
+## 9. Transfer Engine
+
+The transfer engine is the core product, not any one protocol parser.
+
+Required transfer behavior:
+
+- Stream-based upload and download.
+- Backpressure via `stream.pipeline()`.
+- AbortSignal support.
+- Timeouts at connection, command/request, idle, and whole-job levels.
+- Progress events with bytes, total when known, rate, ETA, phase, provider, source, destination, and job id.
+- Resume where provider supports it.
+- Multipart upload where provider supports it.
+- Atomic upload where provider supports rename or compose.
+- Verification by size, modified time, checksum, ETag, provider hash, or manifest.
+- Retry with idempotency awareness.
+- Local temp files and safe rename for downloads.
+- Partial-file cleanup policy.
+- Bandwidth limits.
+- Concurrency limits.
+- Receipts for audit and replay.
+
+Transfer result shape:
 
 ```ts
-export interface RemoteEntry {
-  path: string;
-  name: string;
-  type: "file" | "directory" | "symlink" | "unknown";
-  size?: number;
-  modifiedAt?: Date;
-  createdAt?: Date;
-  accessedAt?: Date;
-  permissions?: RemotePermissions;
-  owner?: string;
-  group?: string;
-  symlinkTarget?: string;
-  uniqueId?: string;
-  raw?: unknown;
-}
-
-export interface RemoteStat extends RemoteEntry {
-  exists: true;
-}
-```
-
-Recommended behavior:
-
-- Prefer `MLST`/`MLSD` for FTP/FTPS metadata.
-- Fall back to `SIZE`, `MDTM`, and robust `LIST` parsing.
-- Use SFTP native stat/lstat/readdir for SFTP.
-- Return `PathNotFoundError` for missing paths unless `exists()` is explicitly called.
-- Make time zone handling explicit for legacy `LIST` fallback parsing.
-- Add exact filename matching and path normalization helpers.
-
-### 4.7 Transfer Performance And Reliability
-
-Current issues:
-
-- `uploadFile()` uses `fs.readFileSync()`, so large files are fully loaded into memory.
-- `download()` buffers the full remote file into memory.
-- `downloadStream()` writes without respecting backpressure.
-- No upload stream API.
-- No resume support.
-- No transfer retries.
-- No checksum or size verification.
-- No atomic upload option.
-- No local parent-directory creation for downloads.
-- Global `client.dataSocket` makes concurrency unsafe.
-
-Required transfer design:
-
-- Use Node streams and `stream.pipeline()`.
-- Respect backpressure everywhere.
-- Add `uploadStream()` and `createWriteStream()` style APIs.
-- Add `downloadStream()` and `createReadStream()` style APIs.
-- Add `downloadFile()` and `uploadFile()` as stream wrappers, not buffer wrappers.
-- Support `AbortSignal` and cleanup partial transfers.
-- Support progress events with bytes transferred, total bytes if known, rate, elapsed time, and transfer id.
-- Support resume download/upload where protocol supports it.
-- Support atomic upload via temp remote path plus rename.
-- Support optional verification by size, modified time, and checksum where available.
-- Support retry policies with retryable error classification.
-- Keep FTP commands serialized per connection, but optionally support a connection pool for parallel transfers.
-
-Potential transfer result:
-
-```ts
-export interface TransferResult {
-  sourcePath?: string;
-  destinationPath: string;
+interface TransferReceipt {
+  transferId: string;
+  provider: string;
+  source: TransferEndpoint;
+  destination: TransferEndpoint;
   bytesTransferred: number;
   startedAt: Date;
   completedAt: Date;
@@ -557,469 +643,218 @@ export interface TransferResult {
   averageBytesPerSecond: number;
   resumed: boolean;
   verified: boolean;
-  checksum?: string;
+  verification?: VerificationResult;
+  attempts: TransferAttempt[];
+  warnings: string[];
 }
 ```
 
-### 4.8 Error Handling
+## 10. Provider Priority
 
-Current issues:
+### Alpha Provider Set
 
-- Uses plain `Error` objects.
-- Errors often lose FTP status code, command, path, host, and retryability context.
-- Callers must inspect string messages such as `FTP Error 550`.
-- No distinction between authentication, permission, missing path, timeout, parse, protocol, TLS, SFTP, filesystem, or aborted-operation errors.
+Alpha should prove the architecture with providers that stress different parts of the core:
 
-Target error hierarchy:
+- Memory provider for deterministic contract tests.
+- Local file-system provider for cross-provider copy and test fixtures.
+- FTP provider for classic command/data-channel complexity.
+- FTPS provider for TLS profiles and certificate handling.
+- SFTP provider for SSH keys, known_hosts, permissions, and stat mapping.
 
-- `ZeroFTPError`
-- `ConnectionError`
-- `AuthenticationError`
-- `AuthorizationError`
-- `PathNotFoundError`
-- `PathAlreadyExistsError`
-- `PermissionDeniedError`
-- `TimeoutError`
-- `AbortError`
-- `ProtocolError`
-- `ParseError`
-- `TransferError`
-- `VerificationError`
-- `UnsupportedFeatureError`
-- `ConfigurationError`
+### Beta Provider Set
 
-Required error fields:
+- HTTP(S) provider with signed URLs, range downloads, ETag verification, mTLS, bearer tokens, and basic auth.
+- WebDAV provider for remote filesystem semantics over HTTP.
+- S3-compatible provider for object storage, multipart transfer, and cloud credential patterns.
+
+### Later Provider Set
+
+- Azure Blob.
+- Google Cloud Storage.
+- Dropbox.
+- Google Drive.
+- OneDrive/SharePoint.
+- Backblaze native B2 if S3-compatible mode is insufficient.
+
+## 11. Testing Strategy
+
+Testing must be contract-first.
+
+Test layers:
+
+- Unit tests for pure utilities, parsers, profile validation, redaction, capability mapping, path logic, transfer planning, and error mapping.
+- Provider contract tests that every provider must pass for the capabilities it advertises.
+- Fake server tests for FTP/FTPS/SFTP/HTTP edge cases.
+- Docker integration tests for real FTP, FTPS, SFTP, WebDAV, and S3-compatible storage.
+- Cloud provider tests behind opt-in environment variables only.
+- Security tests proving secrets never leak into logs, errors, traces, receipts, or validation messages.
+- Transfer tests for abort, timeout, retry, resume, backpressure, partial cleanup, atomic upload, and verification.
+
+Coverage gate stays 90%+ for implemented code.
+
+Provider contract example:
 
 ```ts
-interface ZeroFTPErrorDetails {
-  code: string;
-  message: string;
-  cause?: unknown;
-  protocol?: "ftp" | "ftps" | "sftp";
-  host?: string;
-  command?: string;
-  ftpCode?: number;
-  sftpCode?: number;
-  path?: string;
-  retryable: boolean;
-  details?: Record<string, unknown>;
-}
+describeProviderContract("sftp", createSftpProvider, {
+  requires: ["list", "stat", "readStream", "writeStream", "rename"],
+});
 ```
 
-Mapping examples:
+## 12. Documentation Strategy
 
-- FTP 530 -> `AuthenticationError`
-- FTP 550 on stat/delete/read -> `PathNotFoundError` or `PermissionDeniedError` depending on operation and message.
-- FTP 421 -> retryable `ConnectionError`
-- Socket timeout -> retryable or non-retryable `TimeoutError` depending on idempotency.
-- SFTP `NO_SUCH_FILE` -> `PathNotFoundError`
-- SFTP `PERMISSION_DENIED` -> `PermissionDeniedError`
+Docs should sell the broader SDK clearly.
 
-### 4.9 Logging, Debugging, And Observability
+README positioning:
 
-Current issues:
+- `ZeroTransfer` is a TypeScript SDK for secure file transfer across classic protocols, web endpoints, object storage, and cloud drives.
+- FTP/FTPS/SFTP are first-class providers, not the full product boundary.
+- Show one API connecting to SFTP, S3, and WebDAV with the same transfer engine.
 
-- Debug logging is a boolean plus logger function.
-- Logs are string-oriented and not structured.
-- Password masking only covers commands beginning with `PASS `.
-- No correlation ids, no transfer ids, no log levels, no metrics.
+Required docs:
 
-Target behavior:
-
-- Accept a pino/winston/console-compatible logger.
-- Provide a small built-in no-op logger by default.
-- Emit structured logs with level, component, protocol, host, connection id, command id, transfer id, path, duration, bytes, and result.
-- Redact password, private key, passphrase, token, username when configured, and any command payload known to contain secrets.
-- Support namespaces such as `zero-ftp:connection`, `zero-ftp:control`, `zero-ftp:data`, `zero-ftp:transfer`, `zero-ftp:retry`.
-- Provide optional event emission for UI clients.
-- Provide debug snapshots that do not expose secrets.
-
-Useful events:
-
-- `connect:start`
-- `connect:success`
-- `connect:error`
-- `command:start`
-- `command:response`
-- `command:error`
-- `transfer:start`
-- `transfer:progress`
-- `transfer:retry`
-- `transfer:complete`
-- `transfer:error`
-- `disconnect`
-
-### 4.10 Security
-
-Current issues:
-
-- No TLS or SSH support.
-- FTP credentials and paths are interpolated into raw commands.
-- No command-injection guard against CRLF in paths or command arguments.
-- No host key verification because SFTP does not exist yet.
-- No TLS certificate verification options because FTPS does not exist yet.
-- No documented safe logging/redaction policy.
-- No handling for unsafe local file writes in recursive downloads.
-
-Target security requirements:
-
-- Reject FTP command arguments containing CR or LF unless explicitly using a raw advanced API.
-- Redact secrets in logs, events, errors, and debug state.
-- Default FTPS to certificate verification.
-- Default SFTP to explicit host key verification guidance.
-- Support key-based auth for SFTP.
-- Support secure TLS options with modern minimum versions.
-- Add dependency scanning and CodeQL.
-- Protect recursive downloads from local path traversal.
-- Use temporary files for downloads when requested, then rename after success.
-- Avoid leaving partial files unless `keepPartial` is explicitly enabled.
-- Document threat model and security recommendations.
-
-### 4.11 Testing And TDD
-
-Current issues:
-
-- `test-comprehensive.js` is a manual integration script with empty credentials.
-- No assertions framework.
-- No deterministic mock server.
-- No fixture-based parser tests.
-- No coverage measurement.
-- No CI.
-
-Testing target:
-
-- Test-driven rebuild with 90%+ coverage across statements, branches, functions, and lines.
-- Unit tests first for parsers, path utilities, errors, retry policy, and command queue.
-- Fake server tests for FTP command lifecycle and edge cases.
-- Docker integration tests for FTP, FTPS, and SFTP.
-- Contract tests that assert the same high-level API behavior across protocols.
-- Transfer tests for streams, backpressure, abort, resume, retries, atomic upload, and verification.
-- Snapshot fixtures for weird directory listings.
-
-Recommended tooling:
-
-- `typescript`
-- `vitest` or Node's built-in test runner plus coverage tooling
-- `@types/node`
-- `eslint`
-- `prettier`
-- `tsup` or `rollup` for builds
-- `typedoc` for API documentation
-- Docker Compose for integration servers
-- `c8`/V8 coverage if not using Vitest coverage directly
-
-Coverage gates:
-
-```text
-statements: 90
-branches: 90
-functions: 90
-lines: 90
-```
-
-High-value test fixtures:
-
-- Single-line FTP replies.
-- Multi-line FTP replies.
-- Preliminary plus final transfer replies.
-- Failed `RETR` after data connection setup.
-- `PASV` with private/NAT host.
-- `EPSV` success and fallback to `PASV`.
-- Unix `LIST` lines with spaces in filenames.
-- Symlink listings.
-- DOS/Windows listings.
-- `MLSD` facts with size, modify, type, perm, unique.
-- `MDTM` UTC parsing.
-- SFTP stat mapping.
-- Abort during upload and download.
-- Backpressure during download stream.
-- Retry on dropped data socket.
-- Command injection rejection for CRLF paths.
-
-### 4.12 GitHub Workflows And Release Engineering
-
-Needed workflows:
-
-- CI on push and pull request.
-- Release workflow for npmjs only.
-- CodeQL/security workflow.
-- Dependency update workflow through Dependabot or Renovate.
-- Optional nightly integration matrix against real server containers.
-
-Recommended CI checks:
-
-- Install with `npm ci`.
-- Lint.
-- Format check.
-- Type check.
-- Unit tests.
-- Integration tests where containers are available.
-- Coverage threshold.
-- Build.
-- Package dry run.
-- Verify generated types.
-
-Recommended release path:
-
-- Use Changesets or semantic-release.
-- Generate changelog from changesets/conventional commits.
-- Publish to npmjs with provenance.
-- Use GitHub Actions OIDC trusted publishing instead of long-lived npm tokens where possible.
-- Remove GitHub Packages support.
-- Add `npm publish --dry-run` as a pre-release gate.
-
-Example workflow targets:
-
-- `.github/workflows/ci.yml`
-- `.github/workflows/release.yml`
-- `.github/workflows/codeql.yml`
-- `.github/dependabot.yml`
-
-### 4.13 Documentation
-
-Needed docs:
-
-- New README for `zero-ftp`.
-- Installation and quick start for FTP, FTPS, and SFTP.
-- API reference generated from TypeScript/JSDoc.
-- Error-handling guide.
-- Logging/debugging guide.
+- Quick start.
+- Provider matrix.
+- Profiles and secrets guide.
+- FTPS certificates guide.
+- SFTP keys and known_hosts guide.
+- HTTP(S) and signed URL guide.
+- WebDAV guide.
+- S3-compatible storage guide.
+- Cloud drive provider guide.
+- Transfer queues and progress guide.
+- Sync and dry-run guide.
+- Diagnostics guide.
 - Security guide.
-- Retry/resume guide.
-- Migration guide from `molex-ftp`.
-- Examples for full client-building workflows.
+- MFT workflows guide.
+- Migration from `molex-ftp` / `zero-ftp` if renamed.
+- Generated API docs from JSDoc/TypeDoc.
 
-Example docs/examples:
+Example files:
 
-- `examples/basic-ftp.ts`
-- `examples/ftps-explicit.ts`
 - `examples/sftp-private-key.ts`
-- `examples/progress-events.ts`
-- `examples/recursive-sync.ts`
-- `examples/resume-download.ts`
-- `examples/build-file-browser.ts`
-- `examples/structured-logging.ts`
+- `examples/ftps-client-certificate.ts`
+- `examples/s3-compatible-upload.ts`
+- `examples/webdav-sync.ts`
+- `examples/signed-url-download.ts`
+- `examples/transfer-queue.ts`
+- `examples/dry-run-sync.ts`
+- `examples/mft-route.ts`
+- `examples/profile-from-env.ts`
+- `examples/diagnose-connection.ts`
 
-## 5. Proposed Feature Set
+## 13. New Phase Plan
 
-### MVP For First ZeroFTP Alpha
+### Phase 0B: Hard Rename And Contract Reframe
 
-- TypeScript rewrite.
-- FTP adapter with correct command queue and transfer lifecycle.
-- FTPS explicit support if TLS architecture is ready.
-- Stable error classes.
-- Structured logger injection and secret redaction.
-- `connect`, `disconnect`, `list`, `stat`, `exists`, `mkdir`, `ensureDir`, `removeFile`, `removeDir`, `rename`.
-- `uploadFile`, `uploadStream`, `downloadFile`, `downloadStream`, `download`.
-- Progress events/callbacks.
-- AbortSignal support.
-- `MLSD`/`MLST` support with `LIST` fallback.
-- Unit tests and fake-server tests with 90%+ coverage for implemented code.
-- CI, typecheck, lint, build, coverage.
+- Decide whether to rename to `zero-transfer` before public alpha.
+- If yes, update package name, repo URLs, README, logo, public class names, errors, docs, and TypeDoc output from ZeroFTP to ZeroTransfer.
+- Rename `ZeroFTP` facade to `TransferClient` or `ZeroTransfer`.
+- Replace `RemoteFileAdapter` with provider-neutral `TransferProvider` and `RemoteFileSystem` contracts.
+- Replace `ConnectionProfile.protocol` with `ConnectionProfile.provider`.
+- Keep classic protocol parser code under `providers/classic/ftp` instead of top-level protocol architecture.
 
-### Beta Feature Set
+### Phase 1B: Provider-Neutral Foundation
 
-- SFTP adapter using `ssh2`.
-- FTPS implicit support.
-- Resume download/upload.
-- Retry policies.
-- Atomic upload.
-- Recursive upload/download.
-- `walk` and `glob`.
-- Transfer verification by size and optional checksum.
-- Connection profiles.
-- More integration server coverage.
+- Build `ProviderRegistry`.
+- Build `CapabilitySet`.
+- Build `SecretSource` and secret resolution.
+- Build profile validation and redaction.
+- Build provider contract test harness.
+- Add memory and local providers for deterministic tests.
+- Update README to sell the broad product direction.
 
-### 1.0 Feature Set
+### Phase 2: Transfer Core, Not FTP Core
 
-- Stable public API.
-- Full FTP/FTPS/SFTP parity for common operations.
-- Sync/mirror workflows.
-- Connection pooling for parallel transfers.
-- Typed event emitter support.
-- Typedoc API site.
-- Security guide and migration guide.
-- Release automation with npm provenance.
+- Build `TransferEngine`.
+- Build `TransferJob` and `TransferQueue`.
+- Build `TransferPlan` and dry-run planning primitives.
+- Build progress events, receipts, retry policy, abort handling, timeout handling, and verification hooks.
+- Keep provider operations minimal until the engine contract is stable.
 
-### Longer-Term Differentiators
+### Phase 3: Classic Provider Pack
 
-- Dry-run sync planning with detailed diff output.
-- Bandwidth throttling.
-- Transfer queue with pause/resume/cancel.
-- Local cache/index for huge remote trees.
-- Pluggable credential providers.
-- Browser-style file browser helper models.
-- Checksum adapters for server-specific FTP extensions.
-- OpenTelemetry spans/metrics integration.
-- WebDAV or cloud-storage adapters only if the project intentionally expands beyond FTP/SFTP.
-- HTTP(S) download/upload adapters for signed URLs, basic auth, bearer tokens, mTLS, resumable ranges, and ETag verification.
-- S3-compatible object storage adapter covering AWS S3, MinIO, Cloudflare R2, Backblaze B2 S3, Wasabi, DigitalOcean Spaces, and custom endpoints.
-- Provider adapters for Dropbox, Google Drive, OneDrive/SharePoint, Azure Blob, and Google Cloud Storage if the project becomes a broader file-transfer SDK.
-- Managed file transfer primitives: scheduled jobs, routing rules, inbox/outbox folders, audit trails, immutable transfer receipts, retention cleanup, approval gates, webhooks, and admin UI building blocks.
-- Importers for developer convenience: OpenSSH config, known_hosts, FileZilla sites, and possibly WinSCP sessions where practical and legally/documentationally safe.
+- Implement FTP provider using the existing parser-first work.
+- Implement FTPS provider with full TLS profile support.
+- Implement SFTP provider with SSH key, known_hosts, and permission mapping support.
+- Add classic provider contract tests and Docker integration servers.
+- Make WinSCP/FileZilla/OpenSSH profile importers optional and well-tested.
 
-## 6. Proposed Phased Rebuild
+### Phase 4: Sync, Planning, And UI Helpers
 
-### Phase 0: Rename And Project Baseline
+- Implement tree walking and directory diffing.
+- Implement sync plans and conflict policies.
+- Implement manifest read/write/compare.
+- Add browser helper models for file-manager UIs.
+- Add atomic deploy workflows.
 
-- Rename package to `zero-ftp`.
-- Update README badges, install command, imports, repository URLs, bug URL, homepage.
-- Remove GitHub Packages assumptions and keep npmjs publish config only.
-- Decide Node support floor.
-- Add TypeScript build pipeline.
-- Add lint/format/typecheck/test scripts.
-- Add package `exports`, `types`, `files`, and npm provenance config.
-- Keep old code untouched until tests are ready, or move it under `legacy/` if useful for reference.
+### Phase 5: Web And Object Storage Providers
 
-### Phase 1: Test Harness Before Core Rewrite
+- Add HTTP(S) provider.
+- Add WebDAV provider.
+- Add S3-compatible provider.
+- Add multipart/resume support for object storage.
+- Add provider-specific capability maps.
 
-- Add test framework and coverage gates.
-- Add parser fixture tests.
-- Add fake FTP server harness for deterministic protocol tests.
-- Convert current `test-comprehensive.js` into a real integration test or example.
-- Add Docker Compose integration servers for FTP, FTPS, and SFTP.
-- Add CI running unit tests on every push/PR.
+### Phase 6: Cloud Drive Providers
 
-### Phase 2: FTP Core Correctness
+- Add Dropbox provider.
+- Add Google Drive provider.
+- Add OneDrive/SharePoint provider.
+- Add Azure Blob and Google Cloud Storage providers if not already covered by object-storage abstractions.
+- Add OAuth/token refresh documentation and opt-in integration tests.
 
-- Build `FtpResponseParser`.
-- Build `FtpCommandQueue`.
-- Build `FtpControlConnection`.
-- Build `FtpDataConnection`.
-- Implement `FEAT`, `TYPE I`, `EPSV`, `PASV`, `PWD`, `CWD`, `NOOP`, `QUIT`.
-- Implement transfer lifecycle with preliminary/final response handling.
-- Add abort and timeout handling.
-- Add structured errors.
+### Phase 7: MFT Layer
 
-### Phase 3: Metadata And Filesystem Operations
+- Add route definitions.
+- Add schedules.
+- Add inbox/outbox conventions.
+- Add retention policies.
+- Add audit logs and immutable receipts.
+- Add webhooks.
+- Add approval gates.
 
-- Implement `MLST`/`MLSD` parser.
-- Implement robust `LIST` fallback parser.
-- Implement `stat`, `exists`, `list`, `walk`, `mkdir`, `ensureDir`, `removeFile`, `removeDir`, `rename`.
-- Avoid mutating working directory for path checks.
-- Add exact metadata tests.
+## 14. Alpha Definition Of Done
 
-### Phase 4: Transfer Service
+Alpha should not claim every provider. It should prove the platform shape.
 
-- Implement stream-based upload/download.
-- Add file wrappers using `pipeline()`.
-- Add progress reporting.
-- Add atomic upload.
-- Add local parent-directory handling.
-- Add transfer verification.
-- Add resume support where FTP server supports `REST`.
-- Add retry policy and retryable error classification.
+Alpha is ready when:
 
-### Phase 5: FTPS And SFTP Adapters
+- Naming is final enough to publish.
+- Public API is provider-neutral.
+- Memory and local providers pass provider contracts.
+- At least one classic remote provider passes provider contracts.
+- Secrets, certs, keys, and profile redaction are tested.
+- Transfer engine supports streaming, abort, progress, retry hooks, and receipts.
+- Docs explain the provider architecture and roadmap honestly.
+- CI runs lint, format check, typecheck, tests, coverage, build, docs, and package dry-run.
+- Package publishes only to npmjs with provenance.
 
-- Add explicit FTPS.
-- Add implicit FTPS.
-- Add protected data connections.
-- Add TLS configuration tests for CA, client cert/key, PFX/P12, passphrases, SNI, pinned fingerprint, and insecure-mode warnings.
-- Add SFTP adapter with `ssh2`.
-- Add SFTP tests for password, private key, passphrase, known_hosts, pinned host key, keyboard-interactive hooks, agent settings, and algorithm options where the test server supports them.
-- Normalize SFTP errors and metadata.
-- Add protocol contract tests across FTP, FTPS, and SFTP.
+## 15. 1.0 Definition Of Done
 
-### Phase 6: QOL Workflows And 1.0 Polish
+1.0 is ready when:
 
-- Add recursive upload/download.
-- Add sync/mirror planning and execution.
-- Add transfer queue and optional connection pooling.
-- Add examples and migration docs.
-- Add CodeQL, Dependabot/Renovate, release workflow.
-- Publish alpha/beta versions before 1.0.
+- FTP, FTPS, and SFTP providers are production-ready.
+- FTPS supports PEM, key, PFX/P12, CA, SNI, pinned fingerprint, and secure defaults.
+- SFTP supports password, private key, passphrase, known_hosts, pinned host key, agent where possible, keyboard-interactive hooks, and strict host verification.
+- HTTP(S), WebDAV, and S3-compatible providers are stable or explicitly beta-scoped.
+- Transfer queue supports pause, resume, cancel, retry, concurrency, progress, bandwidth limits, and receipts.
+- Sync planning supports dry run, conflict policy, deletion previews, and manifests.
+- Provider capability matrix is documented.
+- Security guide covers secret handling, cert validation, host keys, OAuth/token storage, insecure opt-ins, logs, and local path safety.
+- Contract tests protect provider consistency.
+- Integration tests cover real classic protocol servers and at least one object-storage-compatible server.
+- API docs are generated and clean.
+- README sells ZeroTransfer as a modern file transfer SDK, not an FTP wrapper.
 
-### Phase 7: Optional Broader Transfer SDK Expansion
+## 16. Immediate Next Actions
 
-- Decide whether `zero-ftp` remains a focused FTP/FTPS/SFTP package or becomes part of a broader `ZeroTransfer`/`ZeroMFT` family.
-- Extract protocol-neutral core packages only after FTP/FTPS/SFTP prove the adapter contracts.
-- Add HTTP(S), WebDAV, and S3-compatible adapters before consumer cloud APIs because they map more naturally to the existing transfer, metadata, and retry model.
-- Add Dropbox, Google Drive, OneDrive/SharePoint, Azure Blob, and Google Cloud Storage only with explicit provider capability maps, pagination models, OAuth/token refresh support, and contract tests.
-- Add web UI helper models and MFT workflow primitives after the SDK core can produce stable plans, jobs, audit records, and transfer receipts.
-
-## 7. Suggested Public API Names
-
-Prefer:
-
-- `ZeroFTP`
-- `ZeroFTP.connect()` static helper
-- `createClient()` factory for users who prefer functions
-- `disconnect()` over `close()` as the primary public name, while `close()` can be an alias
-- `removeFile()` and `removeDir()` over `delete()`
-- `uploadFile()` for local path to remote path
-- `uploadStream()` for stream to remote path
-- `upload()` for Buffer/string payloads only
-- `downloadFile()` for remote path to local path
-- `downloadStream()` for remote path to writable stream or returning readable stream, but avoid ambiguous overloads
-- `stat()` for metadata or throw if missing
-- `exists()` for boolean existence checks
-- `list()` for structured entries, not raw listing strings
-- `rawList()` for raw protocol listing if needed
-- `execute()` or `raw.ftpCommand()` for raw FTP commands
-
-Avoid:
-
-- Bare booleans such as `upload(data, path, true)`.
-- Mutating current directories inside metadata helpers.
-- Stringly typed error handling.
-- Public methods that expose FTP-only assumptions when the API is meant to also support SFTP.
-
-## 8. Concrete Bug And Risk Backlog From Current Code
-
-Priority 0:
-
-- Data transfers do not wait for final server completion responses.
-- Binary transfers may be unsafe because `TYPE I` is not enforced.
-- Control response handling is not robust enough for multi-line replies.
-- `uploadFile()` buffers whole files into memory.
-- `downloadStream()` ignores backpressure.
-- Paths are interpolated into FTP commands without CRLF rejection.
-
-Priority 1:
-
-- `stat()` can return false positives and mutates remote cwd.
-- `listDetailed()` is not reliable across server formats.
-- `ensureDir()` guesses file paths by extension, which fails for extensionless files and dotted directories.
-- No operation-level abort support.
-- No structured errors.
-- No automated tests.
-
-Priority 2:
-
-- No FTPS/SFTP.
-- No retries/resume/verification.
-- No CI/release automation.
-- No TypeScript support.
-- No package export map.
-- No docs beyond README.
-
-## 9. Definition Of Done For ZeroFTP 1.0
-
-- Package publishes as `zero-ftp` to npmjs only.
-- TypeScript source with generated declarations.
-- ESM and CJS consumers both work.
-- FTP, FTPS, and SFTP adapters pass shared contract tests.
-- 90%+ coverage gates pass in CI.
-- All high-risk FTP protocol bugs listed above are fixed by design.
-- Stream transfers respect backpressure.
-- All network operations accept AbortSignal and timeout options.
-- Errors are typed, documented, and include actionable context.
-- Logs are structured and redact secrets by default.
-- Metadata from `stat()` and `list()` is accurate and normalized.
-- Release workflow publishes to npmjs with provenance.
-- README, examples, API docs, migration guide, and security guide exist.
-
-## 10. Immediate Next Steps
-
-1. Create a rename/setup branch for `zero-ftp`.
-2. Update package metadata and README branding.
-3. Add TypeScript, build, lint, test, and coverage tooling.
-4. Add CI workflow before rewriting behavior.
-5. Write parser and command-queue tests first.
-6. Freeze the pre-Phase-2 profile/auth/TLS/SSH option model enough that FTP, FTPS, and SFTP can share it without redesigning later.
-7. Build the FTP core around a real command queue and transfer lifecycle.
-8. Port high-level methods only after the core behavior is tested.
-9. Add FTPS and SFTP adapters once the shared adapter contract is stable.
-10. Decide whether broader `ZeroTransfer`/`ZeroMFT` branding should happen before public alpha or after the focused FTP/FTPS/SFTP core proves itself.
-11. Publish `0.1.0-alpha.0` to npmjs for early testing.
+1. Decide final brand: `zero-transfer`/`ZeroTransfer` unless a stronger name wins quickly.
+2. If broad direction is accepted, rename package metadata and README before writing Phase 2 code.
+3. Rename public facade from `ZeroFTP` to `ZeroTransfer` or `TransferClient`.
+4. Refactor `src/` toward the provider-neutral structure.
+5. Add memory and local providers so contract tests do not depend on FTP first.
+6. Add `SecretSource`, profile validation, and redaction before adding more auth-heavy providers.
+7. Build the transfer engine and provider contracts before deep FTP/FTPS/SFTP implementation.
+8. Move FTP parser work under `providers/classic/ftp` and continue it as one provider implementation.
+9. Rework README and logo language around ZeroTransfer if the rename is chosen.
+10. Only then continue into the next implementation phase.
