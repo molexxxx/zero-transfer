@@ -51,6 +51,7 @@ const FTP_PROVIDER_ID = "ftp";
 const FTPS_PROVIDER_ID = "ftps";
 const DEFAULT_FTP_PORT = 21;
 const DEFAULT_FTPS_IMPLICIT_PORT = 990;
+const DEFAULT_PASSIVE_HOST_STRATEGY: FtpPassiveHostStrategy = "control";
 
 const FTP_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTP_PROVIDER_ID, [
   "Classic FTP provider foundation with MLST/MLSD metadata, EPSV/PASV passive mode, timeout-guarded operations, and RETR/STOR streaming support",
@@ -101,6 +102,8 @@ interface ClassicFtpProviderConfig {
   capabilities: CapabilitySet;
   /** Control-channel port used when the profile omits one. */
   defaultPort: number;
+  /** Host selection strategy used for PASV data endpoints. */
+  passiveHostStrategy: FtpPassiveHostStrategy;
   /** Optional FTPS negotiation settings. Omitted for plain FTP. */
   security?: FtpsSecurityConfig;
 }
@@ -129,10 +132,21 @@ export type FtpsMode = "explicit" | "implicit";
  */
 export type FtpsDataProtection = "clear" | "private";
 
+/**
+ * Host selection strategy for PASV data endpoints.
+ *
+ * `control` connects data sockets back to the control connection host, which avoids
+ * broken private or unroutable PASV addresses from NATed servers. `advertised` uses
+ * the host supplied by the server's PASV response for deployments that require it.
+ */
+export type FtpPassiveHostStrategy = "advertised" | "control";
+
 /** Options used to create the classic FTP provider factory. */
 export interface FtpProviderOptions {
   /** Default control port used when a connection profile omits `port`. */
   defaultPort?: number;
+  /** PASV host selection strategy. Defaults to `control` for NAT-friendly compatibility. */
+  passiveHostStrategy?: FtpPassiveHostStrategy;
 }
 
 /** Options used to create the FTPS provider factory. */
@@ -157,6 +171,7 @@ export function createFtpProviderFactory(options: FtpProviderOptions = {}): Prov
       new FtpProvider({
         capabilities: FTP_PROVIDER_CAPABILITIES,
         defaultPort: options.defaultPort ?? DEFAULT_FTP_PORT,
+        passiveHostStrategy: options.passiveHostStrategy ?? DEFAULT_PASSIVE_HOST_STRATEGY,
         providerId: FTP_PROVIDER_ID,
       }),
   };
@@ -183,6 +198,7 @@ export function createFtpsProviderFactory(options: FtpsProviderOptions = {}): Pr
       new FtpProvider({
         capabilities: FTPS_PROVIDER_CAPABILITIES,
         defaultPort,
+        passiveHostStrategy: options.passiveHostStrategy ?? DEFAULT_PASSIVE_HOST_STRATEGY,
         providerId: FTPS_PROVIDER_ID,
         security: {
           dataProtection: options.dataProtection ?? "private",
@@ -220,6 +236,7 @@ class FtpProvider implements TransferProvider {
     const port = resolvedProfile.port ?? this.config.defaultPort;
     const connectOptions: FtpConnectOptions = {
       host: resolvedProfile.host,
+      passiveHostStrategy: this.config.passiveHostStrategy,
       port,
       providerId: this.config.providerId,
     };
@@ -412,6 +429,8 @@ class FtpFileSystem implements RemoteFileSystem {
 interface FtpConnectOptions {
   /** Remote control endpoint host. */
   host: string;
+  /** Host selection strategy used for PASV data endpoints. */
+  passiveHostStrategy: FtpPassiveHostStrategy;
   /** Remote control endpoint port. */
   port: number;
   /** Provider id used in errors and session metadata. */
@@ -478,6 +497,7 @@ class FtpControlConnection {
    *
    * @param socket - Plain TCP or TLS socket connected to the server.
    * @param host - Host used for diagnostics and passive endpoint defaults.
+   * @param passiveHostStrategy - Host selection strategy for PASV data endpoints.
    * @param providerId - Provider id used for errors and sessions.
    * @param timeoutMs - Optional timeout applied to control reads.
    * @param security - Optional FTPS settings, omitted for plain FTP.
@@ -485,6 +505,7 @@ class FtpControlConnection {
   private constructor(
     socket: Socket,
     private readonly host: string,
+    private readonly passiveHostStrategy: FtpPassiveHostStrategy,
     readonly providerId: ClassicProviderId,
     private readonly timeoutMs: number | undefined,
     private readonly security: FtpConnectSecurity | undefined,
@@ -496,6 +517,11 @@ class FtpControlConnection {
   /** Host used for EPSV passive data connections. */
   get passiveHost(): string {
     return this.host;
+  }
+
+  /** Host selection strategy used for PASV data endpoints. */
+  get passiveEndpointHostStrategy(): FtpPassiveHostStrategy {
+    return this.passiveHostStrategy;
   }
 
   /** Timeout inherited by command waits and passive data operations. */
@@ -519,6 +545,7 @@ class FtpControlConnection {
     const control = new FtpControlConnection(
       socket,
       options.host,
+      options.passiveHostStrategy,
       options.providerId,
       options.timeoutMs,
       options.security,
@@ -675,6 +702,7 @@ class FtpControlConnection {
 
     const connectOptions: FtpConnectOptions = {
       host: this.host,
+      passiveHostStrategy: this.passiveHostStrategy,
       port: 0,
       providerId: this.providerId,
     };
@@ -898,7 +926,12 @@ async function openPassiveEndpoint(
 
   const passiveResponse = await control.sendCommand("PASV");
   assertPathCommandSucceeded(passiveResponse, "PASV", path, control.providerId);
-  return parsePassiveEndpoint(passiveResponse, control.providerId);
+  return parsePassiveEndpoint(
+    passiveResponse,
+    control.passiveHost,
+    control.passiveEndpointHostStrategy,
+    control.providerId,
+  );
 }
 
 async function writePassiveDataCommand(
@@ -1262,11 +1295,15 @@ function cloneVerification(verification: TransferVerificationResult): TransferVe
  * Parses a PASV response into a concrete data endpoint.
  *
  * @param response - Successful PASV response from the server.
+ * @param controlHost - Host used by the control connection.
+ * @param hostStrategy - Strategy used to choose the passive data endpoint host.
  * @param providerId - Provider id used in protocol diagnostics.
  * @returns Host and port for the passive data socket.
  */
 function parsePassiveEndpoint(
   response: FtpResponse,
+  controlHost: string,
+  hostStrategy: FtpPassiveHostStrategy,
   providerId: ClassicProviderId,
 ): PassiveEndpoint {
   const endpointMatch = /(\d+),(\d+),(\d+),(\d+),(\d+),(\d+)/.exec(response.message);
@@ -1292,8 +1329,10 @@ function parsePassiveEndpoint(
     );
   }
 
+  const advertisedHost = `${parts[0]}.${parts[1]}.${parts[2]}.${parts[3]}`;
+
   return {
-    host: `${parts[0]}.${parts[1]}.${parts[2]}.${parts[3]}`,
+    host: hostStrategy === "advertised" ? advertisedHost : controlHost,
     port: parts[4]! * 256 + parts[5]!,
   };
 }

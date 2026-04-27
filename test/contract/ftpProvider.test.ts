@@ -161,7 +161,7 @@ describe("createFtpProviderFactory", () => {
     }
   });
 
-  it("falls back from EPSV to loosely formatted PASV responses", async () => {
+  it("falls back from EPSV to PASV and ignores unroutable advertised data hosts", async () => {
     await server.stop();
     server = new FakeFtpServer({
       extendedPassive: false,
@@ -175,7 +175,7 @@ describe("createFtpProviderFactory", () => {
       passiveResponse(port) {
         const highByte = Math.floor(port / 256);
         const lowByte = port % 256;
-        return `227 Passive address: 127,0,0,1,${highByte},${lowByte}\r\n`;
+        return `227 Passive address: 192,0,2,1,${highByte},${lowByte}\r\n`;
       },
       responder(command) {
         if (command === "USER tester") return "331 Password required\r\n";

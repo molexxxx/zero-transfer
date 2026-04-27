@@ -8,6 +8,7 @@
  */
 export {
   createFtpsProviderFactory,
+  type FtpPassiveHostStrategy,
   type FtpsDataProtection,
   type FtpsMode,
   type FtpsProviderOptions,
