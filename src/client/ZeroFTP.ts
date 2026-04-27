@@ -1,5 +1,5 @@
 /**
- * Public client facade for the ZeroFTP SDK.
+ * Compatibility client facade for the ZeroTransfer SDK foundation.
  *
  * This module intentionally keeps the top-level API small while protocol-specific
  * behavior is delegated to injected adapters. The facade owns lifecycle state,
@@ -48,12 +48,15 @@ export interface ZeroFTPCapabilities {
 }
 
 /**
- * High-level SDK entry point for FTP, FTPS, and SFTP workflows.
+ * Compatibility SDK entry point for FTP, FTPS, and SFTP workflows.
  *
  * @remarks
- * ZeroFTP extends Node.js EventEmitter so applications can observe lifecycle events
- * while still using promise-based APIs for operations. The facade is deliberately
- * protocol-neutral; concrete behavior lives behind {@link RemoteFileAdapter}.
+ * ZeroFTP extends Node.js EventEmitter so applications can observe lifecycle
+ * events while still using promise-based APIs for operations. The facade is
+ * deliberately protocol-neutral; concrete behavior lives behind
+ * {@link RemoteFileAdapter}.
+ *
+ * @deprecated Import `ZeroTransfer` from `@zero-transfer/sdk` for new code.
  */
 export class ZeroFTP extends EventEmitter {
   /** Protocol selected for this client instance. */

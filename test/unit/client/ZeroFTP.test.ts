@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { ZeroFTP, type RemoteFileAdapter, UnsupportedFeatureError } from "../../../src/index";
+import {
+  ZeroFTP,
+  ZeroTransfer,
+  type RemoteFileAdapter,
+  UnsupportedFeatureError,
+} from "../../../src/index";
 
 function createAdapter(): {
   adapter: RemoteFileAdapter;
@@ -36,6 +41,14 @@ function createAdapter(): {
 }
 
 describe("ZeroFTP", () => {
+  it("exports ZeroTransfer as the preferred facade", () => {
+    const client = ZeroTransfer.create();
+
+    expect(ZeroTransfer).toBe(ZeroFTP);
+    expect(client).toBeInstanceOf(ZeroFTP);
+    expect(client.getCapabilities()).toEqual({ adapterReady: false, protocol: "ftp" });
+  });
+
   it("exposes default capabilities before adapters are implemented", async () => {
     const client = ZeroFTP.create();
 

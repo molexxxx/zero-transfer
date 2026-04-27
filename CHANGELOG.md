@@ -4,6 +4,8 @@
 
 ### Changed
 
+- Prepared the package to publish under the `zero-transfer` npm organization as `@zero-transfer/sdk`.
+- Updated repository metadata and documentation for the `tonywied17/zero-transfer` GitHub repository.
 - Renamed package foundation from `molex-ftp` to `zero-ftp`.
 - Switched the package entry point to the new TypeScript `src/` rebuild output.
 - Removed the old CommonJS FTP implementation after the TypeScript foundation became the package surface.
@@ -14,7 +16,7 @@
 - TypeScript, build, lint, format, typecheck, test, coverage, and package dry-run scripts.
 - Initial parser-first test harness with 90% coverage gates.
 - Verbose JSDoc comments for the TypeScript API foundation.
-- Animated ZeroFTP SVG logo for the repository README.
+- Animated ZeroTransfer SVG logo for the repository README.
 - npmjs-only publishing metadata with provenance enabled.
 - CI, release, CodeQL, Dependabot, and integration-server scaffolding.
 

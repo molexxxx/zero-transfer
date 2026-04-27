@@ -2,11 +2,11 @@
 
 Date: 2026-04-27
 
-Current repo/package state: `zero-ftp` / `ZeroFTP` after the Phase 0 and Phase 1 foundation work.
+Current repo/package state: `@zero-transfer/sdk` / `ZeroTransfer` after the Phase 0 and Phase 1 foundation work. `ZeroFTP` remains available as a temporary compatibility export while the provider-neutral API is established.
 
 New product direction: a protocol-neutral, TypeScript-first file transfer SDK. FTP, FTPS, and SFTP are important provider adapters, not the identity of the whole project.
 
-Working brand recommendation: `ZeroTransfer` with npm package `zero-transfer`, pending deeper npm, GitHub, domain, and trademark checks. If that name is not viable, keep the architecture and choose another broad file-transfer name before public alpha.
+Working brand: `ZeroTransfer` with npm organization scope `@zero-transfer` and first package `@zero-transfer/sdk`, pending deeper domain and trademark checks. If that name becomes nonviable, keep the architecture and choose another broad file-transfer name before public alpha.
 
 This document replaces the prior FTP-first remake plan. Do not start the next implementation phase until the naming and public API direction below are accepted or deliberately narrowed.
 
@@ -25,7 +25,7 @@ The new plan is:
 Recommendation:
 
 - Rename before public alpha if we are serious about this broader scope.
-- Preferred package/repo: `zero-transfer`.
+- Preferred package/repo: `@zero-transfer/sdk` in the `tonywied17/zero-transfer` repository.
 - Preferred public class/factory: `ZeroTransfer` and `createTransferClient()`.
 - Keep `zero-ftp` only if we intentionally decide this repo is a focused classic-protocol adapter package.
 
@@ -99,13 +99,13 @@ Provider families implement concrete systems behind the core contracts:
 
 ### Recommended Path
 
-Start as one package until the contracts prove themselves:
+Start as one scoped package until the contracts prove themselves:
 
 ```text
-zero-transfer
+@zero-transfer/sdk
 ```
 
-The first package can include core contracts plus classic providers. Split later only when package size, optional dependencies, or provider cadence justify it.
+The `zero-transfer` npm organization has been created. The first package claims the scope with a batteries-included SDK that can include core contracts plus classic providers. Split later only when package size, optional dependencies, or provider cadence justify it.
 
 ### Future Monorepo Shape
 
@@ -126,10 +126,10 @@ If the SDK expands, use scoped packages:
 @zero-transfer/mft
 ```
 
-Keep the top-level package as a batteries-included distribution only if users prefer one install:
+Keep `@zero-transfer/sdk` as the batteries-included distribution only if users prefer one install:
 
 ```text
-zero-transfer
+@zero-transfer/sdk
 ```
 
 ### Dependency Policy

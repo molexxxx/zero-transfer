@@ -1,7 +1,7 @@
 {
-  "name": "zero-ftp",
+  "name": "@zero-transfer/sdk",
   "version": "0.1.0-alpha.0",
-  "description": "Modern TypeScript FTP, FTPS, and SFTP SDK for Node.js",
+  "description": "Protocol-neutral TypeScript file transfer SDK for Node.js",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -38,10 +38,14 @@
     "ftp",
     "ftps",
     "sftp",
+    "zero-transfer",
     "client",
     "sdk",
     "typescript",
     "file-transfer",
+    "mft",
+    "webdav",
+    "s3",
     "upload",
     "download",
     "streams"
@@ -50,12 +54,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tonywied17/zero-ftp.git"
+    "url": "git+https://github.com/tonywied17/zero-transfer.git"
   },
   "bugs": {
-    "url": "https://github.com/tonywied17/zero-ftp/issues"
+    "url": "https://github.com/tonywied17/zero-transfer/issues"
   },
-  "homepage": "https://github.com/tonywied17/zero-ftp#readme",
+  "homepage": "https://github.com/tonywied17/zero-transfer#readme",
   "engines": {
     "node": ">=20.0.0"
   },

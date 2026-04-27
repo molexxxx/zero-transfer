@@ -1,13 +1,22 @@
 /**
- * ZeroFTP public API surface.
+ * ZeroTransfer public API surface.
  *
- * This barrel exports the alpha foundation: the client facade, shared public types,
- * typed errors, parser utilities, logging helpers, transfer helpers, and path safety
- * utilities used by future protocol adapters.
+ * This barrel exports the alpha foundation: the transfer facade, shared public
+ * types, typed errors, parser utilities, logging helpers, transfer helpers, and
+ * path safety utilities used by future protocol adapters.
  *
- * @module zero-ftp
+ * @module @zero-transfer/sdk
  */
+import { ZeroFTP } from "./client/ZeroFTP";
+import type { ZeroFTPCapabilities, ZeroFTPOptions } from "./client/ZeroFTP";
+
 export { ZeroFTP, type ZeroFTPCapabilities, type ZeroFTPOptions } from "./client/ZeroFTP";
+/** Preferred high-level SDK facade for new ZeroTransfer code. */
+export const ZeroTransfer = ZeroFTP;
+/** Preferred options type for the ZeroTransfer facade. */
+export type ZeroTransferOptions = ZeroFTPOptions;
+/** Preferred capability snapshot type for the ZeroTransfer facade. */
+export type ZeroTransferCapabilities = ZeroFTPCapabilities;
 export { errorFromFtpReply, type FtpReplyErrorInput } from "./errors/errorFactory";
 export {
   AbortError,
