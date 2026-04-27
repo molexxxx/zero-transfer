@@ -776,6 +776,8 @@ Status: done enough to start the next implementation phase.
 
 ### Phase 1B: Provider-Neutral Foundation
 
+Status: started. The first implementation slice adds provider ids, capability sets, provider registry, provider contracts, `TransferClient`, `createTransferClient()`, exported provider-neutral types, and `ConnectionProfile.provider` with `protocol` compatibility. Real network providers, profile secret handling, provider contract harnesses, and memory/local providers remain future Phase 1B work.
+
 - Add `src/core/ProviderId.ts`, `CapabilitySet.ts`, `ProviderRegistry.ts`, `TransferSession.ts`, `TransferClient.ts`, and `createTransferClient.ts`.
 - Add provider contracts under `src/providers/Provider.ts`, `ProviderCapabilities.ts`, `ProviderFactory.ts`, and `RemoteFileSystem.ts`.
 - Replace the current adapter-first concept with provider-neutral contracts while keeping `RemoteFileAdapter` compatibility where it reduces churn.

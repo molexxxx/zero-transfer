@@ -22,6 +22,7 @@ The current foundation includes:
 - Vitest coverage gates at 90% across statements, branches, functions, and lines.
 - ESLint, Prettier, typecheck, build, package dry-run, and CI scripts.
 - Typed error classes, safe remote argument validation, structured logging redaction helpers, and FTP parser tests.
+- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, and provider capability discovery.
 - Verbose JSDoc across the public TypeScript API for future generated documentation.
 - Initial GitHub Actions scaffolding for CI, CodeQL, and npmjs release provenance.
 
@@ -37,7 +38,7 @@ npm install @zero-transfer/sdk
 import { ZeroTransfer } from "@zero-transfer/sdk";
 
 const client = await ZeroTransfer.connect({
-  protocol: "ftps",
+  provider: "ftps",
   host: "ftp.example.com",
   username: "deploy",
   password: process.env.FTP_PASSWORD,
@@ -50,6 +51,17 @@ await client.disconnect();
 ```
 
 `ZeroTransfer` is the preferred facade for new code. `ZeroFTP` remains exported as a temporary compatibility alias while the provider-neutral API takes shape.
+
+The first provider-neutral core path is also available for provider registration and capability discovery:
+
+```ts
+import { createTransferClient } from "@zero-transfer/sdk";
+
+const client = createTransferClient();
+const capabilities = client.getCapabilities();
+```
+
+Provider factories can be registered with `createTransferClient({ providers: [...] })`. Built-in network providers are intentionally not deep-implemented in this alpha slice yet.
 
 Protocol adapters are intentionally being added incrementally. Early releases focus on the package foundation, deterministic tests, parser correctness, typed errors, logging, and transfer-service primitives before the FTP/FTPS/SFTP implementations are ported and broader provider families are added.
 

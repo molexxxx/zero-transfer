@@ -7,9 +7,10 @@
  * @module types/public
  */
 import type { ZeroFTPLogger } from "../logging/Logger";
+import type { ClassicProviderId, ProviderId } from "../core/ProviderId";
 
 /** Supported remote file-transfer protocols. */
-export type RemoteProtocol = "ftp" | "ftps" | "sftp";
+export type RemoteProtocol = ClassicProviderId;
 
 /** Normalized remote entry kinds returned by listing and metadata operations. */
 export type RemoteEntryType = "file" | "directory" | "symlink" | "unknown";
@@ -72,6 +73,8 @@ export interface RemoteStat extends RemoteEntry {
  * Connection settings accepted by facade and adapter implementations.
  */
 export interface ConnectionProfile {
+  /** Provider to use for this connection. Prefer this over the compatibility protocol field. */
+  provider?: ProviderId;
   /** Protocol to use for this connection, overriding the client default. */
   protocol?: RemoteProtocol;
   /** Remote hostname or IP address. */

@@ -11,6 +11,7 @@ import { EventEmitter } from "node:events";
 import { UnsupportedFeatureError } from "../errors/ZeroFTPError";
 import { emitLog, noopLogger, type ZeroFTPLogger } from "../logging/Logger";
 import type { RemoteFileAdapter } from "../protocols/RemoteFileAdapter";
+import { isClassicProviderId } from "../core/ProviderId";
 import type {
   ConnectionProfile,
   ListOptions,
@@ -105,6 +106,8 @@ export class ZeroFTP extends EventEmitter {
 
     if (profile.protocol !== undefined) {
       clientOptions.protocol = profile.protocol;
+    } else if (isClassicProviderId(profile.provider)) {
+      clientOptions.protocol = profile.provider;
     }
 
     const client = new ZeroFTP(clientOptions);
@@ -121,20 +124,23 @@ export class ZeroFTP extends EventEmitter {
    */
   async connect(profile: ConnectionProfile): Promise<void> {
     const adapter = this.requireAdapter();
+    const protocol =
+      profile.protocol ??
+      (isClassicProviderId(profile.provider) ? profile.provider : this.protocol);
     emitLog(this.logger, "info", {
       component: "client",
       host: profile.host,
       message: "Connecting",
-      protocol: profile.protocol ?? this.protocol,
+      protocol,
     });
     await adapter.connect({
       ...profile,
-      protocol: profile.protocol ?? this.protocol,
+      protocol,
     });
     this.connected = true;
     this.emit("connect", {
       host: profile.host,
-      protocol: profile.protocol ?? this.protocol,
+      protocol,
     });
   }
 

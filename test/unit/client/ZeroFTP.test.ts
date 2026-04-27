@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  TransferClient,
   ZeroFTP,
   ZeroTransfer,
   type RemoteFileAdapter,
@@ -46,6 +47,7 @@ describe("ZeroFTP", () => {
 
     expect(ZeroTransfer).toBe(ZeroFTP);
     expect(client).toBeInstanceOf(ZeroFTP);
+    expect(ZeroTransfer.createTransferClient()).toBeInstanceOf(TransferClient);
     expect(client.getCapabilities()).toEqual({ adapterReady: false, protocol: "ftp" });
   });
 
@@ -96,6 +98,21 @@ describe("ZeroFTP", () => {
 
     expect(client.getCapabilities()).toEqual({ adapterReady: true, protocol: "sftp" });
     expect(connect).toHaveBeenCalledOnce();
+  });
+
+  it("accepts provider as a protocol compatibility field", async () => {
+    const { adapter, connect } = createAdapter();
+    const client = await ZeroFTP.connect(
+      { host: "sftp.example.com", provider: "sftp" },
+      { adapter },
+    );
+
+    expect(client.getCapabilities()).toEqual({ adapterReady: true, protocol: "sftp" });
+    expect(connect).toHaveBeenCalledWith({
+      host: "sftp.example.com",
+      provider: "sftp",
+      protocol: "sftp",
+    });
   });
 
   it("does not call disconnect on adapters that are not connected", async () => {
