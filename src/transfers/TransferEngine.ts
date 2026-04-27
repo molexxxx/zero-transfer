@@ -3,15 +3,18 @@
  *
  * @module transfers/TransferEngine
  */
-import { AbortError, TransferError, ZeroFTPError } from "../errors/ZeroFTPError";
+import { AbortError, TimeoutError, TransferError, ZeroFTPError } from "../errors/ZeroFTPError";
 import { createProgressEvent } from "../services/TransferService";
 import type { TransferProgressEvent } from "../types/public";
 import type {
   TransferAttempt,
   TransferAttemptError,
+  TransferBandwidthLimit,
   TransferExecutionResult,
   TransferJob,
   TransferReceipt,
+  TransferTimeoutPolicy,
+  TransferVerificationResult,
 } from "./TransferJob";
 
 /** Context passed to a concrete transfer operation. */
@@ -22,6 +25,8 @@ export interface TransferExecutionContext {
   attempt: number;
   /** Abort signal active for this execution when supplied. */
   signal?: AbortSignal;
+  /** Optional throughput limit shape for concrete executors to honor. */
+  bandwidthLimit?: TransferBandwidthLimit;
   /** Throws an SDK abort error when the active signal has been cancelled. */
   throwIfAborted(): void;
   /** Emits a normalized progress event through engine options. */
@@ -61,6 +66,10 @@ export interface TransferEngineExecuteOptions {
   retry?: TransferRetryPolicy;
   /** Progress observer for normalized transfer progress events. */
   onProgress?(event: TransferProgressEvent): void;
+  /** Timeout policy enforced by the engine. */
+  timeout?: TransferTimeoutPolicy;
+  /** Optional throughput limit shape passed through to concrete executors. */
+  bandwidthLimit?: TransferBandwidthLimit;
 }
 
 /** Construction options for deterministic tests and host integration. */
@@ -100,63 +109,69 @@ export class TransferEngine {
     const maxAttempts = normalizeMaxAttempts(options.retry?.maxAttempts);
     const attempts: TransferAttempt[] = [];
     const startedAt = this.now();
+    const abortScope = createAbortScope(options.signal, options.timeout, job);
     let latestBytesTransferred = 0;
 
-    for (let attemptNumber = 1; attemptNumber <= maxAttempts; attemptNumber += 1) {
-      this.throwIfAborted(options.signal, job);
+    try {
+      for (let attemptNumber = 1; attemptNumber <= maxAttempts; attemptNumber += 1) {
+        this.throwIfAborted(abortScope.signal, job);
 
-      const attemptStartedAt = this.now();
-      const context = this.createExecutionContext(
-        job,
-        attemptNumber,
-        attemptStartedAt,
-        options,
-        (bytesTransferred) => {
-          latestBytesTransferred = bytesTransferred;
-        },
-      );
-
-      try {
-        const result = await executor(context);
-        context.throwIfAborted();
-        latestBytesTransferred = result.bytesTransferred;
-
-        const completedAt = this.now();
-        attempts.push(
-          createAttempt(attemptNumber, attemptStartedAt, completedAt, result.bytesTransferred),
-        );
-
-        return createReceipt(job, result, attempts, startedAt, completedAt);
-      } catch (error) {
-        const completedAt = this.now();
-        const attempt = createAttempt(
+        const attemptStartedAt = this.now();
+        const context = this.createExecutionContext(
+          job,
           attemptNumber,
           attemptStartedAt,
-          completedAt,
-          latestBytesTransferred,
-          summarizeError(error),
+          options,
+          abortScope.signal,
+          (bytesTransferred) => {
+            latestBytesTransferred = bytesTransferred;
+          },
         );
-        attempts.push(attempt);
 
-        if (error instanceof AbortError) {
-          throw error;
+        try {
+          const result = await runExecutor(executor, context, abortScope.signal, job);
+          context.throwIfAborted();
+          latestBytesTransferred = result.bytesTransferred;
+
+          const completedAt = this.now();
+          attempts.push(
+            createAttempt(attemptNumber, attemptStartedAt, completedAt, result.bytesTransferred),
+          );
+
+          return createReceipt(job, result, attempts, startedAt, completedAt);
+        } catch (error) {
+          const completedAt = this.now();
+          const attempt = createAttempt(
+            attemptNumber,
+            attemptStartedAt,
+            completedAt,
+            latestBytesTransferred,
+            summarizeError(error),
+          );
+          attempts.push(attempt);
+
+          if (error instanceof AbortError || error instanceof TimeoutError) {
+            throw error;
+          }
+
+          const retryInput: TransferRetryDecisionInput = { attempt: attemptNumber, error, job };
+          const shouldRetry =
+            attemptNumber < maxAttempts &&
+            (options.retry?.shouldRetry?.(retryInput) ?? isRetryable(error));
+
+          if (shouldRetry) {
+            options.retry?.onRetry?.(retryInput);
+            continue;
+          }
+
+          throw createTransferFailure(job, error, attempts);
         }
-
-        const retryInput: TransferRetryDecisionInput = { attempt: attemptNumber, error, job };
-        const shouldRetry =
-          attemptNumber < maxAttempts &&
-          (options.retry?.shouldRetry?.(retryInput) ?? isRetryable(error));
-
-        if (shouldRetry) {
-          options.retry?.onRetry?.(retryInput);
-          continue;
-        }
-
-        throw createTransferFailure(job, error, attempts);
       }
-    }
 
-    throw createTransferFailure(job, undefined, attempts);
+      throw createTransferFailure(job, undefined, attempts);
+    } finally {
+      abortScope.dispose();
+    }
   }
 
   private createExecutionContext(
@@ -164,13 +179,14 @@ export class TransferEngine {
     attempt: number,
     startedAt: Date,
     options: TransferEngineExecuteOptions,
+    signal: AbortSignal | undefined,
     updateBytesTransferred: (bytesTransferred: number) => void,
   ): TransferExecutionContext {
     const context: TransferExecutionContext = {
       attempt,
       job,
       reportProgress: (bytesTransferred, totalBytes) => {
-        this.throwIfAborted(options.signal, job);
+        this.throwIfAborted(signal, job);
         updateBytesTransferred(bytesTransferred);
         const progressInput = {
           bytesTransferred,
@@ -187,11 +203,15 @@ export class TransferEngine {
         options.onProgress?.(event);
         return event;
       },
-      throwIfAborted: () => this.throwIfAborted(options.signal, job),
+      throwIfAborted: () => this.throwIfAborted(signal, job),
     };
 
-    if (options.signal !== undefined) {
-      context.signal = options.signal;
+    if (signal !== undefined) {
+      context.signal = signal;
+    }
+
+    if (options.bandwidthLimit !== undefined) {
+      context.bandwidthLimit = { ...options.bandwidthLimit };
     }
 
     return context;
@@ -199,6 +219,10 @@ export class TransferEngine {
 
   private throwIfAborted(signal: AbortSignal | undefined, job: TransferJob): void {
     if (signal?.aborted === true) {
+      if (signal.reason instanceof ZeroFTPError) {
+        throw signal.reason;
+      }
+
       throw new AbortError({
         details: { jobId: job.id, operation: job.operation },
         message: `Transfer job aborted: ${job.id}`,
@@ -206,6 +230,104 @@ export class TransferEngine {
       });
     }
   }
+}
+
+interface AbortScope {
+  signal?: AbortSignal;
+  dispose(): void;
+}
+
+function createAbortScope(
+  parentSignal: AbortSignal | undefined,
+  timeout: TransferTimeoutPolicy | undefined,
+  job: TransferJob,
+): AbortScope {
+  const timeoutMs = normalizeTimeoutMs(timeout?.timeoutMs);
+
+  if (parentSignal === undefined && timeoutMs === undefined) {
+    return { dispose: () => undefined };
+  }
+
+  const controller = new AbortController();
+  const abortFromParent = (): void => controller.abort(parentSignal?.reason);
+  const timeoutHandle =
+    timeoutMs === undefined
+      ? undefined
+      : setTimeout(() => {
+          controller.abort(
+            new TimeoutError({
+              details: { jobId: job.id, operation: job.operation, timeoutMs },
+              message: `Transfer job timed out after ${timeoutMs}ms: ${job.id}`,
+              retryable: timeout?.retryable ?? true,
+            }),
+          );
+        }, timeoutMs);
+
+  if (parentSignal?.aborted === true) {
+    abortFromParent();
+  } else {
+    parentSignal?.addEventListener("abort", abortFromParent, { once: true });
+  }
+
+  return {
+    dispose: () => {
+      if (timeoutHandle !== undefined) {
+        clearTimeout(timeoutHandle);
+      }
+      parentSignal?.removeEventListener("abort", abortFromParent);
+    },
+    signal: controller.signal,
+  };
+}
+
+function normalizeTimeoutMs(value: number | undefined): number | undefined {
+  if (value === undefined || !Number.isFinite(value) || value <= 0) {
+    return undefined;
+  }
+
+  return Math.floor(value);
+}
+
+async function runExecutor(
+  executor: TransferExecutor,
+  context: TransferExecutionContext,
+  signal: AbortSignal | undefined,
+  job: TransferJob,
+): Promise<TransferExecutionResult> {
+  if (signal === undefined) {
+    return executor(context);
+  }
+
+  return Promise.race([executor(context), rejectWhenAborted(signal, job)]);
+}
+
+function rejectWhenAborted(
+  signal: AbortSignal,
+  job: TransferJob,
+): Promise<TransferExecutionResult> {
+  return new Promise((_, reject) => {
+    const rejectAbort = (): void => {
+      if (signal.reason instanceof ZeroFTPError) {
+        reject(signal.reason);
+        return;
+      }
+
+      reject(
+        new AbortError({
+          details: { jobId: job.id, operation: job.operation },
+          message: `Transfer job aborted: ${job.id}`,
+          retryable: false,
+        }),
+      );
+    };
+
+    if (signal.aborted) {
+      rejectAbort();
+      return;
+    }
+
+    signal.addEventListener("abort", rejectAbort, { once: true });
+  });
 }
 
 function normalizeMaxAttempts(value: number | undefined): number {
@@ -246,6 +368,7 @@ function createReceipt(
   completedAt: Date,
 ): TransferReceipt {
   const durationMs = Math.max(0, completedAt.getTime() - startedAt.getTime());
+  const verification = normalizeVerificationResult(result);
   const receipt: TransferReceipt = {
     attempts,
     averageBytesPerSecond: calculateBytesPerSecond(result.bytesTransferred, durationMs),
@@ -257,7 +380,7 @@ function createReceipt(
     resumed: result.resumed ?? job.resumed ?? false,
     startedAt,
     transferId: job.id,
-    verified: result.verified ?? false,
+    verified: verification?.verified ?? result.verified ?? false,
     warnings: [...(result.warnings ?? [])],
   };
 
@@ -266,9 +389,44 @@ function createReceipt(
   if (result.totalBytes !== undefined) receipt.totalBytes = result.totalBytes;
   else if (job.totalBytes !== undefined) receipt.totalBytes = job.totalBytes;
   if (result.checksum !== undefined) receipt.checksum = result.checksum;
+  else if (verification?.checksum !== undefined) receipt.checksum = verification.checksum;
+  if (verification !== undefined) receipt.verification = verification;
   if (job.metadata !== undefined) receipt.metadata = { ...job.metadata };
 
   return receipt;
+}
+
+function normalizeVerificationResult(
+  result: TransferExecutionResult,
+): TransferVerificationResult | undefined {
+  const verification = result.verification;
+
+  if (verification !== undefined) {
+    const normalized: TransferVerificationResult = { verified: verification.verified };
+
+    if (verification.method !== undefined) normalized.method = verification.method;
+    if (verification.checksum !== undefined) normalized.checksum = verification.checksum;
+    if (verification.expectedChecksum !== undefined) {
+      normalized.expectedChecksum = verification.expectedChecksum;
+    }
+    if (verification.actualChecksum !== undefined)
+      normalized.actualChecksum = verification.actualChecksum;
+    if (verification.details !== undefined) normalized.details = { ...verification.details };
+
+    return normalized;
+  }
+
+  if (result.verified === undefined && result.checksum === undefined) {
+    return undefined;
+  }
+
+  const normalized: TransferVerificationResult = { verified: result.verified ?? false };
+
+  if (result.checksum !== undefined) {
+    normalized.checksum = result.checksum;
+  }
+
+  return normalized;
 }
 
 function createTransferFailure(

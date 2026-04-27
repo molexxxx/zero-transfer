@@ -41,6 +41,38 @@ export interface TransferJob {
   metadata?: Record<string, unknown>;
 }
 
+/** Optional throughput limit shape that concrete transfer executors may honor. */
+export interface TransferBandwidthLimit {
+  /** Maximum sustained transfer rate in bytes per second. */
+  bytesPerSecond: number;
+  /** Optional burst allowance in bytes for token-bucket-style implementations. */
+  burstBytes?: number;
+}
+
+/** Timeout policy applied by the transfer engine. */
+export interface TransferTimeoutPolicy {
+  /** Maximum duration for the full engine execution, including retries, in milliseconds. */
+  timeoutMs?: number;
+  /** Whether timeout failures are retryable. Defaults to `true`. */
+  retryable?: boolean;
+}
+
+/** Normalized post-transfer verification details. */
+export interface TransferVerificationResult {
+  /** Whether verification completed successfully. */
+  verified: boolean;
+  /** Verification method, such as checksum, size, timestamp, or provider-native. */
+  method?: string;
+  /** Checksum value produced or verified by the operation. */
+  checksum?: string;
+  /** Expected checksum when a checksum comparison was performed. */
+  expectedChecksum?: string;
+  /** Actual checksum observed by the operation. */
+  actualChecksum?: string;
+  /** Caller-defined verification details retained for diagnostics. */
+  details?: Record<string, unknown>;
+}
+
 /** Result returned by a transfer operation implementation. */
 export interface TransferExecutionResult {
   /** Bytes transferred by the completed operation. */
@@ -51,6 +83,8 @@ export interface TransferExecutionResult {
   resumed?: boolean;
   /** Whether post-transfer verification completed successfully. */
   verified?: boolean;
+  /** Normalized post-transfer verification details. */
+  verification?: TransferVerificationResult;
   /** Optional checksum value produced or verified by the operation. */
   checksum?: string;
   /** Non-fatal warnings produced during execution. */
@@ -113,6 +147,8 @@ export interface TransferReceipt {
   resumed: boolean;
   /** Whether post-transfer verification completed successfully. */
   verified: boolean;
+  /** Normalized post-transfer verification details when supplied by the operation. */
+  verification?: TransferVerificationResult;
   /** Optional checksum value produced or verified by the operation. */
   checksum?: string;
   /** Attempt history, including retry failures. */

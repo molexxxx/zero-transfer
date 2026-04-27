@@ -127,6 +127,7 @@ export {
   summarizeTransferPlan,
   type TransferAttempt,
   type TransferAttemptError,
+  type TransferBandwidthLimit,
   type TransferEndpoint,
   type TransferEngineExecuteOptions,
   type TransferEngineOptions,
@@ -149,6 +150,8 @@ export {
   type TransferReceipt,
   type TransferRetryDecisionInput,
   type TransferRetryPolicy,
+  type TransferTimeoutPolicy,
+  type TransferVerificationResult,
 } from "./transfers";
 export type {
   ConnectionProfile,

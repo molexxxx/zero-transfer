@@ -120,7 +120,7 @@ const safeForLogs = redactConnectionProfile(profile);
 
 Protocol adapters are intentionally being added incrementally. Early releases focus on the package foundation, deterministic tests, parser correctness, typed errors, logging, and transfer-service primitives before the FTP/FTPS/SFTP implementations are ported and broader provider families are added.
 
-The first transfer-engine foundation is available for adapters and higher-level workflows that need abort-aware execution, progress callbacks, retry hooks, and audit receipts around a concrete transfer operation:
+The first transfer-engine foundation is available for adapters and higher-level workflows that need abort-aware execution, progress callbacks, retry hooks, timeout policy, bandwidth-limit handoff, verification details, and audit receipts around a concrete transfer operation:
 
 ```ts
 import { TransferEngine, type TransferJob } from "@zero-transfer/sdk";
@@ -138,9 +138,16 @@ const receipt = await engine.execute(
   job,
   (context) => {
     context.reportProgress(1024);
-    return { bytesTransferred: 1024, verified: true };
+    return {
+      bytesTransferred: 1024,
+      verification: { method: "checksum", verified: true },
+    };
   },
-  { retry: { maxAttempts: 2 } },
+  {
+    bandwidthLimit: { bytesPerSecond: 1024 * 1024 },
+    retry: { maxAttempts: 2 },
+    timeout: { timeoutMs: 30_000 },
+  },
 );
 ```
 

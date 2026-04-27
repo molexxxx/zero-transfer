@@ -29,9 +29,12 @@ export {
 export type {
   TransferAttempt,
   TransferAttemptError,
+  TransferBandwidthLimit,
   TransferEndpoint,
   TransferExecutionResult,
   TransferJob,
   TransferOperation,
   TransferReceipt,
+  TransferTimeoutPolicy,
+  TransferVerificationResult,
 } from "./TransferJob";

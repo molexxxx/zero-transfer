@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   AbortError,
   ConnectionError,
+  TimeoutError,
   TransferEngine,
   TransferError,
   type TransferJob,
@@ -44,15 +45,19 @@ describe("TransferEngine", () => {
           totalBytes: 100,
           transferId: "job-1",
         });
+        expect(context.bandwidthLimit).toEqual({ bytesPerSecond: 512, burstBytes: 1024 });
 
         return {
           bytesTransferred: 100,
-          checksum: "sha256:abc",
-          verified: true,
+          verification: {
+            checksum: "sha256:abc",
+            method: "checksum",
+            verified: true,
+          },
           warnings: ["verified by fixture"],
         };
       },
-      { onProgress },
+      { bandwidthLimit: { bytesPerSecond: 512, burstBytes: 1024 }, onProgress },
     );
 
     expect(onProgress).toHaveBeenCalledWith(
@@ -72,6 +77,7 @@ describe("TransferEngine", () => {
       source: { path: "./report.csv", provider: "local" },
       totalBytes: 100,
       transferId: "job-1",
+      verification: { checksum: "sha256:abc", method: "checksum", verified: true },
       verified: true,
       warnings: ["verified by fixture"],
     });
@@ -158,6 +164,26 @@ describe("TransferEngine", () => {
         { signal: midFlightController.signal },
       ),
     ).rejects.toBeInstanceOf(AbortError);
+  });
+
+  it("raises timeout errors for stalled execution", async () => {
+    const engine = new TransferEngine();
+
+    await expect(
+      engine.execute(uploadJob, () => new Promise<never>(() => undefined), {
+        timeout: { retryable: false, timeoutMs: 1 },
+      }),
+    ).rejects.toBeInstanceOf(TimeoutError);
+
+    await expect(
+      engine.execute(uploadJob, () => new Promise<never>(() => undefined), {
+        timeout: { retryable: false, timeoutMs: 1 },
+      }),
+    ).rejects.toMatchObject({
+      code: "ZERO_FTP_TIMEOUT",
+      details: { jobId: "job-1", operation: "upload", timeoutMs: 1 },
+      retryable: false,
+    });
   });
 
   it("wraps exhausted failures with transfer attempt details", async () => {

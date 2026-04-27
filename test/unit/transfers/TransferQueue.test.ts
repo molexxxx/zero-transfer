@@ -25,6 +25,7 @@ describe("TransferQueue", () => {
     let activeExecutors = 0;
     let maxActiveExecutors = 0;
     const executor: TransferExecutor = async (context) => {
+      expect(context.bandwidthLimit).toEqual({ bytesPerSecond: 256 });
       activeExecutors += 1;
       maxActiveExecutors = Math.max(maxActiveExecutors, activeExecutors);
       context.reportProgress(1);
@@ -34,6 +35,7 @@ describe("TransferQueue", () => {
     };
     const queue = new TransferQueue({
       concurrency: 2,
+      bandwidthLimit: { bytesPerSecond: 256 },
       executor,
       onProgress: (event) => progressEvents.push(event),
       onReceipt: (receipt) => receipts.push(receipt),

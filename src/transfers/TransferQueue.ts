@@ -11,7 +11,12 @@ import {
   type TransferExecutor,
   type TransferRetryPolicy,
 } from "./TransferEngine";
-import type { TransferJob, TransferReceipt } from "./TransferJob";
+import type {
+  TransferBandwidthLimit,
+  TransferJob,
+  TransferReceipt,
+  TransferTimeoutPolicy,
+} from "./TransferJob";
 
 /** Queue item lifecycle state. */
 export type TransferQueueItemStatus = "queued" | "running" | "completed" | "failed" | "canceled";
@@ -31,6 +36,10 @@ export interface TransferQueueOptions {
   resolveExecutor?: TransferQueueExecutorResolver;
   /** Retry policy passed to engine executions. */
   retry?: TransferRetryPolicy;
+  /** Timeout policy passed to engine executions. */
+  timeout?: TransferTimeoutPolicy;
+  /** Optional throughput limit shape passed to transfer executors. */
+  bandwidthLimit?: TransferBandwidthLimit;
   /** Progress observer shared across queued jobs. */
   onProgress?: (event: TransferProgressEvent) => void;
   /** Completion observer for successful jobs. */
@@ -45,6 +54,10 @@ export interface TransferQueueRunOptions {
   signal?: AbortSignal;
   /** Retry policy override for this drain. */
   retry?: TransferRetryPolicy;
+  /** Timeout policy override for this drain. */
+  timeout?: TransferTimeoutPolicy;
+  /** Bandwidth limit override for this drain. */
+  bandwidthLimit?: TransferBandwidthLimit;
   /** Progress observer override for this drain. */
   onProgress?: (event: TransferProgressEvent) => void;
 }
@@ -95,6 +108,8 @@ export class TransferQueue {
   private readonly defaultExecutor: TransferExecutor | undefined;
   private readonly resolveExecutor: TransferQueueExecutorResolver | undefined;
   private readonly retry: TransferRetryPolicy | undefined;
+  private readonly timeout: TransferTimeoutPolicy | undefined;
+  private readonly bandwidthLimit: TransferBandwidthLimit | undefined;
   private readonly onProgress: ((event: TransferProgressEvent) => void) | undefined;
   private readonly onReceipt: ((receipt: TransferReceipt) => void) | undefined;
   private readonly onError: ((item: TransferQueueItem, error: unknown) => void) | undefined;
@@ -112,6 +127,8 @@ export class TransferQueue {
     this.defaultExecutor = options.executor;
     this.resolveExecutor = options.resolveExecutor;
     this.retry = options.retry;
+    this.timeout = options.timeout;
+    this.bandwidthLimit = options.bandwidthLimit;
     this.onProgress = options.onProgress;
     this.onReceipt = options.onReceipt;
     this.onError = options.onError;
@@ -258,6 +275,8 @@ export class TransferQueue {
       };
       const onProgress = options.onProgress ?? this.onProgress;
       const retry = options.retry ?? this.retry;
+      const timeout = options.timeout ?? this.timeout;
+      const bandwidthLimit = options.bandwidthLimit ?? this.bandwidthLimit;
 
       if (onProgress !== undefined) {
         executeOptions.onProgress = onProgress;
@@ -265,6 +284,14 @@ export class TransferQueue {
 
       if (retry !== undefined) {
         executeOptions.retry = retry;
+      }
+
+      if (timeout !== undefined) {
+        executeOptions.timeout = timeout;
+      }
+
+      if (bandwidthLimit !== undefined) {
+        executeOptions.bandwidthLimit = bandwidthLimit;
       }
 
       const receipt = await this.engine.execute(
