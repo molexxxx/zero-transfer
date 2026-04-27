@@ -138,6 +138,11 @@ export {
   type FtpResponseStatus,
 } from "./providers/classic/ftp";
 export {
+  createSftpProviderFactory,
+  type SftpProviderOptions,
+  type SftpRawSession,
+} from "./providers/classic/sftp";
+export {
   createProgressEvent,
   createTransferResult,
   type ProgressEventInput,
