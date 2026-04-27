@@ -789,7 +789,7 @@ Status: complete for the provider-neutral foundation slice. The foundation now h
 
 ### Phase 2: Transfer Core, Not FTP Core
 
-Status: started. The first Phase 2 slice adds provider-neutral transfer job and endpoint contracts, `TransferEngine`, normalized progress emission, abort-aware execution, retry decision hooks, attempt history, and audit-friendly transfer receipts around caller-supplied transfer operations. Transfer queues, transfer plans, concrete streaming upload/download behavior, timeout policy, and provider-backed transfer implementations remain future Phase 2 work.
+Status: in progress. Phase 2 now has provider-neutral transfer job and endpoint contracts, `TransferEngine`, normalized progress emission, abort-aware execution, retry decision hooks, attempt history, audit-friendly transfer receipts, dry-run `TransferPlan` primitives, and a minimal `TransferQueue` with concurrency, pause/resume, cancellation, progress, retry, receipts, and per-job failure tracking around caller-supplied transfer operations. Concrete streaming upload/download behavior, timeout policy, bandwidth limits, and provider-backed transfer implementations remain future Phase 2 work.
 
 - Build `TransferEngine`.
 - Build `TransferJob` and `TransferQueue`.
@@ -875,9 +875,8 @@ Alpha is ready when:
 ## 16. Immediate Next Actions
 
 1. Claim the package on npm by publishing the first scoped alpha as `@zero-transfer/sdk`, preferably through the GitHub Release workflow.
-2. Continue Phase 2 with transfer queue and transfer plan primitives.
-3. Add timeout policy and verification-result contracts around `TransferEngine` before provider-backed streaming begins.
-4. Keep `ZeroFTP` compatibility while gradually moving new examples and docs to `ZeroTransfer` and `createTransferClient()`.
-5. Move FTP parser work under `providers/classic/ftp` only after the transfer/provider contracts are stable enough to host real adapters.
-6. Add the first classic remote provider behind the contract harness after the transfer engine has a minimal shape.
-7. Expand README examples only for APIs that exist in the current alpha surface.
+2. Add timeout policy, bandwidth-limit shape, and verification-result contracts around `TransferEngine` before provider-backed streaming begins.
+3. Keep `ZeroFTP` compatibility while gradually moving new examples and docs to `ZeroTransfer` and `createTransferClient()`.
+4. Move FTP parser work under `providers/classic/ftp` only after the transfer/provider contracts are stable enough to host real adapters.
+5. Add the first classic remote provider behind the contract harness after the transfer engine has a minimal shape.
+6. Expand README examples only for APIs that exist in the current alpha surface.

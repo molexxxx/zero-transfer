@@ -22,7 +22,7 @@ The current foundation includes:
 - Vitest coverage gates at 90% across statements, branches, functions, and lines.
 - ESLint, Prettier, typecheck, build, package dry-run, and CI scripts.
 - Typed error classes, safe remote argument validation, structured logging redaction helpers, and FTP parser tests.
-- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers, profile secret utilities, and initial transfer engine primitives.
+- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers, profile secret utilities, transfer plans, transfer queue primitives, and the initial transfer engine.
 - Verbose JSDoc across the public TypeScript API for future generated documentation.
 - Initial GitHub Actions scaffolding for CI, CodeQL, and npmjs release provenance.
 
@@ -142,6 +142,40 @@ const receipt = await engine.execute(
   },
   { retry: { maxAttempts: 2 } },
 );
+```
+
+Dry-run transfer plans can be converted into executable jobs and drained through a minimal queue with concurrency, pause/resume, cancellation, progress, retries, receipts, and per-job failure tracking:
+
+```ts
+import { TransferQueue, createTransferJobsFromPlan, createTransferPlan } from "@zero-transfer/sdk";
+
+const plan = createTransferPlan({
+  id: "release-plan",
+  steps: [
+    {
+      id: "upload-app",
+      action: "upload",
+      source: { provider: "local", path: "./dist/app.zip" },
+      destination: { provider: "memory", path: "/releases/app.zip" },
+      expectedBytes: 1024,
+    },
+  ],
+});
+
+const queue = new TransferQueue({
+  concurrency: 2,
+  executor: (context) => {
+    const bytesTransferred = context.job.totalBytes ?? 0;
+    context.reportProgress(bytesTransferred);
+    return { bytesTransferred, verified: true };
+  },
+});
+
+for (const plannedJob of createTransferJobsFromPlan(plan)) {
+  queue.add(plannedJob);
+}
+
+const summary = await queue.run();
 ```
 
 ## Development
