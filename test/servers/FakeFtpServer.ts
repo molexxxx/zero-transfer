@@ -4,7 +4,7 @@
  * The harness accepts TCP connections, sends a configurable greeting, records received
  * commands, and delegates each command to a scripted responder. It can also open a
  * passive data socket for deterministic MLSD-style listing tests, including explicit
- * FTPS control upgrades and protected passive data sockets. It is intentionally
+ * and implicit FTPS control security and protected passive data sockets. It is intentionally
  * minimal so tests can exercise parser and command-lifecycle behavior without a real
  * FTP daemon.
  *
@@ -33,7 +33,7 @@ export type FakeFtpDataResponder = (command: string) => string | Uint8Array | nu
 /** Callback that formats a passive-mode control response for a data socket port. */
 export type FakeFtpPassiveResponseFactory = (port: number) => string;
 
-/** TLS certificate options used by the fake explicit FTPS server mode. */
+/** TLS certificate options used by the fake FTPS server modes. */
 export interface FakeFtpTlsOptions {
   /** Server private key PEM. */
   key: SecureContextOptions["key"];
@@ -67,6 +67,8 @@ export interface FakeFtpServerOptions {
   passiveFinalResponse?: string | null;
   /** Enables explicit FTPS support for AUTH TLS, PBSZ, PROT, and passive data sockets. */
   tls?: FakeFtpTlsOptions;
+  /** Starts the control connection inside TLS immediately for implicit FTPS tests. */
+  implicitTls?: boolean;
 }
 
 interface PassiveDataChannel {
@@ -76,7 +78,7 @@ interface PassiveDataChannel {
 }
 
 /**
- * Small TCP FTP/explicit-FTPS control server for deterministic protocol tests.
+ * Small TCP FTP/FTPS control server for deterministic protocol tests.
  */
 export class FakeFtpServer {
   private readonly greeting: string;
@@ -87,6 +89,7 @@ export class FakeFtpServer {
   private readonly responder: FakeFtpResponder;
   private readonly server: Server;
   private readonly tls: FakeFtpTlsOptions | undefined;
+  private readonly implicitTls: boolean;
   private readonly passiveUploads: FakeFtpUpload[] = [];
   private readonly receivedCommands: string[] = [];
   private readonly sockets = new Set<Socket>();
@@ -99,6 +102,10 @@ export class FakeFtpServer {
    * @param options - Optional greeting and command responder.
    */
   constructor(options: FakeFtpServerOptions = {}) {
+    if (options.implicitTls === true && options.tls === undefined) {
+      throw new Error("Fake FTP implicit TLS mode requires TLS certificate options");
+    }
+
     this.greeting = options.greeting ?? "220 ZeroTransfer fake server ready\r\n";
     this.extendedPassive = options.extendedPassive ?? true;
     this.passiveData = options.passiveData;
@@ -109,6 +116,7 @@ export class FakeFtpServer {
     this.passiveResponse = options.passiveResponse ?? createDefaultPassiveResponse;
     this.responder = options.responder ?? (() => "200 OK\r\n");
     this.tls = options.tls;
+    this.implicitTls = options.implicitTls ?? false;
     this.server = createServer((socket) => this.handleSocket(socket));
   }
 
@@ -193,10 +201,30 @@ export class FakeFtpServer {
    * @returns Nothing.
    */
   private handleSocket(socket: Socket): void {
+    if (this.implicitTls) {
+      this.handleImplicitTlsSocket(socket);
+      return;
+    }
+
     this.sockets.add(socket);
     socket.write(this.greeting);
     socket.on("close", () => this.sockets.delete(socket));
     this.wireCommandSocket(socket);
+  }
+
+  /**
+   * Wraps an accepted control socket in TLS before sending the FTP greeting.
+   *
+   * @param socket - Accepted TCP socket for an implicit FTPS control connection.
+   */
+  private handleImplicitTlsSocket(socket: Socket): void {
+    const tlsSocket = this.createTlsServerSocket(socket);
+
+    this.sockets.add(tlsSocket);
+    tlsSocket.once("secure", () => tlsSocket.write(this.greeting));
+    tlsSocket.on("close", () => this.sockets.delete(tlsSocket));
+    tlsSocket.on("error", () => undefined);
+    this.wireCommandSocket(tlsSocket);
   }
 
   /**

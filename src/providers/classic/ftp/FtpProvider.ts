@@ -53,7 +53,7 @@ const FTP_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTP_PROVIDER_ID, 
 ]);
 
 const FTPS_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTPS_PROVIDER_ID, [
-  "Explicit FTPS provider foundation with AUTH TLS, PBSZ/PROT setup, TLS profile support, MLST/MLSD metadata, EPSV/PASV passive mode, and RETR/STOR streaming support",
+  "FTPS provider foundation with explicit AUTH TLS or implicit TLS, PBSZ/PROT setup, TLS profile support, MLST/MLSD metadata, EPSV/PASV passive mode, and RETR/STOR streaming support",
 ]);
 
 /**
@@ -534,6 +534,8 @@ class FtpControlConnection {
 
       if (options.security?.mode === "explicit") {
         await negotiateExplicitFtps(control, options.security);
+      } else if (options.security?.mode === "implicit") {
+        await configureFtpsProtection(control, options.security);
       }
 
       return control;
@@ -1377,6 +1379,20 @@ async function negotiateExplicitFtps(
   }
 
   await control.upgradeToTls(security.tlsOptions);
+  await configureFtpsProtection(control, security);
+}
+
+/**
+ * Configures FTPS buffer size and data-channel protection for an encrypted control session.
+ *
+ * @param control - TLS-protected FTPS control connection.
+ * @param security - Resolved FTPS data-channel protection settings.
+ * @returns A promise that resolves after PBSZ and PROT commands complete.
+ */
+async function configureFtpsProtection(
+  control: FtpControlConnection,
+  security: FtpConnectSecurity,
+): Promise<void> {
   await expectCompletion(control, "PBSZ 0", "/");
   await expectCompletion(control, security.dataProtection === "private" ? "PROT P" : "PROT C", "/");
 }

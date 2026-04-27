@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ProtocolError,
   createFtpsProviderFactory,
@@ -112,6 +112,44 @@ describe("createFtpsProviderFactory", () => {
     expect(server.commands).toContain("MLSD /incoming");
   });
 
+  it("opens implicit FTPS over TLS immediately and protects passive data transfers", async () => {
+    await server.stop();
+    server = createContractFtpsServer({ implicitTls: true });
+    const port = await server.start();
+    const checkServerIdentity = vi.fn(() => undefined);
+    const client = createTransferClient({
+      providers: [createFtpsProviderFactory({ mode: "implicit" })],
+    });
+    const session = await client.connect({
+      ...profile,
+      port,
+      tls: {
+        ...profile.tls,
+        checkServerIdentity,
+      },
+    });
+
+    try {
+      await expect(session.fs.list("/incoming")).resolves.toHaveLength(1);
+    } finally {
+      await session.disconnect();
+    }
+
+    expect(checkServerIdentity).toHaveBeenCalledWith("localhost", expect.any(Object));
+    expect(server.commands).not.toContain("AUTH TLS");
+    expect(server.commands).toEqual(
+      expect.arrayContaining([
+        "PBSZ 0",
+        "PROT P",
+        "USER tester",
+        "PASS secret",
+        "TYPE I",
+        "EPSV",
+        "MLSD /incoming",
+      ]),
+    );
+  });
+
   it("raises typed protocol errors when AUTH TLS is rejected", async () => {
     await server.stop();
     server = new FakeFtpServer({
@@ -136,12 +174,14 @@ describe("createFtpsProviderFactory", () => {
 });
 
 /**
- * Creates the explicit-FTPS fake server used by provider contract coverage.
+ * Creates the FTPS fake server used by provider contract coverage.
  *
+ * @param options - Optional mode switches for explicit or implicit FTPS coverage.
  * @returns Fake FTPS server with deterministic login, MLST, and MLSD responses.
  */
-function createContractFtpsServer(): FakeFtpServer {
+function createContractFtpsServer(options: { implicitTls?: boolean } = {}): FakeFtpServer {
   return new FakeFtpServer({
+    ...(options.implicitTls === undefined ? {} : { implicitTls: options.implicitTls }),
     passiveData(command) {
       if (command === "MLSD /incoming") {
         return `${reportFact}\r\n`;
