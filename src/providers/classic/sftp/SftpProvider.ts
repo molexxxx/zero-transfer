@@ -2,7 +2,7 @@
  * SSH2-backed SFTP provider.
  *
  * This initial SFTP slice supports password/private-key authenticated sessions plus provider-neutral
- * directory listing and metadata reads. Transfer streaming, host-key policy helpers,
+ * directory listing, metadata reads, and transfer streaming. Host-key policy helpers
  * and agent authentication can layer on this foundation in later slices.
  *
  * @module providers/classic/sftp/SftpProvider
@@ -13,8 +13,10 @@ import type {
   ClientErrorExtensions,
   ConnectConfig,
   FileEntryWithStats,
+  ReadStream,
   SFTPWrapper,
   Stats,
+  WriteStream,
 } from "ssh2";
 import type { CapabilitySet } from "../../../core/CapabilitySet";
 import type { TransferSession } from "../../../core/TransferSession";
@@ -34,6 +36,7 @@ import {
   type ResolvedConnectionProfile,
 } from "../../../profiles/resolveConnectionProfileSecrets";
 import type { SecretValue } from "../../../profiles/SecretSource";
+import type { TransferVerificationResult } from "../../../transfers/TransferJob";
 import type {
   ConnectionProfile,
   ListOptions,
@@ -45,6 +48,13 @@ import type {
 import { basenameRemotePath, joinRemotePath, normalizeRemotePath } from "../../../utils/path";
 import type { TransferProvider } from "../../Provider";
 import type { ProviderFactory } from "../../ProviderFactory";
+import type {
+  ProviderTransferOperations,
+  ProviderTransferReadRequest,
+  ProviderTransferReadResult,
+  ProviderTransferWriteRequest,
+  ProviderTransferWriteResult,
+} from "../../ProviderTransferOperations";
 import type { RemoteFileSystem } from "../../RemoteFileSystem";
 
 const SFTP_PROVIDER_ID = "sftp";
@@ -54,12 +64,12 @@ const SFTP_PROVIDER_CAPABILITIES: CapabilitySet = {
   authentication: ["password", "private-key"],
   list: true,
   stat: true,
-  readStream: false,
-  writeStream: false,
+  readStream: true,
+  writeStream: true,
   serverSideCopy: false,
   serverSideMove: false,
-  resumeDownload: false,
-  resumeUpload: false,
+  resumeDownload: true,
+  resumeUpload: true,
   checksum: [],
   atomicRename: false,
   chmod: false,
@@ -68,7 +78,7 @@ const SFTP_PROVIDER_CAPABILITIES: CapabilitySet = {
   metadata: ["accessedAt", "group", "modifiedAt", "owner", "permissions"],
   maxConcurrency: 8,
   notes: [
-    "Initial ssh2-backed SFTP provider with password/private-key authentication and metadata reads",
+    "Initial ssh2-backed SFTP provider with password/private-key authentication, metadata reads, and transfer streams",
   ],
 };
 
@@ -135,6 +145,7 @@ class SftpTransferSession implements TransferSession<SftpRawSession> {
   readonly provider = SFTP_PROVIDER_ID;
   readonly capabilities = SFTP_PROVIDER_CAPABILITIES;
   readonly fs: RemoteFileSystem;
+  readonly transfers: ProviderTransferOperations;
 
   constructor(
     private readonly client: Client,
@@ -142,6 +153,7 @@ class SftpTransferSession implements TransferSession<SftpRawSession> {
   ) {
     this.client.on("error", noop);
     this.fs = new SftpFileSystem(sftp);
+    this.transfers = new SftpTransferOperations(sftp);
   }
 
   disconnect(): Promise<void> {
@@ -155,6 +167,61 @@ class SftpTransferSession implements TransferSession<SftpRawSession> {
       client: this.client,
       sftp: this.sftp,
     };
+  }
+}
+
+class SftpTransferOperations implements ProviderTransferOperations {
+  constructor(private readonly sftp: SFTPWrapper) {}
+
+  async read(request: ProviderTransferReadRequest): Promise<ProviderTransferReadResult> {
+    request.throwIfAborted();
+    const remotePath = normalizeSftpPath(request.endpoint.path);
+
+    try {
+      const stats = await readSftpStats(this.sftp, remotePath);
+
+      if (!stats.isFile()) {
+        throw createSftpPathNotFoundError(remotePath, `SFTP path is not a file: ${remotePath}`);
+      }
+
+      const range = resolveSftpReadRange(stats.size, request.range);
+      const result: ProviderTransferReadResult = {
+        content: createSftpReadSource(this.sftp, remotePath, range, request),
+        totalBytes: range.length,
+      };
+
+      if (range.offset > 0) {
+        result.bytesRead = range.offset;
+      }
+
+      return result;
+    } catch (error) {
+      throw mapSftpError(error, { command: "READ", path: remotePath });
+    }
+  }
+
+  async write(request: ProviderTransferWriteRequest): Promise<ProviderTransferWriteResult> {
+    request.throwIfAborted();
+    const remotePath = normalizeSftpPath(request.endpoint.path);
+    const offset = normalizeOptionalByteCount(request.offset, "offset", remotePath);
+
+    try {
+      const bytesTransferred = await writeSftpContent(this.sftp, remotePath, request, offset);
+      const result: ProviderTransferWriteResult = {
+        bytesTransferred,
+        resumed: offset !== undefined && offset > 0,
+        totalBytes: request.totalBytes ?? (offset ?? 0) + bytesTransferred,
+        verified: request.verification?.verified ?? false,
+      };
+
+      if (request.verification !== undefined) {
+        result.verification = cloneVerification(request.verification);
+      }
+
+      return result;
+    } catch (error) {
+      throw mapSftpError(error, { command: "WRITE", path: remotePath });
+    }
   }
 }
 
@@ -212,6 +279,11 @@ interface SftpAuthenticationConfig {
   password?: string;
   privateKey?: SecretValue;
   passphrase?: SecretValue;
+}
+
+interface ResolvedSftpReadRange {
+  offset: number;
+  length: number;
 }
 
 function connectSshClient(
@@ -392,6 +464,182 @@ function readSftpStats(sftp: SFTPWrapper, path: string): Promise<Stats> {
   });
 }
 
+async function* createSftpReadSource(
+  sftp: SFTPWrapper,
+  path: string,
+  range: ResolvedSftpReadRange,
+  request: ProviderTransferReadRequest,
+): AsyncGenerator<Uint8Array> {
+  if (range.length <= 0) {
+    return;
+  }
+
+  const stream = sftp.createReadStream(path, {
+    end: range.offset + range.length - 1,
+    start: range.offset,
+  }) as ReadStream & AsyncIterable<Buffer>;
+  const closeOnAbort = () => stream.destroy();
+
+  request.signal?.addEventListener("abort", closeOnAbort, { once: true });
+
+  try {
+    for await (const chunk of stream) {
+      request.throwIfAborted();
+      yield new Uint8Array(Buffer.from(chunk));
+    }
+  } catch (error) {
+    throw mapSftpError(error, { command: "READ", path });
+  } finally {
+    request.signal?.removeEventListener("abort", closeOnAbort);
+  }
+}
+
+async function writeSftpContent(
+  sftp: SFTPWrapper,
+  path: string,
+  request: ProviderTransferWriteRequest,
+  offset: number | undefined,
+): Promise<number> {
+  const stream = createSftpWriteStream(sftp, path, offset);
+  const closeOnAbort = () => stream.destroy();
+  let bytesTransferred = 0;
+
+  request.signal?.addEventListener("abort", closeOnAbort, { once: true });
+
+  try {
+    for await (const chunk of request.content) {
+      request.throwIfAborted();
+      await writeSftpChunk(stream, chunk);
+      bytesTransferred += chunk.byteLength;
+      request.reportProgress(bytesTransferred, request.totalBytes);
+    }
+
+    await endSftpWriteStream(stream);
+    return bytesTransferred;
+  } catch (error) {
+    stream.destroy();
+    throw error;
+  } finally {
+    request.signal?.removeEventListener("abort", closeOnAbort);
+  }
+}
+
+function createSftpWriteStream(
+  sftp: SFTPWrapper,
+  path: string,
+  offset: number | undefined,
+): WriteStream {
+  if (offset === undefined) {
+    return sftp.createWriteStream(path, { flags: "w" });
+  }
+
+  return sftp.createWriteStream(path, { flags: "r+", start: offset });
+}
+
+function writeSftpChunk(stream: WriteStream, chunk: Uint8Array): Promise<void> {
+  if (chunk.byteLength === 0) {
+    return Promise.resolve();
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const cleanup = () => {
+      stream.off("error", handleError);
+    };
+    const handleError = (error: Error) => {
+      cleanup();
+      reject(error);
+    };
+
+    stream.once("error", handleError);
+    stream.write(Buffer.from(chunk), (error?: Error | null) => {
+      cleanup();
+
+      if (error != null) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+}
+
+function endSftpWriteStream(stream: WriteStream): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const cleanup = () => {
+      stream.off("close", handleClose);
+      stream.off("error", handleError);
+    };
+    const handleClose = () => {
+      cleanup();
+      resolve();
+    };
+    const handleError = (error: Error) => {
+      cleanup();
+      reject(error);
+    };
+
+    stream.once("close", handleClose);
+    stream.once("error", handleError);
+    stream.end();
+  });
+}
+
+function resolveSftpReadRange(
+  size: number,
+  range: ProviderTransferReadRequest["range"],
+): ResolvedSftpReadRange {
+  if (range === undefined) {
+    return { length: size, offset: 0 };
+  }
+
+  const requestedOffset = normalizeByteCount(range.offset, "offset", "/");
+  const requestedLength =
+    range.length === undefined
+      ? size - Math.min(requestedOffset, size)
+      : normalizeByteCount(range.length, "length", "/");
+  const offset = Math.min(requestedOffset, size);
+  const length = Math.max(0, Math.min(requestedLength, size - offset));
+
+  return { length, offset };
+}
+
+function normalizeOptionalByteCount(
+  value: number | undefined,
+  field: string,
+  path: string,
+): number | undefined {
+  return value === undefined ? undefined : normalizeByteCount(value, field, path);
+}
+
+function normalizeByteCount(value: number, field: string, path: string): number {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new ConfigurationError({
+      details: { field, provider: SFTP_PROVIDER_ID },
+      message: `SFTP provider ${field} must be a non-negative number`,
+      path,
+      protocol: "sftp",
+      retryable: false,
+    });
+  }
+
+  return Math.floor(value);
+}
+
+function cloneVerification(verification: TransferVerificationResult): TransferVerificationResult {
+  const clone: TransferVerificationResult = { verified: verification.verified };
+
+  if (verification.method !== undefined) clone.method = verification.method;
+  if (verification.checksum !== undefined) clone.checksum = verification.checksum;
+  if (verification.expectedChecksum !== undefined) {
+    clone.expectedChecksum = verification.expectedChecksum;
+  }
+  if (verification.actualChecksum !== undefined) clone.actualChecksum = verification.actualChecksum;
+  if (verification.details !== undefined) clone.details = { ...verification.details };
+
+  return clone;
+}
+
 function mapSftpDirectoryEntry(directory: string, entry: FileEntryWithStats): RemoteEntry {
   return mapSftpStats(joinRemotePath(directory, entry.filename), entry.filename, entry.attrs, {
     longname: entry.longname,
@@ -512,6 +760,16 @@ function validateSftpProviderOptions(options: SftpProviderOptions): void {
       retryable: false,
     });
   }
+}
+
+function createSftpPathNotFoundError(path: string, message: string): PathNotFoundError {
+  return new PathNotFoundError({
+    details: { provider: SFTP_PROVIDER_ID },
+    message,
+    path,
+    protocol: "sftp",
+    retryable: false,
+  });
 }
 
 function throwIfAborted(

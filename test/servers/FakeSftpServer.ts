@@ -4,7 +4,7 @@
  * The server uses `ssh2`'s real SSH and SFTP protocol machinery while keeping the
  * backing filesystem in memory. It intentionally implements only the request surface
  * needed by current provider contracts: password/private-key authentication, directory listing,
- * metadata reads, and clean close handling.
+ * metadata reads, transfer reads/writes, and clean close handling.
  *
  * @module test/servers/FakeSftpServer
  */
@@ -17,7 +17,9 @@ const DEFAULT_TIMESTAMP = new Date("2026-04-27T01:02:03.000Z");
 const DIRECTORY_TYPE_BITS = 0o040000;
 const FILE_TYPE_BITS = 0o100000;
 const SYMLINK_TYPE_BITS = 0o120000;
+const OPEN_MODE = utils.sftp.OPEN_MODE;
 const STATUS_CODE = utils.sftp.STATUS_CODE;
+const HOST_KEY = utils.generateKeyPairSync("ed25519").private;
 
 /** Entry kind accepted by the fake SFTP filesystem. */
 export type FakeSftpEntryType = "directory" | "file" | "symlink" | "unknown";
@@ -30,6 +32,8 @@ export interface FakeSftpEntry {
   type: FakeSftpEntryType;
   /** Entry size in bytes. Defaults to 0 for directories and symlinks. */
   size?: number;
+  /** Optional file content. Strings are encoded as UTF-8. */
+  content?: string | Uint8Array;
   /** Numeric uid returned through SFTP attributes. Defaults to 1000. */
   uid?: number;
   /** Numeric gid returned through SFTP attributes. Defaults to 1000. */
@@ -52,7 +56,7 @@ export interface FakeSftpServerOptions {
   publicKey?: Buffer | string;
   /** In-memory entries exposed by the SFTP subsystem. */
   entries?: Iterable<FakeSftpEntry>;
-  /** Paths that should return SFTP permission-denied for OPENDIR, STAT, and LSTAT. */
+  /** Paths that should return SFTP permission-denied for OPENDIR, OPEN, STAT, and LSTAT. */
   deniedPaths?: Iterable<string>;
   /** Reject SFTP subsystem requests after successful SSH authentication. */
   rejectSftp?: boolean;
@@ -60,15 +64,24 @@ export interface FakeSftpServerOptions {
 
 interface FakeSftpNode {
   attrs: Attributes;
+  content: Buffer;
   name: string;
   path: string;
   type: FakeSftpEntryType;
 }
 
 interface FakeSftpDirectoryHandle {
+  kind: "directory";
   path: string;
   sent: boolean;
 }
+
+interface FakeSftpFileHandle {
+  kind: "file";
+  path: string;
+}
+
+type FakeSftpHandle = FakeSftpDirectoryHandle | FakeSftpFileHandle;
 
 /** Small SSH/SFTP server for deterministic SFTP provider tests. */
 export class FakeSftpServer {
@@ -95,10 +108,7 @@ export class FakeSftpServer {
     this.entries = createEntryMap(options.entries ?? createDefaultEntries());
     this.deniedPaths = new Set(Array.from(options.deniedPaths ?? [], normalizeFakeSftpPath));
     this.rejectSftp = options.rejectSftp ?? false;
-    this.server = new SshServer(
-      { hostKeys: [utils.generateKeyPairSync("ed25519").private] },
-      (client) => this.handleClient(client),
-    );
+    this.server = new SshServer({ hostKeys: [HOST_KEY] }, (client) => this.handleClient(client));
   }
 
   /** Starts listening on a random local TCP port. */
@@ -146,6 +156,13 @@ export class FakeSftpServer {
   /** Gets protocol requests received by the fake SFTP subsystem. */
   get commands(): readonly string[] {
     return this.requests;
+  }
+
+  /** Reads a file from the fake backing store for assertions. */
+  readFile(path: string): Buffer | undefined {
+    const node = this.entries.get(normalizeFakeSftpPath(path));
+
+    return node?.type === "file" ? Buffer.from(node.content) : undefined;
   }
 
   private handleClient(client: Connection): void {
@@ -218,10 +235,98 @@ export class FakeSftpServer {
   }
 
   private handleSftp(sftp: SFTPWrapper): void {
-    const handles = new Map<number, FakeSftpDirectoryHandle>();
+    const handles = new Map<number, FakeSftpHandle>();
     let nextHandle = 1;
 
     sftp
+      .on("OPEN", (reqId, path, flags) => {
+        const remotePath = normalizeFakeSftpPath(path);
+        this.requests.push(`OPEN ${remotePath}`);
+
+        if (this.deniedPaths.has(remotePath)) {
+          sftp.status(reqId, STATUS_CODE.PERMISSION_DENIED);
+          return;
+        }
+
+        const node = this.openFileNode(remotePath, flags);
+
+        if (node === undefined) {
+          sftp.status(reqId, STATUS_CODE.NO_SUCH_FILE);
+          return;
+        }
+
+        const handle = Buffer.alloc(4);
+        handle.writeUInt32BE(nextHandle, 0);
+        handles.set(nextHandle, { kind: "file", path: remotePath });
+        nextHandle += 1;
+        sftp.handle(reqId, handle);
+      })
+      .on("READ", (reqId, handle, offset, length) => {
+        const fileHandle = getFileHandle(handles, handle);
+
+        if (fileHandle === undefined) {
+          sftp.status(reqId, STATUS_CODE.FAILURE);
+          return;
+        }
+
+        this.requests.push(`READ ${fileHandle.path} ${offset} ${length}`);
+        const node = this.entries.get(fileHandle.path);
+
+        if (node?.type !== "file") {
+          sftp.status(reqId, STATUS_CODE.NO_SUCH_FILE);
+          return;
+        }
+
+        if (offset >= node.content.byteLength) {
+          sftp.status(reqId, STATUS_CODE.EOF);
+          return;
+        }
+
+        sftp.data(reqId, node.content.subarray(offset, offset + length));
+      })
+      .on("WRITE", (reqId, handle, offset, data) => {
+        const fileHandle = getFileHandle(handles, handle);
+
+        if (fileHandle === undefined) {
+          sftp.status(reqId, STATUS_CODE.FAILURE);
+          return;
+        }
+
+        this.requests.push(`WRITE ${fileHandle.path} ${offset} ${data.byteLength}`);
+        const node = this.entries.get(fileHandle.path);
+
+        if (node?.type !== "file") {
+          sftp.status(reqId, STATUS_CODE.NO_SUCH_FILE);
+          return;
+        }
+
+        writeNodeContent(node, data, offset);
+        sftp.status(reqId, STATUS_CODE.OK);
+      })
+      .on("FSTAT", (reqId, handle) => {
+        const fileHandle = getFileHandle(handles, handle);
+        const node = fileHandle === undefined ? undefined : this.entries.get(fileHandle.path);
+
+        if (node === undefined) {
+          sftp.status(reqId, STATUS_CODE.FAILURE);
+          return;
+        }
+
+        sftp.attrs(reqId, cloneAttributes(node.attrs));
+      })
+      .on("FSETSTAT", (reqId, handle, attrs) => {
+        const fileHandle = getFileHandle(handles, handle);
+        const node = fileHandle === undefined ? undefined : this.entries.get(fileHandle.path);
+
+        if (fileHandle === undefined || node === undefined) {
+          sftp.status(reqId, STATUS_CODE.FAILURE);
+          return;
+        }
+
+        this.requests.push(`FSETSTAT ${fileHandle.path}`);
+        applyAttributes(node, attrs);
+        sftp.status(reqId, STATUS_CODE.OK);
+      })
       .on("OPENDIR", (reqId, path) => {
         const remotePath = normalizeFakeSftpPath(path);
         this.requests.push(`OPENDIR ${remotePath}`);
@@ -239,12 +344,12 @@ export class FakeSftpServer {
 
         const handle = Buffer.alloc(4);
         handle.writeUInt32BE(nextHandle, 0);
-        handles.set(nextHandle, { path: remotePath, sent: false });
+        handles.set(nextHandle, { kind: "directory", path: remotePath, sent: false });
         nextHandle += 1;
         sftp.handle(reqId, handle);
       })
       .on("READDIR", (reqId, handle) => {
-        const directoryHandle = handles.get(readHandleId(handle));
+        const directoryHandle = getDirectoryHandle(handles, handle);
 
         if (directoryHandle === undefined) {
           sftp.status(reqId, STATUS_CODE.FAILURE);
@@ -325,15 +430,46 @@ export class FakeSftpServer {
       .filter((entry) => entry.path !== path && getParentPath(entry.path) === path)
       .sort((left, right) => left.path.localeCompare(right.path));
   }
+
+  private openFileNode(path: string, flags: number): FakeSftpNode | undefined {
+    const existing = this.entries.get(path);
+
+    if (existing !== undefined) {
+      if (existing.type !== "file") {
+        return undefined;
+      }
+
+      if (hasOpenFlag(flags, OPEN_MODE.TRUNC)) {
+        writeNodeContent(existing, Buffer.alloc(0), 0, true);
+      }
+
+      return existing;
+    }
+
+    if (!hasOpenFlag(flags, OPEN_MODE.CREAT)) {
+      return undefined;
+    }
+
+    const parent = this.entries.get(getParentPath(path) ?? "/");
+
+    if (parent?.type !== "directory") {
+      return undefined;
+    }
+
+    const node = createNode({ content: new Uint8Array(0), path, type: "file" });
+
+    this.entries.set(path, node);
+    return node;
+  }
 }
 
 function createDefaultEntries(): FakeSftpEntry[] {
   return [
     { path: "/incoming", type: "directory" },
     {
+      content: "id,name\n1,Ada\n",
       modifiedAt: DEFAULT_TIMESTAMP,
       path: "/incoming/report.csv",
-      size: 14,
       type: "file",
     },
   ];
@@ -381,16 +517,32 @@ function ensureParentDirectories(nodes: Map<string, FakeSftpNode>, path: string)
 
 function createNode(entry: FakeSftpEntry): FakeSftpNode {
   const path = normalizeFakeSftpPath(entry.path);
+  const content = createNodeContent(entry);
 
   return {
-    attrs: createAttributes(entry),
+    attrs: createAttributes(entry, content),
+    content,
     name: basenameFakeSftpPath(path),
     path,
     type: entry.type,
   };
 }
 
-function createAttributes(entry: FakeSftpEntry): Attributes {
+function createNodeContent(entry: FakeSftpEntry): Buffer {
+  if (entry.type !== "file") {
+    return Buffer.alloc(0);
+  }
+
+  if (entry.content !== undefined) {
+    return typeof entry.content === "string"
+      ? Buffer.from(entry.content, "utf8")
+      : Buffer.from(entry.content);
+  }
+
+  return Buffer.alloc(entry.size ?? 0);
+}
+
+function createAttributes(entry: FakeSftpEntry, content: Buffer): Attributes {
   const modifiedAt = entry.modifiedAt ?? DEFAULT_TIMESTAMP;
   const accessedAt = entry.accessedAt ?? modifiedAt;
 
@@ -399,9 +551,58 @@ function createAttributes(entry: FakeSftpEntry): Attributes {
     gid: entry.gid ?? 1000,
     mode: getTypeBits(entry.type) | (entry.permissions ?? getDefaultPermissions(entry.type)),
     mtime: toSftpSeconds(modifiedAt),
-    size: entry.size ?? 0,
+    size: entry.type === "file" ? content.byteLength : (entry.size ?? 0),
     uid: entry.uid ?? 1000,
   };
+}
+
+function getDirectoryHandle(
+  handles: Map<number, FakeSftpHandle>,
+  handle: Buffer,
+): FakeSftpDirectoryHandle | undefined {
+  const entry = handles.get(readHandleId(handle));
+
+  return entry?.kind === "directory" ? entry : undefined;
+}
+
+function getFileHandle(
+  handles: Map<number, FakeSftpHandle>,
+  handle: Buffer,
+): FakeSftpFileHandle | undefined {
+  const entry = handles.get(readHandleId(handle));
+
+  return entry?.kind === "file" ? entry : undefined;
+}
+
+function writeNodeContent(node: FakeSftpNode, data: Buffer, offset: number, replace = false): void {
+  const content = replace
+    ? Buffer.alloc(data.byteLength)
+    : Buffer.alloc(Math.max(node.content.byteLength, offset + data.byteLength));
+
+  if (!replace) {
+    node.content.copy(content);
+  }
+
+  data.copy(content, offset);
+  node.content = content;
+  node.attrs.size = content.byteLength;
+  node.attrs.mtime = toSftpSeconds(DEFAULT_TIMESTAMP);
+}
+
+function applyAttributes(node: FakeSftpNode, attrs: Partial<Attributes>): void {
+  if (attrs.mode !== undefined) node.attrs.mode = attrs.mode;
+  if (attrs.uid !== undefined) node.attrs.uid = attrs.uid;
+  if (attrs.gid !== undefined) node.attrs.gid = attrs.gid;
+  if (attrs.atime !== undefined) node.attrs.atime = toSftpAttributeSeconds(attrs.atime);
+  if (attrs.mtime !== undefined) node.attrs.mtime = toSftpAttributeSeconds(attrs.mtime);
+}
+
+function toSftpAttributeSeconds(value: number | Date): number {
+  return value instanceof Date ? toSftpSeconds(value) : value;
+}
+
+function hasOpenFlag(flags: number, flag: number): boolean {
+  return (flags & flag) === flag;
 }
 
 function nodeToFileEntry(node: FakeSftpNode, filename = node.name): FileEntry {

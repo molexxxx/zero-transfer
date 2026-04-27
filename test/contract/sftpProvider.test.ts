@@ -5,11 +5,21 @@ import {
   AuthenticationError,
   ConfigurationError,
   ConnectionError,
+  PathNotFoundError,
   PermissionDeniedError,
   ProtocolError,
+  TransferEngine,
+  createProgressEvent,
+  createProviderTransferExecutor,
   createSftpProviderFactory,
   createTransferClient,
   type ConnectionProfile,
+  type ProviderTransferOperations,
+  type ProviderTransferReadRequest,
+  type ProviderTransferWriteRequest,
+  type TransferDataSource,
+  type TransferSession,
+  type TransferVerificationResult,
 } from "../../src/index";
 import { FakeSftpServer, type FakeSftpServerOptions } from "../servers/FakeSftpServer";
 import { describeProviderContract } from "./providerContract";
@@ -39,9 +49,11 @@ describeProviderContract("sftp", {
     authentication: ["password", "private-key"],
     list: true,
     provider: "sftp",
-    readStream: false,
+    readStream: true,
+    resumeDownload: true,
+    resumeUpload: true,
     stat: true,
-    writeStream: false,
+    writeStream: true,
   },
   expectedListPaths: ["/incoming/report.csv"],
   expectedStat: {
@@ -153,6 +165,132 @@ describe("createSftpProviderFactory", () => {
       await expect(session.fs.stat("/incoming/report.csv")).resolves.toMatchObject({
         path: "/incoming/report.csv",
       });
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("reads, writes, resumes, and copies SFTP transfer streams", async () => {
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+    const session = await client.connect(profile);
+    const copySession = await client.connect(profile);
+    const transfers = requireTransfers(session);
+
+    try {
+      const rangeRead = await transfers.read(
+        createReadRequest("/incoming/report.csv", { length: 4, offset: 3 }),
+      );
+      const rangeText = await readText(rangeRead.content);
+      const verification: TransferVerificationResult = {
+        actualChecksum: "sha256:sftp-source",
+        checksum: "sha256:sftp-source",
+        details: { side: "source" },
+        expectedChecksum: "sha256:sftp-source",
+        method: "checksum",
+        verified: true,
+      };
+      const writeResult = await transfers.write(
+        createWriteRequest("/incoming/upload.txt", createTextContent("hello", 2), {
+          totalBytes: 5,
+          verification,
+        }),
+      );
+      const resumedWriteResult = await transfers.write(
+        createWriteRequest("/incoming/upload.txt", createTextContent("!!"), {
+          offset: 5,
+          totalBytes: 7,
+        }),
+      );
+      const emptyVerification: TransferVerificationResult = { verified: false };
+      const emptyWriteResult = await transfers.write(
+        createWriteRequest("/incoming/empty.txt", createChunkContent(new Uint8Array(0)), {
+          totalBytes: 0,
+          verification: emptyVerification,
+        }),
+      );
+      const executor = createProviderTransferExecutor({
+        resolveSession: ({ endpoint, role }) => {
+          if (endpoint.provider !== "sftp") {
+            return undefined;
+          }
+
+          return role === "source" ? session : copySession;
+        },
+      });
+      const receipt = await new TransferEngine().execute(
+        {
+          destination: { path: "/incoming/copy.csv", provider: "sftp" },
+          id: "sftp-provider-copy",
+          operation: "copy",
+          source: { path: "/incoming/report.csv", provider: "sftp" },
+        },
+        executor,
+      );
+
+      expect(rangeRead).toMatchObject({ bytesRead: 3, totalBytes: 4 });
+      expect(rangeText).toBe("name");
+      expect(writeResult).toMatchObject({
+        bytesTransferred: 5,
+        resumed: false,
+        totalBytes: 5,
+        verification,
+        verified: true,
+      });
+      expect(writeResult.verification).not.toBe(verification);
+      expect(writeResult.verification?.details).not.toBe(verification.details);
+      expect(resumedWriteResult).toMatchObject({
+        bytesTransferred: 2,
+        resumed: true,
+        totalBytes: 7,
+      });
+      expect(emptyWriteResult).toMatchObject({
+        bytesTransferred: 0,
+        totalBytes: 0,
+        verification: emptyVerification,
+        verified: false,
+      });
+      expect(receipt).toMatchObject({
+        bytesTransferred: 14,
+        destination: { path: "/incoming/copy.csv", provider: "sftp" },
+        source: { path: "/incoming/report.csv", provider: "sftp" },
+        totalBytes: 14,
+      });
+      expect(server.readFile("/incoming/upload.txt")?.toString("utf8")).toBe("hello!!");
+      expect(server.readFile("/incoming/copy.csv")?.toString("utf8")).toBe("id,name\n1,Ada\n");
+      expect(server.readFile("/incoming/empty.txt")?.byteLength).toBe(0);
+      expect(server.commands).toContain("OPEN /incoming/report.csv");
+      expect(server.commands).toContain("OPEN /incoming/upload.txt");
+    } finally {
+      await session.disconnect();
+      await copySession.disconnect();
+    }
+  });
+
+  it("handles SFTP transfer ranges and transfer errors", async () => {
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+    const session = await client.connect(profile);
+    const transfers = requireTransfers(session);
+
+    try {
+      const offsetRead = await transfers.read(
+        createReadRequest("/incoming/report.csv", { offset: 3 }),
+      );
+      const emptyRead = await transfers.read(
+        createReadRequest("/incoming/report.csv", { length: 5, offset: 99 }),
+      );
+
+      expect(offsetRead).toMatchObject({ bytesRead: 3, totalBytes: 11 });
+      await expect(readText(offsetRead.content)).resolves.toBe("name\n1,Ada\n");
+      expect(emptyRead).toMatchObject({ bytesRead: 14, totalBytes: 0 });
+      await expect(readText(emptyRead.content)).resolves.toBe("");
+      await expect(transfers.read(createReadRequest("/incoming"))).rejects.toBeInstanceOf(
+        PathNotFoundError,
+      );
+      await expect(
+        transfers.write(
+          createWriteRequest("/incoming/bad.txt", createTextContent("x"), { offset: -1 }),
+        ),
+      ).rejects.toBeInstanceOf(ConfigurationError);
     } finally {
       await session.disconnect();
     }
@@ -285,6 +423,110 @@ describe("createSftpProviderFactory", () => {
     }
   });
 });
+
+function requireTransfers(session: TransferSession): ProviderTransferOperations {
+  if (session.transfers === undefined) {
+    throw new Error("Expected SFTP transfer operations");
+  }
+
+  return session.transfers;
+}
+
+function createReadRequest(
+  path: string,
+  range?: ProviderTransferReadRequest["range"],
+): ProviderTransferReadRequest {
+  const request: ProviderTransferReadRequest = {
+    endpoint: { path, provider: "sftp" },
+    attempt: 1,
+    job: {
+      id: "sftp-read-test",
+      operation: "download",
+      source: { path, provider: "sftp" },
+    },
+    reportProgress: reportTestProgress,
+    throwIfAborted: () => undefined,
+  };
+
+  if (range !== undefined) {
+    request.range = range;
+  }
+
+  return request;
+}
+
+interface CreateWriteRequestOptions {
+  offset?: number;
+  totalBytes?: number;
+  verification?: TransferVerificationResult;
+}
+
+function createWriteRequest(
+  path: string,
+  content: TransferDataSource,
+  options: CreateWriteRequestOptions = {},
+): ProviderTransferWriteRequest {
+  const request: ProviderTransferWriteRequest = {
+    content,
+    endpoint: { path, provider: "sftp" },
+    attempt: 1,
+    job: {
+      destination: { path, provider: "sftp" },
+      id: "sftp-write-test",
+      operation: "upload",
+    },
+    reportProgress: reportTestProgress,
+    throwIfAborted: () => undefined,
+  };
+
+  if (options.offset !== undefined) request.offset = options.offset;
+  if (options.totalBytes !== undefined) request.totalBytes = options.totalBytes;
+  if (options.verification !== undefined) request.verification = options.verification;
+
+  return request;
+}
+
+async function* createTextContent(
+  text: string,
+  chunkSize = text.length,
+): AsyncGenerator<Uint8Array> {
+  await Promise.resolve();
+  const content = Buffer.from(text, "utf8");
+
+  for (let offset = 0; offset < content.byteLength; offset += chunkSize) {
+    yield content.subarray(offset, offset + chunkSize);
+  }
+}
+
+async function* createChunkContent(...chunks: Uint8Array[]): AsyncGenerator<Uint8Array> {
+  await Promise.resolve();
+
+  for (const chunk of chunks) {
+    yield chunk;
+  }
+}
+
+async function readText(content: TransferDataSource): Promise<string> {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of content) {
+    chunks.push(Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+function reportTestProgress(bytesTransferred: number, totalBytes?: number) {
+  const input = {
+    bytesTransferred,
+    startedAt: new Date(0),
+    transferId: "sftp-provider-test",
+  };
+
+  return totalBytes === undefined
+    ? createProgressEvent(input)
+    : createProgressEvent({ ...input, totalBytes });
+}
 
 async function restartServer(options: FakeSftpServerOptions): Promise<void> {
   await server.stop();
