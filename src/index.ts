@@ -40,6 +40,11 @@ export type {
 } from "./providers/ProviderCapabilities";
 export type { ProviderFactory } from "./providers/ProviderFactory";
 export type { RemoteFileSystem } from "./providers/RemoteFileSystem";
+export {
+  createMemoryProviderFactory,
+  type MemoryProviderEntry,
+  type MemoryProviderOptions,
+} from "./providers/memory";
 /** Preferred high-level SDK facade for new ZeroTransfer code. */
 export const ZeroTransfer = Object.assign(ZeroFTP, { createTransferClient });
 /** Preferred options type for the ZeroTransfer facade. */

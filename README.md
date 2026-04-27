@@ -22,7 +22,7 @@ The current foundation includes:
 - Vitest coverage gates at 90% across statements, branches, functions, and lines.
 - ESLint, Prettier, typecheck, build, package dry-run, and CI scripts.
 - Typed error classes, safe remote argument validation, structured logging redaction helpers, and FTP parser tests.
-- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, and provider capability discovery.
+- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, and a deterministic memory provider for contract tests.
 - Verbose JSDoc across the public TypeScript API for future generated documentation.
 - Initial GitHub Actions scaffolding for CI, CodeQL, and npmjs release provenance.
 
@@ -62,6 +62,27 @@ const capabilities = client.getCapabilities();
 ```
 
 Provider factories can be registered with `createTransferClient({ providers: [...] })`. Built-in network providers are intentionally not deep-implemented in this alpha slice yet.
+
+For deterministic contract and unit tests, the SDK exports a fixture-backed memory provider factory:
+
+```ts
+import { createMemoryProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+
+const client = createTransferClient({
+  providers: [
+    createMemoryProviderFactory({
+      entries: [{ path: "/fixtures/report.csv", type: "file", size: 24 }],
+    }),
+  ],
+});
+
+const session = await client.connect({ provider: "memory", host: "memory.local" });
+const entries = await session.fs.list("/fixtures");
+const report = await session.fs.stat("/fixtures/report.csv");
+await session.disconnect();
+```
+
+The memory provider is intentionally narrow: it supports connection lifecycle, capability discovery, `fs.list()`, `fs.stat()`, and typed missing-path errors over in-memory fixture state.
 
 Protocol adapters are intentionally being added incrementally. Early releases focus on the package foundation, deterministic tests, parser correctness, typed errors, logging, and transfer-service primitives before the FTP/FTPS/SFTP implementations are ported and broader provider families are added.
 

@@ -776,15 +776,15 @@ Status: done enough to start the next implementation phase.
 
 ### Phase 1B: Provider-Neutral Foundation
 
-Status: started. The first implementation slice adds provider ids, capability sets, provider registry, provider contracts, `TransferClient`, `createTransferClient()`, exported provider-neutral types, and `ConnectionProfile.provider` with `protocol` compatibility. Real network providers, profile secret handling, provider contract harnesses, and memory/local providers remain future Phase 1B work.
+Status: started. The foundation now has provider ids, capability sets, provider registry, provider contracts, `TransferClient`, `createTransferClient()`, exported provider-neutral types, `ConnectionProfile.provider` with `protocol` compatibility, a deterministic memory provider, and an initial provider contract harness. Real network providers, profile secret handling, and the local provider remain future Phase 1B work.
 
 - Add `src/core/ProviderId.ts`, `CapabilitySet.ts`, `ProviderRegistry.ts`, `TransferSession.ts`, `TransferClient.ts`, and `createTransferClient.ts`.
 - Add provider contracts under `src/providers/Provider.ts`, `ProviderCapabilities.ts`, `ProviderFactory.ts`, and `RemoteFileSystem.ts`.
 - Replace the current adapter-first concept with provider-neutral contracts while keeping `RemoteFileAdapter` compatibility where it reduces churn.
 - Introduce `ConnectionProfile.provider` while temporarily accepting `ConnectionProfile.protocol` for compatibility.
 - Build `SecretSource`, secret resolution, profile validation, and profile redaction.
-- Build the provider contract test harness.
-- Add memory and local providers for deterministic tests.
+- Continue expanding the provider contract test harness.
+- Add the local provider for deterministic filesystem tests.
 - Export `createTransferClient()` and make `ZeroTransfer` use the new client path when the contracts are ready.
 
 ### Phase 2: Transfer Core, Not FTP Core
@@ -874,7 +874,7 @@ Alpha is ready when:
 
 1. Claim the package on npm by publishing the first scoped alpha as `@zero-transfer/sdk`, preferably through the GitHub Release workflow.
 2. Start Phase 1B by adding provider-neutral core contracts without deleting the current tested facade.
-3. Add a memory provider and local file-system provider first so provider contracts can run without FTP servers.
+3. Add a local file-system provider next so provider contracts can cover deterministic filesystem behavior without FTP servers.
 4. Add `SecretSource`, profile validation, and redaction before adding more auth-heavy providers.
 5. Introduce `createTransferClient()` and `TransferClient` while keeping `ZeroTransfer` as the friendly public entry point.
 6. Move FTP parser work under `providers/classic/ftp` only after the provider contracts and tests exist.
