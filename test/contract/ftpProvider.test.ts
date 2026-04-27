@@ -1,17 +1,29 @@
+import { Buffer } from "node:buffer";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   AbortError,
   AuthenticationError,
+  ConfigurationError,
   ProtocolError,
+  TransferEngine,
+  createProgressEvent,
+  createProviderTransferExecutor,
   createFtpProviderFactory,
   createTransferClient,
   type ConnectionProfile,
+  type ProviderTransferOperations,
+  type ProviderTransferReadRequest,
+  type ProviderTransferWriteRequest,
+  type TransferDataSource,
+  type TransferSession,
+  type TransferVerificationResult,
 } from "../../src/index";
 import { FakeFtpServer } from "../servers/FakeFtpServer";
 import { describeProviderContract } from "./providerContract";
 
 const reportFact =
   "type=file;size=14;modify=20260427010203;perm=adfr;unique=file:report; report.csv";
+const reportContent = "id,name\n1,Ada\n";
 
 let server: FakeFtpServer;
 const profile: ConnectionProfile = {
@@ -38,7 +50,11 @@ describeProviderContract("ftp", {
     authentication: ["anonymous", "password"],
     list: true,
     provider: "ftp",
+    readStream: true,
+    resumeDownload: true,
+    resumeUpload: true,
     stat: true,
+    writeStream: true,
   },
   expectedListPaths: ["/incoming/report.csv"],
   expectedStat: {
@@ -56,6 +72,150 @@ describeProviderContract("ftp", {
 });
 
 describe("createFtpProviderFactory", () => {
+  it("exposes FTP read, write, resume, and provider-executor transfer operations", async () => {
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect(profile);
+    const transfers = requireTransfers(session);
+
+    try {
+      const rangeRead = await transfers.read(
+        createReadRequest("/incoming/report.csv", { length: 4, offset: 3 }),
+      );
+      const verification: TransferVerificationResult = {
+        actualChecksum: "sha256:source",
+        checksum: "sha256:source",
+        details: { side: "source" },
+        expectedChecksum: "sha256:source",
+        method: "checksum",
+        verified: true,
+      };
+      const writeResult = await transfers.write(
+        createWriteRequest("/out/upload.txt", createTextContent("hello"), {
+          totalBytes: 5,
+          verification,
+        }),
+      );
+      const executor = createProviderTransferExecutor({
+        resolveSession: ({ endpoint }) => (endpoint.provider === "ftp" ? session : undefined),
+      });
+      const receipt = await new TransferEngine().execute(
+        {
+          destination: { path: "/out/copy.csv", provider: "ftp" },
+          id: "ftp-provider-copy",
+          operation: "copy",
+          source: { path: "/incoming/report.csv", provider: "ftp" },
+        },
+        executor,
+      );
+      const resumedWriteResult = await transfers.write(
+        createWriteRequest("/out/upload.txt", createTextContent("!!"), {
+          offset: 5,
+          totalBytes: 7,
+        }),
+      );
+
+      expect(rangeRead).toMatchObject({ bytesRead: 3, totalBytes: 4 });
+      await expect(readText(rangeRead.content)).resolves.toBe("name");
+      expect(writeResult).toMatchObject({
+        bytesTransferred: 5,
+        resumed: false,
+        totalBytes: 5,
+        verification,
+        verified: true,
+      });
+      expect(resumedWriteResult).toMatchObject({
+        bytesTransferred: 2,
+        resumed: true,
+        totalBytes: 7,
+      });
+      expect(receipt).toMatchObject({
+        bytesTransferred: reportContent.length,
+        destination: { path: "/out/copy.csv", provider: "ftp" },
+        source: { path: "/incoming/report.csv", provider: "ftp" },
+        totalBytes: reportContent.length,
+      });
+      expect(server.commands).toContain("REST 3");
+      expect(server.commands).toContain("REST 5");
+      expect(
+        server.uploads.map((upload) => [upload.command, upload.content.toString("utf8")]),
+      ).toEqual([
+        ["STOR /out/upload.txt", "hello"],
+        ["STOR /out/copy.csv", reportContent],
+        ["STOR /out/upload.txt", "!!"],
+      ]);
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("raises typed transfer errors for invalid offsets and failed restart commands", async () => {
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    let session = await client.connect(profile);
+    let transfers = requireTransfers(session);
+
+    try {
+      await expect(
+        transfers.read(createReadRequest("/incoming/report.csv", { offset: -1 })),
+      ).rejects.toBeInstanceOf(ConfigurationError);
+      await expect(
+        transfers.write(
+          createWriteRequest("/out/upload.txt", createTextContent("nope"), { offset: -1 }),
+        ),
+      ).rejects.toBeInstanceOf(ConfigurationError);
+    } finally {
+      await session.disconnect();
+    }
+
+    await server.stop();
+    server = new FakeFtpServer({
+      responder(command) {
+        if (command === "USER tester") return "331 Password required\r\n";
+        if (command === "PASS secret") return "230 Logged in\r\n";
+        if (command === "TYPE I") return "200 Type set\r\n";
+        if (command === "REST 1") return "500 Restart failed\r\n";
+        if (command === "QUIT") return "221 Bye\r\n";
+        return "502 Unexpected command\r\n";
+      },
+    });
+    const port = await server.start();
+    session = await client.connect({
+      host: "127.0.0.1",
+      password: "secret",
+      port,
+      provider: "ftp",
+      username: "tester",
+    });
+    transfers = requireTransfers(session);
+
+    try {
+      await expect(
+        transfers.read(createReadRequest("/incoming/report.csv", { offset: 1 })),
+      ).rejects.toBeInstanceOf(ProtocolError);
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("normalizes root and relative paths for FTP metadata commands", async () => {
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect(profile);
+
+    try {
+      const rootEntries = await session.fs.list(".");
+      const relativeStat = await session.fs.stat("incoming/report.csv");
+      const rootStat = await session.fs.stat("/");
+
+      expect(rootEntries.map((entry) => entry.path)).toEqual(["/report.csv"]);
+      expect(relativeStat.path).toBe("/incoming/report.csv");
+      expect(rootStat).toMatchObject({ path: "/", type: "directory" });
+      expect(server.commands).toContain("MLSD /");
+      expect(server.commands).toContain("MLST /incoming/report.csv");
+      expect(server.commands).toContain("MLST /");
+    } finally {
+      await session.disconnect();
+    }
+  });
+
   it("uses factory default ports and optional connection controls", async () => {
     const port = requireProfilePort();
     const abortController = new AbortController();
@@ -275,10 +435,22 @@ describe("createFtpProviderFactory", () => {
 });
 
 function createContractFtpServer(): FakeFtpServer {
+  let restartOffset = 0;
+
   return new FakeFtpServer({
     passiveData(command) {
       if (command === "MLSD /incoming") {
         return `${reportFact}\r\n`;
+      }
+
+      if (command === "MLSD /") {
+        return `${reportFact}\r\n`;
+      }
+
+      if (command === "RETR /incoming/report.csv") {
+        const payload = Buffer.from(reportContent, "utf8").subarray(restartOffset);
+        restartOffset = 0;
+        return payload;
       }
 
       return undefined;
@@ -287,8 +459,15 @@ function createContractFtpServer(): FakeFtpServer {
       if (command === "USER tester") return "331 Password required\r\n";
       if (command === "PASS secret") return "230 Logged in\r\n";
       if (command === "TYPE I") return "200 Type set\r\n";
+      if (command.startsWith("REST ")) {
+        restartOffset = Number(command.slice("REST ".length));
+        return `350 Restarting at ${restartOffset}\r\n`;
+      }
       if (command === "MLST /incoming/report.csv") {
         return ["250-Listing\r\n", ` ${reportFact}\r\n`, "250 End\r\n"];
+      }
+      if (command === "MLST /") {
+        return ["250-Listing\r\n", " type=cdir;perm=el; .\r\n", "250 End\r\n"];
       }
       if (command.startsWith("MLST ") || command.startsWith("MLSD ")) {
         return "550 Path not found\r\n";
@@ -305,4 +484,93 @@ function requireProfilePort(): number {
   }
 
   return profile.port;
+}
+
+function requireTransfers(session: TransferSession): ProviderTransferOperations {
+  if (session.transfers === undefined) {
+    throw new Error("Expected FTP transfer operations");
+  }
+
+  return session.transfers;
+}
+
+function createReadRequest(
+  path: string,
+  range?: ProviderTransferReadRequest["range"],
+): ProviderTransferReadRequest {
+  const request: ProviderTransferReadRequest = {
+    endpoint: { path, provider: "ftp" },
+    attempt: 1,
+    job: {
+      id: "ftp-read-test",
+      operation: "download",
+      source: { path, provider: "ftp" },
+    },
+    reportProgress: reportTestProgress,
+    throwIfAborted: () => undefined,
+  };
+
+  if (range !== undefined) {
+    request.range = range;
+  }
+
+  return request;
+}
+
+interface CreateWriteRequestOptions {
+  offset?: number;
+  totalBytes?: number;
+  verification?: TransferVerificationResult;
+}
+
+function createWriteRequest(
+  path: string,
+  content: TransferDataSource,
+  options: CreateWriteRequestOptions = {},
+): ProviderTransferWriteRequest {
+  const request: ProviderTransferWriteRequest = {
+    content,
+    endpoint: { path, provider: "ftp" },
+    attempt: 1,
+    job: {
+      destination: { path, provider: "ftp" },
+      id: "ftp-write-test",
+      operation: "upload",
+    },
+    reportProgress: reportTestProgress,
+    throwIfAborted: () => undefined,
+  };
+
+  if (options.offset !== undefined) request.offset = options.offset;
+  if (options.totalBytes !== undefined) request.totalBytes = options.totalBytes;
+  if (options.verification !== undefined) request.verification = options.verification;
+
+  return request;
+}
+
+async function* createTextContent(text: string): AsyncGenerator<Uint8Array> {
+  await Promise.resolve();
+  yield Buffer.from(text, "utf8");
+}
+
+async function readText(content: TransferDataSource): Promise<string> {
+  const chunks: Buffer[] = [];
+
+  for await (const chunk of content) {
+    chunks.push(Buffer.from(chunk));
+  }
+
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+function reportTestProgress(bytesTransferred: number, totalBytes?: number) {
+  const input = {
+    bytesTransferred,
+    startedAt: new Date(0),
+    transferId: "ftp-provider-test",
+  };
+
+  return totalBytes === undefined
+    ? createProgressEvent(input)
+    : createProgressEvent({ ...input, totalBytes });
 }

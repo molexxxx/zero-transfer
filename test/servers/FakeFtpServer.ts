@@ -10,6 +10,7 @@
  * @module test/servers/FakeFtpServer
  */
 import { createServer, type Server, type Socket } from "node:net";
+import { Buffer } from "node:buffer";
 
 /**
  * Callback that returns a response for a received FTP command.
@@ -26,6 +27,14 @@ export type FakeFtpResponder = (command: string) => string | string[] | undefine
  * @returns Data payload to send over the passive data socket, or `undefined`.
  */
 export type FakeFtpDataResponder = (command: string) => string | Uint8Array | undefined;
+
+/** Passive upload captured by the fake FTP data server. */
+export interface FakeFtpUpload {
+  /** Command that opened the passive upload, such as `STOR /path`. */
+  command: string;
+  /** Bytes received on the passive data socket. */
+  content: Buffer;
+}
 
 /**
  * Configuration for a {@link FakeFtpServer} instance.
@@ -53,6 +62,7 @@ export class FakeFtpServer {
   private readonly passiveData: FakeFtpDataResponder | undefined;
   private readonly responder: FakeFtpResponder;
   private readonly server: Server;
+  private readonly passiveUploads: FakeFtpUpload[] = [];
   private readonly receivedCommands: string[] = [];
   private readonly sockets = new Set<Socket>();
   private passiveDataChannel: PassiveDataChannel | undefined;
@@ -135,6 +145,14 @@ export class FakeFtpServer {
     return [...this.receivedCommands];
   }
 
+  /** Gets a copy of passive upload payloads received by the server. */
+  get uploads(): FakeFtpUpload[] {
+    return this.passiveUploads.map((upload) => ({
+      command: upload.command,
+      content: Buffer.from(upload.content),
+    }));
+  }
+
   /**
    * Wires a connected client socket to the scripted FTP responder.
    *
@@ -174,7 +192,14 @@ export class FakeFtpServer {
       return;
     }
 
-    if (command.startsWith("MLSD") && this.passiveDataChannel !== undefined) {
+    if (this.passiveDataChannel !== undefined && command.startsWith("STOR")) {
+      socket.write("150 Opening passive data connection\r\n");
+      await this.readPassiveUpload(command);
+      socket.write("226 Transfer complete\r\n");
+      return;
+    }
+
+    if (this.passiveDataChannel !== undefined && isPassiveDownloadCommand(command)) {
       const payload = this.passiveData?.(command);
 
       if (payload !== undefined) {
@@ -194,6 +219,27 @@ export class FakeFtpServer {
     }
 
     socket.write(Array.isArray(response) ? response.join("") : response);
+  }
+
+  private async readPassiveUpload(command: string): Promise<void> {
+    const channel = this.passiveDataChannel;
+
+    if (channel === undefined) {
+      return;
+    }
+
+    this.passiveDataChannel = undefined;
+    const socket = await channel.socketPromise;
+    const chunks: Buffer[] = [];
+
+    await new Promise<void>((resolve, reject) => {
+      socket.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+      socket.once("end", resolve);
+      socket.once("error", reject);
+    });
+
+    this.passiveUploads.push({ command, content: Buffer.concat(chunks) });
+    await closeServer(channel.server);
   }
 
   private async openPassiveDataChannel(): Promise<number> {
@@ -254,6 +300,10 @@ export class FakeFtpServer {
     channel.socket?.destroy();
     await closeServer(channel.server);
   }
+}
+
+function isPassiveDownloadCommand(command: string): boolean {
+  return command.startsWith("MLSD") || command.startsWith("RETR");
 }
 
 async function closeServer(server: Server): Promise<void> {

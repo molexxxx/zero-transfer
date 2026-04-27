@@ -22,7 +22,7 @@ The current foundation includes:
 - Vitest coverage gates at 90% across statements, branches, functions, and lines.
 - ESLint, Prettier, typecheck, build, package dry-run, and CI scripts.
 - Typed error classes, safe remote argument validation, structured logging redaction helpers, FTP parser tests, and an initial classic FTP provider contract slice.
-- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers with read/write transfer operations, an MLST/MLSD-based FTP metadata provider, profile secret utilities, transfer plans, transfer queue primitives, and the initial transfer engine.
+- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers with read/write transfer operations, an MLST/MLSD/PASV-based FTP provider with initial read/write transfer operations, profile secret utilities, transfer plans, transfer queue primitives, and the initial transfer engine.
 - Verbose JSDoc across the public TypeScript API for future generated documentation.
 - Initial GitHub Actions scaffolding for CI, CodeQL, and npmjs release provenance.
 
@@ -61,7 +61,7 @@ const client = createTransferClient();
 const capabilities = client.getCapabilities();
 ```
 
-Provider factories can be registered with `createTransferClient({ providers: [...] })`. Classic network providers are being added incrementally; the first FTP provider slice supports login, `fs.stat()` through MLST, and `fs.list()` through PASV/MLSD, while transfer reads/writes and FTPS/SFTP remain later alpha work.
+Provider factories can be registered with `createTransferClient({ providers: [...] })`. Classic network providers are being added incrementally; the first FTP provider slice supports login, `fs.stat()` through MLST, `fs.list()` through PASV/MLSD, and provider transfer reads/writes through PASV `RETR`/`STOR` with REST offsets, while FTPS/SFTP remain later alpha work.
 
 ```ts
 import { createFtpProviderFactory, createTransferClient } from "@zero-transfer/sdk";
@@ -139,7 +139,7 @@ const resolved = await resolveConnectionProfileSecrets(profile);
 const safeForLogs = redactConnectionProfile(profile);
 ```
 
-Protocol adapters are intentionally being added incrementally. Early releases focus on the package foundation, deterministic tests, parser correctness, typed errors, logging, provider contracts, and transfer-service primitives while FTP/FTPS/SFTP support is ported in focused slices and broader provider families are added.
+Protocol adapters are intentionally being added incrementally. Early releases focus on the package foundation, deterministic tests, parser correctness, typed errors, logging, provider contracts, and transfer-service primitives while FTP is hardened, FTPS/SFTP support is ported in focused slices, and broader provider families are added.
 
 The first transfer-engine foundation is available for adapters and higher-level workflows that need abort-aware execution, progress callbacks, retry hooks, timeout policy, bandwidth-limit handoff, verification details, and audit receipts around a concrete transfer operation:
 
@@ -172,7 +172,7 @@ const receipt = await engine.execute(
 );
 ```
 
-Provider sessions that can stream content expose `session.transfers.read()` and `session.transfers.write()`. The memory and local providers implement that surface now, and the SDK exports `createProviderTransferExecutor()` to bridge provider operations into `TransferEngine` without hard-coding a concrete FTP, SFTP, or cloud implementation:
+Provider sessions that can stream content expose `session.transfers.read()` and `session.transfers.write()`. The memory, local, and initial FTP providers implement that surface now, and the SDK exports `createProviderTransferExecutor()` to bridge provider operations into `TransferEngine` without hard-coding a concrete FTP, SFTP, or cloud implementation:
 
 ```ts
 import { createProviderTransferExecutor } from "@zero-transfer/sdk";
