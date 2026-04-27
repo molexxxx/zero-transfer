@@ -1,155 +1,96 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1320 360" role="img" aria-labelledby="title desc">
-  <title id="title">ZeroTransfer SDK logo</title>
-  <desc id="desc">A sleek transparent ZeroTransfer wordmark with abstract transfer lanes.</desc>
-  <style>
-    :root {
-      --ink: #0b1020;
-      --muted: #536173;
-      --edge: #ffffff;
-      --ghost: rgba(15, 23, 42, 0.1);
-      --accent-a: #2563eb;
-      --accent-b: #7c3aed;
-      --dot-edge: #ffffff;
-    }
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200" width="720" height="200" role="img" aria-label="Zero Transfer SDK">
+  <title>Zero Transfer SDK</title>
 
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --ink: #f8fafc;
-        --muted: #9aa7b8;
-        --edge: #0d1117;
-        --ghost: rgba(248, 250, 252, 0.12);
-        --accent-a: #60a5fa;
-        --accent-b: #a78bfa;
-        --dot-edge: #0d1117;
-      }
-    }
-
-    .wordmark,
-    .tagline {
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      letter-spacing: 0;
-      paint-order: stroke fill;
-      stroke: var(--edge);
-      stroke-linejoin: round;
-    }
-
-    .wordmark {
-      fill: var(--ink);
-      font-size: 96px;
-      font-weight: 760;
-      stroke-width: 7px;
-    }
-
-    .wordmark-accent {
-      fill: url(#accentGradient);
-    }
-
-    .tagline {
-      fill: var(--muted);
-      font-size: 24px;
-      font-weight: 620;
-      letter-spacing: 4px;
-      stroke-width: 5px;
-    }
-
-    .mark-ghost {
-      fill: none;
-      stroke: var(--ghost);
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 34px;
-    }
-
-    .lane-base {
-      fill: none;
-      stroke: var(--ink);
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 16px;
-      opacity: 0.92;
-    }
-
-    .lane-accent {
-      fill: none;
-      stroke: url(#accentGradient);
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-width: 16px;
-      stroke-dasharray: 44 30;
-      animation: laneFlow 5.5s linear infinite;
-    }
-
-    .node {
-      fill: var(--edge);
-      stroke: var(--ink);
-      stroke-width: 8px;
-    }
-
-    .node-accent {
-      fill: url(#accentGradient);
-      stroke: var(--dot-edge);
-      stroke-width: 6px;
-    }
-
-    .spark {
-      fill: url(#accentGradient);
-      stroke: var(--dot-edge);
-      stroke-width: 5px;
-      filter: url(#sparkGlow);
-    }
-
-    @keyframes laneFlow {
-      to {
-        stroke-dashoffset: -148;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .lane-accent,
-      .motion-spark {
-        animation: none;
-      }
-
-      .motion-spark {
-        display: none;
-      }
-    }
-  </style>
   <defs>
-    <linearGradient id="accentGradient" x1="92" x2="1130" y1="80" y2="276" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="var(--accent-a)" />
-      <stop offset="1" stop-color="var(--accent-b)" />
+    <linearGradient id="ztw-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"  stop-color="#22D3EE"/>
+      <stop offset="55%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#A855F7"/>
     </linearGradient>
-    <filter id="sparkGlow" x="-120%" y="-120%" width="340%" height="340%">
-      <feGaussianBlur stdDeviation="7" result="blur" />
-      <feColorMatrix
-        in="blur"
-        result="glow"
-        type="matrix"
-        values="0 0 0 0 0.25 0 0 0 0 0.45 0 0 0 0 1 0 0 0 0.55 0"
-      />
-      <feMerge>
-        <feMergeNode in="glow" />
-        <feMergeNode in="SourceGraphic" />
-      </feMerge>
+    <linearGradient id="ztw-grad-soft" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"  stop-color="#22D3EE" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#A855F7" stop-opacity="0.35"/>
+    </linearGradient>
+    <radialGradient id="ztw-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"  stop-color="#6366F1" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#6366F1" stop-opacity="0"/>
+    </radialGradient>
+
+    <path id="ztw-z-path" d="M 60 64 L 140 64 L 60 136 L 140 136" fill="none"/>
+
+    <filter id="ztw-blur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2"/>
     </filter>
-    <path id="transferLane" d="M98 94H310L156 180H368L214 266H426" />
   </defs>
 
-  <g transform="translate(58 0)">
-    <use href="#transferLane" class="mark-ghost" />
-    <path class="lane-base" d="M98 94H310" />
-    <path class="lane-base" d="M156 180H368" />
-    <path class="lane-base" d="M214 266H426" />
-    <path class="lane-accent" d="M310 94L156 180L368 180L214 266" />
-    <circle class="node" cx="98" cy="94" r="18" />
-    <circle class="node" cx="426" cy="266" r="18" />
-    <circle class="node-accent" cx="368" cy="180" r="16" />
-    <circle class="spark motion-spark" r="10">
-      <animateMotion dur="4.8s" repeatCount="indefinite" path="M98 94H310L156 180H368L214 266H426" />
+  <!-- Mark -->
+  <g transform="translate(0 0)">
+    <circle cx="100" cy="100" r="92" fill="url(#ztw-glow)">
+      <animate attributeName="r" values="86;96;86" dur="4s" repeatCount="indefinite"/>
     </circle>
+    <g transform="translate(100 100)">
+      <circle r="80" fill="none" stroke="url(#ztw-grad-soft)" stroke-width="1.75"/>
+      <circle r="80" fill="none" stroke="url(#ztw-grad)" stroke-width="1.75"
+              stroke-linecap="round"
+              stroke-dasharray="5 14 22 12 8 18" opacity="0.85">
+        <animateTransform attributeName="transform" type="rotate"
+                          from="0" to="360" dur="14s" repeatCount="indefinite"/>
+      </circle>
+    </g>
+
+    <use href="#ztw-z-path" stroke="url(#ztw-grad)" stroke-width="11"
+         stroke-linecap="round" stroke-linejoin="round"
+         opacity="0.45" filter="url(#ztw-blur)"/>
+
+    <use href="#ztw-z-path" stroke="url(#ztw-grad)" stroke-width="8"
+         stroke-linecap="round" stroke-linejoin="round"
+         stroke-dasharray="260" stroke-dashoffset="260">
+      <animate attributeName="stroke-dashoffset"
+               values="260;0;0;260" keyTimes="0;0.35;0.85;1"
+               dur="5s" repeatCount="indefinite"/>
+      <animate attributeName="opacity"
+               values="0;1;1;0" keyTimes="0;0.1;0.85;1"
+               dur="5s" repeatCount="indefinite"/>
+    </use>
+
+    <circle cx="60"  cy="64"  r="5" fill="#0EA5E9">
+      <animate attributeName="r" values="4;6;4" dur="2.4s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="140" cy="136" r="5" fill="#A855F7">
+      <animate attributeName="r" values="4;6;4" dur="2.4s" begin="1.2s" repeatCount="indefinite"/>
+    </circle>
+
+    <g>
+      <circle r="2.8" fill="#E0F2FE">
+        <animateMotion dur="2.6s" repeatCount="indefinite" rotate="auto">
+          <mpath href="#ztw-z-path"/>
+        </animateMotion>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="2.6s" repeatCount="indefinite"/>
+      </circle>
+      <circle r="2.2" fill="#C7D2FE">
+        <animateMotion dur="2.6s" begin="0.65s" repeatCount="indefinite" rotate="auto">
+          <mpath href="#ztw-z-path"/>
+        </animateMotion>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="2.6s" begin="0.65s" repeatCount="indefinite"/>
+      </circle>
+      <circle r="2" fill="#F5D0FE">
+        <animateMotion dur="2.6s" begin="1.3s" repeatCount="indefinite" rotate="auto">
+          <mpath href="#ztw-z-path"/>
+        </animateMotion>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="2.6s" begin="1.3s" repeatCount="indefinite"/>
+      </circle>
+    </g>
   </g>
 
-  <text class="wordmark" x="530" y="168">Zero<tspan class="wordmark-accent">Transfer</tspan></text>
-  <text class="tagline" x="536" y="222">SECURE FILE TRANSFER SDK</text>
+  <!-- Wordmark -->
+  <g font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+     fill="url(#ztw-grad)">
+    <text x="210" y="108" font-size="58" font-weight="800" letter-spacing="-1.5">
+      zero<tspan fill="#E5E7EB">-</tspan>transfer
+    </text>
+    <text x="212" y="146" font-size="20" font-weight="500" letter-spacing="6" fill="#94A3B8">
+      PROTOCOL · NEUTRAL · SDK
+    </text>
+  </g>
 </svg>
