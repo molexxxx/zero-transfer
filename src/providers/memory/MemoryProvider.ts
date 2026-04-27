@@ -6,7 +6,7 @@
 import { Buffer } from "node:buffer";
 import type { CapabilitySet } from "../../core/CapabilitySet";
 import type { TransferSession } from "../../core/TransferSession";
-import { ConfigurationError, PathNotFoundError } from "../../errors/ZeroFTPError";
+import { ConfigurationError, PathNotFoundError } from "../../errors/ZeroTransferError";
 import type { TransferVerificationResult } from "../../transfers/TransferJob";
 import type { ProviderFactory } from "../ProviderFactory";
 import type { TransferProvider } from "../Provider";

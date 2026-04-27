@@ -3,7 +3,7 @@
  *
  * @module profiles/ProfileValidator
  */
-import { ConfigurationError } from "../errors/ZeroFTPError";
+import { ConfigurationError } from "../errors/ZeroTransferError";
 import type { ConnectionProfile, TlsProfile } from "../types/public";
 import { resolveProviderId } from "../core/ProviderId";
 

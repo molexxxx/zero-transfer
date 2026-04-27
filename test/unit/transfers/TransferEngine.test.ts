@@ -110,7 +110,7 @@ describe("TransferEngine", () => {
     expect(receipt.attempts[0]).toMatchObject({
       attempt: 1,
       bytesTransferred: 10,
-      error: { code: "ZERO_FTP_CONNECTION_ERROR", retryable: true },
+      error: { code: "ZERO_TRANSFER_CONNECTION_ERROR", retryable: true },
     });
     expect(receipt.attempts[1]).toMatchObject({ attempt: 2, bytesTransferred: 100 });
     expect(receipt.resumed).toBe(true);
@@ -180,7 +180,7 @@ describe("TransferEngine", () => {
         timeout: { retryable: false, timeoutMs: 1 },
       }),
     ).rejects.toMatchObject({
-      code: "ZERO_FTP_TIMEOUT",
+      code: "ZERO_TRANSFER_TIMEOUT",
       details: { jobId: "job-1", operation: "upload", timeoutMs: 1 },
       retryable: false,
     });

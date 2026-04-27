@@ -6,7 +6,7 @@
  *
  * @module providers/classic/ftp/FtpResponseParser
  */
-import { ParseError } from "../../../errors/ZeroFTPError";
+import { ParseError } from "../../../errors/ZeroTransferError";
 
 /** FTP response status family derived from the first digit of the reply code. */
 export type FtpResponseStatus =

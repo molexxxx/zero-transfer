@@ -106,7 +106,7 @@ describe("createProviderTransferExecutor", () => {
       attempts: [
         {
           error: {
-            code: "ZERO_FTP_UNSUPPORTED_FEATURE",
+            code: "ZERO_TRANSFER_UNSUPPORTED_FEATURE",
           },
         },
       ],
@@ -118,7 +118,7 @@ describe("createProviderTransferExecutor", () => {
       details: {
         attempts: [
           {
-            error: { code: "ZERO_FTP_UNSUPPORTED_FEATURE" },
+            error: { code: "ZERO_TRANSFER_UNSUPPORTED_FEATURE" },
           },
         ],
       },
@@ -198,7 +198,7 @@ describe("createProviderTransferExecutor", () => {
       details: {
         attempts: [
           {
-            error: { code: "ZERO_FTP_UNSUPPORTED_FEATURE" },
+            error: { code: "ZERO_TRANSFER_UNSUPPORTED_FEATURE" },
           },
         ],
       },
@@ -217,7 +217,7 @@ describe("createProviderTransferExecutor", () => {
       details: {
         attempts: [
           {
-            error: { code: "ZERO_FTP_CONFIGURATION_ERROR" },
+            error: { code: "ZERO_TRANSFER_CONFIGURATION_ERROR" },
           },
         ],
       },

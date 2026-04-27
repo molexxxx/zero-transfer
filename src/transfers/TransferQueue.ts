@@ -3,7 +3,7 @@
  *
  * @module transfers/TransferQueue
  */
-import { ConfigurationError } from "../errors/ZeroFTPError";
+import { ConfigurationError } from "../errors/ZeroTransferError";
 import type { TransferProgressEvent } from "../types/public";
 import {
   TransferEngine,

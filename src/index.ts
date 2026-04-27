@@ -97,9 +97,11 @@ export {
   UnsupportedFeatureError,
   VerificationError,
   ZeroFTPError,
+  ZeroTransferError,
   type SpecializedErrorDetails,
   type ZeroFTPErrorDetails,
-} from "./errors/ZeroFTPError";
+  type ZeroTransferErrorDetails,
+} from "./errors/ZeroTransferError";
 export {
   emitLog,
   noopLogger,

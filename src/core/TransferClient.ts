@@ -3,7 +3,7 @@
  *
  * @module core/TransferClient
  */
-import { ConfigurationError } from "../errors/ZeroFTPError";
+import { ConfigurationError } from "../errors/ZeroTransferError";
 import { emitLog, noopLogger, type LogRecordInput, type ZeroFTPLogger } from "../logging/Logger";
 import { validateConnectionProfile } from "../profiles/ProfileValidator";
 import type { ProviderFactory } from "../providers/ProviderFactory";

@@ -5,7 +5,7 @@
  */
 import { Buffer } from "node:buffer";
 import { readFile } from "node:fs/promises";
-import { ConfigurationError } from "../errors/ZeroFTPError";
+import { ConfigurationError } from "../errors/ZeroTransferError";
 import { REDACTED } from "../logging/redaction";
 
 /** Resolved secret value accepted by profile credential fields. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ParseError } from "../../../../../src/errors/ZeroFTPError";
+import { ParseError } from "../../../../../src/errors/ZeroTransferError";
 import { FtpResponseParser, parseFtpResponseLines } from "../../../../../src/providers/classic/ftp";
 
 describe("FtpResponseParser", () => {

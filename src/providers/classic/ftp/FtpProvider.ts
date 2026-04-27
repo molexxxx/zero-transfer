@@ -17,7 +17,7 @@ import {
   PathNotFoundError,
   ProtocolError,
   TimeoutError,
-} from "../../../errors/ZeroFTPError";
+} from "../../../errors/ZeroTransferError";
 import {
   resolveConnectionProfileSecrets,
   type ResolvedConnectionProfile,

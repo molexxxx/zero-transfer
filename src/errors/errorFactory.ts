@@ -1,7 +1,7 @@
 /**
  * Protocol error factory helpers.
  *
- * This module translates raw FTP status replies into typed ZeroFTP errors so
+ * This module translates raw FTP status replies into typed ZeroTransfer errors so
  * adapters can keep protocol parsing separate from application-facing failures.
  *
  * @module errors/errorFactory
@@ -15,12 +15,12 @@ import {
   ProtocolError,
   TransferError,
   type SpecializedErrorDetails,
-  type ZeroFTPError,
-} from "./ZeroFTPError";
+  type ZeroTransferError,
+} from "./ZeroTransferError";
 import type { RemoteProtocol } from "../types/public";
 
 /**
- * Input used to map an FTP reply into a structured ZeroFTP error.
+ * Input used to map an FTP reply into a structured ZeroTransfer error.
  */
 export interface FtpReplyErrorInput {
   /** Numeric FTP response code returned by the server. */
@@ -38,12 +38,12 @@ export interface FtpReplyErrorInput {
 }
 
 /**
- * Maps an FTP reply into the closest typed ZeroFTP error.
+ * Maps an FTP reply into the closest typed ZeroTransfer error.
  *
  * @param input - FTP code, message, and optional operation context.
  * @returns A structured error subclass with stable code and retryability metadata.
  */
-export function errorFromFtpReply(input: FtpReplyErrorInput): ZeroFTPError {
+export function errorFromFtpReply(input: FtpReplyErrorInput): ZeroTransferError {
   const details: SpecializedErrorDetails = {
     ftpCode: input.ftpCode,
     message: input.message,
@@ -93,7 +93,7 @@ export function errorFromFtpReply(input: FtpReplyErrorInput): ZeroFTPError {
  * @param details - Shared error details derived from the original reply.
  * @returns A typed path or permission error.
  */
-function mapFtp550(details: SpecializedErrorDetails): ZeroFTPError {
+function mapFtp550(details: SpecializedErrorDetails): ZeroTransferError {
   const lowerMessage = details.message.toLowerCase();
 
   if (lowerMessage.includes("already") || lowerMessage.includes("exists")) {

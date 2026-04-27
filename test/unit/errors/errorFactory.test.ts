@@ -7,7 +7,7 @@ import {
   PermissionDeniedError,
   ProtocolError,
   TransferError,
-} from "../../../src/errors/ZeroFTPError";
+} from "../../../src/errors/ZeroTransferError";
 import { errorFromFtpReply } from "../../../src/errors/errorFactory";
 
 describe("errorFromFtpReply", () => {

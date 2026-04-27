@@ -3,7 +3,7 @@
  *
  * @module core/ProviderRegistry
  */
-import { ConfigurationError, UnsupportedFeatureError } from "../errors/ZeroFTPError";
+import { ConfigurationError, UnsupportedFeatureError } from "../errors/ZeroTransferError";
 import type { ProviderFactory } from "../providers/ProviderFactory";
 import type { CapabilitySet } from "./CapabilitySet";
 import type { ProviderId } from "./ProviderId";

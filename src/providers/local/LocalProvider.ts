@@ -14,7 +14,7 @@ import {
   ConfigurationError,
   PathNotFoundError,
   PermissionDeniedError,
-} from "../../errors/ZeroFTPError";
+} from "../../errors/ZeroTransferError";
 import type { TransferVerificationResult } from "../../transfers/TransferJob";
 import type {
   ConnectionProfile,

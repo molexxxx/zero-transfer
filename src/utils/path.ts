@@ -6,7 +6,7 @@
  *
  * @module utils/path
  */
-import { ConfigurationError } from "../errors/ZeroFTPError";
+import { ConfigurationError } from "../errors/ZeroTransferError";
 
 const UNSAFE_FTP_ARGUMENT_PATTERN = /[\r\n]/;
 

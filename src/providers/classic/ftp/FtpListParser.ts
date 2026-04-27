@@ -6,7 +6,7 @@
  *
  * @module providers/classic/ftp/FtpListParser
  */
-import { ParseError } from "../../../errors/ZeroFTPError";
+import { ParseError } from "../../../errors/ZeroTransferError";
 import type { RemoteEntry, RemoteEntryType } from "../../../types/public";
 import { joinRemotePath } from "../../../utils/path";
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ConfigurationError } from "../../../src/errors/ZeroFTPError";
+import { ConfigurationError } from "../../../src/errors/ZeroTransferError";
 import {
   assertSafeFtpArgument,
   basenameRemotePath,

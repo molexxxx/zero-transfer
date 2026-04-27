@@ -15,13 +15,14 @@ import {
   UnsupportedFeatureError,
   VerificationError,
   ZeroFTPError,
+  ZeroTransferError,
   type SpecializedErrorDetails,
-} from "../../../src/errors/ZeroFTPError";
+} from "../../../src/errors/ZeroTransferError";
 
-describe("ZeroFTPError", () => {
+describe("ZeroTransferError", () => {
   it("stores structured error context and serializes safely", () => {
     const cause = new Error("socket closed");
-    const error = new ZeroFTPError({
+    const error = new ZeroTransferError({
       cause,
       code: "CUSTOM",
       command: "RETR file.txt",
@@ -42,7 +43,7 @@ describe("ZeroFTPError", () => {
       details: { attempt: 2 },
       ftpCode: 421,
       host: "ftp.example.com",
-      name: "ZeroFTPError",
+      name: "ZeroTransferError",
       path: "/file.txt",
       protocol: "ftp",
       retryable: true,
@@ -73,21 +74,29 @@ describe("ZeroFTPError", () => {
     ];
 
     expect(specializedErrors.map((error) => error.code)).toEqual([
-      "ZERO_FTP_CONNECTION_ERROR",
-      "ZERO_FTP_AUTHENTICATION_ERROR",
-      "ZERO_FTP_AUTHORIZATION_ERROR",
-      "ZERO_FTP_PATH_NOT_FOUND",
-      "ZERO_FTP_PATH_ALREADY_EXISTS",
-      "ZERO_FTP_PERMISSION_DENIED",
-      "ZERO_FTP_TIMEOUT",
-      "ZERO_FTP_ABORTED",
-      "ZERO_FTP_PROTOCOL_ERROR",
-      "ZERO_FTP_PARSE_ERROR",
-      "ZERO_FTP_TRANSFER_ERROR",
-      "ZERO_FTP_VERIFICATION_ERROR",
-      "ZERO_FTP_UNSUPPORTED_FEATURE",
-      "ZERO_FTP_CONFIGURATION_ERROR",
+      "ZERO_TRANSFER_CONNECTION_ERROR",
+      "ZERO_TRANSFER_AUTHENTICATION_ERROR",
+      "ZERO_TRANSFER_AUTHORIZATION_ERROR",
+      "ZERO_TRANSFER_PATH_NOT_FOUND",
+      "ZERO_TRANSFER_PATH_ALREADY_EXISTS",
+      "ZERO_TRANSFER_PERMISSION_DENIED",
+      "ZERO_TRANSFER_TIMEOUT",
+      "ZERO_TRANSFER_ABORTED",
+      "ZERO_TRANSFER_PROTOCOL_ERROR",
+      "ZERO_TRANSFER_PARSE_ERROR",
+      "ZERO_TRANSFER_TRANSFER_ERROR",
+      "ZERO_TRANSFER_VERIFICATION_ERROR",
+      "ZERO_TRANSFER_UNSUPPORTED_FEATURE",
+      "ZERO_TRANSFER_CONFIGURATION_ERROR",
     ]);
     expect(specializedErrors.every((error) => error.name.endsWith("Error"))).toBe(true);
+  });
+
+  it("keeps the ZeroFTPError export as a compatibility alias", () => {
+    const error = new ConnectionError({ message: "boom", retryable: true });
+
+    expect(ZeroFTPError).toBe(ZeroTransferError);
+    expect(error).toBeInstanceOf(ZeroTransferError);
+    expect(error).toBeInstanceOf(ZeroFTPError);
   });
 });

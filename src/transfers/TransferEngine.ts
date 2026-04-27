@@ -3,7 +3,12 @@
  *
  * @module transfers/TransferEngine
  */
-import { AbortError, TimeoutError, TransferError, ZeroFTPError } from "../errors/ZeroFTPError";
+import {
+  AbortError,
+  TimeoutError,
+  TransferError,
+  ZeroTransferError,
+} from "../errors/ZeroTransferError";
 import { createProgressEvent } from "../services/TransferService";
 import type { TransferProgressEvent } from "../types/public";
 import type {
@@ -219,7 +224,7 @@ export class TransferEngine {
 
   private throwIfAborted(signal: AbortSignal | undefined, job: TransferJob): void {
     if (signal?.aborted === true) {
-      if (signal.reason instanceof ZeroFTPError) {
+      if (signal.reason instanceof ZeroTransferError) {
         throw signal.reason;
       }
 
@@ -307,7 +312,7 @@ function rejectWhenAborted(
 ): Promise<TransferExecutionResult> {
   return new Promise((_, reject) => {
     const rejectAbort = (): void => {
-      if (signal.reason instanceof ZeroFTPError) {
+      if (signal.reason instanceof ZeroTransferError) {
         reject(signal.reason);
         return;
       }
@@ -447,7 +452,7 @@ function createTransferFailure(
 }
 
 function summarizeError(error: unknown): TransferAttemptError {
-  if (error instanceof ZeroFTPError) {
+  if (error instanceof ZeroTransferError) {
     return {
       code: error.code,
       message: error.message,
@@ -470,7 +475,7 @@ function summarizeError(error: unknown): TransferAttemptError {
 }
 
 function isRetryable(error: unknown): boolean {
-  return error instanceof ZeroFTPError && error.retryable;
+  return error instanceof ZeroTransferError && error.retryable;
 }
 
 function calculateBytesPerSecond(bytes: number, durationMs: number): number {

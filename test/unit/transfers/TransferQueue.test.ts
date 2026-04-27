@@ -89,7 +89,7 @@ describe("TransferQueue", () => {
 
     expect(summary).toMatchObject({ failed: 1, queued: 0, total: 1 });
     expect(failedItem?.status).toBe("failed");
-    expect(failedItem?.error).toMatchObject({ code: "ZERO_FTP_CONFIGURATION_ERROR" });
+    expect(failedItem?.error).toMatchObject({ code: "ZERO_TRANSFER_CONFIGURATION_ERROR" });
     expect(onError).toHaveBeenCalledOnce();
   });
 

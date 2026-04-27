@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ParseError } from "../../../../../src/errors/ZeroFTPError";
+import { ParseError } from "../../../../../src/errors/ZeroTransferError";
 import {
   parseMlsdLine,
   parseMlsdList,

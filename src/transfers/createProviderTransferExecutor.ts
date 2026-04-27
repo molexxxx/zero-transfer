@@ -4,7 +4,7 @@
  * @module transfers/createProviderTransferExecutor
  */
 import type { TransferSession } from "../core/TransferSession";
-import { ConfigurationError, UnsupportedFeatureError } from "../errors/ZeroFTPError";
+import { ConfigurationError, UnsupportedFeatureError } from "../errors/ZeroTransferError";
 import type {
   ProviderTransferOperations,
   ProviderTransferReadRequest,

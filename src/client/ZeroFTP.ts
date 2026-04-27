@@ -8,7 +8,7 @@
  * @module client/ZeroFTP
  */
 import { EventEmitter } from "node:events";
-import { UnsupportedFeatureError } from "../errors/ZeroFTPError";
+import { UnsupportedFeatureError } from "../errors/ZeroTransferError";
 import { emitLog, noopLogger, type ZeroFTPLogger } from "../logging/Logger";
 import type { RemoteFileAdapter } from "../protocols/RemoteFileAdapter";
 import { isClassicProviderId } from "../core/ProviderId";
