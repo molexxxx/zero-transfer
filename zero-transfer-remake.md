@@ -799,10 +799,10 @@ Status: in progress. Phase 2 now has provider-neutral transfer job and endpoint 
 
 ### Phase 3: Classic Provider Pack
 
-Status: started. The existing FTP response, FEAT, and MLSD/MLST parser work now lives under `src/providers/classic/ftp`, with public root exports preserved for compatibility. The first classic FTP provider slice now connects, logs in, lists through EPSV/PASV MLSD, stats through MLST, streams transfer reads/writes through EPSV/PASV `RETR`/`STOR` with REST offsets and upload backpressure, enforces profile `timeoutMs` across control replies and passive transfers, maps missing paths/auth/protocol/timeout failures into typed errors, runs behind the provider contract harness, and has opt-in Docker-backed `pure-ftpd` integration coverage. FTPS, SFTP, broader server compatibility, and production hardening remain future Phase 3 work.
+Status: started. The existing FTP response, FEAT, and MLSD/MLST parser work now lives under `src/providers/classic/ftp`, with public root exports preserved for compatibility. The first classic FTP provider slice now connects, logs in, lists through EPSV/PASV MLSD, stats through MLST, streams transfer reads/writes through EPSV/PASV `RETR`/`STOR` with REST offsets and upload backpressure, enforces profile `timeoutMs` across control replies and passive transfers, maps missing paths/auth/protocol/timeout failures into typed errors, runs behind the provider contract harness, and has opt-in Docker-backed `pure-ftpd` integration coverage. The first FTPS slice now exposes `createFtpsProviderFactory()`, resolves/redacts/validates TLS profile fields, negotiates explicit `AUTH TLS`, sends `PBSZ 0` and default encrypted `PROT P`, protects passive data sockets, and runs behind fake-server provider contract coverage. SFTP, implicit-FTPS hardening, broader server compatibility, and production hardening remain future Phase 3 work.
 
 - Implement FTP provider using the existing parser-first work. Initial metadata, EPSV/PASV streaming transfer-operation, timeout, and Docker-backed integration slices are in place; remaining server compatibility quirks remain.
-- Implement FTPS provider with full TLS profile support.
+- Implement FTPS provider with full TLS profile support. Initial explicit TLS, TLS profile plumbing, and encrypted passive data-channel support are in place; remaining work includes implicit FTPS integration coverage, certificate pinning/fingerprint helpers, broader server compatibility, and production hardening.
 - Implement SFTP provider with SSH key, known_hosts, and permission mapping support.
 - Add classic provider contract tests and Docker integration servers.
 - Make WinSCP/FileZilla/OpenSSH profile importers optional and well-tested.
@@ -878,6 +878,6 @@ Alpha is ready when:
 
 1. Claim the package on npm by publishing the first scoped alpha as `@zero-transfer/sdk`, preferably through the GitHub Release workflow.
 2. Keep `ZeroFTP` compatibility while gradually moving new examples and docs to `ZeroTransfer` and `createTransferClient()`.
-3. Broaden FTP server compatibility around remaining server quirks.
-4. Begin FTPS TLS profile support only after the FTP provider contract is stable.
+3. Broaden FTP/FTPS server compatibility around remaining server quirks.
+4. Continue FTPS TLS profile hardening around implicit FTPS, certificate pinning/fingerprints, and real-server integration coverage.
 5. Expand README examples only for APIs that exist in the current alpha surface.

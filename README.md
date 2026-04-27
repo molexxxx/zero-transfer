@@ -61,7 +61,7 @@ const client = createTransferClient();
 const capabilities = client.getCapabilities();
 ```
 
-Provider factories can be registered with `createTransferClient({ providers: [...] })`. Classic network providers are being added incrementally; the first FTP provider slice supports login, `fs.stat()` through MLST, `fs.list()` through EPSV/PASV MLSD, streaming provider transfer reads/writes through EPSV/PASV `RETR`/`STOR` with REST offsets, and profile `timeoutMs` enforcement across control replies and passive transfers, while FTPS/SFTP remain later alpha work.
+Provider factories can be registered with `createTransferClient({ providers: [...] })`. Classic network providers are being added incrementally; the FTP provider supports login, `fs.stat()` through MLST, `fs.list()` through EPSV/PASV MLSD, streaming provider transfer reads/writes through EPSV/PASV `RETR`/`STOR` with REST offsets, and profile `timeoutMs` enforcement across control replies and passive transfers. The first FTPS slice supports explicit `AUTH TLS`, `PBSZ 0`, encrypted `PROT P` data channels, and TLS profile fields for CA bundles, client certificates, keys, PFX/P12 bundles, passphrases, SNI, TLS versions, and certificate validation controls. SFTP remains later alpha work.
 
 ```ts
 import { createFtpProviderFactory, createTransferClient } from "@zero-transfer/sdk";
@@ -79,6 +79,30 @@ const session = await client.connect({
 
 const releases = await session.fs.list("/releases");
 const artifact = await session.fs.stat("/releases/app.zip");
+await session.disconnect();
+```
+
+Explicit FTPS can use the same provider-neutral session API with TLS settings on the connection profile:
+
+```ts
+import { createFtpsProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+
+const client = createTransferClient({
+  providers: [createFtpsProviderFactory()],
+});
+
+const session = await client.connect({
+  provider: "ftps",
+  host: "ftp.example.com",
+  username: { env: "FTP_USERNAME" },
+  password: { env: "FTP_PASSWORD" },
+  tls: {
+    ca: { path: "./certs/private-ca.pem" },
+    servername: "ftp.example.com",
+  },
+});
+
+const releases = await session.fs.list("/releases");
 await session.disconnect();
 ```
 

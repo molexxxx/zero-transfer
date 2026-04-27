@@ -11,6 +11,7 @@
  */
 import { createServer, type Server, type Socket } from "node:net";
 import { Buffer } from "node:buffer";
+import { createSecureContext, TLSSocket, type SecureContextOptions } from "node:tls";
 
 /**
  * Callback that returns a response for a received FTP command.
@@ -30,6 +31,14 @@ export type FakeFtpDataResponder = (command: string) => string | Uint8Array | nu
 
 /** Callback that formats a passive-mode control response for a data socket port. */
 export type FakeFtpPassiveResponseFactory = (port: number) => string;
+
+/** TLS certificate options used by the fake explicit FTPS server mode. */
+export interface FakeFtpTlsOptions {
+  /** Server private key PEM. */
+  key: SecureContextOptions["key"];
+  /** Server certificate PEM. */
+  cert: SecureContextOptions["cert"];
+}
 
 /** Passive upload captured by the fake FTP data server. */
 export interface FakeFtpUpload {
@@ -55,6 +64,8 @@ export interface FakeFtpServerOptions {
   passiveResponse?: FakeFtpPassiveResponseFactory;
   /** Final response sent after passive transfer data, or `null` to simulate a stalled server. */
   passiveFinalResponse?: string | null;
+  /** Enables explicit FTPS support for AUTH TLS, PBSZ, PROT, and passive data sockets. */
+  tls?: FakeFtpTlsOptions;
 }
 
 interface PassiveDataChannel {
@@ -74,10 +85,12 @@ export class FakeFtpServer {
   private readonly passiveResponse: FakeFtpPassiveResponseFactory;
   private readonly responder: FakeFtpResponder;
   private readonly server: Server;
+  private readonly tls: FakeFtpTlsOptions | undefined;
   private readonly passiveUploads: FakeFtpUpload[] = [];
   private readonly receivedCommands: string[] = [];
   private readonly sockets = new Set<Socket>();
   private passiveDataChannel: PassiveDataChannel | undefined;
+  private protectPassiveData = false;
 
   /**
    * Creates a fake server without binding a port.
@@ -94,6 +107,7 @@ export class FakeFtpServer {
         : options.passiveFinalResponse;
     this.passiveResponse = options.passiveResponse ?? createDefaultPassiveResponse;
     this.responder = options.responder ?? (() => "200 OK\r\n");
+    this.tls = options.tls;
     this.server = createServer((socket) => this.handleSocket(socket));
   }
 
@@ -179,9 +193,13 @@ export class FakeFtpServer {
    */
   private handleSocket(socket: Socket): void {
     this.sockets.add(socket);
-    socket.setEncoding("utf8");
     socket.write(this.greeting);
     socket.on("close", () => this.sockets.delete(socket));
+    this.wireCommandSocket(socket);
+  }
+
+  private wireCommandSocket(socket: Socket): void {
+    socket.setEncoding("utf8");
 
     let buffer = "";
 
@@ -202,6 +220,28 @@ export class FakeFtpServer {
   }
 
   private async handleCommand(socket: Socket, command: string): Promise<void> {
+    if (command === "AUTH TLS" && this.tls !== undefined) {
+      socket.write("234 AUTH TLS successful\r\n", () => this.upgradeControlSocket(socket));
+      return;
+    }
+
+    if (command === "PBSZ 0" && this.tls !== undefined) {
+      socket.write("200 PBSZ=0\r\n");
+      return;
+    }
+
+    if (command === "PROT P" && this.tls !== undefined) {
+      this.protectPassiveData = true;
+      socket.write("200 Data channel protection set\r\n");
+      return;
+    }
+
+    if (command === "PROT C" && this.tls !== undefined) {
+      this.protectPassiveData = false;
+      socket.write("200 Data channel protection cleared\r\n");
+      return;
+    }
+
     if (command === "EPSV" && this.passiveData !== undefined && this.extendedPassive) {
       const port = await this.openPassiveDataChannel();
       socket.write(`229 Entering Extended Passive Mode (|||${port}|)\r\n`);
@@ -248,6 +288,19 @@ export class FakeFtpServer {
     socket.write(Array.isArray(response) ? response.join("") : response);
   }
 
+  private upgradeControlSocket(socket: Socket): void {
+    if (this.tls === undefined) {
+      return;
+    }
+
+    socket.removeAllListeners("data");
+    const tlsSocket = this.createTlsServerSocket(socket);
+    this.sockets.add(tlsSocket);
+    tlsSocket.on("close", () => this.sockets.delete(tlsSocket));
+    tlsSocket.on("error", () => undefined);
+    this.wireCommandSocket(tlsSocket);
+  }
+
   private async readPassiveUpload(command: string): Promise<void> {
     const channel = this.passiveDataChannel;
 
@@ -277,11 +330,13 @@ export class FakeFtpServer {
       resolveSocket = resolve;
     });
     const server = createServer((socket) => {
+      const dataSocket = this.createPassiveDataSocket(socket);
+
       if (this.passiveDataChannel !== undefined) {
-        this.passiveDataChannel.socket = socket;
+        this.passiveDataChannel.socket = dataSocket;
       }
 
-      resolveSocket(socket);
+      resolveSocket(dataSocket);
     });
 
     await new Promise<void>((resolve) => {
@@ -296,6 +351,27 @@ export class FakeFtpServer {
     }
 
     return address.port;
+  }
+
+  private createPassiveDataSocket(socket: Socket): Socket {
+    if (!this.protectPassiveData || this.tls === undefined) {
+      return socket;
+    }
+
+    const tlsSocket = this.createTlsServerSocket(socket);
+    tlsSocket.on("error", () => undefined);
+    return tlsSocket;
+  }
+
+  private createTlsServerSocket(socket: Socket): TLSSocket {
+    if (this.tls === undefined) {
+      throw new Error("Fake FTP TLS options are not configured");
+    }
+
+    return new TLSSocket(socket, {
+      isServer: true,
+      secureContext: createSecureContext(this.tls),
+    });
   }
 
   private async writePassiveData(payload: string | Uint8Array): Promise<void> {

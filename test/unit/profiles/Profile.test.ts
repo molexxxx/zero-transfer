@@ -32,6 +32,34 @@ describe("profile validation", () => {
     expect(() =>
       validateConnectionProfile({ host: "memory.local", provider: "memory", timeoutMs: 0 }),
     ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        tls: { servername: " " },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        tls: { minVersion: "SSLv3" as never },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        tls: { maxVersion: "SSLv3" as never },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        tls: { rejectUnauthorized: "yes" as never },
+      }),
+    ).toThrow(ConfigurationError);
   });
 });
 
@@ -93,20 +121,44 @@ describe("connection profile secrets", () => {
       host: "sftp.example.test",
       password: { env: "ZT_PASSWORD" },
       provider: "sftp",
+      tls: {
+        ca: [{ env: "ZT_CA" }, { path: "ca.pem" }],
+        cert: { env: "ZT_CERT" },
+        key: { base64Env: "ZT_KEY" },
+        passphrase: { env: "ZT_PASSPHRASE" },
+        pfx: { path: "client.p12", encoding: "buffer" },
+        servername: "files.example.test",
+      },
       username: { value: "deploy" },
     };
 
     const resolved = await resolveConnectionProfileSecrets(profile, {
-      env: { ZT_PASSWORD: "super-secret" },
+      env: {
+        ZT_CA: "inline-ca",
+        ZT_CERT: "client-cert",
+        ZT_KEY: Buffer.from("private-key").toString("base64"),
+        ZT_PASSWORD: "super-secret",
+        ZT_PASSPHRASE: "key-passphrase",
+      },
+      readFile: () => Buffer.from("file-ca"),
     });
 
     expect(resolved).toMatchObject({
       host: "sftp.example.test",
       password: "super-secret",
       provider: "sftp",
+      tls: {
+        ca: ["inline-ca", "file-ca"],
+        cert: "client-cert",
+        key: Buffer.from("private-key"),
+        passphrase: "key-passphrase",
+        pfx: Buffer.from("file-ca"),
+        servername: "files.example.test",
+      },
       username: "deploy",
     });
     expect(profile.password).toEqual({ env: "ZT_PASSWORD" });
+    expect(profile.tls?.key).toEqual({ base64Env: "ZT_KEY" });
   });
 
   it("leaves profiles without credential sources unchanged", async () => {
@@ -123,6 +175,15 @@ describe("connection profile secrets", () => {
         password: { env: "ZT_PASSWORD" },
         provider: "ftp",
         signal: new AbortController().signal,
+        tls: {
+          ca: [{ env: "ZT_CA" }],
+          cert: { path: "client.pem" },
+          checkServerIdentity: () => undefined,
+          key: { path: "client.key" },
+          passphrase: { env: "ZT_KEY_PASS" },
+          rejectUnauthorized: true,
+          servername: "files.example.test",
+        },
         username: "deploy",
       }),
     ).toEqual({
@@ -131,11 +192,37 @@ describe("connection profile secrets", () => {
       password: { env: "[REDACTED]" },
       provider: "ftp",
       signal: "[AbortSignal]",
+      tls: {
+        ca: [{ env: "[REDACTED]" }],
+        cert: { encoding: undefined, path: "[REDACTED]" },
+        checkServerIdentity: "[REDACTED]",
+        key: { encoding: undefined, path: "[REDACTED]" },
+        passphrase: { env: "[REDACTED]" },
+        rejectUnauthorized: true,
+        servername: "files.example.test",
+      },
       username: "[REDACTED]",
     });
     expect(redactConnectionProfile({ host: "memory.local", provider: "memory" })).toEqual({
       host: "memory.local",
       provider: "memory",
+    });
+    expect(
+      redactConnectionProfile({
+        host: "ftps.example.test",
+        provider: "ftps",
+        tls: {
+          ca: { path: "ca.pem" },
+          pfx: { path: "client.p12", encoding: "buffer" },
+        },
+      }),
+    ).toEqual({
+      host: "ftps.example.test",
+      provider: "ftps",
+      tls: {
+        ca: { encoding: undefined, path: "[REDACTED]" },
+        pfx: { encoding: "buffer", path: "[REDACTED]" },
+      },
     });
   });
 });

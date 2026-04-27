@@ -4,8 +4,10 @@
  * @module profiles/ProfileValidator
  */
 import { ConfigurationError } from "../errors/ZeroFTPError";
-import type { ConnectionProfile } from "../types/public";
+import type { ConnectionProfile, TlsProfile } from "../types/public";
 import { resolveProviderId } from "../core/ProviderId";
+
+const TLS_VERSIONS = new Set(["TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"]);
 
 /**
  * Validates provider-neutral connection profile fields before provider lookup.
@@ -45,7 +47,45 @@ export function validateConnectionProfile(profile: ConnectionProfile): Connectio
     });
   }
 
+  if (profile.tls !== undefined) {
+    validateTlsProfile(profile.tls);
+  }
+
   return profile;
+}
+
+function validateTlsProfile(profile: TlsProfile): void {
+  if (profile.servername !== undefined && profile.servername.trim().length === 0) {
+    throw new ConfigurationError({
+      message: "Connection profile tls.servername must be non-empty when provided",
+      retryable: false,
+    });
+  }
+
+  if (profile.rejectUnauthorized !== undefined && typeof profile.rejectUnauthorized !== "boolean") {
+    throw new ConfigurationError({
+      details: { rejectUnauthorized: profile.rejectUnauthorized },
+      message: "Connection profile tls.rejectUnauthorized must be a boolean",
+      retryable: false,
+    });
+  }
+
+  validateTlsVersion(profile.minVersion, "minVersion");
+  validateTlsVersion(profile.maxVersion, "maxVersion");
+}
+
+function validateTlsVersion(value: TlsProfile["minVersion"], field: string): void {
+  if (value === undefined) {
+    return;
+  }
+
+  if (!TLS_VERSIONS.has(value)) {
+    throw new ConfigurationError({
+      details: { [field]: value },
+      message: `Connection profile tls.${field} must be a supported TLS version`,
+      retryable: false,
+    });
+  }
 }
 
 function isValidPort(value: number): boolean {

@@ -344,6 +344,21 @@ describe("createFtpProviderFactory", () => {
     expect(server.commands).toEqual(["USER anonymous", "QUIT"]);
   });
 
+  it("accepts Buffer credential sources", async () => {
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      password: Buffer.from("secret"),
+      port: requireProfilePort(),
+      provider: "ftp",
+      username: Buffer.from("tester"),
+    });
+
+    await session.disconnect();
+
+    expect(server.commands).toEqual(["USER tester", "PASS secret", "QUIT"]);
+  });
+
   it("raises typed authentication errors for rejected credentials", async () => {
     await server.stop();
     server = new FakeFtpServer({

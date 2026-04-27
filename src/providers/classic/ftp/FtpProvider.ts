@@ -4,8 +4,10 @@
  * @module providers/classic/ftp/FtpProvider
  */
 import { Buffer } from "node:buffer";
-import { createConnection, type Socket } from "node:net";
+import { createConnection, isIP, type Socket } from "node:net";
+import { connect as connectTls, type ConnectionOptions as TlsConnectionOptions } from "node:tls";
 import type { CapabilitySet } from "../../../core/CapabilitySet";
+import type { ClassicProviderId } from "../../../core/ProviderId";
 import type { TransferSession } from "../../../core/TransferSession";
 import {
   AbortError,
@@ -16,7 +18,11 @@ import {
   ProtocolError,
   TimeoutError,
 } from "../../../errors/ZeroFTPError";
-import { resolveConnectionProfileSecrets } from "../../../profiles/resolveConnectionProfileSecrets";
+import {
+  resolveConnectionProfileSecrets,
+  type ResolvedConnectionProfile,
+  type ResolvedTlsProfile,
+} from "../../../profiles/resolveConnectionProfileSecrets";
 import type { TransferVerificationResult } from "../../../transfers/TransferJob";
 import type { ProviderFactory } from "../../ProviderFactory";
 import type { TransferProvider } from "../../Provider";
@@ -38,35 +44,74 @@ import { parseMlsdLine, parseMlsdList } from "./FtpListParser";
 import { FtpResponseParser, type FtpResponse } from "./FtpResponseParser";
 
 const FTP_PROVIDER_ID = "ftp";
+const FTPS_PROVIDER_ID = "ftps";
 const DEFAULT_FTP_PORT = 21;
+const DEFAULT_FTPS_IMPLICIT_PORT = 990;
 
-const FTP_PROVIDER_CAPABILITIES: CapabilitySet = {
-  provider: FTP_PROVIDER_ID,
-  authentication: ["anonymous", "password"],
-  list: true,
-  stat: true,
-  readStream: true,
-  writeStream: true,
-  serverSideCopy: false,
-  serverSideMove: false,
-  resumeDownload: true,
-  resumeUpload: true,
-  checksum: [],
-  atomicRename: false,
-  chmod: false,
-  chown: false,
-  symlink: true,
-  metadata: ["modifiedAt", "permissions", "uniqueId"],
-  maxConcurrency: 1,
-  notes: [
-    "Classic FTP provider foundation with MLST/MLSD metadata, EPSV/PASV passive mode, timeout-guarded operations, and RETR/STOR streaming support",
-  ],
-};
+const FTP_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTP_PROVIDER_ID, [
+  "Classic FTP provider foundation with MLST/MLSD metadata, EPSV/PASV passive mode, timeout-guarded operations, and RETR/STOR streaming support",
+]);
+
+const FTPS_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTPS_PROVIDER_ID, [
+  "Explicit FTPS provider foundation with AUTH TLS, PBSZ/PROT setup, TLS profile support, MLST/MLSD metadata, EPSV/PASV passive mode, and RETR/STOR streaming support",
+]);
+
+function createClassicFtpCapabilities(provider: ClassicProviderId, notes: string[]): CapabilitySet {
+  return {
+    provider,
+    authentication:
+      provider === FTPS_PROVIDER_ID
+        ? ["anonymous", "password", "client-certificate"]
+        : ["anonymous", "password"],
+    list: true,
+    stat: true,
+    readStream: true,
+    writeStream: true,
+    serverSideCopy: false,
+    serverSideMove: false,
+    resumeDownload: true,
+    resumeUpload: true,
+    checksum: [],
+    atomicRename: false,
+    chmod: false,
+    chown: false,
+    symlink: true,
+    metadata: ["modifiedAt", "permissions", "uniqueId"],
+    maxConcurrency: 1,
+    notes,
+  };
+}
+
+interface ClassicFtpProviderConfig {
+  providerId: ClassicProviderId;
+  capabilities: CapabilitySet;
+  defaultPort: number;
+  security?: FtpsSecurityConfig;
+}
+
+interface FtpsSecurityConfig {
+  mode: FtpsMode;
+  dataProtection: FtpsDataProtection;
+}
+
+/** FTPS control-channel TLS mode. */
+export type FtpsMode = "explicit" | "implicit";
+
+/** FTPS data-channel protection level requested after TLS negotiation. */
+export type FtpsDataProtection = "clear" | "private";
 
 /** Options used to create the classic FTP provider factory. */
 export interface FtpProviderOptions {
   /** Default control port used when a connection profile omits `port`. */
   defaultPort?: number;
+}
+
+/** Options used to create the FTPS provider factory. */
+export interface FtpsProviderOptions extends FtpProviderOptions {
+  /** TLS mode used for the control connection. Defaults to explicit FTPS on port 21. */
+  mode?: FtpsMode;
+  /** Data channel protection requested through PROT. Defaults to private/encrypted data. */
+  dataProtection?: FtpsDataProtection;
 }
 
 /**
@@ -79,23 +124,66 @@ export function createFtpProviderFactory(options: FtpProviderOptions = {}): Prov
   return {
     id: FTP_PROVIDER_ID,
     capabilities: FTP_PROVIDER_CAPABILITIES,
-    create: () => new FtpProvider(options),
+    create: () =>
+      new FtpProvider({
+        capabilities: FTP_PROVIDER_CAPABILITIES,
+        defaultPort: options.defaultPort ?? DEFAULT_FTP_PORT,
+        providerId: FTP_PROVIDER_ID,
+      }),
+  };
+}
+
+/**
+ * Creates a provider factory for explicit or implicit FTPS connections.
+ *
+ * @param options - Optional provider defaults.
+ * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ */
+export function createFtpsProviderFactory(options: FtpsProviderOptions = {}): ProviderFactory {
+  const mode = options.mode ?? "explicit";
+  const defaultPort =
+    options.defaultPort ?? (mode === "implicit" ? DEFAULT_FTPS_IMPLICIT_PORT : DEFAULT_FTP_PORT);
+
+  return {
+    id: FTPS_PROVIDER_ID,
+    capabilities: FTPS_PROVIDER_CAPABILITIES,
+    create: () =>
+      new FtpProvider({
+        capabilities: FTPS_PROVIDER_CAPABILITIES,
+        defaultPort,
+        providerId: FTPS_PROVIDER_ID,
+        security: {
+          dataProtection: options.dataProtection ?? "private",
+          mode,
+        },
+      }),
   };
 }
 
 class FtpProvider implements TransferProvider {
-  readonly id = FTP_PROVIDER_ID;
-  readonly capabilities = FTP_PROVIDER_CAPABILITIES;
+  readonly id: ClassicProviderId;
+  readonly capabilities: CapabilitySet;
 
-  constructor(private readonly options: FtpProviderOptions) {}
+  constructor(private readonly config: ClassicFtpProviderConfig) {
+    this.id = config.providerId;
+    this.capabilities = config.capabilities;
+  }
 
   async connect(profile: ConnectionProfile): Promise<TransferSession> {
     const resolvedProfile = await resolveConnectionProfileSecrets(profile);
-    const port = resolvedProfile.port ?? this.options.defaultPort ?? DEFAULT_FTP_PORT;
+    const port = resolvedProfile.port ?? this.config.defaultPort;
     const connectOptions: FtpConnectOptions = {
       host: resolvedProfile.host,
       port,
+      providerId: this.config.providerId,
     };
+
+    if (this.config.security !== undefined) {
+      connectOptions.security = {
+        ...this.config.security,
+        tlsOptions: createTlsConnectionOptions(resolvedProfile),
+      };
+    }
 
     if (resolvedProfile.signal !== undefined) {
       connectOptions.signal = resolvedProfile.signal;
@@ -118,7 +206,7 @@ class FtpProvider implements TransferProvider {
           : secretToString(resolvedProfile.password),
         resolvedProfile.host,
       );
-      return new FtpTransferSession(control);
+      return new FtpTransferSession(control, this.capabilities);
     } catch (error) {
       control.close();
       throw error;
@@ -127,12 +215,17 @@ class FtpProvider implements TransferProvider {
 }
 
 class FtpTransferSession implements TransferSession {
-  readonly provider = FTP_PROVIDER_ID;
-  readonly capabilities = FTP_PROVIDER_CAPABILITIES;
+  readonly provider: ClassicProviderId;
+  readonly capabilities: CapabilitySet;
   readonly fs: RemoteFileSystem;
   readonly transfers: ProviderTransferOperations;
 
-  constructor(private readonly control: FtpControlConnection) {
+  constructor(
+    private readonly control: FtpControlConnection,
+    capabilities: CapabilitySet,
+  ) {
+    this.provider = control.providerId;
+    this.capabilities = capabilities;
     this.fs = new FtpFileSystem(control);
     this.transfers = new FtpTransferOperations(control);
   }
@@ -230,12 +323,17 @@ class FtpFileSystem implements RemoteFileSystem {
   async stat(path: string): Promise<RemoteStat> {
     const remotePath = normalizeFtpPath(path);
     const response = await this.control.sendCommand(`MLST ${remotePath}`);
-    assertPathCommandSucceeded(response, "MLST", remotePath);
+    assertPathCommandSucceeded(response, "MLST", remotePath, this.control.providerId);
 
     const factLine = response.lines.map((line) => line.trim()).find(isFtpFactLine);
 
     if (factLine === undefined) {
-      throw createProtocolError("MLST", "FTP MLST response did not include a fact line", response);
+      throw createProtocolError(
+        "MLST",
+        `${this.control.providerId.toUpperCase()} MLST response did not include a fact line`,
+        response,
+        this.control.providerId,
+      );
     }
 
     const entry = parseMlsdLine(factLine, getParentPath(remotePath) ?? "/");
@@ -252,8 +350,14 @@ class FtpFileSystem implements RemoteFileSystem {
 interface FtpConnectOptions {
   host: string;
   port: number;
+  providerId: ClassicProviderId;
+  security?: FtpConnectSecurity;
   signal?: AbortSignal;
   timeoutMs?: number;
+}
+
+interface FtpConnectSecurity extends FtpsSecurityConfig {
+  tlsOptions: TlsConnectionOptions;
 }
 
 interface ResponseWaiter {
@@ -272,24 +376,32 @@ class FtpControlConnection {
   private readonly responses: FtpResponse[] = [];
   private readonly waiters: ResponseWaiter[] = [];
   private closedError: Error | undefined;
+  private socket: Socket;
+
+  private readonly handleSocketData = (chunk: Buffer | string) => this.handleData(chunk);
+  private readonly handleSocketError = (error: Error) => {
+    this.failPending(createConnectionError(this.host, error, this.providerId));
+  };
+  private readonly handleSocketClose = () => {
+    this.failPending(
+      new ConnectionError({
+        host: this.host,
+        message: `${this.providerId.toUpperCase()} control connection closed`,
+        protocol: this.providerId,
+        retryable: true,
+      }),
+    );
+  };
 
   private constructor(
-    private readonly socket: Socket,
+    socket: Socket,
     private readonly host: string,
+    readonly providerId: ClassicProviderId,
     private readonly timeoutMs: number | undefined,
+    private readonly security: FtpConnectSecurity | undefined,
   ) {
-    this.socket.on("data", (chunk) => this.handleData(chunk));
-    this.socket.on("error", (error) => this.failPending(createConnectionError(this.host, error)));
-    this.socket.on("close", () => {
-      this.failPending(
-        new ConnectionError({
-          host: this.host,
-          message: "FTP control connection closed",
-          protocol: FTP_PROVIDER_ID,
-          retryable: true,
-        }),
-      );
-    });
+    this.socket = socket;
+    this.attachSocket(socket);
   }
 
   get passiveHost(): string {
@@ -300,16 +412,39 @@ class FtpControlConnection {
     return this.timeoutMs;
   }
 
+  get dataTlsOptions(): TlsConnectionOptions | undefined {
+    return this.security?.dataProtection === "private" ? this.security.tlsOptions : undefined;
+  }
+
   static async connect(options: FtpConnectOptions): Promise<FtpControlConnection> {
-    const socket = createConnection({ host: options.host, port: options.port });
-    const control = new FtpControlConnection(socket, options.host, options.timeoutMs);
+    const socket = createControlSocket(options);
+    const control = new FtpControlConnection(
+      socket,
+      options.host,
+      options.providerId,
+      options.timeoutMs,
+      options.security,
+    );
 
     try {
-      await waitForSocketConnect(socket, options);
+      await waitForSocketConnect(
+        socket,
+        options,
+        options.security?.mode === "implicit" ? "secureConnect" : "connect",
+      );
       const greeting = await control.readFinalResponse({ operation: "greeting" });
 
       if (!greeting.completion) {
-        throw createProtocolError("greeting", "FTP server greeting was not successful", greeting);
+        throw createProtocolError(
+          "greeting",
+          `${options.providerId.toUpperCase()} server greeting was not successful`,
+          greeting,
+          options.providerId,
+        );
+      }
+
+      if (options.security?.mode === "explicit") {
+        await negotiateExplicitFtps(control, options.security);
       }
 
       return control;
@@ -378,6 +513,7 @@ class FtpControlConnection {
           const error = createFtpTimeoutError({
             ...context,
             host: this.host,
+            providerId: this.providerId,
             timeoutMs,
           });
 
@@ -395,13 +531,48 @@ class FtpControlConnection {
     }
   }
 
+  async upgradeToTls(tlsOptions: TlsConnectionOptions): Promise<void> {
+    const plainSocket = this.socket;
+    this.detachSocket(plainSocket);
+    const tlsSocket = connectTls({ ...tlsOptions, socket: plainSocket });
+
+    this.socket = tlsSocket;
+    this.attachSocket(tlsSocket);
+
+    const connectOptions: FtpConnectOptions = {
+      host: this.host,
+      port: 0,
+      providerId: this.providerId,
+    };
+
+    if (this.timeoutMs !== undefined) {
+      connectOptions.timeoutMs = this.timeoutMs;
+    }
+
+    await waitForSocketConnect(tlsSocket, connectOptions, "secureConnect", "TLS negotiation");
+  }
+
+  private attachSocket(socket: Socket): void {
+    socket.on("data", this.handleSocketData);
+    socket.on("error", this.handleSocketError);
+    socket.on("close", this.handleSocketClose);
+  }
+
+  private detachSocket(socket: Socket): void {
+    socket.off("data", this.handleSocketData);
+    socket.off("error", this.handleSocketError);
+    socket.off("close", this.handleSocketClose);
+  }
+
   private handleData(chunk: Buffer | string): void {
     try {
       for (const response of this.parser.push(chunk)) {
         this.enqueueResponse(response);
       }
     } catch (error) {
-      this.failPending(error instanceof Error ? error : createConnectionError(this.host, error));
+      this.failPending(
+        error instanceof Error ? error : createConnectionError(this.host, error, this.providerId),
+      );
     }
   }
 
@@ -456,7 +627,7 @@ async function expectCompletion(
   path: string,
 ): Promise<void> {
   const response = await control.sendCommand(command);
-  assertPathCommandSucceeded(response, command, path);
+  assertPathCommandSucceeded(response, command, path, control.providerId);
 }
 
 async function readPassiveDataCommand(
@@ -468,13 +639,18 @@ async function readPassiveDataCommand(
   const dataConnection = await openPassiveDataCommand(control, command, path, options);
 
   try {
-    const payload = await collectPassiveData(dataConnection, control.operationTimeoutMs, path);
+    const payload = await collectPassiveData(
+      dataConnection,
+      control.operationTimeoutMs,
+      path,
+      control.providerId,
+    );
     const finalResponse = await control.readFinalResponse({
       command,
       operation: "data command completion",
       path,
     });
-    assertPathCommandSucceeded(finalResponse, command, path);
+    assertPathCommandSucceeded(finalResponse, command, path, control.providerId);
     return payload;
   } catch (error) {
     dataConnection.close();
@@ -499,6 +675,7 @@ async function openPassiveDataCommand(
     passiveEndpoint,
     control.operationTimeoutMs,
     path,
+    control,
   );
 
   try {
@@ -512,11 +689,12 @@ async function openPassiveDataCommand(
 
     if (!initialResponse.preliminary) {
       dataConnection.close();
-      assertPathCommandSucceeded(initialResponse, command, path);
+      assertPathCommandSucceeded(initialResponse, command, path, control.providerId);
       throw createProtocolError(
         command,
-        "FTP data command did not open a data transfer",
+        `${control.providerId.toUpperCase()} data command did not open a data transfer`,
         initialResponse,
+        control.providerId,
       );
     }
 
@@ -534,16 +712,20 @@ async function openPassiveEndpoint(
   const extendedPassiveResponse = await control.sendCommand("EPSV");
 
   if (extendedPassiveResponse.completion) {
-    return parseExtendedPassiveEndpoint(extendedPassiveResponse, control.passiveHost);
+    return parseExtendedPassiveEndpoint(
+      extendedPassiveResponse,
+      control.passiveHost,
+      control.providerId,
+    );
   }
 
   if (!isExtendedPassiveUnsupported(extendedPassiveResponse)) {
-    assertPathCommandSucceeded(extendedPassiveResponse, "EPSV", path);
+    assertPathCommandSucceeded(extendedPassiveResponse, "EPSV", path, control.providerId);
   }
 
   const passiveResponse = await control.sendCommand("PASV");
-  assertPathCommandSucceeded(passiveResponse, "PASV", path);
-  return parsePassiveEndpoint(passiveResponse);
+  assertPathCommandSucceeded(passiveResponse, "PASV", path, control.providerId);
+  return parsePassiveEndpoint(passiveResponse, control.providerId);
 }
 
 async function writePassiveDataCommand(
@@ -559,6 +741,7 @@ async function writePassiveDataCommand(
     host: dataConnection.endpoint.host,
     operation: "passive data transfer",
     path,
+    providerId: control.providerId,
   };
 
   try {
@@ -581,7 +764,7 @@ async function writePassiveDataCommand(
       operation: "data command completion",
       path,
     });
-    assertPathCommandSucceeded(finalResponse, command, path);
+    assertPathCommandSucceeded(finalResponse, command, path, control.providerId);
     return bytesTransferred;
   } catch (error) {
     dataConnection.close();
@@ -600,21 +783,28 @@ async function sendRestartOffset(
     return;
   }
 
-  assertPathCommandSucceeded(response, "REST", path);
+  assertPathCommandSucceeded(response, "REST", path, control.providerId);
 }
 
 function openPassiveDataConnection(
   endpoint: PassiveEndpoint,
   timeoutMs: number | undefined,
   path: string,
+  control: FtpControlConnection,
 ): PassiveDataConnection {
-  const socket = createConnection({ host: endpoint.host, port: endpoint.port });
+  const tlsOptions = control.dataTlsOptions;
+  const socket =
+    tlsOptions === undefined
+      ? createConnection({ host: endpoint.host, port: endpoint.port })
+      : connectTls({ ...tlsOptions, host: endpoint.host, port: endpoint.port });
+  socket.on("error", () => undefined);
   const ready = new Promise<void>((resolve, reject) => {
     let settled = false;
     let timeout: NodeJS.Timeout | undefined;
+    const readyEvent = tlsOptions === undefined ? "connect" : "secureConnect";
 
     const cleanup = () => {
-      socket.off("connect", handleConnect);
+      socket.off(readyEvent, handleConnect);
       socket.off("error", handleError);
 
       if (timeout !== undefined) {
@@ -642,11 +832,13 @@ function openPassiveDataConnection(
     };
     const handleError = (error: Error) => {
       rejectOnce(
-        error instanceof TimeoutError ? error : createConnectionError(endpoint.host, error),
+        error instanceof TimeoutError
+          ? error
+          : createConnectionError(endpoint.host, error, control.providerId),
       );
     };
 
-    socket.once("connect", handleConnect);
+    socket.once(readyEvent, handleConnect);
     socket.once("error", handleError);
 
     if (timeoutMs !== undefined) {
@@ -657,6 +849,7 @@ function openPassiveDataConnection(
               host: endpoint.host,
               operation: "passive data connection",
               path,
+              providerId: control.providerId,
               timeoutMs,
             }),
           ),
@@ -679,12 +872,14 @@ async function collectPassiveData(
   dataConnection: PassiveDataConnection,
   timeoutMs: number | undefined,
   path: string,
+  providerId: ClassicProviderId,
 ): Promise<Buffer> {
   const chunks: Buffer[] = [];
   const clearIdleTimeout = setSocketTimeout(dataConnection.socket, timeoutMs, {
     host: dataConnection.endpoint.host,
     operation: "passive data transfer",
     path,
+    providerId,
   });
 
   try {
@@ -718,6 +913,7 @@ async function* createPassiveReadSource(
       host: dataConnection.endpoint.host,
       operation: "passive data transfer",
       path,
+      providerId: control.providerId,
     });
 
     for await (const chunk of dataConnection.socket as AsyncIterable<Buffer>) {
@@ -749,7 +945,7 @@ async function* createPassiveReadSource(
       operation: "data command completion",
       path,
     });
-    assertPathCommandSucceeded(finalResponse, command, path);
+    assertPathCommandSucceeded(finalResponse, command, path, control.providerId);
     completed = true;
   } finally {
     clearIdleTimeout();
@@ -868,14 +1064,18 @@ function cloneVerification(verification: TransferVerificationResult): TransferVe
   return clone;
 }
 
-function parsePassiveEndpoint(response: FtpResponse): PassiveEndpoint {
+function parsePassiveEndpoint(
+  response: FtpResponse,
+  providerId: ClassicProviderId,
+): PassiveEndpoint {
   const endpointMatch = /(\d+),(\d+),(\d+),(\d+),(\d+),(\d+)/.exec(response.message);
 
   if (endpointMatch === null) {
     throw createProtocolError(
       "PASV",
-      "FTP PASV response did not include a host and port",
+      `${providerId.toUpperCase()} PASV response did not include a host and port`,
       response,
+      providerId,
     );
   }
 
@@ -885,8 +1085,9 @@ function parsePassiveEndpoint(response: FtpResponse): PassiveEndpoint {
   if (parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
     throw createProtocolError(
       "PASV",
-      "FTP PASV response included an invalid host or port",
+      `${providerId.toUpperCase()} PASV response included an invalid host or port`,
       response,
+      providerId,
     );
   }
 
@@ -896,25 +1097,44 @@ function parsePassiveEndpoint(response: FtpResponse): PassiveEndpoint {
   };
 }
 
-function parseExtendedPassiveEndpoint(response: FtpResponse, host: string): PassiveEndpoint {
+function parseExtendedPassiveEndpoint(
+  response: FtpResponse,
+  host: string,
+  providerId: ClassicProviderId,
+): PassiveEndpoint {
   const endpointMatch = /\((.+)\)/.exec(response.message);
 
   if (endpointMatch === null) {
-    throw createProtocolError("EPSV", "FTP EPSV response did not include a port", response);
+    throw createProtocolError(
+      "EPSV",
+      `${providerId.toUpperCase()} EPSV response did not include a port`,
+      response,
+      providerId,
+    );
   }
 
   const endpointText = endpointMatch[1] ?? "";
   const delimiter = endpointText[0];
 
   if (delimiter === undefined) {
-    throw createProtocolError("EPSV", "FTP EPSV response did not include a delimiter", response);
+    throw createProtocolError(
+      "EPSV",
+      `${providerId.toUpperCase()} EPSV response did not include a delimiter`,
+      response,
+      providerId,
+    );
   }
 
   const parts = endpointText.split(delimiter);
   const port = Number(parts[3]);
 
   if (!Number.isInteger(port) || port <= 0 || port > 65_535) {
-    throw createProtocolError("EPSV", "FTP EPSV response included an invalid port", response);
+    throw createProtocolError(
+      "EPSV",
+      `${providerId.toUpperCase()} EPSV response included an invalid port`,
+      response,
+      providerId,
+    );
   }
 
   return { host, port };
@@ -928,6 +1148,79 @@ function isExtendedPassiveUnsupported(response: FtpResponse): boolean {
     response.code === 504 ||
     response.code === 522
   );
+}
+
+function createControlSocket(options: FtpConnectOptions): Socket {
+  if (options.security?.mode === "implicit") {
+    return connectTls({
+      ...options.security.tlsOptions,
+      host: options.host,
+      port: options.port,
+    });
+  }
+
+  return createConnection({ host: options.host, port: options.port });
+}
+
+async function negotiateExplicitFtps(
+  control: FtpControlConnection,
+  security: FtpConnectSecurity,
+): Promise<void> {
+  const authResponse = await control.sendCommand("AUTH TLS");
+
+  if (!authResponse.completion) {
+    throw createProtocolError(
+      "AUTH TLS",
+      "FTPS AUTH TLS negotiation failed",
+      authResponse,
+      control.providerId,
+    );
+  }
+
+  await control.upgradeToTls(security.tlsOptions);
+  await expectCompletion(control, "PBSZ 0", "/");
+  await expectCompletion(control, security.dataProtection === "private" ? "PROT P" : "PROT C", "/");
+}
+
+function createTlsConnectionOptions(profile: ResolvedConnectionProfile): TlsConnectionOptions {
+  const tlsProfile = profile.tls;
+  const options: TlsConnectionOptions = {
+    rejectUnauthorized: tlsProfile?.rejectUnauthorized ?? true,
+  };
+  const servername =
+    tlsProfile?.servername ?? (isIP(profile.host) === 0 ? profile.host : undefined);
+
+  if (servername !== undefined) {
+    options.servername = servername;
+  }
+
+  if (tlsProfile === undefined) {
+    return options;
+  }
+
+  if (tlsProfile.ca !== undefined) options.ca = normalizeTlsSecretValue(tlsProfile.ca);
+  if (tlsProfile.cert !== undefined) options.cert = normalizeTlsSecretValue(tlsProfile.cert);
+  if (tlsProfile.key !== undefined) options.key = normalizeTlsSecretValue(tlsProfile.key);
+  if (tlsProfile.pfx !== undefined) options.pfx = normalizeTlsSecretValue(tlsProfile.pfx);
+  if (tlsProfile.passphrase !== undefined)
+    options.passphrase = secretToString(tlsProfile.passphrase);
+  if (tlsProfile.minVersion !== undefined) options.minVersion = tlsProfile.minVersion;
+  if (tlsProfile.maxVersion !== undefined) options.maxVersion = tlsProfile.maxVersion;
+  if (tlsProfile.checkServerIdentity !== undefined) {
+    options.checkServerIdentity = tlsProfile.checkServerIdentity;
+  }
+
+  return options;
+}
+
+function normalizeTlsSecretValue(
+  value: NonNullable<ResolvedTlsProfile["ca"]> | NonNullable<ResolvedTlsProfile["cert"]>,
+): string | Buffer | Array<string | Buffer> {
+  if (Array.isArray(value)) {
+    return value.map((item) => (Buffer.isBuffer(item) ? Buffer.from(item) : item));
+  }
+
+  return Buffer.isBuffer(value) ? Buffer.from(value) : value;
 }
 
 async function authenticateFtpSession(
@@ -945,17 +1238,22 @@ async function authenticateFtpSession(
   }
 
   if (!userResponse.intermediate) {
-    throw createAuthenticationError(host, "USER", userResponse);
+    throw createAuthenticationError(host, "USER", userResponse, control.providerId);
   }
 
   const passwordResponse = await control.sendCommand(`PASS ${safePassword}`);
 
   if (!passwordResponse.completion) {
-    throw createAuthenticationError(host, "PASS", passwordResponse);
+    throw createAuthenticationError(host, "PASS", passwordResponse, control.providerId);
   }
 }
 
-function assertPathCommandSucceeded(response: FtpResponse, command: string, path: string): void {
+function assertPathCommandSucceeded(
+  response: FtpResponse,
+  command: string,
+  path: string,
+  providerId: ClassicProviderId,
+): void {
   if (response.completion) {
     return;
   }
@@ -964,23 +1262,34 @@ function assertPathCommandSucceeded(response: FtpResponse, command: string, path
     throw new PathNotFoundError({
       command,
       ftpCode: response.code,
-      message: `FTP path not found: ${path}`,
+      message: `${providerId.toUpperCase()} path not found: ${path}`,
       path,
-      protocol: FTP_PROVIDER_ID,
+      protocol: providerId,
       retryable: false,
     });
   }
 
-  throw createProtocolError(command, `FTP command failed: ${command}`, response);
+  throw createProtocolError(
+    command,
+    `${providerId.toUpperCase()} command failed: ${command}`,
+    response,
+    providerId,
+  );
 }
 
-function waitForSocketConnect(socket: Socket, options: FtpConnectOptions): Promise<void> {
+function waitForSocketConnect(
+  socket: Socket,
+  options: FtpConnectOptions,
+  readyEvent: "connect" | "secureConnect" = "connect",
+  operation = "connection",
+): Promise<void> {
   return new Promise((resolve, reject) => {
     let settled = false;
     let timeout: NodeJS.Timeout | undefined;
 
     const cleanup = () => {
       socket.off("connect", handleConnect);
+      socket.off(readyEvent, handleConnect);
       socket.off("error", handleError);
       options.signal?.removeEventListener("abort", handleAbort);
 
@@ -1007,19 +1316,20 @@ function waitForSocketConnect(socket: Socket, options: FtpConnectOptions): Promi
       cleanup();
       resolve();
     };
-    const handleError = (error: Error) => rejectOnce(createConnectionError(options.host, error));
+    const handleError = (error: Error) =>
+      rejectOnce(createConnectionError(options.host, error, options.providerId));
     const handleAbort = () =>
       rejectOnce(
         new AbortError({
-          details: { operation: "connect" },
+          details: { operation },
           host: options.host,
-          message: "FTP connection aborted",
-          protocol: FTP_PROVIDER_ID,
+          message: `${options.providerId.toUpperCase()} ${operation} aborted`,
+          protocol: options.providerId,
           retryable: false,
         }),
       );
 
-    socket.once("connect", handleConnect);
+    socket.once(readyEvent, handleConnect);
     socket.once("error", handleError);
 
     if (options.signal?.aborted === true) {
@@ -1037,7 +1347,8 @@ function waitForSocketConnect(socket: Socket, options: FtpConnectOptions): Promi
           rejectOnce(
             createFtpTimeoutError({
               host: options.host,
-              operation: "connection",
+              operation,
+              providerId: options.providerId,
               timeoutMs,
             }),
           ),
@@ -1049,6 +1360,7 @@ function waitForSocketConnect(socket: Socket, options: FtpConnectOptions): Promi
 
 interface FtpTimeoutErrorInput extends FtpTimeoutContext {
   host: string;
+  providerId: ClassicProviderId;
   timeoutMs: number;
 }
 
@@ -1061,8 +1373,8 @@ function createFtpTimeoutError(input: FtpTimeoutErrorInput): TimeoutError {
   return new TimeoutError({
     details,
     host: input.host,
-    message: `FTP ${input.operation} timed out after ${input.timeoutMs}ms`,
-    protocol: FTP_PROVIDER_ID,
+    message: `${input.providerId.toUpperCase()} ${input.operation} timed out after ${input.timeoutMs}ms`,
+    protocol: input.providerId,
     retryable: true,
     ...(input.command === undefined ? {} : { command: input.command }),
     ...(input.path === undefined ? {} : { path: input.path }),
@@ -1095,23 +1407,28 @@ function createAuthenticationError(
   host: string,
   command: string,
   response: FtpResponse,
+  providerId: ClassicProviderId,
 ): AuthenticationError {
   return new AuthenticationError({
     command,
     ftpCode: response.code,
     host,
-    message: `FTP authentication failed during ${command}`,
-    protocol: FTP_PROVIDER_ID,
+    message: `${providerId.toUpperCase()} authentication failed during ${command}`,
+    protocol: providerId,
     retryable: false,
   });
 }
 
-function createConnectionError(host: string, cause: unknown): ConnectionError {
+function createConnectionError(
+  host: string,
+  cause: unknown,
+  providerId: ClassicProviderId,
+): ConnectionError {
   return new ConnectionError({
     cause,
     host,
-    message: "FTP connection failed",
-    protocol: FTP_PROVIDER_ID,
+    message: `${providerId.toUpperCase()} connection failed`,
+    protocol: providerId,
     retryable: true,
   });
 }
@@ -1120,12 +1437,13 @@ function createProtocolError(
   command: string,
   message: string,
   response: FtpResponse,
+  providerId: ClassicProviderId,
 ): ProtocolError {
   return new ProtocolError({
     command,
     ftpCode: response.code,
     message,
-    protocol: FTP_PROVIDER_ID,
+    protocol: providerId,
     retryable: response.transientFailure,
   });
 }

@@ -3,7 +3,14 @@
  *
  * @module providers/classic/ftp
  */
-export { createFtpProviderFactory, type FtpProviderOptions } from "./FtpProvider";
+export {
+  createFtpProviderFactory,
+  createFtpsProviderFactory,
+  type FtpProviderOptions,
+  type FtpsDataProtection,
+  type FtpsMode,
+  type FtpsProviderOptions,
+} from "./FtpProvider";
 export { parseFtpFeatures, type FtpFeatures } from "./FtpFeatureParser";
 export { parseMlsdLine, parseMlsdList, parseMlstTimestamp } from "./FtpListParser";
 export {

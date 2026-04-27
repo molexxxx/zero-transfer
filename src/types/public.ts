@@ -6,6 +6,7 @@
  *
  * @module types/public
  */
+import type { PeerCertificate, SecureVersion } from "node:tls";
 import type { ZeroFTPLogger } from "../logging/Logger";
 import type { ClassicProviderId, ProviderId } from "../core/ProviderId";
 import type { SecretSource } from "../profiles/SecretSource";
@@ -70,6 +71,35 @@ export interface RemoteStat extends RemoteEntry {
   exists: true;
 }
 
+/** TLS material source accepted by certificate-aware connection profiles. */
+export type TlsSecretSource = SecretSource | SecretSource[];
+
+/**
+ * TLS settings shared by certificate-aware providers such as FTPS and future HTTPS/WebDAV adapters.
+ */
+export interface TlsProfile {
+  /** Certificate authority bundle used to validate private or self-signed endpoints. */
+  ca?: TlsSecretSource;
+  /** Client certificate PEM used for mutual TLS when a provider requires it. */
+  cert?: SecretSource;
+  /** Client private key PEM used with `cert`. */
+  key?: SecretSource;
+  /** PFX/P12 client certificate bundle. */
+  pfx?: SecretSource;
+  /** Passphrase for an encrypted private key or PFX/P12 bundle. */
+  passphrase?: SecretSource;
+  /** Server name used for SNI and certificate identity checks. Defaults to the profile host. */
+  servername?: string;
+  /** Whether TLS certificate validation is required. Defaults to `true`. */
+  rejectUnauthorized?: boolean;
+  /** Minimum TLS protocol version accepted by the client. */
+  minVersion?: SecureVersion;
+  /** Maximum TLS protocol version accepted by the client. */
+  maxVersion?: SecureVersion;
+  /** Optional custom server identity checker for private PKI or certificate pinning. */
+  checkServerIdentity?: (host: string, cert: PeerCertificate) => Error | undefined;
+}
+
 /**
  * Connection settings accepted by facade and adapter implementations.
  */
@@ -88,6 +118,8 @@ export interface ConnectionProfile {
   password?: SecretSource;
   /** Whether encrypted transport should be requested for protocols that support it. */
   secure?: boolean;
+  /** TLS settings for encrypted providers such as FTPS. */
+  tls?: TlsProfile;
   /** Operation or connection timeout in milliseconds. */
   timeoutMs?: number;
   /** Abort signal used to cancel connection setup or long-running operations. */
