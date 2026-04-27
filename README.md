@@ -151,6 +151,20 @@ const receipt = await engine.execute(
 );
 ```
 
+Provider sessions that can stream content may expose `session.transfers.read()` and `session.transfers.write()`. The SDK also exports `createProviderTransferExecutor()` to bridge those provider operations into `TransferEngine` without hard-coding a concrete FTP, SFTP, local, or cloud implementation:
+
+```ts
+import { createProviderTransferExecutor } from "@zero-transfer/sdk";
+
+const executor = createProviderTransferExecutor({
+  resolveSession: ({ endpoint }) => connectedSessions.get(endpoint.provider ?? ""),
+});
+
+const receipt = await engine.execute(job, executor, {
+  retry: { maxAttempts: 2 },
+});
+```
+
 Dry-run transfer plans can be converted into executable jobs and drained through a minimal queue with concurrency, pause/resume, cancellation, progress, retries, receipts, and per-job failure tracking:
 
 ```ts

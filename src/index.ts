@@ -39,6 +39,17 @@ export type {
   ProviderCapabilities,
 } from "./providers/ProviderCapabilities";
 export type { ProviderFactory } from "./providers/ProviderFactory";
+export type {
+  ProviderTransferOperations,
+  ProviderTransferReadRequest,
+  ProviderTransferReadResult,
+  ProviderTransferRequest,
+  ProviderTransferWriteRequest,
+  ProviderTransferWriteResult,
+  TransferByteRange,
+  TransferDataChunk,
+  TransferDataSource,
+} from "./providers/ProviderTransferOperations";
 export type { RemoteFileSystem } from "./providers/RemoteFileSystem";
 export { createLocalProviderFactory, type LocalProviderOptions } from "./providers/local";
 export {
@@ -122,6 +133,7 @@ export {
 export {
   TransferEngine,
   TransferQueue,
+  createProviderTransferExecutor,
   createTransferJobsFromPlan,
   createTransferPlan,
   summarizeTransferPlan,
@@ -141,6 +153,10 @@ export {
   type TransferPlanInput,
   type TransferPlanStep,
   type TransferPlanSummary,
+  type ProviderTransferEndpointRole,
+  type ProviderTransferExecutorOptions,
+  type ProviderTransferSessionResolver,
+  type ProviderTransferSessionResolverInput,
   type TransferQueueExecutorResolver,
   type TransferQueueItem,
   type TransferQueueItemStatus,

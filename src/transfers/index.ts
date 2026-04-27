@@ -1,4 +1,11 @@
 export {
+  createProviderTransferExecutor,
+  type ProviderTransferEndpointRole,
+  type ProviderTransferExecutorOptions,
+  type ProviderTransferSessionResolver,
+  type ProviderTransferSessionResolverInput,
+} from "./createProviderTransferExecutor";
+export {
   TransferEngine,
   type TransferEngineExecuteOptions,
   type TransferEngineOptions,
