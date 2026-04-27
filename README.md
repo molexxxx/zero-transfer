@@ -61,7 +61,7 @@ const client = createTransferClient();
 const capabilities = client.getCapabilities();
 ```
 
-Provider factories can be registered with `createTransferClient({ providers: [...] })`. Classic network providers are being added incrementally; the first FTP provider slice supports login, `fs.stat()` through MLST, `fs.list()` through EPSV/PASV MLSD, and streaming provider transfer reads/writes through EPSV/PASV `RETR`/`STOR` with REST offsets, while FTPS/SFTP remain later alpha work.
+Provider factories can be registered with `createTransferClient({ providers: [...] })`. Classic network providers are being added incrementally; the first FTP provider slice supports login, `fs.stat()` through MLST, `fs.list()` through EPSV/PASV MLSD, streaming provider transfer reads/writes through EPSV/PASV `RETR`/`STOR` with REST offsets, and profile `timeoutMs` enforcement across control replies and passive transfers, while FTPS/SFTP remain later alpha work.
 
 ```ts
 import { createFtpProviderFactory, createTransferClient } from "@zero-transfer/sdk";

@@ -59,7 +59,7 @@ const FTP_PROVIDER_CAPABILITIES: CapabilitySet = {
   metadata: ["modifiedAt", "permissions", "uniqueId"],
   maxConcurrency: 1,
   notes: [
-    "Classic FTP provider foundation with MLST/MLSD metadata, EPSV/PASV passive mode, and RETR/STOR streaming support",
+    "Classic FTP provider foundation with MLST/MLSD metadata, EPSV/PASV passive mode, timeout-guarded operations, and RETR/STOR streaming support",
   ],
 };
 
@@ -261,6 +261,12 @@ interface ResponseWaiter {
   reject(error: Error): void;
 }
 
+interface FtpTimeoutContext {
+  operation: string;
+  command?: string;
+  path?: string;
+}
+
 class FtpControlConnection {
   private readonly parser = new FtpResponseParser();
   private readonly responses: FtpResponse[] = [];
@@ -270,6 +276,7 @@ class FtpControlConnection {
   private constructor(
     private readonly socket: Socket,
     private readonly host: string,
+    private readonly timeoutMs: number | undefined,
   ) {
     this.socket.on("data", (chunk) => this.handleData(chunk));
     this.socket.on("error", (error) => this.failPending(createConnectionError(this.host, error)));
@@ -289,13 +296,17 @@ class FtpControlConnection {
     return this.host;
   }
 
+  get operationTimeoutMs(): number | undefined {
+    return this.timeoutMs;
+  }
+
   static async connect(options: FtpConnectOptions): Promise<FtpControlConnection> {
     const socket = createConnection({ host: options.host, port: options.port });
-    const control = new FtpControlConnection(socket, options.host);
+    const control = new FtpControlConnection(socket, options.host, options.timeoutMs);
 
     try {
       await waitForSocketConnect(socket, options);
-      const greeting = await control.readFinalResponse();
+      const greeting = await control.readFinalResponse({ operation: "greeting" });
 
       if (!greeting.completion) {
         throw createProtocolError("greeting", "FTP server greeting was not successful", greeting);
@@ -314,20 +325,22 @@ class FtpControlConnection {
 
   async sendCommand(command: string): Promise<FtpResponse> {
     this.writeCommand(command);
-    return this.readFinalResponse();
+    return this.readFinalResponse({ command, operation: "command response" });
   }
 
-  async readFinalResponse(): Promise<FtpResponse> {
-    let response = await this.readResponse();
+  async readFinalResponse(
+    context: FtpTimeoutContext = { operation: "response" },
+  ): Promise<FtpResponse> {
+    let response = await this.readResponse(context);
 
     while (response.preliminary) {
-      response = await this.readResponse();
+      response = await this.readResponse(context);
     }
 
     return response;
   }
 
-  readResponse(): Promise<FtpResponse> {
+  readResponse(context: FtpTimeoutContext = { operation: "response" }): Promise<FtpResponse> {
     const response = this.responses.shift();
 
     if (response !== undefined) {
@@ -339,7 +352,39 @@ class FtpControlConnection {
     }
 
     return new Promise((resolve, reject) => {
-      this.waiters.push({ reject, resolve });
+      let timeout: NodeJS.Timeout | undefined;
+      const clearWaiterTimeout = () => {
+        if (timeout !== undefined) {
+          clearTimeout(timeout);
+        }
+      };
+      const waiter: ResponseWaiter = {
+        reject(error) {
+          clearWaiterTimeout();
+          reject(error);
+        },
+        resolve(response) {
+          clearWaiterTimeout();
+          resolve(response);
+        },
+      };
+
+      this.waiters.push(waiter);
+
+      const timeoutMs = this.timeoutMs;
+
+      if (timeoutMs !== undefined) {
+        timeout = setTimeout(() => {
+          const error = createFtpTimeoutError({
+            ...context,
+            host: this.host,
+            timeoutMs,
+          });
+
+          this.failPending(error);
+          this.close();
+        }, timeoutMs);
+      }
     });
   }
 
@@ -390,6 +435,7 @@ interface PassiveEndpoint {
 }
 
 interface PassiveDataConnection {
+  endpoint: PassiveEndpoint;
   ready: Promise<void>;
   socket: Socket;
   close(): void;
@@ -422,8 +468,12 @@ async function readPassiveDataCommand(
   const dataConnection = await openPassiveDataCommand(control, command, path, options);
 
   try {
-    const payload = await collectPassiveData(dataConnection);
-    const finalResponse = await control.readFinalResponse();
+    const payload = await collectPassiveData(dataConnection, control.operationTimeoutMs, path);
+    const finalResponse = await control.readFinalResponse({
+      command,
+      operation: "data command completion",
+      path,
+    });
     assertPathCommandSucceeded(finalResponse, command, path);
     return payload;
   } catch (error) {
@@ -445,12 +495,20 @@ async function openPassiveDataCommand(
   }
 
   const passiveEndpoint = await openPassiveEndpoint(control, path);
-  const dataConnection = openPassiveDataConnection(passiveEndpoint);
+  const dataConnection = openPassiveDataConnection(
+    passiveEndpoint,
+    control.operationTimeoutMs,
+    path,
+  );
 
   try {
     await dataConnection.ready;
     control.writeCommand(command);
-    const initialResponse = await control.readResponse();
+    const initialResponse = await control.readResponse({
+      command,
+      operation: "data command response",
+      path,
+    });
 
     if (!initialResponse.preliminary) {
       dataConnection.close();
@@ -497,18 +555,32 @@ async function writePassiveDataCommand(
 ): Promise<number> {
   const dataConnection = await openPassiveDataCommand(control, command, path, options);
   let bytesTransferred = 0;
+  const timeoutContext = {
+    host: dataConnection.endpoint.host,
+    operation: "passive data transfer",
+    path,
+  };
 
   try {
     for await (const chunk of request.content) {
       request.throwIfAborted();
       const output = new Uint8Array(chunk);
-      await writeSocketChunk(dataConnection.socket, output);
+      await writeSocketChunk(
+        dataConnection.socket,
+        output,
+        control.operationTimeoutMs,
+        timeoutContext,
+      );
       bytesTransferred += output.byteLength;
       request.reportProgress(bytesTransferred, request.totalBytes);
     }
 
-    await endSocket(dataConnection.socket);
-    const finalResponse = await control.readFinalResponse();
+    await endSocket(dataConnection.socket, control.operationTimeoutMs, timeoutContext);
+    const finalResponse = await control.readFinalResponse({
+      command,
+      operation: "data command completion",
+      path,
+    });
     assertPathCommandSucceeded(finalResponse, command, path);
     return bytesTransferred;
   } catch (error) {
@@ -531,14 +603,70 @@ async function sendRestartOffset(
   assertPathCommandSucceeded(response, "REST", path);
 }
 
-function openPassiveDataConnection(endpoint: PassiveEndpoint): PassiveDataConnection {
+function openPassiveDataConnection(
+  endpoint: PassiveEndpoint,
+  timeoutMs: number | undefined,
+  path: string,
+): PassiveDataConnection {
   const socket = createConnection({ host: endpoint.host, port: endpoint.port });
   const ready = new Promise<void>((resolve, reject) => {
-    socket.once("connect", resolve);
-    socket.once("error", reject);
+    let settled = false;
+    let timeout: NodeJS.Timeout | undefined;
+
+    const cleanup = () => {
+      socket.off("connect", handleConnect);
+      socket.off("error", handleError);
+
+      if (timeout !== undefined) {
+        clearTimeout(timeout);
+      }
+    };
+    const rejectOnce = (error: Error) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      cleanup();
+      socket.destroy();
+      reject(error);
+    };
+    const handleConnect = () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      cleanup();
+      resolve();
+    };
+    const handleError = (error: Error) => {
+      rejectOnce(
+        error instanceof TimeoutError ? error : createConnectionError(endpoint.host, error),
+      );
+    };
+
+    socket.once("connect", handleConnect);
+    socket.once("error", handleError);
+
+    if (timeoutMs !== undefined) {
+      timeout = setTimeout(
+        () =>
+          rejectOnce(
+            createFtpTimeoutError({
+              host: endpoint.host,
+              operation: "passive data connection",
+              path,
+              timeoutMs,
+            }),
+          ),
+        timeoutMs,
+      );
+    }
   });
 
   return {
+    endpoint,
     ready,
     socket,
     close() {
@@ -547,11 +675,24 @@ function openPassiveDataConnection(endpoint: PassiveEndpoint): PassiveDataConnec
   };
 }
 
-async function collectPassiveData(dataConnection: PassiveDataConnection): Promise<Buffer> {
+async function collectPassiveData(
+  dataConnection: PassiveDataConnection,
+  timeoutMs: number | undefined,
+  path: string,
+): Promise<Buffer> {
   const chunks: Buffer[] = [];
+  const clearIdleTimeout = setSocketTimeout(dataConnection.socket, timeoutMs, {
+    host: dataConnection.endpoint.host,
+    operation: "passive data transfer",
+    path,
+  });
 
-  for await (const chunk of dataConnection.socket as AsyncIterable<Buffer>) {
-    chunks.push(Buffer.from(chunk));
+  try {
+    for await (const chunk of dataConnection.socket as AsyncIterable<Buffer>) {
+      chunks.push(Buffer.from(chunk));
+    }
+  } finally {
+    clearIdleTimeout();
   }
 
   return Buffer.concat(chunks);
@@ -567,11 +708,18 @@ async function* createPassiveReadSource(
 ): AsyncGenerator<Uint8Array> {
   let bytesEmitted = 0;
   let completed = false;
+  let clearIdleTimeout: () => void = () => undefined;
   const closeOnAbort = () => dataConnection.close();
 
   request.signal?.addEventListener("abort", closeOnAbort, { once: true });
 
   try {
+    clearIdleTimeout = setSocketTimeout(dataConnection.socket, control.operationTimeoutMs, {
+      host: dataConnection.endpoint.host,
+      operation: "passive data transfer",
+      path,
+    });
+
     for await (const chunk of dataConnection.socket as AsyncIterable<Buffer>) {
       request.throwIfAborted();
       const buffer = Buffer.from(chunk);
@@ -596,10 +744,15 @@ async function* createPassiveReadSource(
       }
     }
 
-    const finalResponse = await control.readFinalResponse();
+    const finalResponse = await control.readFinalResponse({
+      command,
+      operation: "data command completion",
+      path,
+    });
     assertPathCommandSucceeded(finalResponse, command, path);
     completed = true;
   } finally {
+    clearIdleTimeout();
     request.signal?.removeEventListener("abort", closeOnAbort);
 
     if (!completed) {
@@ -608,19 +761,27 @@ async function* createPassiveReadSource(
   }
 }
 
-function writeSocketChunk(socket: Socket, chunk: Uint8Array): Promise<void> {
+function writeSocketChunk(
+  socket: Socket,
+  chunk: Uint8Array,
+  timeoutMs: number | undefined,
+  context: Omit<FtpTimeoutErrorInput, "timeoutMs">,
+): Promise<void> {
   if (chunk.byteLength === 0) {
     return Promise.resolve();
   }
 
   return new Promise<void>((resolve, reject) => {
+    const clearIdleTimeout = setSocketTimeout(socket, timeoutMs, context);
     const handleError = (error: Error) => {
+      clearIdleTimeout();
       socket.off("error", handleError);
       reject(error);
     };
 
     socket.once("error", handleError);
     socket.write(chunk, (error?: Error | null) => {
+      clearIdleTimeout();
       socket.off("error", handleError);
 
       if (error != null) {
@@ -633,15 +794,22 @@ function writeSocketChunk(socket: Socket, chunk: Uint8Array): Promise<void> {
   });
 }
 
-function endSocket(socket: Socket): Promise<void> {
+function endSocket(
+  socket: Socket,
+  timeoutMs: number | undefined,
+  context: Omit<FtpTimeoutErrorInput, "timeoutMs">,
+): Promise<void> {
   return new Promise<void>((resolve, reject) => {
+    const clearIdleTimeout = setSocketTimeout(socket, timeoutMs, context);
     const handleError = (error: Error) => {
+      clearIdleTimeout();
       socket.off("error", handleError);
       reject(error);
     };
 
     socket.once("error", handleError);
     socket.end(() => {
+      clearIdleTimeout();
       socket.off("error", handleError);
       resolve();
     });
@@ -861,22 +1029,66 @@ function waitForSocketConnect(socket: Socket, options: FtpConnectOptions): Promi
 
     options.signal?.addEventListener("abort", handleAbort, { once: true });
 
-    if (options.timeoutMs !== undefined) {
+    const timeoutMs = options.timeoutMs;
+
+    if (timeoutMs !== undefined) {
       timeout = setTimeout(
         () =>
           rejectOnce(
-            new TimeoutError({
-              details: { timeoutMs: options.timeoutMs },
+            createFtpTimeoutError({
               host: options.host,
-              message: "FTP connection timed out",
-              protocol: FTP_PROVIDER_ID,
-              retryable: true,
+              operation: "connection",
+              timeoutMs,
             }),
           ),
-        options.timeoutMs,
+        timeoutMs,
       );
     }
   });
+}
+
+interface FtpTimeoutErrorInput extends FtpTimeoutContext {
+  host: string;
+  timeoutMs: number;
+}
+
+function createFtpTimeoutError(input: FtpTimeoutErrorInput): TimeoutError {
+  const details: Record<string, unknown> = {
+    operation: input.operation,
+    timeoutMs: input.timeoutMs,
+  };
+
+  return new TimeoutError({
+    details,
+    host: input.host,
+    message: `FTP ${input.operation} timed out after ${input.timeoutMs}ms`,
+    protocol: FTP_PROVIDER_ID,
+    retryable: true,
+    ...(input.command === undefined ? {} : { command: input.command }),
+    ...(input.path === undefined ? {} : { path: input.path }),
+  });
+}
+
+function setSocketTimeout(
+  socket: Socket,
+  timeoutMs: number | undefined,
+  context: Omit<FtpTimeoutErrorInput, "timeoutMs">,
+): () => void {
+  if (timeoutMs === undefined) {
+    return () => undefined;
+  }
+
+  const handleTimeout = () => {
+    socket.destroy(createFtpTimeoutError({ ...context, timeoutMs }));
+  };
+
+  socket.setTimeout(timeoutMs);
+  socket.once("timeout", handleTimeout);
+
+  return () => {
+    socket.off("timeout", handleTimeout);
+    socket.setTimeout(0);
+  };
 }
 
 function createAuthenticationError(

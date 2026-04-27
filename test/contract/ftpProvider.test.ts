@@ -1,10 +1,13 @@
 import { Buffer } from "node:buffer";
+import { createServer } from "node:net";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   AbortError,
   AuthenticationError,
   ConfigurationError,
+  ConnectionError,
   ProtocolError,
+  TimeoutError,
   TransferEngine,
   createProgressEvent,
   createProviderTransferExecutor,
@@ -406,6 +409,150 @@ describe("createFtpProviderFactory", () => {
     ).rejects.toBeInstanceOf(AbortError);
   });
 
+  it("raises typed timeout errors for stalled FTP command responses", async () => {
+    await server.stop();
+    server = new FakeFtpServer({
+      responder(command) {
+        if (command === "USER tester") return "331 Password required\r\n";
+        if (command === "PASS secret") return "230 Logged in\r\n";
+        if (command === "TYPE I") return undefined;
+        if (command === "QUIT") return "221 Bye\r\n";
+        return "502 Unexpected command\r\n";
+      },
+    });
+    const port = await server.start();
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      password: "secret",
+      port,
+      provider: "ftp",
+      timeoutMs: 25,
+      username: "tester",
+    });
+
+    try {
+      await expect(session.fs.list("/incoming")).rejects.toBeInstanceOf(TimeoutError);
+      expect(server.commands).toContain("TYPE I");
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("raises typed timeout errors for stalled FTP transfer completion replies", async () => {
+    await server.stop();
+    server = new FakeFtpServer({
+      passiveData(command) {
+        if (command === "MLSD /incoming") {
+          return `${reportFact}\r\n`;
+        }
+
+        return undefined;
+      },
+      passiveFinalResponse: null,
+      responder(command) {
+        if (command === "USER tester") return "331 Password required\r\n";
+        if (command === "PASS secret") return "230 Logged in\r\n";
+        if (command === "TYPE I") return "200 Type set\r\n";
+        if (command === "QUIT") return "221 Bye\r\n";
+        return "502 Unexpected command\r\n";
+      },
+    });
+    const port = await server.start();
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      password: "secret",
+      port,
+      provider: "ftp",
+      timeoutMs: 25,
+      username: "tester",
+    });
+
+    try {
+      await expect(session.fs.list("/incoming")).rejects.toBeInstanceOf(TimeoutError);
+      expect(server.commands).toContain("MLSD /incoming");
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("raises typed timeout errors for stalled FTP passive data sockets", async () => {
+    await server.stop();
+    server = new FakeFtpServer({
+      passiveData(command) {
+        if (command === "MLSD /incoming") {
+          return null;
+        }
+
+        return undefined;
+      },
+      responder(command) {
+        if (command === "USER tester") return "331 Password required\r\n";
+        if (command === "PASS secret") return "230 Logged in\r\n";
+        if (command === "TYPE I") return "200 Type set\r\n";
+        if (command === "QUIT") return "221 Bye\r\n";
+        return "502 Unexpected command\r\n";
+      },
+    });
+    const port = await server.start();
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      password: "secret",
+      port,
+      provider: "ftp",
+      timeoutMs: 25,
+      username: "tester",
+    });
+
+    try {
+      await expect(session.fs.list("/incoming")).rejects.toBeInstanceOf(TimeoutError);
+      expect(server.commands).toContain("MLSD /incoming");
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("raises typed connection errors for unreachable passive data endpoints", async () => {
+    const unreachablePort = await findUnusedPort();
+    await server.stop();
+    server = new FakeFtpServer({
+      extendedPassive: false,
+      passiveData: () => "unreachable data\r\n",
+      passiveResponse() {
+        const highByte = Math.floor(unreachablePort / 256);
+        const lowByte = unreachablePort % 256;
+        return `227 Entering Passive Mode (127,0,0,1,${highByte},${lowByte})\r\n`;
+      },
+      responder(command) {
+        if (command === "USER tester") return "331 Password required\r\n";
+        if (command === "PASS secret") return "230 Logged in\r\n";
+        if (command === "TYPE I") return "200 Type set\r\n";
+        if (command === "EPSV") return "502 EPSV not implemented\r\n";
+        if (command === "QUIT") return "221 Bye\r\n";
+        return "502 Unexpected command\r\n";
+      },
+    });
+    const port = await server.start();
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      password: "secret",
+      port,
+      provider: "ftp",
+      timeoutMs: 1_000,
+      username: "tester",
+    });
+
+    try {
+      await expect(session.fs.list("/incoming")).rejects.toBeInstanceOf(ConnectionError);
+      expect(server.commands).toContain("PASV");
+    } finally {
+      await session.disconnect();
+    }
+  });
+
   it("raises typed protocol errors for malformed passive responses", async () => {
     await server.stop();
     server = new FakeFtpServer({
@@ -666,4 +813,31 @@ function reportTestProgress(bytesTransferred: number, totalBytes?: number) {
   return totalBytes === undefined
     ? createProgressEvent(input)
     : createProgressEvent({ ...input, totalBytes });
+}
+
+async function findUnusedPort(): Promise<number> {
+  const temporaryServer = createServer();
+
+  await new Promise<void>((resolve) => {
+    temporaryServer.listen(0, "127.0.0.1", resolve);
+  });
+
+  const address = temporaryServer.address();
+
+  if (address === null || typeof address === "string") {
+    throw new Error("Expected an ephemeral TCP port");
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    temporaryServer.close((error) => {
+      if (error !== undefined) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+
+  return address.port;
 }

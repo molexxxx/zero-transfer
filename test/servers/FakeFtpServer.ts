@@ -24,9 +24,9 @@ export type FakeFtpResponder = (command: string) => string | string[] | undefine
  * Callback that returns passive data payloads for transfer commands such as MLSD.
  *
  * @param command - Command text without a trailing CRLF delimiter.
- * @returns Data payload to send over the passive data socket, or `undefined`.
+ * @returns Data payload to send, `null` to leave the data socket idle, or `undefined`.
  */
-export type FakeFtpDataResponder = (command: string) => string | Uint8Array | undefined;
+export type FakeFtpDataResponder = (command: string) => string | Uint8Array | null | undefined;
 
 /** Callback that formats a passive-mode control response for a data socket port. */
 export type FakeFtpPassiveResponseFactory = (port: number) => string;
@@ -53,6 +53,8 @@ export interface FakeFtpServerOptions {
   extendedPassive?: boolean;
   /** Custom PASV response formatter for parser compatibility tests. */
   passiveResponse?: FakeFtpPassiveResponseFactory;
+  /** Final response sent after passive transfer data, or `null` to simulate a stalled server. */
+  passiveFinalResponse?: string | null;
 }
 
 interface PassiveDataChannel {
@@ -68,6 +70,7 @@ export class FakeFtpServer {
   private readonly greeting: string;
   private readonly extendedPassive: boolean;
   private readonly passiveData: FakeFtpDataResponder | undefined;
+  private readonly passiveFinalResponse: string | null;
   private readonly passiveResponse: FakeFtpPassiveResponseFactory;
   private readonly responder: FakeFtpResponder;
   private readonly server: Server;
@@ -85,6 +88,10 @@ export class FakeFtpServer {
     this.greeting = options.greeting ?? "220 ZeroFTP fake server ready\r\n";
     this.extendedPassive = options.extendedPassive ?? true;
     this.passiveData = options.passiveData;
+    this.passiveFinalResponse =
+      options.passiveFinalResponse === undefined
+        ? "226 Transfer complete\r\n"
+        : options.passiveFinalResponse;
     this.passiveResponse = options.passiveResponse ?? createDefaultPassiveResponse;
     this.responder = options.responder ?? (() => "200 OK\r\n");
     this.server = createServer((socket) => this.handleSocket(socket));
@@ -210,7 +217,7 @@ export class FakeFtpServer {
     if (this.passiveDataChannel !== undefined && command.startsWith("STOR")) {
       socket.write("150 Opening passive data connection\r\n");
       await this.readPassiveUpload(command);
-      socket.write("226 Transfer complete\r\n");
+      this.writePassiveFinalResponse(socket);
       return;
     }
 
@@ -219,8 +226,13 @@ export class FakeFtpServer {
 
       if (payload !== undefined) {
         socket.write("150 Opening passive data connection\r\n");
+
+        if (payload === null) {
+          return;
+        }
+
         await this.writePassiveData(payload);
-        socket.write("226 Transfer complete\r\n");
+        this.writePassiveFinalResponse(socket);
         return;
       }
 
@@ -314,6 +326,12 @@ export class FakeFtpServer {
     this.passiveDataChannel = undefined;
     channel.socket?.destroy();
     await closeServer(channel.server);
+  }
+
+  private writePassiveFinalResponse(socket: Socket): void {
+    if (this.passiveFinalResponse !== null) {
+      socket.write(this.passiveFinalResponse);
+    }
   }
 }
 
