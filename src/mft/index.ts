@@ -39,6 +39,25 @@ export {
   type MftAuditLog,
 } from "./audit";
 export {
+  createWebhookAuditLog,
+  dispatchWebhook,
+  signWebhookPayload,
+  type CreateWebhookAuditLogOptions,
+  type DispatchWebhookOptions,
+  type DispatchWebhookResult,
+  type WebhookRetryPolicy,
+  type WebhookSignature,
+  type WebhookTarget,
+} from "./webhooks";
+export {
+  ApprovalRegistry,
+  ApprovalRejectedError,
+  createApprovalGate,
+  type ApprovalRequest,
+  type ApprovalStatus,
+  type CreateApprovalGateOptions,
+} from "./approvals";
+export {
   nextScheduleFireAt,
   validateSchedule,
   type CronScheduleTrigger,

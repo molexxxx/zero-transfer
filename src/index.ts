@@ -336,6 +336,25 @@ export {
   type MftAuditLog,
 } from "./mft";
 export {
+  createWebhookAuditLog,
+  dispatchWebhook,
+  signWebhookPayload,
+  type CreateWebhookAuditLogOptions,
+  type DispatchWebhookOptions,
+  type DispatchWebhookResult,
+  type WebhookRetryPolicy,
+  type WebhookSignature,
+  type WebhookTarget,
+} from "./mft";
+export {
+  ApprovalRegistry,
+  ApprovalRejectedError,
+  createApprovalGate,
+  type ApprovalRequest,
+  type ApprovalStatus,
+  type CreateApprovalGateOptions,
+} from "./mft";
+export {
   MftScheduler,
   ScheduleRegistry,
   nextCronFireAt,
