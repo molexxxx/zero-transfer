@@ -14,7 +14,9 @@ import type { ProviderId } from "../core/ProviderId";
 import { createFtpProviderFactory, createFtpsProviderFactory } from "./classic/ftp";
 import { createSftpProviderFactory } from "./classic/sftp";
 import {
+  createAzureBlobProviderFactory,
   createDropboxProviderFactory,
+  createGcsProviderFactory,
   createGoogleDriveProviderFactory,
   createOneDriveProviderFactory,
 } from "./cloud";
@@ -115,6 +117,24 @@ export function getBuiltinCapabilityMatrix(): BuiltinCapabilityMatrixEntry[] {
       capabilities: createOneDriveProviderFactory({ fetch: noopFetch }).capabilities,
       id: "one-drive",
       label: "OneDrive / SharePoint",
+    },
+    {
+      capabilities: createAzureBlobProviderFactory({
+        container: "capability-matrix",
+        endpoint: "https://example.blob.core.windows.net",
+        fetch: noopFetch,
+        sasToken: "sv=ignored",
+      }).capabilities,
+      id: "azure-blob",
+      label: "Azure Blob Storage",
+    },
+    {
+      capabilities: createGcsProviderFactory({
+        bucket: "capability-matrix",
+        fetch: noopFetch,
+      }).capabilities,
+      id: "gcs",
+      label: "Google Cloud Storage",
     },
   ];
 }

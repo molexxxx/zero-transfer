@@ -20,6 +20,8 @@ describe("getBuiltinCapabilityMatrix", () => {
       "dropbox",
       "google-drive",
       "one-drive",
+      "azure-blob",
+      "gcs",
     ]);
   });
 
@@ -44,11 +46,13 @@ describe("formatCapabilityMatrixMarkdown", () => {
     const lines = markdown.split("\n");
     expect(lines[0]).toContain("Provider");
     expect(lines[1]).toMatch(/^\| --- \|/);
-    // header + divider + 12 entries
-    expect(lines).toHaveLength(2 + 12);
+    // header + divider + 14 entries
+    expect(lines).toHaveLength(2 + 14);
     expect(markdown).toContain("S3-compatible (multipart uploads)");
     expect(markdown).toContain("Dropbox");
     expect(markdown).toContain("Google Drive");
     expect(markdown).toContain("OneDrive / SharePoint");
+    expect(markdown).toContain("Azure Blob Storage");
+    expect(markdown).toContain("Google Cloud Storage");
   });
 });

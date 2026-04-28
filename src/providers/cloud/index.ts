@@ -15,3 +15,11 @@ export {
   createOneDriveProviderFactory,
   type OneDriveProviderOptions,
 } from "./OneDriveProvider";
+export {
+  createAzureBlobProviderFactory,
+  type AzureBlobProviderOptions,
+} from "./AzureBlobProvider";
+export {
+  createGcsProviderFactory,
+  type GcsProviderOptions,
+} from "./GcsProvider";

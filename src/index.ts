@@ -59,10 +59,14 @@ export {
 } from "./providers/capabilityMatrix";
 export { createLocalProviderFactory, type LocalProviderOptions } from "./providers/local";
 export {
+  createAzureBlobProviderFactory,
   createDropboxProviderFactory,
+  createGcsProviderFactory,
   createGoogleDriveProviderFactory,
   createOneDriveProviderFactory,
+  type AzureBlobProviderOptions,
   type DropboxProviderOptions,
+  type GcsProviderOptions,
   type GoogleDriveProviderOptions,
   type OneDriveProviderOptions,
 } from "./providers/cloud";
