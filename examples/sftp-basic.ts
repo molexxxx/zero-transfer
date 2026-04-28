@@ -13,12 +13,8 @@
  * trusted, lab-only networks.
  */
 import { fileURLToPath } from "node:url";
-import {
-  createSftpProviderFactory,
-  createTransferClient,
-  uploadFile,
-  type ConnectionProfile,
-} from "../src/index";
+import { createTransferClient, uploadFile, type ConnectionProfile } from "@zero-transfer/core";
+import { createSftpProviderFactory } from "@zero-transfer/sftp";
 
 async function main(): Promise<void> {
   const client = createTransferClient({

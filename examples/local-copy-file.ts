@@ -12,7 +12,7 @@ import {
   createLocalProviderFactory,
   createTransferClient,
   type ConnectionProfile,
-} from "../src/index";
+} from "@zero-transfer/core";
 
 async function main(): Promise<void> {
   const client = createTransferClient({

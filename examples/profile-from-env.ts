@@ -10,7 +10,7 @@ import {
   resolveConnectionProfileSecrets,
   validateConnectionProfile,
   type ConnectionProfile,
-} from "../src/index";
+} from "@zero-transfer/core";
 
 import { fileURLToPath } from "node:url";
 function buildSftpProfile(): ConnectionProfile {

@@ -7,14 +7,14 @@
  * and a graceful failure observer in one place.
  */
 import {
+  TransferQueue,
   createMemoryProviderFactory,
   createProviderTransferExecutor,
   createTransferClient,
-  TransferQueue,
   type ProviderTransferSessionResolverInput,
   type TransferJob,
   type TransferSession,
-} from "../src/index";
+} from "@zero-transfer/core";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {

@@ -7,13 +7,13 @@
  * for support flows or CI smoke checks.
  */
 import {
-  createFtpProviderFactory,
-  createSftpProviderFactory,
   createTransferClient,
   runConnectionDiagnostics,
   summarizeClientDiagnostics,
   type ConnectionProfile,
-} from "../src/index";
+} from "@zero-transfer/core";
+import { createFtpProviderFactory } from "@zero-transfer/ftp";
+import { createSftpProviderFactory } from "@zero-transfer/sftp";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {

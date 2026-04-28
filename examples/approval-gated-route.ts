@@ -6,6 +6,7 @@
  * route actually runs. This pattern is suitable for production releases,
  * compliance-gated MFT flows, and "two-person rule" deployments.
  */
+import { createTransferClient } from "@zero-transfer/core";
 import {
   ApprovalRegistry,
   ApprovalRejectedError,
@@ -13,12 +14,11 @@ import {
   RouteRegistry,
   ScheduleRegistry,
   createApprovalGate,
-  createSftpProviderFactory,
-  createTransferClient,
   runRoute,
   type MftRoute,
   type MftSchedule,
-} from "../src/index";
+} from "@zero-transfer/mft";
+import { createSftpProviderFactory } from "@zero-transfer/sftp";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {

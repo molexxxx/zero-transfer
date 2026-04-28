@@ -10,10 +10,11 @@
  */
 import { Buffer } from "node:buffer";
 import type { Readable } from "node:stream";
-import { Client as SshClient, type ConnectConfig } from "ssh2";
+import ssh2, { type Client as SshClientType, type ConnectConfig } from "ssh2";
 import { AbortError, ConfigurationError, ConnectionError } from "../../../errors/ZeroTransferError";
 import type { ZeroTransferLogger } from "../../../logging/Logger";
 import type { SshSocketFactory, SshSocketFactoryContext } from "../../../types/public";
+const { Client: SshClientCtor } = ssh2;
 
 /** Options for {@link createSftpJumpHostSocketFactory}. */
 export interface SftpJumpHostOptions {
@@ -24,7 +25,7 @@ export interface SftpJumpHostOptions {
   /** Optional logger used for tunnel diagnostics. */
   logger?: ZeroTransferLogger;
   /** Optional ssh2 client factory override used in tests. */
-  createClient?: () => SshClient;
+  createClient?: () => SshClientType;
 }
 
 /**
@@ -59,12 +60,12 @@ interface OpenChannelOptions {
   bastionConfig: ConnectConfig;
   context: SshSocketFactoryContext;
   logger?: ZeroTransferLogger;
-  createClient?: () => SshClient;
+  createClient?: () => SshClientType;
 }
 
 function openJumpHostChannel(options: OpenChannelOptions): Promise<Readable> {
   const { bastionConfig, context } = options;
-  const client = options.createClient ? options.createClient() : new SshClient();
+  const client = options.createClient ? options.createClient() : new SshClientCtor();
   if (context.signal?.aborted === true) {
     return Promise.reject(
       new AbortError({

@@ -5,16 +5,16 @@
  * via `MftScheduler`, observes results through the auditing hooks, and
  * shuts down gracefully on SIGINT.
  */
+import { createTransferClient } from "@zero-transfer/core";
 import {
   MftScheduler,
   RouteRegistry,
   ScheduleRegistry,
-  createS3ProviderFactory,
-  createSftpProviderFactory,
-  createTransferClient,
   type MftRoute,
   type MftSchedule,
-} from "../src/index";
+} from "@zero-transfer/mft";
+import { createS3ProviderFactory } from "@zero-transfer/s3";
+import { createSftpProviderFactory } from "@zero-transfer/sftp";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {

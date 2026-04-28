@@ -9,11 +9,11 @@ import {
   createLocalProviderFactory,
   createSyncPlan,
   createTransferClient,
-  createWebDavProviderFactory,
   diffRemoteTrees,
   uploadFile,
   type ConnectionProfile,
-} from "../src/index";
+} from "@zero-transfer/core";
+import { createWebDavProviderFactory } from "@zero-transfer/webdav";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {

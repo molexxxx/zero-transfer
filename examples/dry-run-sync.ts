@@ -8,13 +8,13 @@
  */
 import {
   createLocalProviderFactory,
-  createSftpProviderFactory,
   createSyncPlan,
   createTransferClient,
   diffRemoteTrees,
   summarizeTransferPlan,
   type ConnectionProfile,
-} from "../src/index";
+} from "@zero-transfer/core";
+import { createSftpProviderFactory } from "@zero-transfer/sftp";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {

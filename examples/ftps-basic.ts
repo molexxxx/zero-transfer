@@ -12,12 +12,8 @@
  *     `tls.pinnedFingerprint256`. See `ftps-client-certificate.ts`.
  */
 import { fileURLToPath } from "node:url";
-import {
-  createFtpsProviderFactory,
-  createTransferClient,
-  uploadFile,
-  type ConnectionProfile,
-} from "../src/index";
+import { createTransferClient, uploadFile, type ConnectionProfile } from "@zero-transfer/core";
+import { createFtpsProviderFactory } from "@zero-transfer/ftps";
 
 async function main(): Promise<void> {
   const client = createTransferClient({

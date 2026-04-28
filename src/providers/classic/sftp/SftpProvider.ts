@@ -8,9 +8,10 @@
  */
 import { Buffer } from "node:buffer";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
-import { Client, utils } from "ssh2";
+import ssh2 from "ssh2";
 import type {
   AnyAuthMethod,
+  Client,
   ClientErrorExtensions,
   ConnectConfig,
   FileEntryWithStats,
@@ -21,6 +22,7 @@ import type {
   Stats,
   WriteStream,
 } from "ssh2";
+const { Client: SshClientCtor, utils } = ssh2;
 import type { CapabilitySet } from "../../../core/CapabilitySet";
 import type { TransferSession } from "../../../core/TransferSession";
 import {
@@ -330,7 +332,7 @@ async function connectSshClient(
   username: string,
   authentication: SftpAuthenticationConfig,
 ): Promise<Client> {
-  const client = new Client();
+  const client = new SshClientCtor();
   let config: ConnectConfig;
 
   try {
