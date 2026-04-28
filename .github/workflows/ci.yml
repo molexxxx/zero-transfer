@@ -34,6 +34,12 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
+      - name: Build
+        run: npm run build
+
+      - name: Generate scoped packages
+        run: npm run packages:generate
+
       - name: Lint
         run: npm run lint
 
@@ -42,12 +48,6 @@ jobs:
 
       - name: Type check
         run: npm run typecheck
-
-      - name: Build
-        run: npm run build
-
-      - name: Generate scoped packages
-        run: npm run packages:generate
 
       - name: Test with coverage
         run: npm run test:coverage
