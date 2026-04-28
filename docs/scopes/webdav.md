@@ -16,15 +16,15 @@ WebDAV provider — PROPFIND-based `list`/`stat`, ranged GET, PUT uploads, Basic
 
 This is the actual surface published by [`@zero-transfer/webdav`](https://www.npmjs.com/package/@zero-transfer/webdav). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createWebDavProviderFactory`](../api-md/functions/createWebDavProviderFactory.md) | Function | See API reference. |
-| [`WebDavProviderOptions`](../api-md/interfaces/WebDavProviderOptions.md) | Interface | See API reference. |
+| Symbol                                                                              | Kind      | Notes              |
+| ----------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createWebDavProviderFactory`](../api-md/functions/createWebDavProviderFactory.md) | Function  | See API reference. |
+| [`WebDavProviderOptions`](../api-md/interfaces/WebDavProviderOptions.md)            | Interface | See API reference. |
 
 ## Examples
 
-| Example | What it shows |
-| --- | --- |
+| Example                                                    | What it shows                      |
+| ---------------------------------------------------------- | ---------------------------------- |
 | [`examples/webdav-sync.ts`](../../examples/webdav-sync.ts) | WebDAV bidirectional sync example. |
 
 ## See also

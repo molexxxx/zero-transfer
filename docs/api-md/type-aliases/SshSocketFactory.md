@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / SshSocketFactory
 
@@ -18,8 +18,8 @@ Use this hook for HTTP CONNECT, SOCKS, bastion, or custom tunnel integrations.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                  | Description                                                  |
+| --------- | --------------------------------------------------------------------- | ------------------------------------------------------------ |
 | `context` | [`SshSocketFactoryContext`](../interfaces/SshSocketFactoryContext.md) | Resolved SSH target information for the socket being opened. |
 
 ## Returns

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / isSensitiveKey
 
@@ -16,9 +16,9 @@ Checks whether an object key is likely to contain sensitive data.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `key` | `string` | Object key to inspect. |
+| Parameter | Type     | Description            |
+| --------- | -------- | ---------------------- |
+| `key`     | `string` | Object key to inspect. |
 
 ## Returns
 

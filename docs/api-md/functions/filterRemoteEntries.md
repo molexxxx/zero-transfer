@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / filterRemoteEntries
 
@@ -16,12 +16,12 @@ Filters entries using the optional predicate plus an optional hidden-file rule.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `entries` | readonly [`RemoteEntry`](../interfaces/RemoteEntry.md)[] | Entries to filter. |
-| `options` | \{ `filter?`: [`RemoteBrowserFilter`](../type-aliases/RemoteBrowserFilter.md); `showHidden?`: `boolean`; \} | Filtering controls. |
-| `options.filter?` | [`RemoteBrowserFilter`](../type-aliases/RemoteBrowserFilter.md) | - |
-| `options.showHidden?` | `boolean` | - |
+| Parameter             | Type                                                                                                        | Description         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------- |
+| `entries`             | readonly [`RemoteEntry`](../interfaces/RemoteEntry.md)[]                                                    | Entries to filter.  |
+| `options`             | \{ `filter?`: [`RemoteBrowserFilter`](../type-aliases/RemoteBrowserFilter.md); `showHidden?`: `boolean`; \} | Filtering controls. |
+| `options.filter?`     | [`RemoteBrowserFilter`](../type-aliases/RemoteBrowserFilter.md)                                             | -                   |
+| `options.showHidden?` | `boolean`                                                                                                   | -                   |
 
 ## Returns
 

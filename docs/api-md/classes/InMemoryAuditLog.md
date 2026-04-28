@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / InMemoryAuditLog
 
@@ -60,7 +60,7 @@ Drops all recorded entries.
 
 `void`
 
-***
+---
 
 ### list()
 
@@ -80,7 +80,7 @@ Returns recorded entries in insertion order.
 
 [`MftAuditLog`](../interfaces/MftAuditLog.md).[`list`](../interfaces/MftAuditLog.md#list)
 
-***
+---
 
 ### record()
 
@@ -94,9 +94,9 @@ Records a new audit entry.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `entry` | [`MftAuditEntry`](../interfaces/MftAuditEntry.md) |
+| Parameter | Type                                              |
+| --------- | ------------------------------------------------- |
+| `entry`   | [`MftAuditEntry`](../interfaces/MftAuditEntry.md) |
 
 #### Returns
 

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / ProviderTransferSessionResolver
 
@@ -16,9 +16,9 @@ Resolves the connected provider session that owns an endpoint.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `input` | [`ProviderTransferSessionResolverInput`](../interfaces/ProviderTransferSessionResolverInput.md) |
+| Parameter | Type                                                                                            |
+| --------- | ----------------------------------------------------------------------------------------------- |
+| `input`   | [`ProviderTransferSessionResolverInput`](../interfaces/ProviderTransferSessionResolverInput.md) |
 
 ## Returns
 

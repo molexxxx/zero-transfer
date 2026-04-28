@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / MftScheduler
 
@@ -42,8 +42,8 @@ Creates a scheduler bound to a transfer client and registries.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                          | Description                                                      |
+| --------- | ------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `options` | [`MftSchedulerOptions`](../interfaces/MftSchedulerOptions.md) | Client, registries, optional runner, observers, and timer hooks. |
 
 #### Returns
@@ -66,7 +66,7 @@ Starts the scheduler. No-op when already running.
 
 `void`
 
-***
+---
 
 ### stop()
 

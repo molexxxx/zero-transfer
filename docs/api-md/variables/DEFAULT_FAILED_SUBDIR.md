@@ -1,10 +1,10 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
-[ZeroTransfer SDK](../README.md) / DEFAULT\_FAILED\_SUBDIR
+[ZeroTransfer SDK](../README.md) / DEFAULT_FAILED_SUBDIR
 
-# Variable: DEFAULT\_FAILED\_SUBDIR
+# Variable: DEFAULT_FAILED_SUBDIR
 
 ```ts
 const DEFAULT_FAILED_SUBDIR: "failed" = "failed";

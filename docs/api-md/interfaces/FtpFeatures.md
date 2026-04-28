@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / FtpFeatures
 
@@ -24,8 +24,8 @@ Checks whether a named feature is advertised.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter     | Type     | Description                                     |
+| ------------- | -------- | ----------------------------------------------- |
 | `featureName` | `string` | Feature name to search for, case-insensitively. |
 
 #### Returns
@@ -36,8 +36,8 @@ Checks whether a named feature is advertised.
 
 ## Properties
 
-| Property | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="mlstfacts"></a> `mlstFacts` | `string`[] | MLST facts advertised by the server, preserving required-fact markers. | [src/providers/classic/ftp/FtpFeatureParser.ts:20](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpFeatureParser.ts#L20) |
-| <a id="names"></a> `names` | `Set`\<`string`\> | Uppercase feature names for fast lookup. | [src/providers/classic/ftp/FtpFeatureParser.ts:18](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpFeatureParser.ts#L18) |
-| <a id="raw"></a> `raw` | `string`[] | Raw normalized feature lines. | [src/providers/classic/ftp/FtpFeatureParser.ts:16](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpFeatureParser.ts#L16) |
+| Property                           | Type              | Description                                                            | Defined in                                                                                                                                                                                      |
+| ---------------------------------- | ----------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="mlstfacts"></a> `mlstFacts` | `string`[]        | MLST facts advertised by the server, preserving required-fact markers. | [src/providers/classic/ftp/FtpFeatureParser.ts:20](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpFeatureParser.ts#L20) |
+| <a id="names"></a> `names`         | `Set`\<`string`\> | Uppercase feature names for fast lookup.                               | [src/providers/classic/ftp/FtpFeatureParser.ts:18](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpFeatureParser.ts#L18) |
+| <a id="raw"></a> `raw`             | `string`[]        | Raw normalized feature lines.                                          | [src/providers/classic/ftp/FtpFeatureParser.ts:16](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpFeatureParser.ts#L16) |

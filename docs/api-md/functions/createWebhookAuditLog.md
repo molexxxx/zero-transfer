@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createWebhookAuditLog
 
@@ -19,8 +19,8 @@ always returns an empty array because webhook deliveries are not buffered.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                            | Description                                        |
+| --------- | ------------------------------------------------------------------------------- | -------------------------------------------------- |
 | `options` | [`CreateWebhookAuditLogOptions`](../interfaces/CreateWebhookAuditLogOptions.md) | Webhook target plus optional retry/observer hooks. |
 
 ## Returns

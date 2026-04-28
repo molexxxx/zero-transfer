@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createGcsProviderFactory
 
@@ -16,8 +16,8 @@ Creates a Google Cloud Storage provider factory.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type                                                        |
+| --------- | ----------------------------------------------------------- |
 | `options` | [`GcsProviderOptions`](../interfaces/GcsProviderOptions.md) |
 
 ## Returns

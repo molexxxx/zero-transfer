@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createSyncPlan
 
@@ -20,8 +20,8 @@ become executable transfers and which become `skip` steps.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                              | Description                              |
+| --------- | ----------------------------------------------------------------- | ---------------------------------------- |
 | `options` | [`CreateSyncPlanOptions`](../interfaces/CreateSyncPlanOptions.md) | Inputs and policies that shape the plan. |
 
 ## Returns

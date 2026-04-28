@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createDropboxProviderFactory
 
@@ -20,8 +20,8 @@ their token.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type                                                                |
+| --------- | ------------------------------------------------------------------- |
 | `options` | [`DropboxProviderOptions`](../interfaces/DropboxProviderOptions.md) |
 
 ## Returns

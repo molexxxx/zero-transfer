@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createFtpProviderFactory
 
@@ -16,8 +16,8 @@ Creates a provider factory for classic FTP connections.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                        | Description                 |
+| --------- | ----------------------------------------------------------- | --------------------------- |
 | `options` | [`FtpProviderOptions`](../interfaces/FtpProviderOptions.md) | Optional provider defaults. |
 
 ## Returns

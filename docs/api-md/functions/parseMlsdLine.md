@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / parseMlsdLine
 
@@ -16,10 +16,10 @@ Parses a single MLSD or MLST fact line.
 
 ## Parameters
 
-| Parameter | Type | Default value | Description |
-| ------ | ------ | ------ | ------ |
-| `line` | `string` | `undefined` | Raw fact line in `fact=value; name` format. |
-| `directory` | `string` | `"."` | Parent remote directory used to build the entry path. |
+| Parameter   | Type     | Default value | Description                                           |
+| ----------- | -------- | ------------- | ----------------------------------------------------- |
+| `line`      | `string` | `undefined`   | Raw fact line in `fact=value; name` format.           |
+| `directory` | `string` | `"."`         | Parent remote directory used to build the entry path. |
 
 ## Returns
 

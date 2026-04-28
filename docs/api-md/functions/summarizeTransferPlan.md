@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / summarizeTransferPlan
 
@@ -16,9 +16,9 @@ Summarizes a transfer plan for diagnostics, previews, and tests.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `plan` | [`TransferPlan`](../interfaces/TransferPlan.md) |
+| Parameter | Type                                            |
+| --------- | ----------------------------------------------- |
+| `plan`    | [`TransferPlan`](../interfaces/TransferPlan.md) |
 
 ## Returns
 

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / parseKnownHosts
 
@@ -17,9 +17,9 @@ Lines that cannot be parsed are silently dropped so callers can tolerate hand-ed
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `text` | `string` | Raw `known_hosts` file contents. |
+| Parameter | Type     | Description                      |
+| --------- | -------- | -------------------------------- |
+| `text`    | `string` | Raw `known_hosts` file contents. |
 
 ## Returns
 

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createJsonlAuditLog
 
@@ -20,9 +20,9 @@ JSONL log with an [InMemoryAuditLog](../classes/InMemoryAuditLog.md) via [compos
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `writer` | [`JsonlWriter`](../interfaces/JsonlWriter.md) | Sink that receives one JSON line per record. |
+| Parameter | Type                                          | Description                                  |
+| --------- | --------------------------------------------- | -------------------------------------------- |
+| `writer`  | [`JsonlWriter`](../interfaces/JsonlWriter.md) | Sink that receives one JSON line per record. |
 
 ## Returns
 

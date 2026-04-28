@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / uploadFile
 
@@ -20,8 +20,8 @@ as the destination.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                      | Description              |
+| --------- | --------------------------------------------------------- | ------------------------ |
 | `options` | [`UploadFileOptions`](../interfaces/UploadFileOptions.md) | Friendly upload options. |
 
 ## Returns
@@ -33,11 +33,7 @@ Receipt produced by the underlying transfer engine.
 ## Example
 
 ```ts
-import {
-  createSftpProviderFactory,
-  createTransferClient,
-  uploadFile,
-} from "@zero-transfer/sdk";
+import { createSftpProviderFactory, createTransferClient, uploadFile } from "@zero-transfer/sdk";
 
 const client = createTransferClient({ providers: [createSftpProviderFactory()] });
 

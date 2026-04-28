@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / freezeReceipt
 
@@ -16,8 +16,8 @@ Returns a deeply frozen copy of a transfer receipt.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                  | Description        |
+| --------- | ----------------------------------------------------- | ------------------ |
 | `receipt` | [`TransferReceipt`](../interfaces/TransferReceipt.md) | Receipt to freeze. |
 
 ## Returns

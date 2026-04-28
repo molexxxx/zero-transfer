@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createProgressEvent
 
@@ -16,9 +16,9 @@ Creates a progress event with elapsed time, rate, and optional percentage.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | [`ProgressEventInput`](../interfaces/ProgressEventInput.md) | Transfer id, byte count, start time, optional current time, and total bytes. |
+| Parameter | Type                                                        | Description                                                                  |
+| --------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `input`   | [`ProgressEventInput`](../interfaces/ProgressEventInput.md) | Transfer id, byte count, start time, optional current time, and total bytes. |
 
 ## Returns
 

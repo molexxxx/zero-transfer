@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / redactConnectionProfile
 
@@ -16,8 +16,8 @@ Produces a diagnostics-safe profile copy with credentials and runtime hooks reda
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                      | Description                     |
+| --------- | --------------------------------------------------------- | ------------------------------- |
 | `profile` | [`ConnectionProfile`](../interfaces/ConnectionProfile.md) | Connection profile to sanitize. |
 
 ## Returns

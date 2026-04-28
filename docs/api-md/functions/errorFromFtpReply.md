@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / errorFromFtpReply
 
@@ -16,9 +16,9 @@ Maps an FTP reply into the closest typed ZeroTransfer error.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | [`FtpReplyErrorInput`](../interfaces/FtpReplyErrorInput.md) | FTP code, message, and optional operation context. |
+| Parameter | Type                                                        | Description                                        |
+| --------- | ----------------------------------------------------------- | -------------------------------------------------- |
+| `input`   | [`FtpReplyErrorInput`](../interfaces/FtpReplyErrorInput.md) | FTP code, message, and optional operation context. |
 
 ## Returns
 

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / parseRemoteManifest
 
@@ -16,9 +16,9 @@ Parses a JSON-encoded manifest, validating the schema version and entry shape.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `text` | `string` | JSON payload produced by [serializeRemoteManifest](serializeRemoteManifest.md). |
+| Parameter | Type     | Description                                                                     |
+| --------- | -------- | ------------------------------------------------------------------------------- |
+| `text`    | `string` | JSON payload produced by [serializeRemoteManifest](serializeRemoteManifest.md). |
 
 ## Returns
 

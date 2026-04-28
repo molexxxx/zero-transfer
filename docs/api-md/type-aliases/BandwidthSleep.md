@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / BandwidthSleep
 
@@ -16,9 +16,9 @@ Sleep helper signature used by [createBandwidthThrottle](../functions/createBand
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `delayMs` | `number` |
+| Parameter | Type          |
+| --------- | ------------- |
+| `delayMs` | `number`      |
 | `signal?` | `AbortSignal` |
 
 ## Returns

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / RouteRegistry
 
@@ -42,9 +42,9 @@ Creates a registry and optionally seeds it with route definitions.
 
 #### Parameters
 
-| Parameter | Type | Default value | Description |
-| ------ | ------ | ------ | ------ |
-| `routes` | `Iterable`\<[`MftRoute`](../interfaces/MftRoute.md)\> | `[]` | Routes to register immediately. |
+| Parameter | Type                                                  | Default value | Description                     |
+| --------- | ----------------------------------------------------- | ------------- | ------------------------------- |
+| `routes`  | `Iterable`\<[`MftRoute`](../interfaces/MftRoute.md)\> | `[]`          | Routes to register immediately. |
 
 #### Returns
 
@@ -64,8 +64,8 @@ Gets a route definition when registered.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type     | Description           |
+| --------- | -------- | --------------------- |
 | `routeId` | `string` | Route id to retrieve. |
 
 #### Returns
@@ -74,7 +74,7 @@ Gets a route definition when registered.
 
 The route, or `undefined` when missing.
 
-***
+---
 
 ### has()
 
@@ -88,8 +88,8 @@ Checks whether a route id is registered.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type     | Description          |
+| --------- | -------- | -------------------- |
 | `routeId` | `string` | Route id to inspect. |
 
 #### Returns
@@ -98,7 +98,7 @@ Checks whether a route id is registered.
 
 `true` when a route exists.
 
-***
+---
 
 ### list()
 
@@ -116,7 +116,7 @@ Returns all registered routes in registration order.
 
 Array of route definitions.
 
-***
+---
 
 ### register()
 
@@ -130,9 +130,9 @@ Registers a route definition.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `route` | [`MftRoute`](../interfaces/MftRoute.md) | Route to add. |
+| Parameter | Type                                    | Description   |
+| --------- | --------------------------------------- | ------------- |
+| `route`   | [`MftRoute`](../interfaces/MftRoute.md) | Route to add. |
 
 #### Returns
 
@@ -144,7 +144,7 @@ This registry for fluent setup.
 
 [ConfigurationError](ConfigurationError.md) When the route id is already registered or empty.
 
-***
+---
 
 ### require()
 
@@ -158,8 +158,8 @@ Gets a route definition or throws a typed SDK error.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type     | Description           |
+| --------- | -------- | --------------------- |
 | `routeId` | `string` | Route id to retrieve. |
 
 #### Returns
@@ -172,7 +172,7 @@ The registered route.
 
 [ConfigurationError](ConfigurationError.md) When no route is registered under the id.
 
-***
+---
 
 ### unregister()
 
@@ -186,8 +186,8 @@ Removes a route from the registry.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type     | Description         |
+| --------- | -------- | ------------------- |
 | `routeId` | `string` | Route id to remove. |
 
 #### Returns

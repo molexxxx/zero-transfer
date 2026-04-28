@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / resolveProviderId
 
@@ -16,8 +16,8 @@ Resolves the provider id from a profile, preferring the new `provider` field.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter   | Type                                                      | Description                                                     |
+| ----------- | --------------------------------------------------------- | --------------------------------------------------------------- |
 | `selection` | [`ProviderSelection`](../interfaces/ProviderSelection.md) | Profile-like object containing provider and/or protocol fields. |
 
 ## Returns

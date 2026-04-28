@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / isClassicProviderId
 
@@ -16,8 +16,8 @@ Checks whether a provider id belongs to the classic FTP/FTPS/SFTP family.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type                                                         | Description             |
+| ------------ | ------------------------------------------------------------ | ----------------------- |
 | `providerId` | [`ProviderId`](../type-aliases/ProviderId.md) \| `undefined` | Provider id to inspect. |
 
 ## Returns

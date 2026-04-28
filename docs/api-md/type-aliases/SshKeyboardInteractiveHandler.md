@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / SshKeyboardInteractiveHandler
 
@@ -16,8 +16,8 @@ Provides ordered answers for an SSH keyboard-interactive authentication challeng
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter   | Type                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------- |
 | `challenge` | [`SshKeyboardInteractiveChallenge`](../interfaces/SshKeyboardInteractiveChallenge.md) |
 
 ## Returns

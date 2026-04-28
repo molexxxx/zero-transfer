@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / S3MultipartResumeStore
 
@@ -25,20 +25,20 @@ Defined in: [src/providers/web/S3Provider.ts:118](https://github.com/tonywied17/
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `key` | [`S3MultipartResumeKey`](S3MultipartResumeKey.md) |
+| Parameter | Type                                              |
+| --------- | ------------------------------------------------- |
+| `key`     | [`S3MultipartResumeKey`](S3MultipartResumeKey.md) |
 
 #### Returns
 
 `void` \| `Promise`\<`void`\>
 
-***
+---
 
 ### load()
 
 ```ts
-load(key): 
+load(key):
   | S3MultipartCheckpoint
   | Promise<S3MultipartCheckpoint | undefined>
   | undefined;
@@ -48,17 +48,17 @@ Defined in: [src/providers/web/S3Provider.ts:114](https://github.com/tonywied17/
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `key` | [`S3MultipartResumeKey`](S3MultipartResumeKey.md) |
+| Parameter | Type                                              |
+| --------- | ------------------------------------------------- |
+| `key`     | [`S3MultipartResumeKey`](S3MultipartResumeKey.md) |
 
 #### Returns
 
-  \| [`S3MultipartCheckpoint`](S3MultipartCheckpoint.md)
-  \| `Promise`\<[`S3MultipartCheckpoint`](S3MultipartCheckpoint.md) \| `undefined`\>
-  \| `undefined`
+\| [`S3MultipartCheckpoint`](S3MultipartCheckpoint.md)
+\| `Promise`\<[`S3MultipartCheckpoint`](S3MultipartCheckpoint.md) \| `undefined`\>
+\| `undefined`
 
-***
+---
 
 ### save()
 
@@ -70,9 +70,9 @@ Defined in: [src/providers/web/S3Provider.ts:117](https://github.com/tonywied17/
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `key` | [`S3MultipartResumeKey`](S3MultipartResumeKey.md) |
+| Parameter    | Type                                                |
+| ------------ | --------------------------------------------------- |
+| `key`        | [`S3MultipartResumeKey`](S3MultipartResumeKey.md)   |
 | `checkpoint` | [`S3MultipartCheckpoint`](S3MultipartCheckpoint.md) |
 
 #### Returns

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / resolveSecret
 
@@ -16,9 +16,9 @@ Resolves a secret source into a string or Buffer without logging the value.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `source` | [`SecretSource`](../type-aliases/SecretSource.md) | Secret source to resolve. |
+| Parameter | Type                                                            | Description                             |
+| --------- | --------------------------------------------------------------- | --------------------------------------- |
+| `source`  | [`SecretSource`](../type-aliases/SecretSource.md)               | Secret source to resolve.               |
 | `options` | [`ResolveSecretOptions`](../interfaces/ResolveSecretOptions.md) | Optional env and file-reader overrides. |
 
 ## Returns

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / assertSafeFtpArgument
 
@@ -16,10 +16,10 @@ Validates that an FTP command argument cannot inject additional command lines.
 
 ## Parameters
 
-| Parameter | Type | Default value | Description |
-| ------ | ------ | ------ | ------ |
-| `value` | `string` | `undefined` | Argument value to validate. |
-| `label` | `string` | `"path"` | Human-readable argument label used in error messages. |
+| Parameter | Type     | Default value | Description                                           |
+| --------- | -------- | ------------- | ----------------------------------------------------- |
+| `value`   | `string` | `undefined`   | Argument value to validate.                           |
+| `label`   | `string` | `"path"`      | Human-readable argument label used in error messages. |
 
 ## Returns
 

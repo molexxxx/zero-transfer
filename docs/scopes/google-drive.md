@@ -16,15 +16,15 @@ Google Drive provider over OAuth bearer tokens — paginated folder listings fro
 
 This is the actual surface published by [`@zero-transfer/google-drive`](https://www.npmjs.com/package/@zero-transfer/google-drive). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createGoogleDriveProviderFactory`](../api-md/functions/createGoogleDriveProviderFactory.md) | Function | See API reference. |
-| [`GoogleDriveProviderOptions`](../api-md/interfaces/GoogleDriveProviderOptions.md) | Interface | See API reference. |
+| Symbol                                                                                        | Kind      | Notes              |
+| --------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createGoogleDriveProviderFactory`](../api-md/functions/createGoogleDriveProviderFactory.md) | Function  | See API reference. |
+| [`GoogleDriveProviderOptions`](../api-md/interfaces/GoogleDriveProviderOptions.md)            | Interface | See API reference. |
 
 ## Examples
 
-| Example | What it shows |
-| --- | --- |
+| Example                                                                                | What it shows                       |
+| -------------------------------------------------------------------------------------- | ----------------------------------- |
 | [`examples/multi-cloud-orchestration.ts`](../../examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase. |
 
 ## See also

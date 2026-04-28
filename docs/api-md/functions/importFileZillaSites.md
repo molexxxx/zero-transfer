@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / importFileZillaSites
 
@@ -16,9 +16,9 @@ Parses FileZilla `sitemanager.xml` text and returns generated profiles.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `xml` | `string` | Contents of `sitemanager.xml`. |
+| Parameter | Type     | Description                    |
+| --------- | -------- | ------------------------------ |
+| `xml`     | `string` | Contents of `sitemanager.xml`. |
 
 ## Returns
 

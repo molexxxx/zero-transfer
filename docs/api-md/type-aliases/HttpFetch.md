@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / HttpFetch
 
@@ -16,10 +16,10 @@ Fetch implementation accepted by web-family providers.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `input` | `string` |
-| `init?` | `RequestInit` |
+| Parameter | Type          |
+| --------- | ------------- |
+| `input`   | `string`      |
+| `init?`   | `RequestInit` |
 
 ## Returns
 

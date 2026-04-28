@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / RemoteTreeFilter
 
@@ -16,9 +16,9 @@ Filter callback applied to each visited entry. Returning `false` skips the entry
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `entry` | [`RemoteEntry`](../interfaces/RemoteEntry.md) |
+| Parameter | Type                                          |
+| --------- | --------------------------------------------- |
+| `entry`   | [`RemoteEntry`](../interfaces/RemoteEntry.md) |
 
 ## Returns
 

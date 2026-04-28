@@ -46,7 +46,7 @@
     "access": "public"
   },
   "sideEffects": false,
-  "dependencies": {
+  "peerDependencies": {
     "@zero-transfer/sdk": "0.1.0"
   }
 }

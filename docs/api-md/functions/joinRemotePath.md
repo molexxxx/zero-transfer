@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / joinRemotePath
 
@@ -16,8 +16,8 @@ Joins remote path segments and normalizes the result.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter     | Type       | Description                          |
+| ------------- | ---------- | ------------------------------------ |
 | ...`segments` | `string`[] | Remote path segments to concatenate. |
 
 ## Returns

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / buildRemoteBreadcrumbs
 
@@ -16,9 +16,9 @@ Builds breadcrumbs from `/` down to the supplied path.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | `string` | Absolute remote path. |
+| Parameter | Type     | Description           |
+| --------- | -------- | --------------------- |
+| `input`   | `string` | Absolute remote path. |
 
 ## Returns
 

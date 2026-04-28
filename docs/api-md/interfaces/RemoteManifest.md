@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / RemoteManifest
 
@@ -12,10 +12,10 @@ Persisted snapshot of a remote subtree.
 
 ## Properties
 
-| Property | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="entries"></a> `entries` | [`RemoteManifestEntry`](RemoteManifestEntry.md)[] | Manifest entries sorted by path. | [src/sync/manifest.ts:58](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/manifest.ts#L58) |
-| <a id="formatversion"></a> `formatVersion` | `number` | Schema version. Must equal [REMOTE\_MANIFEST\_FORMAT\_VERSION](../variables/REMOTE_MANIFEST_FORMAT_VERSION.md). | [src/sync/manifest.ts:50](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/manifest.ts#L50) |
-| <a id="generatedat"></a> `generatedAt` | `string` | ISO 8601 timestamp recording when the manifest was generated. | [src/sync/manifest.ts:52](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/manifest.ts#L52) |
-| <a id="provider"></a> `provider?` | [`ProviderId`](../type-aliases/ProviderId.md) | Optional provider identifier the snapshot was captured from. | [src/sync/manifest.ts:56](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/manifest.ts#L56) |
-| <a id="root"></a> `root` | `string` | Normalized absolute root path the manifest snapshot is anchored to. | [src/sync/manifest.ts:54](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/manifest.ts#L54) |
+| Property                                   | Type                                              | Description                                                                                                  | Defined in                                                                                                                                    |
+| ------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="entries"></a> `entries`             | [`RemoteManifestEntry`](RemoteManifestEntry.md)[] | Manifest entries sorted by path.                                                                             | [src/sync/manifest.ts:58](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/manifest.ts#L58) |
+| <a id="formatversion"></a> `formatVersion` | `number`                                          | Schema version. Must equal [REMOTE_MANIFEST_FORMAT_VERSION](../variables/REMOTE_MANIFEST_FORMAT_VERSION.md). | [src/sync/manifest.ts:50](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/manifest.ts#L50) |
+| <a id="generatedat"></a> `generatedAt`     | `string`                                          | ISO 8601 timestamp recording when the manifest was generated.                                                | [src/sync/manifest.ts:52](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/manifest.ts#L52) |
+| <a id="provider"></a> `provider?`          | [`ProviderId`](../type-aliases/ProviderId.md)     | Optional provider identifier the snapshot was captured from.                                                 | [src/sync/manifest.ts:56](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/manifest.ts#L56) |
+| <a id="root"></a> `root`                   | `string`                                          | Normalized absolute root path the manifest snapshot is anchored to.                                          | [src/sync/manifest.ts:54](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/manifest.ts#L54) |

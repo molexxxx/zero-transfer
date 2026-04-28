@@ -1,10 +1,10 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
-[ZeroTransfer SDK](../README.md) / CLASSIC\_PROVIDER\_IDS
+[ZeroTransfer SDK](../README.md) / CLASSIC_PROVIDER_IDS
 
-# Variable: CLASSIC\_PROVIDER\_IDS
+# Variable: CLASSIC_PROVIDER_IDS
 
 ```ts
 const CLASSIC_PROVIDER_IDS: readonly ["ftp", "ftps", "sftp"];

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / TransferQueueExecutorResolver
 
@@ -16,9 +16,9 @@ Resolver used when jobs do not provide an executor at enqueue time.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `job` | [`TransferJob`](../interfaces/TransferJob.md) |
+| Parameter | Type                                          |
+| --------- | --------------------------------------------- |
+| `job`     | [`TransferJob`](../interfaces/TransferJob.md) |
 
 ## Returns
 

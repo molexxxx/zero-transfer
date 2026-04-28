@@ -1,10 +1,10 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
-[ZeroTransfer SDK](../README.md) / DEFAULT\_PROCESSED\_SUBDIR
+[ZeroTransfer SDK](../README.md) / DEFAULT_PROCESSED_SUBDIR
 
-# Variable: DEFAULT\_PROCESSED\_SUBDIR
+# Variable: DEFAULT_PROCESSED_SUBDIR
 
 ```ts
 const DEFAULT_PROCESSED_SUBDIR: "processed" = "processed";

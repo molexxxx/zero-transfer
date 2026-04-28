@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / inboxProcessedPath
 
@@ -16,9 +16,9 @@ Computes the absolute path used to archive successfully processed files.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `inbox` | [`MftInboxConvention`](../interfaces/MftInboxConvention.md) | Inbox convention. |
+| Parameter | Type                                                        | Description       |
+| --------- | ----------------------------------------------------------- | ----------------- |
+| `inbox`   | [`MftInboxConvention`](../interfaces/MftInboxConvention.md) | Inbox convention. |
 
 ## Returns
 

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / parseCronExpression
 
@@ -16,8 +16,8 @@ Parses a 5-field cron expression.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type     | Description                                   |
+| ------------ | -------- | --------------------------------------------- |
 | `expression` | `string` | Whitespace-separated 5-field cron expression. |
 
 ## Returns

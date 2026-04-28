@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / SshKeyboardInteractivePrompt
 
@@ -12,7 +12,7 @@ Prompt metadata supplied by an SSH keyboard-interactive server challenge.
 
 ## Properties
 
-| Property | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="echo"></a> `echo?` | `boolean` | Whether the answer may be echoed to a terminal or UI. | [src/types/public.ts:119](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/types/public.ts#L119) |
-| <a id="prompt"></a> `prompt` | `string` | Human-readable prompt text supplied by the SSH server. | [src/types/public.ts:117](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/types/public.ts#L117) |
+| Property                     | Type      | Description                                            | Defined in                                                                                                                                    |
+| ---------------------------- | --------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="echo"></a> `echo?`    | `boolean` | Whether the answer may be echoed to a terminal or UI.  | [src/types/public.ts:119](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/types/public.ts#L119) |
+| <a id="prompt"></a> `prompt` | `string`  | Human-readable prompt text supplied by the SSH server. | [src/types/public.ts:117](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/types/public.ts#L117) |

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / RemoteBrowser
 
@@ -26,7 +26,7 @@ Compute breadcrumbs for the current path without re-listing.
 
 [`RemoteBreadcrumb`](RemoteBreadcrumb.md)[]
 
-***
+---
 
 ### navigate()
 
@@ -40,15 +40,15 @@ Navigate to the supplied absolute or relative path.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `target` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `target`  | `string` |
 
 #### Returns
 
 `Promise`\<[`RemoteBrowserSnapshot`](RemoteBrowserSnapshot.md)\>
 
-***
+---
 
 ### open()
 
@@ -62,15 +62,15 @@ Descend into the supplied directory entry. Throws when the entry is not a direct
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `entry` | [`RemoteEntry`](RemoteEntry.md) |
+| Parameter | Type                            |
+| --------- | ------------------------------- |
+| `entry`   | [`RemoteEntry`](RemoteEntry.md) |
 
 #### Returns
 
 `Promise`\<[`RemoteBrowserSnapshot`](RemoteBrowserSnapshot.md)\>
 
-***
+---
 
 ### refresh()
 
@@ -86,7 +86,7 @@ Reload the current directory and return the latest snapshot.
 
 `Promise`\<[`RemoteBrowserSnapshot`](RemoteBrowserSnapshot.md)\>
 
-***
+---
 
 ### setShowHidden()
 
@@ -100,15 +100,15 @@ Toggle hidden-entry visibility. The next refresh re-applies the filter.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter    | Type      |
+| ------------ | --------- |
 | `showHidden` | `boolean` |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### setSort()
 
@@ -122,16 +122,16 @@ Update the sort key. The next refresh re-sorts the cached entries.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `key` | [`RemoteEntrySortKey`](../type-aliases/RemoteEntrySortKey.md) |
-| `order?` | [`RemoteEntrySortOrder`](../type-aliases/RemoteEntrySortOrder.md) |
+| Parameter | Type                                                              |
+| --------- | ----------------------------------------------------------------- |
+| `key`     | [`RemoteEntrySortKey`](../type-aliases/RemoteEntrySortKey.md)     |
+| `order?`  | [`RemoteEntrySortOrder`](../type-aliases/RemoteEntrySortOrder.md) |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### up()
 
@@ -149,7 +149,7 @@ Move to the parent directory; no-op when already at the root.
 
 ## Properties
 
-| Property | Modifier | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ | ------ |
+| Property                       | Modifier   | Type                                       | Description                          | Defined in                                                                                                                                                          |
+| ------------------------------ | ---------- | ------------------------------------------ | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | <a id="entries"></a> `entries` | `readonly` | readonly [`RemoteEntry`](RemoteEntry.md)[] | Last loaded sorted/filtered entries. | [src/sync/createRemoteBrowser.ts:62](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L62) |
-| <a id="path"></a> `path` | `readonly` | `string` | Current absolute path. | [src/sync/createRemoteBrowser.ts:60](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L60) |
+| <a id="path"></a> `path`       | `readonly` | `string`                                   | Current absolute path.               | [src/sync/createRemoteBrowser.ts:60](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L60) |

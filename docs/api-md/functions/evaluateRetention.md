@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / evaluateRetention
 
@@ -16,8 +16,8 @@ Splits a listing into retained and evictable entries according to a policy.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                    | Description                                    |
+| --------- | ----------------------------------------------------------------------- | ---------------------------------------------- |
 | `options` | [`EvaluateRetentionOptions`](../interfaces/EvaluateRetentionOptions.md) | Listing, policy, and optional reference clock. |
 
 ## Returns

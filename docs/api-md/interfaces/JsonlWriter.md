@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / JsonlWriter
 
@@ -24,9 +24,9 @@ Writes a UTF-8 line that already includes a trailing newline.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `line` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `line`    | `string` |
 
 #### Returns
 

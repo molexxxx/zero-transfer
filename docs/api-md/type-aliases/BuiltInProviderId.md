@@ -1,13 +1,13 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / BuiltInProviderId
 
 # Type Alias: BuiltInProviderId
 
 ```ts
-type BuiltInProviderId = 
+type BuiltInProviderId =
   | ClassicProviderId
   | "memory"
   | "local"

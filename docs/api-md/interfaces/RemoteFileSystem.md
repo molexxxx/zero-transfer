@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / RemoteFileSystem
 
@@ -24,16 +24,16 @@ Lists entries for a provider path.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `path` | `string` |
+| Parameter  | Type                            |
+| ---------- | ------------------------------- |
+| `path`     | `string`                        |
 | `options?` | [`ListOptions`](ListOptions.md) |
 
 #### Returns
 
 `Promise`\<[`RemoteEntry`](RemoteEntry.md)[]\>
 
-***
+---
 
 ### stat()
 
@@ -47,9 +47,9 @@ Reads metadata for a provider path.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `path` | `string` |
+| Parameter  | Type                            |
+| ---------- | ------------------------------- |
+| `path`     | `string`                        |
 | `options?` | [`StatOptions`](StatOptions.md) |
 
 #### Returns

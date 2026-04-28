@@ -108,7 +108,7 @@ for (const scope of scopes) {
       access: "public",
     },
     sideEffects: false,
-    dependencies: {
+    peerDependencies: {
       "@zero-transfer/sdk": sdkVersion,
     },
   };

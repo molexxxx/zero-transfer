@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createTransferClient
 
@@ -21,8 +21,8 @@ Registering only the providers you actually use keeps bundle size small
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                              | Description                                        |
+| --------- | ----------------------------------------------------------------- | -------------------------------------------------- |
 | `options` | [`TransferClientOptions`](../interfaces/TransferClientOptions.md) | Optional registry, provider factories, and logger. |
 
 ## Returns

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / parseOpenSshConfig
 
@@ -18,9 +18,9 @@ The parser is intentionally permissive: unknown directives are retained and `Mat
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `text` | `string` | Contents of the `ssh_config` file. |
+| Parameter | Type     | Description                        |
+| --------- | -------- | ---------------------------------- |
+| `text`    | `string` | Contents of the `ssh_config` file. |
 
 ## Returns
 

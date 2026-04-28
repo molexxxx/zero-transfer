@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createAzureBlobProviderFactory
 
@@ -16,8 +16,8 @@ Creates an Azure Blob Storage provider factory.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type                                                                    |
+| --------- | ----------------------------------------------------------------------- |
 | `options` | [`AzureBlobProviderOptions`](../interfaces/AzureBlobProviderOptions.md) |
 
 ## Returns

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / RemoteBrowserFilter
 
@@ -16,9 +16,9 @@ Filter callback applied to a directory listing.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `entry` | [`RemoteEntry`](../interfaces/RemoteEntry.md) |
+| Parameter | Type                                          |
+| --------- | --------------------------------------------- |
+| `entry`   | [`RemoteEntry`](../interfaces/RemoteEntry.md) |
 
 ## Returns
 

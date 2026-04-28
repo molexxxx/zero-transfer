@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / importOpenSshConfig
 
@@ -16,8 +16,8 @@ Builds a [ConnectionProfile](../interfaces/ConnectionProfile.md) for the given S
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                        | Description     |
+| --------- | --------------------------------------------------------------------------- | --------------- |
 | `options` | [`ImportOpenSshConfigOptions`](../interfaces/ImportOpenSshConfigOptions.md) | Import options. |
 
 ## Returns

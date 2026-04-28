@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createMemoryProviderFactory
 
@@ -16,8 +16,8 @@ Creates a provider factory backed by deterministic in-memory fixture entries.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                              | Description                                                     |
+| --------- | ----------------------------------------------------------------- | --------------------------------------------------------------- |
 | `options` | [`MemoryProviderOptions`](../interfaces/MemoryProviderOptions.md) | Optional fixture entries to expose through the memory provider. |
 
 ## Returns

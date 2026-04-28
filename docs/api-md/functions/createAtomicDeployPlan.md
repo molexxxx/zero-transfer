@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createAtomicDeployPlan
 
@@ -16,8 +16,8 @@ Builds an [AtomicDeployPlan](../interfaces/AtomicDeployPlan.md) that stages a re
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                              | Description                                |
+| --------- | --------------------------------------------------------------------------------- | ------------------------------------------ |
 | `options` | [`CreateAtomicDeployPlanOptions`](../interfaces/CreateAtomicDeployPlanOptions.md) | Inputs and policies that shape the deploy. |
 
 ## Returns

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / parseFtpResponseLines
 
@@ -16,9 +16,9 @@ Parses an exact set of response lines into one complete FTP response.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `lines` | `string`[] | Raw response lines without trailing newline delimiters. |
+| Parameter | Type       | Description                                             |
+| --------- | ---------- | ------------------------------------------------------- |
+| `lines`   | `string`[] | Raw response lines without trailing newline delimiters. |
 
 ## Returns
 

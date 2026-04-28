@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createProviderTransferExecutor
 
@@ -20,8 +20,8 @@ the actual streaming implementation.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                                  | Description                                                 |
+| --------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | `options` | [`ProviderTransferExecutorOptions`](../interfaces/ProviderTransferExecutorOptions.md) | Session resolver used for source and destination endpoints. |
 
 ## Returns

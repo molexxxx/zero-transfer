@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createSftpJumpHostSocketFactory
 
@@ -16,8 +16,8 @@ Builds an [SshSocketFactory](../type-aliases/SshSocketFactory.md) that tunnels S
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                          | Description                          |
+| --------- | ------------------------------------------------------------- | ------------------------------------ |
 | `options` | [`SftpJumpHostOptions`](../interfaces/SftpJumpHostOptions.md) | Bastion configuration and overrides. |
 
 ## Returns

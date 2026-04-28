@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / TransferClient
 
@@ -24,8 +24,8 @@ Creates a transfer client without opening any provider connections.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                              | Description                                        |
+| --------- | ----------------------------------------------------------------- | -------------------------------------------------- |
 | `options` | [`TransferClientOptions`](../interfaces/TransferClientOptions.md) | Optional registry, provider factories, and logger. |
 
 #### Returns
@@ -46,8 +46,8 @@ Opens a provider session using `profile.provider`, with `profile.protocol` as co
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                      | Description                                                        |
+| --------- | --------------------------------------------------------- | ------------------------------------------------------------------ |
 | `profile` | [`ConnectionProfile`](../interfaces/ConnectionProfile.md) | Connection profile containing a provider or legacy protocol field. |
 
 #### Returns
@@ -60,7 +60,7 @@ A connected provider session.
 
 [ConfigurationError](ConfigurationError.md) When neither provider nor protocol is present.
 
-***
+---
 
 ### getCapabilities()
 
@@ -90,15 +90,15 @@ Gets a specific provider capability snapshot.
 
 ##### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter    | Type                                          |
+| ------------ | --------------------------------------------- |
 | `providerId` | [`ProviderId`](../type-aliases/ProviderId.md) |
 
 ##### Returns
 
 [`CapabilitySet`](../interfaces/CapabilitySet.md)
 
-***
+---
 
 ### hasProvider()
 
@@ -112,8 +112,8 @@ Checks whether this client can create sessions for a provider id.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type                                          | Description             |
+| ------------ | --------------------------------------------- | ----------------------- |
 | `providerId` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id to inspect. |
 
 #### Returns
@@ -122,7 +122,7 @@ Checks whether this client can create sessions for a provider id.
 
 `true` when a provider factory is registered.
 
-***
+---
 
 ### registerProvider()
 
@@ -136,8 +136,8 @@ Registers a provider factory with this client's registry.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                                  | Description                   |
+| ---------- | ----------------------------------------------------- | ----------------------------- |
 | `provider` | [`ProviderFactory`](../interfaces/ProviderFactory.md) | Provider factory to register. |
 
 #### Returns
@@ -148,6 +148,6 @@ This client for fluent setup.
 
 ## Properties
 
-| Property | Modifier | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ | ------ |
+| Property                         | Modifier   | Type                                      | Description                            | Defined in                                                                                                                                                |
+| -------------------------------- | ---------- | ----------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | <a id="registry"></a> `registry` | `readonly` | [`ProviderRegistry`](ProviderRegistry.md) | Provider registry used by this client. | [src/core/TransferClient.ts:35](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/core/TransferClient.ts#L35) |

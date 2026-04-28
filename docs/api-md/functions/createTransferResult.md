@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createTransferResult
 
@@ -16,9 +16,9 @@ Creates a final transfer result with duration and average throughput.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | [`TransferResultInput`](../interfaces/TransferResultInput.md) | Transfer paths, byte count, timestamps, and optional verification metadata. |
+| Parameter | Type                                                          | Description                                                                 |
+| --------- | ------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `input`   | [`TransferResultInput`](../interfaces/TransferResultInput.md) | Transfer paths, byte count, timestamps, and optional verification metadata. |
 
 ## Returns
 

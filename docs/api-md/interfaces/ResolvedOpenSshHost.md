@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / ResolvedOpenSshHost
 
@@ -13,8 +13,8 @@ merged after earlier ones so wildcard fallbacks (e.g. `Host *`) only fill gaps.
 
 ## Properties
 
-| Property | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="alias"></a> `alias` | `string` | Host alias the lookup was performed against. | [src/profiles/importers/OpenSshConfigImporter.ts:85](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/OpenSshConfigImporter.ts#L85) |
+| Property                       | Type                                                     | Description                                                          | Defined in                                                                                                                                                                                          |
+| ------------------------------ | -------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="alias"></a> `alias`     | `string`                                                 | Host alias the lookup was performed against.                         | [src/profiles/importers/OpenSshConfigImporter.ts:85](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/OpenSshConfigImporter.ts#L85) |
 | <a id="matched"></a> `matched` | readonly [`OpenSshConfigEntry`](OpenSshConfigEntry.md)[] | Source entries that contributed to the resolved set, in match order. | [src/profiles/importers/OpenSshConfigImporter.ts:89](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/OpenSshConfigImporter.ts#L89) |
-| <a id="options"></a> `options` | `Readonly`\<`Record`\<`string`, readonly `string`[]\>\> | Per-directive ordered values, keyed by lower-cased directive name. | [src/profiles/importers/OpenSshConfigImporter.ts:87](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/OpenSshConfigImporter.ts#L87) |
+| <a id="options"></a> `options` | `Readonly`\<`Record`\<`string`, readonly `string`[]\>\>  | Per-directive ordered values, keyed by lower-cased directive name.   | [src/profiles/importers/OpenSshConfigImporter.ts:87](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/OpenSshConfigImporter.ts#L87) |

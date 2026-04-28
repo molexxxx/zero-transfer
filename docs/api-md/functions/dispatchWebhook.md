@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / dispatchWebhook
 
@@ -16,8 +16,8 @@ Dispatches a single webhook payload with bounded retries.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                | Description                                              |
+| --------- | ------------------------------------------------------------------- | -------------------------------------------------------- |
 | `options` | [`DispatchWebhookOptions`](../interfaces/DispatchWebhookOptions.md) | Target, payload, fetch impl, retry policy, abort signal. |
 
 ## Returns

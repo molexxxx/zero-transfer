@@ -1,13 +1,13 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / FtpResponseStatus
 
 # Type Alias: FtpResponseStatus
 
 ```ts
-type FtpResponseStatus = 
+type FtpResponseStatus =
   | "preliminary"
   | "completion"
   | "intermediate"

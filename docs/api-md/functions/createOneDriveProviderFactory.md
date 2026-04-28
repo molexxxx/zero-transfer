@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createOneDriveProviderFactory
 
@@ -19,8 +19,8 @@ The bearer token is resolved per-connection from `profile.password`.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type                                                                  |
+| --------- | --------------------------------------------------------------------- |
 | `options` | [`OneDriveProviderOptions`](../interfaces/OneDriveProviderOptions.md) |
 
 ## Returns

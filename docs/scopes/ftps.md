@@ -16,17 +16,17 @@ FTPS over explicit `AUTH TLS` or implicit TLS, with PEM/PFX/P12 certificate sour
 
 This is the actual surface published by [`@zero-transfer/ftps`](https://www.npmjs.com/package/@zero-transfer/ftps). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createFtpsProviderFactory`](../api-md/functions/createFtpsProviderFactory.md) | Function | See API reference. |
-| [`FtpsProviderOptions`](../api-md/interfaces/FtpsProviderOptions.md) | Interface | See API reference. |
-| [`FtpsMode`](../api-md/type-aliases/FtpsMode.md) | Type | See API reference. |
-| [`FtpsDataProtection`](../api-md/type-aliases/FtpsDataProtection.md) | Type | See API reference. |
+| Symbol                                                                          | Kind      | Notes              |
+| ------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createFtpsProviderFactory`](../api-md/functions/createFtpsProviderFactory.md) | Function  | See API reference. |
+| [`FtpsProviderOptions`](../api-md/interfaces/FtpsProviderOptions.md)            | Interface | See API reference. |
+| [`FtpsMode`](../api-md/type-aliases/FtpsMode.md)                                | Type      | See API reference. |
+| [`FtpsDataProtection`](../api-md/type-aliases/FtpsDataProtection.md)            | Type      | See API reference. |
 
 ## Examples
 
-| Example | What it shows |
-| --- | --- |
+| Example                                                                            | What it shows                                                          |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | [`examples/ftps-client-certificate.ts`](../../examples/ftps-client-certificate.ts) | FTPS client-certificate (mutual TLS) example with certificate pinning. |
 
 ## See also

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / importWinScpSessions
 
@@ -16,9 +16,9 @@ Parses WinSCP `WinSCP.ini` text and returns generated profiles.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `ini` | `string` | Contents of the WinSCP configuration file. |
+| Parameter | Type     | Description                                |
+| --------- | -------- | ------------------------------------------ |
+| `ini`     | `string` | Contents of the WinSCP configuration file. |
 
 ## Returns
 

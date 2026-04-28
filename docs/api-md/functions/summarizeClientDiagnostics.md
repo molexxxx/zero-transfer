@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / summarizeClientDiagnostics
 
@@ -16,9 +16,9 @@ Returns a redaction-safe snapshot of the providers registered with a client.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `client` | [`TransferClient`](../classes/TransferClient.md) | Transfer client to inspect. |
+| Parameter | Type                                             | Description                 |
+| --------- | ------------------------------------------------ | --------------------------- |
+| `client`  | [`TransferClient`](../classes/TransferClient.md) | Transfer client to inspect. |
 
 ## Returns
 

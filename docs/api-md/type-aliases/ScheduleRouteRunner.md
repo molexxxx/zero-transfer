@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / ScheduleRouteRunner
 
@@ -16,13 +16,13 @@ Function shape used to fire a route. Defaults to [runRoute](../functions/runRout
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `input` | \{ `client`: [`TransferClient`](../classes/TransferClient.md); `route`: [`MftRoute`](../interfaces/MftRoute.md); `schedule`: [`MftSchedule`](../interfaces/MftSchedule.md); `signal`: `AbortSignal`; \} |
-| `input.client` | [`TransferClient`](../classes/TransferClient.md) |
-| `input.route` | [`MftRoute`](../interfaces/MftRoute.md) |
-| `input.schedule` | [`MftSchedule`](../interfaces/MftSchedule.md) |
-| `input.signal` | `AbortSignal` |
+| Parameter        | Type                                                                                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `input`          | \{ `client`: [`TransferClient`](../classes/TransferClient.md); `route`: [`MftRoute`](../interfaces/MftRoute.md); `schedule`: [`MftSchedule`](../interfaces/MftSchedule.md); `signal`: `AbortSignal`; \} |
+| `input.client`   | [`TransferClient`](../classes/TransferClient.md)                                                                                                                                                        |
+| `input.route`    | [`MftRoute`](../interfaces/MftRoute.md)                                                                                                                                                                 |
+| `input.schedule` | [`MftSchedule`](../interfaces/MftSchedule.md)                                                                                                                                                           |
+| `input.signal`   | `AbortSignal`                                                                                                                                                                                           |
 
 ## Returns
 

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / validateSchedule
 
@@ -16,8 +16,8 @@ Validates a schedule and returns it for fluent setup.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                          | Description           |
+| ---------- | --------------------------------------------- | --------------------- |
 | `schedule` | [`MftSchedule`](../interfaces/MftSchedule.md) | Schedule to validate. |
 
 ## Returns

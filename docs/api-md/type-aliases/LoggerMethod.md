@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / LoggerMethod
 
@@ -16,10 +16,10 @@ Logger method signature used for each severity level.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `record` | [`LogRecord`](../interfaces/LogRecord.md) | Structured log record. |
-| `message?` | `string` | Convenience message argument for console-like loggers. |
+| Parameter  | Type                                      | Description                                            |
+| ---------- | ----------------------------------------- | ------------------------------------------------------ |
+| `record`   | [`LogRecord`](../interfaces/LogRecord.md) | Structured log record.                                 |
+| `message?` | `string`                                  | Convenience message argument for console-like loggers. |
 
 ## Returns
 

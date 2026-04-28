@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createBandwidthThrottle
 
@@ -20,10 +20,10 @@ without conditional branches at the call site.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `limit` | \| [`TransferBandwidthLimit`](../interfaces/TransferBandwidthLimit.md) \| `undefined` | Optional throughput limit. Returns `undefined` when omitted. |
-| `options` | [`BandwidthThrottleOptions`](../interfaces/BandwidthThrottleOptions.md) | Optional clock/sleep overrides for deterministic tests. |
+| Parameter | Type                                                                                  | Description                                                  |
+| --------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `limit`   | \| [`TransferBandwidthLimit`](../interfaces/TransferBandwidthLimit.md) \| `undefined` | Optional throughput limit. Returns `undefined` when omitted. |
+| `options` | [`BandwidthThrottleOptions`](../interfaces/BandwidthThrottleOptions.md)               | Optional clock/sleep overrides for deterministic tests.      |
 
 ## Returns
 

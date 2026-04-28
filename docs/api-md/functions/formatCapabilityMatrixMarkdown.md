@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / formatCapabilityMatrixMarkdown
 
@@ -18,9 +18,9 @@ capability flags.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `matrix` | readonly [`BuiltinCapabilityMatrixEntry`](../interfaces/BuiltinCapabilityMatrixEntry.md)[] |
+| Parameter | Type                                                                                       |
+| --------- | ------------------------------------------------------------------------------------------ |
+| `matrix`  | readonly [`BuiltinCapabilityMatrixEntry`](../interfaces/BuiltinCapabilityMatrixEntry.md)[] |
 
 ## Returns
 

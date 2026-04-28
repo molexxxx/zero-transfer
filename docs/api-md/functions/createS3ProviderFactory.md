@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createS3ProviderFactory
 
@@ -23,8 +23,8 @@ Backblaze B2, DigitalOcean Spaces, Wasabi, etc.) via `options.endpoint`.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type                                                      |
+| --------- | --------------------------------------------------------- |
 | `options` | [`S3ProviderOptions`](../interfaces/S3ProviderOptions.md) |
 
 ## Returns
@@ -49,9 +49,11 @@ const session = await client.connect({
 
 ```ts
 const client = createTransferClient({
-  providers: [createS3ProviderFactory({
-    endpoint: "https://minio.internal:9000",
-    pathStyle: true,
-  })],
+  providers: [
+    createS3ProviderFactory({
+      endpoint: "https://minio.internal:9000",
+      pathStyle: true,
+    }),
+  ],
 });
 ```

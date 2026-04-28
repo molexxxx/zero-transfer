@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / runRoute
 
@@ -16,8 +16,8 @@ Executes an MFT route as a single transfer through the supplied client.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                  | Description                                           |
+| --------- | ----------------------------------------------------- | ----------------------------------------------------- |
 | `options` | [`RunRouteOptions`](../interfaces/RunRouteOptions.md) | Client, route, and optional engine/abort/retry hooks. |
 
 ## Returns

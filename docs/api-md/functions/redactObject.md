@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / redactObject
 
@@ -16,9 +16,9 @@ Redacts sensitive keys and nested values in a plain object.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | `Record`\<`string`, `unknown`\> | Object containing diagnostic fields. |
+| Parameter | Type                            | Description                          |
+| --------- | ------------------------------- | ------------------------------------ |
+| `input`   | `Record`\<`string`, `unknown`\> | Object containing diagnostic fields. |
 
 ## Returns
 

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createApprovalGate
 
@@ -20,8 +20,8 @@ surfaces an [ApprovalRejectedError](../classes/ApprovalRejectedError.md).
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                      | Description                                                 |
+| --------- | ------------------------------------------------------------------------- | ----------------------------------------------------------- |
 | `options` | [`CreateApprovalGateOptions`](../interfaces/CreateApprovalGateOptions.md) | Registry, downstream runner, approval-id derivation, hooks. |
 
 ## Returns

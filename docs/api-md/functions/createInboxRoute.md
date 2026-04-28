@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createInboxRoute
 
@@ -16,8 +16,8 @@ Creates a route that pulls files out of an inbox into a destination directory.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                  | Description                                                |
+| --------- | --------------------------------------------------------------------- | ---------------------------------------------------------- |
 | `options` | [`CreateInboxRouteOptions`](../interfaces/CreateInboxRouteOptions.md) | Inbox layout, destination endpoint, and optional metadata. |
 
 ## Returns

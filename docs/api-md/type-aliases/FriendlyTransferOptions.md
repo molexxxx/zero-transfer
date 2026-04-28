@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / FriendlyTransferOptions
 
@@ -19,7 +19,7 @@ Shared options consumed by [uploadFile](../functions/uploadFile.md), [downloadFi
 
 ## Type Declaration
 
-| Name | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ |
-| `routeId?` | `string` | Stable route id assigned to the synthetic route. Defaults to `"upload:..."`, `"download:..."`, or `"copy:..."`. | [src/client/operations.ts:30](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/client/operations.ts#L30) |
-| `routeName?` | `string` | Optional human-readable route name forwarded to telemetry. | [src/client/operations.ts:32](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/client/operations.ts#L32) |
+| Name         | Type     | Description                                                                                                     | Defined in                                                                                                                                            |
+| ------------ | -------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `routeId?`   | `string` | Stable route id assigned to the synthetic route. Defaults to `"upload:..."`, `"download:..."`, or `"copy:..."`. | [src/client/operations.ts:30](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/client/operations.ts#L30) |
+| `routeName?` | `string` | Optional human-readable route name forwarded to telemetry.                                                      | [src/client/operations.ts:32](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/client/operations.ts#L32) |

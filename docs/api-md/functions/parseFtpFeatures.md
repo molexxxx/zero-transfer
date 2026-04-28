@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / parseFtpFeatures
 
@@ -16,9 +16,9 @@ Parses FTP FEAT output into a normalized feature set.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | `string` \| `string`[] \| [`FtpResponse`](../interfaces/FtpResponse.md) | Parsed FTP response, raw string, or individual response lines. |
+| Parameter | Type                                                                    | Description                                                    |
+| --------- | ----------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `input`   | `string` \| `string`[] \| [`FtpResponse`](../interfaces/FtpResponse.md) | Parsed FTP response, raw string, or individual response lines. |
 
 ## Returns
 

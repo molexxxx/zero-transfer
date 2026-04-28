@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / redactValue
 
@@ -16,9 +16,9 @@ Recursively redacts strings, arrays, and plain object values.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `value` | `unknown` | Arbitrary value to sanitize for diagnostics. |
+| Parameter | Type      | Description                                  |
+| --------- | --------- | -------------------------------------------- |
+| `value`   | `unknown` | Arbitrary value to sanitize for diagnostics. |
 
 ## Returns
 

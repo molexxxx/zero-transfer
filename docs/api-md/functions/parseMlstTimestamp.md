@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / parseMlstTimestamp
 
@@ -16,9 +16,9 @@ Parses the UTC timestamp format used by MLST/MLSD `modify` facts.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | `string` \| `undefined` | Timestamp text such as `20260427010203.123`. |
+| Parameter | Type                    | Description                                  |
+| --------- | ----------------------- | -------------------------------------------- |
+| `input`   | `string` \| `undefined` | Timestamp text such as `20260427010203.123`. |
 
 ## Returns
 

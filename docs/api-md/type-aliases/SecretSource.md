@@ -1,13 +1,13 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / SecretSource
 
 # Type Alias: SecretSource
 
 ```ts
-type SecretSource = 
+type SecretSource =
   | SecretValue
   | SecretProvider
   | ValueSecretSource

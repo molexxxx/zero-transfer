@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / composeAuditLogs
 
@@ -16,8 +16,8 @@ Combines multiple audit logs into a single fan-out log.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                     | Description                                         |
+| --------- | -------------------------------------------------------- | --------------------------------------------------- |
 | ...`logs` | readonly [`MftAuditLog`](../interfaces/MftAuditLog.md)[] | Logs that should each receive every recorded entry. |
 
 ## Returns
@@ -25,4 +25,4 @@ Combines multiple audit logs into a single fan-out log.
 [`MftAuditLog`](../interfaces/MftAuditLog.md)
 
 A composite log whose `record` writes to all targets in order and
-         whose `list` returns the first non-empty result.
+whose `list` returns the first non-empty result.

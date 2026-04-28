@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createRemoteBrowser
 
@@ -20,8 +20,8 @@ render synchronously without re-reading state.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                        | Description            |
+| --------- | --------------------------------------------------------------------------- | ---------------------- |
 | `options` | [`CreateRemoteBrowserOptions`](../interfaces/CreateRemoteBrowserOptions.md) | Browser configuration. |
 
 ## Returns

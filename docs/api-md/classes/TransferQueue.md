@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / TransferQueue
 
@@ -24,8 +24,8 @@ Creates a transfer queue.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                            | Description                                                |
+| --------- | --------------------------------------------------------------- | ---------------------------------------------------------- |
 | `options` | [`TransferQueueOptions`](../interfaces/TransferQueueOptions.md) | Queue engine, concurrency, executor, and observer options. |
 
 #### Returns
@@ -46,16 +46,16 @@ Adds a transfer job to the queue.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `job` | [`TransferJob`](../interfaces/TransferJob.md) |
+| Parameter   | Type                                                      |
+| ----------- | --------------------------------------------------------- |
+| `job`       | [`TransferJob`](../interfaces/TransferJob.md)             |
 | `executor?` | [`TransferExecutor`](../type-aliases/TransferExecutor.md) |
 
 #### Returns
 
 [`TransferQueueItem`](../interfaces/TransferQueueItem.md)
 
-***
+---
 
 ### cancel()
 
@@ -69,15 +69,15 @@ Cancels a queued or running job.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `jobId` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `jobId`   | `string` |
 
 #### Returns
 
 `boolean`
 
-***
+---
 
 ### get()
 
@@ -91,15 +91,15 @@ Returns a queued item snapshot by id.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `jobId` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `jobId`   | `string` |
 
 #### Returns
 
 [`TransferQueueItem`](../interfaces/TransferQueueItem.md) \| `undefined`
 
-***
+---
 
 ### list()
 
@@ -115,7 +115,7 @@ Lists queue item snapshots in insertion order.
 
 [`TransferQueueItem`](../interfaces/TransferQueueItem.md)[]
 
-***
+---
 
 ### pause()
 
@@ -131,7 +131,7 @@ Pauses dispatch of new queued jobs. Running jobs are allowed to finish.
 
 `void`
 
-***
+---
 
 ### resume()
 
@@ -147,7 +147,7 @@ Resumes dispatch of queued jobs on the next `run()` call.
 
 `void`
 
-***
+---
 
 ### run()
 
@@ -161,15 +161,15 @@ Drains currently queued jobs until complete, failed, canceled, or paused.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type                                                                  |
+| --------- | --------------------------------------------------------------------- |
 | `options` | [`TransferQueueRunOptions`](../interfaces/TransferQueueRunOptions.md) |
 
 #### Returns
 
 `Promise`\<[`TransferQueueSummary`](../interfaces/TransferQueueSummary.md)\>
 
-***
+---
 
 ### setConcurrency()
 
@@ -183,15 +183,15 @@ Updates queue concurrency for subsequent drains.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter     | Type     |
+| ------------- | -------- |
 | `concurrency` | `number` |
 
 #### Returns
 
 `void`
 
-***
+---
 
 ### summarize()
 

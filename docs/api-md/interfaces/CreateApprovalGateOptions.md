@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / CreateApprovalGateOptions
 
@@ -12,10 +12,10 @@ Options accepted by [createApprovalGate](../functions/createApprovalGate.md).
 
 ## Properties
 
-| Property | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="approvalid"></a> `approvalId` | (`input`) => `string` | Function that derives an approval id from each route invocation. | [src/mft/approvals.ts:210](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L210) |
-| <a id="now"></a> `now?` | () => `Date` | Optional clock used for `requestedAt`/`resolvedAt`. | [src/mft/approvals.ts:212](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L212) |
-| <a id="onrequested"></a> `onRequested?` | (`request`) => `void` | Observer fired when a new approval request is created. | [src/mft/approvals.ts:214](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L214) |
-| <a id="registry"></a> `registry` | [`ApprovalRegistry`](../classes/ApprovalRegistry.md) | Registry that holds approval requests. | [src/mft/approvals.ts:206](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L206) |
-| <a id="runner"></a> `runner` | [`ScheduleRouteRunner`](../type-aliases/ScheduleRouteRunner.md) | Underlying runner that executes the route once approval is granted. | [src/mft/approvals.ts:208](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L208) |
+| Property                                | Type                                                            | Description                                                         | Defined in                                                                                                                                      |
+| --------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="approvalid"></a> `approvalId`    | (`input`) => `string`                                           | Function that derives an approval id from each route invocation.    | [src/mft/approvals.ts:210](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L210) |
+| <a id="now"></a> `now?`                 | () => `Date`                                                    | Optional clock used for `requestedAt`/`resolvedAt`.                 | [src/mft/approvals.ts:212](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L212) |
+| <a id="onrequested"></a> `onRequested?` | (`request`) => `void`                                           | Observer fired when a new approval request is created.              | [src/mft/approvals.ts:214](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L214) |
+| <a id="registry"></a> `registry`        | [`ApprovalRegistry`](../classes/ApprovalRegistry.md)            | Registry that holds approval requests.                              | [src/mft/approvals.ts:206](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L206) |
+| <a id="runner"></a> `runner`            | [`ScheduleRouteRunner`](../type-aliases/ScheduleRouteRunner.md) | Underlying runner that executes the route once approval is granted. | [src/mft/approvals.ts:208](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L208) |

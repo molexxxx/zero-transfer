@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / parentRemotePath
 
@@ -16,9 +16,9 @@ Returns the parent directory of a remote path, or `"/"` for root inputs.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | `string` | Remote path to inspect. |
+| Parameter | Type     | Description             |
+| --------- | -------- | ----------------------- |
+| `input`   | `string` | Remote path to inspect. |
 
 ## Returns
 

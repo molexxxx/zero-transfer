@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / ValueSecretSource
 
@@ -12,6 +12,6 @@ Inline secret descriptor. Prefer env, path, or callback sources for real applica
 
 ## Properties
 
-| Property | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ |
+| Property                   | Type                                            | Description          | Defined in                                                                                                                                                    |
+| -------------------------- | ----------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | <a id="value"></a> `value` | [`SecretValue`](../type-aliases/SecretValue.md) | Inline secret value. | [src/profiles/SecretSource.ts:20](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/SecretSource.ts#L20) |

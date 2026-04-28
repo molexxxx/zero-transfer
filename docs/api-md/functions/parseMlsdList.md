@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / parseMlsdList
 
@@ -16,10 +16,10 @@ Parses an MLSD directory listing into normalized remote entries.
 
 ## Parameters
 
-| Parameter | Type | Default value | Description |
-| ------ | ------ | ------ | ------ |
-| `input` | `string` | `undefined` | Raw MLSD response body. |
-| `directory` | `string` | `"."` | Parent remote directory used to build entry paths. |
+| Parameter   | Type     | Default value | Description                                        |
+| ----------- | -------- | ------------- | -------------------------------------------------- |
+| `input`     | `string` | `undefined`   | Raw MLSD response body.                            |
+| `directory` | `string` | `"."`         | Parent remote directory used to build entry paths. |
 
 ## Returns
 

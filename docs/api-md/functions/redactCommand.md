@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / redactCommand
 
@@ -16,8 +16,8 @@ Redacts sensitive FTP command payloads while preserving the command name.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type     | Description                                              |
+| --------- | -------- | -------------------------------------------------------- |
 | `command` | `string` | Raw command text such as `PASS secret` or `USER deploy`. |
 
 ## Returns

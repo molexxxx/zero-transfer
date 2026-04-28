@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / resolveConnectionProfileSecrets
 
@@ -16,10 +16,10 @@ Resolves credential and TLS material secret sources without mutating the origina
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `profile` | [`ConnectionProfile`](../interfaces/ConnectionProfile.md) | Profile containing optional secret sources. |
-| `options` | [`ResolveSecretOptions`](../interfaces/ResolveSecretOptions.md) | Optional env and file-reader overrides. |
+| Parameter | Type                                                            | Description                                 |
+| --------- | --------------------------------------------------------------- | ------------------------------------------- |
+| `profile` | [`ConnectionProfile`](../interfaces/ConnectionProfile.md)       | Profile containing optional secret sources. |
+| `options` | [`ResolveSecretOptions`](../interfaces/ResolveSecretOptions.md) | Optional env and file-reader overrides.     |
 
 ## Returns
 

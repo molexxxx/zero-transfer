@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / ConnectionDiagnosticTimings
 
@@ -12,8 +12,8 @@ Per-step duration measurements collected by [runConnectionDiagnostics](../functi
 
 ## Properties
 
-| Property | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="connectms"></a> `connectMs?` | `number` | Total time spent inside `client.connect`. | [src/diagnostics/index.ts:38](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/diagnostics/index.ts#L38) |
+| Property                                  | Type     | Description                                          | Defined in                                                                                                                                            |
+| ----------------------------------------- | -------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="connectms"></a> `connectMs?`       | `number` | Total time spent inside `client.connect`.            | [src/diagnostics/index.ts:38](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/diagnostics/index.ts#L38) |
 | <a id="disconnectms"></a> `disconnectMs?` | `number` | Time spent inside the optional `session.disconnect`. | [src/diagnostics/index.ts:42](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/diagnostics/index.ts#L42) |
-| <a id="listms"></a> `listMs?` | `number` | Time spent inside the optional `fs.list` probe. | [src/diagnostics/index.ts:40](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/diagnostics/index.ts#L40) |
+| <a id="listms"></a> `listMs?`             | `number` | Time spent inside the optional `fs.list` probe.      | [src/diagnostics/index.ts:40](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/diagnostics/index.ts#L40) |

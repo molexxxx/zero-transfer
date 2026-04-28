@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / ProviderTransferOperations
 
@@ -15,7 +15,7 @@ Optional read/write surface exposed by provider sessions that support transfer s
 ### read()
 
 ```ts
-read(request): 
+read(request):
   | ProviderTransferReadResult
 | Promise<ProviderTransferReadResult>;
 ```
@@ -26,21 +26,21 @@ Opens readable content for a provider endpoint.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type                                                            |
+| --------- | --------------------------------------------------------------- |
 | `request` | [`ProviderTransferReadRequest`](ProviderTransferReadRequest.md) |
 
 #### Returns
 
-  \| [`ProviderTransferReadResult`](ProviderTransferReadResult.md)
-  \| `Promise`\<[`ProviderTransferReadResult`](ProviderTransferReadResult.md)\>
+\| [`ProviderTransferReadResult`](ProviderTransferReadResult.md)
+\| `Promise`\<[`ProviderTransferReadResult`](ProviderTransferReadResult.md)\>
 
-***
+---
 
 ### write()
 
 ```ts
-write(request): 
+write(request):
   | TransferExecutionResult
 | Promise<TransferExecutionResult>;
 ```
@@ -51,11 +51,11 @@ Writes readable content to a provider endpoint.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter | Type                                                              |
+| --------- | ----------------------------------------------------------------- |
 | `request` | [`ProviderTransferWriteRequest`](ProviderTransferWriteRequest.md) |
 
 #### Returns
 
-  \| [`TransferExecutionResult`](TransferExecutionResult.md)
-  \| `Promise`\<[`TransferExecutionResult`](TransferExecutionResult.md)\>
+\| [`TransferExecutionResult`](TransferExecutionResult.md)
+\| `Promise`\<[`TransferExecutionResult`](TransferExecutionResult.md)\>

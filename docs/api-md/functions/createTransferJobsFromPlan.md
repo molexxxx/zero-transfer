@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createTransferJobsFromPlan
 
@@ -16,9 +16,9 @@ Converts executable plan steps into transfer jobs while preserving order.
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `plan` | [`TransferPlan`](../interfaces/TransferPlan.md) |
+| Parameter | Type                                            |
+| --------- | ----------------------------------------------- |
+| `plan`    | [`TransferPlan`](../interfaces/TransferPlan.md) |
 
 ## Returns
 

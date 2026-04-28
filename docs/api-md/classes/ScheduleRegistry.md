@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / ScheduleRegistry
 
@@ -42,9 +42,9 @@ Creates a registry and optionally seeds it with schedules.
 
 #### Parameters
 
-| Parameter | Type | Default value | Description |
-| ------ | ------ | ------ | ------ |
-| `schedules` | `Iterable`\<[`MftSchedule`](../interfaces/MftSchedule.md)\> | `[]` | Schedules to register immediately. |
+| Parameter   | Type                                                        | Default value | Description                        |
+| ----------- | ----------------------------------------------------------- | ------------- | ---------------------------------- |
+| `schedules` | `Iterable`\<[`MftSchedule`](../interfaces/MftSchedule.md)\> | `[]`          | Schedules to register immediately. |
 
 #### Returns
 
@@ -64,15 +64,15 @@ Gets a schedule when registered.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter    | Type     |
+| ------------ | -------- |
 | `scheduleId` | `string` |
 
 #### Returns
 
 [`MftSchedule`](../interfaces/MftSchedule.md) \| `undefined`
 
-***
+---
 
 ### has()
 
@@ -86,15 +86,15 @@ Checks whether a schedule id is registered.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter    | Type     |
+| ------------ | -------- |
 | `scheduleId` | `string` |
 
 #### Returns
 
 `boolean`
 
-***
+---
 
 ### list()
 
@@ -110,7 +110,7 @@ Returns all schedules in registration order.
 
 [`MftSchedule`](../interfaces/MftSchedule.md)[]
 
-***
+---
 
 ### register()
 
@@ -124,8 +124,8 @@ Registers a schedule.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                          | Description      |
+| ---------- | --------------------------------------------- | ---------------- |
 | `schedule` | [`MftSchedule`](../interfaces/MftSchedule.md) | Schedule to add. |
 
 #### Returns
@@ -138,7 +138,7 @@ This registry for fluent setup.
 
 [ConfigurationError](ConfigurationError.md) When the schedule is malformed or a duplicate.
 
-***
+---
 
 ### require()
 
@@ -152,8 +152,8 @@ Gets a schedule or throws when missing.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type     | Description              |
+| ------------ | -------- | ------------------------ |
 | `scheduleId` | `string` | Schedule id to retrieve. |
 
 #### Returns
@@ -166,7 +166,7 @@ The schedule.
 
 [ConfigurationError](ConfigurationError.md) When no schedule is registered under the id.
 
-***
+---
 
 ### unregister()
 
@@ -180,8 +180,8 @@ Removes a schedule.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type     | Description            |
+| ------------ | -------- | ---------------------- |
 | `scheduleId` | `string` | Schedule id to remove. |
 
 #### Returns

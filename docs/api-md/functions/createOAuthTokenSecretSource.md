@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createOAuthTokenSecretSource
 
@@ -21,9 +21,9 @@ Azure Blob via AAD).
 
 ## Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `refresh` | [`OAuthRefreshCallback`](../type-aliases/OAuthRefreshCallback.md) |
+| Parameter | Type                                                                              |
+| --------- | --------------------------------------------------------------------------------- |
+| `refresh` | [`OAuthRefreshCallback`](../type-aliases/OAuthRefreshCallback.md)                 |
 | `options` | [`OAuthTokenSecretSourceOptions`](../interfaces/OAuthTokenSecretSourceOptions.md) |
 
 ## Returns

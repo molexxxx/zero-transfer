@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / TransferEngine
 
@@ -24,8 +24,8 @@ Creates a transfer engine.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                              | Description                                      |
+| --------- | ----------------------------------------------------------------- | ------------------------------------------------ |
 | `options` | [`TransferEngineOptions`](../interfaces/TransferEngineOptions.md) | Optional clock override for deterministic tests. |
 
 #### Returns
@@ -38,8 +38,8 @@ Creates a transfer engine.
 
 ```ts
 execute(
-   job, 
-   executor, 
+   job,
+   executor,
 options?): Promise<TransferReceipt>;
 ```
 
@@ -49,11 +49,11 @@ Executes a transfer job through a caller-supplied operation.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `job` | [`TransferJob`](../interfaces/TransferJob.md) | Job metadata used for correlation and receipts. |
-| `executor` | [`TransferExecutor`](../type-aliases/TransferExecutor.md) | Concrete transfer operation implementation. |
-| `options` | [`TransferEngineExecuteOptions`](../interfaces/TransferEngineExecuteOptions.md) | Optional abort, retry, and progress hooks. |
+| Parameter  | Type                                                                            | Description                                     |
+| ---------- | ------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `job`      | [`TransferJob`](../interfaces/TransferJob.md)                                   | Job metadata used for correlation and receipts. |
+| `executor` | [`TransferExecutor`](../type-aliases/TransferExecutor.md)                       | Concrete transfer operation implementation.     |
+| `options`  | [`TransferEngineExecuteOptions`](../interfaces/TransferEngineExecuteOptions.md) | Optional abort, retry, and progress hooks.      |
 
 #### Returns
 

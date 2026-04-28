@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / runConnectionDiagnostics
 
@@ -16,8 +16,8 @@ Connects to a profile, captures capability and listing samples, and returns a re
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                                  | Description               |
+| --------- | ------------------------------------------------------------------------------------- | ------------------------- |
 | `options` | [`RunConnectionDiagnosticsOptions`](../interfaces/RunConnectionDiagnosticsOptions.md) | Diagnostic probe options. |
 
 ## Returns

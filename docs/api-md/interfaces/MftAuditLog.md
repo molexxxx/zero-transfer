@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / MftAuditLog
 
@@ -26,7 +26,7 @@ Returns recorded entries in insertion order.
 
 `Promise`\<readonly [`MftAuditEntry`](MftAuditEntry.md)[]\>
 
-***
+---
 
 ### record()
 
@@ -40,9 +40,9 @@ Records a new audit entry.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `entry` | [`MftAuditEntry`](MftAuditEntry.md) |
+| Parameter | Type                                |
+| --------- | ----------------------------------- |
+| `entry`   | [`MftAuditEntry`](MftAuditEntry.md) |
 
 #### Returns
 

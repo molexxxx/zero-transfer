@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createLocalProviderFactory
 
@@ -20,8 +20,8 @@ helper registers a local provider implicitly.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                            | Description                                                 |
+| --------- | --------------------------------------------------------------- | ----------------------------------------------------------- |
 | `options` | [`LocalProviderOptions`](../interfaces/LocalProviderOptions.md) | Optional local root path exposed through provider sessions. |
 
 ## Returns

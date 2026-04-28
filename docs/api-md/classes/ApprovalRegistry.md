@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / ApprovalRegistry
 
@@ -28,8 +28,8 @@ new ApprovalRegistry(): ApprovalRegistry;
 
 ```ts
 approve(
-   id, 
-   input?, 
+   id,
+   input?,
    now?): ApprovalRequest;
 ```
 
@@ -39,13 +39,13 @@ Approves a pending request.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `id` | `string` | Approval id to resolve. |
-| `input` | \{ `reason?`: `string`; `resolvedBy?`: `string`; \} | Optional reviewer identifier and reason. |
-| `input.reason?` | `string` | - |
-| `input.resolvedBy?` | `string` | - |
-| `now` | `Date` | Reference clock used to stamp `resolvedAt`. |
+| Parameter           | Type                                                | Description                                 |
+| ------------------- | --------------------------------------------------- | ------------------------------------------- |
+| `id`                | `string`                                            | Approval id to resolve.                     |
+| `input`             | \{ `reason?`: `string`; `resolvedBy?`: `string`; \} | Optional reviewer identifier and reason.    |
+| `input.reason?`     | `string`                                            | -                                           |
+| `input.resolvedBy?` | `string`                                            | -                                           |
+| `now`               | `Date`                                              | Reference clock used to stamp `resolvedAt`. |
 
 #### Returns
 
@@ -53,7 +53,7 @@ Approves a pending request.
 
 The updated approval record.
 
-***
+---
 
 ### create()
 
@@ -71,13 +71,13 @@ transitions out of `"pending"` state.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | \{ `id`: `string`; `metadata?`: `Record`\<`string`, `unknown`\>; `routeId`: `string`; \} | Request seed (id, routeId, optional metadata). |
-| `input.id` | `string` | - |
-| `input.metadata?` | `Record`\<`string`, `unknown`\> | - |
-| `input.routeId` | `string` | - |
-| `now` | `Date` | Reference clock used to stamp `requestedAt`. |
+| Parameter         | Type                                                                                     | Description                                    |
+| ----------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `input`           | \{ `id`: `string`; `metadata?`: `Record`\<`string`, `unknown`\>; `routeId`: `string`; \} | Request seed (id, routeId, optional metadata). |
+| `input.id`        | `string`                                                                                 | -                                              |
+| `input.metadata?` | `Record`\<`string`, `unknown`\>                                                          | -                                              |
+| `input.routeId`   | `string`                                                                                 | -                                              |
+| `now`             | `Date`                                                                                   | Reference clock used to stamp `requestedAt`.   |
 
 #### Returns
 
@@ -90,12 +90,12 @@ transitions out of `"pending"` state.
 
 The created request and a promise tracking its resolution.
 
-| Name | Type | Defined in |
-| ------ | ------ | ------ |
-| `request` | [`ApprovalRequest`](../interfaces/ApprovalRequest.md) | [src/mft/approvals.ts:79](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L79) |
+| Name      | Type                                                               | Defined in                                                                                                                                    |
+| --------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `request` | [`ApprovalRequest`](../interfaces/ApprovalRequest.md)              | [src/mft/approvals.ts:79](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L79) |
 | `settled` | `Promise`\<[`ApprovalRequest`](../interfaces/ApprovalRequest.md)\> | [src/mft/approvals.ts:79](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/approvals.ts#L79) |
 
-***
+---
 
 ### get()
 
@@ -109,15 +109,15 @@ Looks up a request by id.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `id` | `string` |
+| Parameter | Type     |
+| --------- | -------- |
+| `id`      | `string` |
 
 #### Returns
 
 [`ApprovalRequest`](../interfaces/ApprovalRequest.md) \| `undefined`
 
-***
+---
 
 ### list()
 
@@ -133,7 +133,7 @@ Lists every request ever created.
 
 [`ApprovalRequest`](../interfaces/ApprovalRequest.md)[]
 
-***
+---
 
 ### listPending()
 
@@ -149,14 +149,14 @@ Lists pending requests in insertion order.
 
 [`ApprovalRequest`](../interfaces/ApprovalRequest.md)[]
 
-***
+---
 
 ### reject()
 
 ```ts
 reject(
-   id, 
-   input?, 
+   id,
+   input?,
    now?): ApprovalRequest;
 ```
 
@@ -166,13 +166,13 @@ Rejects a pending request.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `id` | `string` | Approval id to resolve. |
-| `input` | \{ `reason?`: `string`; `resolvedBy?`: `string`; \} | Optional reviewer identifier and reason. |
-| `input.reason?` | `string` | - |
-| `input.resolvedBy?` | `string` | - |
-| `now` | `Date` | Reference clock used to stamp `resolvedAt`. |
+| Parameter           | Type                                                | Description                                 |
+| ------------------- | --------------------------------------------------- | ------------------------------------------- |
+| `id`                | `string`                                            | Approval id to resolve.                     |
+| `input`             | \{ `reason?`: `string`; `resolvedBy?`: `string`; \} | Optional reviewer identifier and reason.    |
+| `input.reason?`     | `string`                                            | -                                           |
+| `input.resolvedBy?` | `string`                                            | -                                           |
+| `now`               | `Date`                                              | Reference clock used to stamp `resolvedAt`. |
 
 #### Returns
 

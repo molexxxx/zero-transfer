@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createOutboxRoute
 
@@ -16,8 +16,8 @@ Creates a route that drops files from a source endpoint into an outbox directory
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                    | Description                                            |
+| --------- | ----------------------------------------------------------------------- | ------------------------------------------------------ |
 | `options` | [`CreateOutboxRouteOptions`](../interfaces/CreateOutboxRouteOptions.md) | Source endpoint, outbox layout, and optional metadata. |
 
 ## Returns

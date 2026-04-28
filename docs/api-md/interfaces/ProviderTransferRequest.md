@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / ProviderTransferRequest
 
@@ -33,10 +33,10 @@ Emits a normalized progress event through engine options.
 
 #### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
+| Parameter          | Type     |
+| ------------------ | -------- |
 | `bytesTransferred` | `number` |
-| `totalBytes?` | `number` |
+| `totalBytes?`      | `number` |
 
 #### Returns
 
@@ -46,7 +46,7 @@ Emits a normalized progress event through engine options.
 
 [`TransferExecutionContext`](TransferExecutionContext.md).[`reportProgress`](TransferExecutionContext.md#reportprogress)
 
-***
+---
 
 ### throwIfAborted()
 
@@ -68,10 +68,10 @@ Throws an SDK abort error when the active signal has been cancelled.
 
 ## Properties
 
-| Property | Type | Description | Inherited from | Defined in |
-| ------ | ------ | ------ | ------ | ------ |
-| <a id="attempt"></a> `attempt` | `number` | One-based attempt number. | [`TransferExecutionContext`](TransferExecutionContext.md).[`attempt`](TransferExecutionContext.md#attempt) | [src/transfers/TransferEngine.ts:30](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L30) |
-| <a id="bandwidthlimit"></a> `bandwidthLimit?` | [`TransferBandwidthLimit`](TransferBandwidthLimit.md) | Optional throughput limit shape for concrete executors to honor. | [`TransferExecutionContext`](TransferExecutionContext.md).[`bandwidthLimit`](TransferExecutionContext.md#bandwidthlimit) | [src/transfers/TransferEngine.ts:34](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L34) |
-| <a id="endpoint"></a> `endpoint` | [`TransferEndpoint`](TransferEndpoint.md) | Endpoint owned by the provider handling this request. | - | [src/providers/ProviderTransferOperations.ts:30](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/ProviderTransferOperations.ts#L30) |
-| <a id="job"></a> `job` | [`TransferJob`](TransferJob.md) | Job being executed. | [`TransferExecutionContext`](TransferExecutionContext.md).[`job`](TransferExecutionContext.md#job) | [src/transfers/TransferEngine.ts:28](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L28) |
-| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal active for this execution when supplied. | [`TransferExecutionContext`](TransferExecutionContext.md).[`signal`](TransferExecutionContext.md#signal) | [src/transfers/TransferEngine.ts:32](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L32) |
+| Property                                      | Type                                                  | Description                                                      | Inherited from                                                                                                           | Defined in                                                                                                                                                                                  |
+| --------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="attempt"></a> `attempt`                | `number`                                              | One-based attempt number.                                        | [`TransferExecutionContext`](TransferExecutionContext.md).[`attempt`](TransferExecutionContext.md#attempt)               | [src/transfers/TransferEngine.ts:30](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L30)                         |
+| <a id="bandwidthlimit"></a> `bandwidthLimit?` | [`TransferBandwidthLimit`](TransferBandwidthLimit.md) | Optional throughput limit shape for concrete executors to honor. | [`TransferExecutionContext`](TransferExecutionContext.md).[`bandwidthLimit`](TransferExecutionContext.md#bandwidthlimit) | [src/transfers/TransferEngine.ts:34](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L34)                         |
+| <a id="endpoint"></a> `endpoint`              | [`TransferEndpoint`](TransferEndpoint.md)             | Endpoint owned by the provider handling this request.            | -                                                                                                                        | [src/providers/ProviderTransferOperations.ts:30](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/ProviderTransferOperations.ts#L30) |
+| <a id="job"></a> `job`                        | [`TransferJob`](TransferJob.md)                       | Job being executed.                                              | [`TransferExecutionContext`](TransferExecutionContext.md).[`job`](TransferExecutionContext.md#job)                       | [src/transfers/TransferEngine.ts:28](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L28)                         |
+| <a id="signal"></a> `signal?`                 | `AbortSignal`                                         | Abort signal active for this execution when supplied.            | [`TransferExecutionContext`](TransferExecutionContext.md).[`signal`](TransferExecutionContext.md#signal)                 | [src/transfers/TransferEngine.ts:32](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L32)                         |

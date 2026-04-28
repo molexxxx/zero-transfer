@@ -1,16 +1,13 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / matchKnownHostsEntry
 
 # Function: matchKnownHostsEntry()
 
 ```ts
-function matchKnownHostsEntry(
-   entry, 
-   host, 
-   port?): boolean;
+function matchKnownHostsEntry(entry, host, port?): boolean;
 ```
 
 Defined in: [src/profiles/importers/KnownHostsParser.ts:105](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/KnownHostsParser.ts#L105)
@@ -20,11 +17,11 @@ Hashed entries use HMAC-SHA1 verification per OpenSSH semantics.
 
 ## Parameters
 
-| Parameter | Type | Default value | Description |
-| ------ | ------ | ------ | ------ |
-| `entry` | [`KnownHostsEntry`](../interfaces/KnownHostsEntry.md) | `undefined` | Parsed `known_hosts` entry to test. |
-| `host` | `string` | `undefined` | Hostname or IP literal to match. |
-| `port` | `number` | `DEFAULT_SSH_PORT` | Optional connection port. Defaults to [DEFAULT\_SSH\_PORT](#). |
+| Parameter | Type                                                  | Default value      | Description                                                  |
+| --------- | ----------------------------------------------------- | ------------------ | ------------------------------------------------------------ |
+| `entry`   | [`KnownHostsEntry`](../interfaces/KnownHostsEntry.md) | `undefined`        | Parsed `known_hosts` entry to test.                          |
+| `host`    | `string`                                              | `undefined`        | Hostname or IP literal to match.                             |
+| `port`    | `number`                                              | `DEFAULT_SSH_PORT` | Optional connection port. Defaults to [DEFAULT_SSH_PORT](#). |
 
 ## Returns
 

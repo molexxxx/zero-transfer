@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / RemoteFileAdapter
 
@@ -24,8 +24,8 @@ Opens a remote connection.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                        | Description                                                           |
+| --------- | ------------------------------------------- | --------------------------------------------------------------------- |
 | `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Host, authentication, protocol, timeout, signal, and logger settings. |
 
 #### Returns
@@ -34,7 +34,7 @@ Opens a remote connection.
 
 A promise that resolves when the remote session is ready for operations.
 
-***
+---
 
 ### disconnect()
 
@@ -52,7 +52,7 @@ Closes the remote connection and releases protocol resources.
 
 A promise that resolves when the remote session is fully closed.
 
-***
+---
 
 ### list()
 
@@ -66,9 +66,9 @@ Lists entries for a remote directory.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `path` | `string` | Remote directory path to list. |
+| Parameter  | Type                            | Description                                                   |
+| ---------- | ------------------------------- | ------------------------------------------------------------- |
+| `path`     | `string`                        | Remote directory path to list.                                |
 | `options?` | [`ListOptions`](ListOptions.md) | Optional listing controls such as recursion and abort signal. |
 
 #### Returns
@@ -77,7 +77,7 @@ Lists entries for a remote directory.
 
 Normalized remote entries contained by the requested path.
 
-***
+---
 
 ### stat()
 
@@ -91,9 +91,9 @@ Reads metadata for a remote entry.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `path` | `string` | Remote path to inspect. |
+| Parameter  | Type                            | Description                                  |
+| ---------- | ------------------------------- | -------------------------------------------- |
+| `path`     | `string`                        | Remote path to inspect.                      |
 | `options?` | [`StatOptions`](StatOptions.md) | Optional stat controls such as abort signal. |
 
 #### Returns

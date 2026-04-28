@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / resolveOpenSshHost
 
@@ -16,10 +16,10 @@ Resolves the merged option set for an OpenSSH host alias.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                                   | Description                                                      |
+| --------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `entries` | readonly [`OpenSshConfigEntry`](../interfaces/OpenSshConfigEntry.md)[] | Parsed entries from [parseOpenSshConfig](parseOpenSshConfig.md). |
-| `alias` | `string` | Host alias to resolve. |
+| `alias`   | `string`                                                               | Host alias to resolve.                                           |
 
 ## Returns
 

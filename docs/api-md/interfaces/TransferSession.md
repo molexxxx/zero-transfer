@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / TransferSession
 
@@ -13,8 +13,8 @@ Connected provider session exposed through [TransferClient.connect](../classes/T
 ## Type Parameters
 
 | Type Parameter | Default type |
-| ------ | ------ |
-| `TRaw` | `unknown` |
+| -------------- | ------------ |
+| `TRaw`         | `unknown`    |
 
 ## Methods
 
@@ -32,7 +32,7 @@ Disconnects and releases provider resources.
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### raw()?
 
@@ -50,9 +50,9 @@ Returns a provider-specific advanced interface when one exists.
 
 ## Properties
 
-| Property | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="capabilities"></a> `capabilities` | [`CapabilitySet`](CapabilitySet.md) | Provider capabilities available for this connected session. | [src/core/TransferSession.ts:18](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/core/TransferSession.ts#L18) |
-| <a id="fs"></a> `fs` | [`RemoteFileSystem`](RemoteFileSystem.md) | Provider-neutral remote file-system operations. | [src/core/TransferSession.ts:20](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/core/TransferSession.ts#L20) |
-| <a id="provider"></a> `provider` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider backing this session. | [src/core/TransferSession.ts:16](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/core/TransferSession.ts#L16) |
-| <a id="transfers"></a> `transfers?` | [`ProviderTransferOperations`](ProviderTransferOperations.md) | Optional provider-backed transfer read/write operations. | [src/core/TransferSession.ts:22](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/core/TransferSession.ts#L22) |
+| Property                                 | Type                                                          | Description                                                 | Defined in                                                                                                                                                  |
+| ---------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="capabilities"></a> `capabilities` | [`CapabilitySet`](CapabilitySet.md)                           | Provider capabilities available for this connected session. | [src/core/TransferSession.ts:18](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/core/TransferSession.ts#L18) |
+| <a id="fs"></a> `fs`                     | [`RemoteFileSystem`](RemoteFileSystem.md)                     | Provider-neutral remote file-system operations.             | [src/core/TransferSession.ts:20](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/core/TransferSession.ts#L20) |
+| <a id="provider"></a> `provider`         | [`ProviderId`](../type-aliases/ProviderId.md)                 | Provider backing this session.                              | [src/core/TransferSession.ts:16](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/core/TransferSession.ts#L16) |
+| <a id="transfers"></a> `transfers?`      | [`ProviderTransferOperations`](ProviderTransferOperations.md) | Optional provider-backed transfer read/write operations.    | [src/core/TransferSession.ts:22](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/core/TransferSession.ts#L22) |

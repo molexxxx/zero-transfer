@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / downloadFile
 
@@ -19,8 +19,8 @@ destination path is created (including parent directories) on demand.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                          | Description                |
+| --------- | ------------------------------------------------------------- | -------------------------- |
 | `options` | [`DownloadFileOptions`](../interfaces/DownloadFileOptions.md) | Friendly download options. |
 
 ## Returns
@@ -32,11 +32,7 @@ Receipt produced by the underlying transfer engine.
 ## Example
 
 ```ts
-import {
-  createS3ProviderFactory,
-  createTransferClient,
-  downloadFile,
-} from "@zero-transfer/sdk";
+import { createS3ProviderFactory, createTransferClient, downloadFile } from "@zero-transfer/sdk";
 
 const client = createTransferClient({ providers: [createS3ProviderFactory()] });
 

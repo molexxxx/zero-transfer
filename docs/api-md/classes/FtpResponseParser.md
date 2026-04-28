@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / FtpResponseParser
 
@@ -40,7 +40,7 @@ Checks whether the parser is holding buffered or incomplete response data.
 
 `true` when there is unconsumed text or an open multi-line response.
 
-***
+---
 
 ### push()
 
@@ -54,9 +54,9 @@ Adds incoming socket data and returns any complete responses.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `chunk` | `string` \| `Buffer`\<`ArrayBufferLike`\> | Buffer or string chunk from the FTP control connection. |
+| Parameter | Type                                      | Description                                             |
+| --------- | ----------------------------------------- | ------------------------------------------------------- |
+| `chunk`   | `string` \| `Buffer`\<`ArrayBufferLike`\> | Buffer or string chunk from the FTP control connection. |
 
 #### Returns
 
@@ -68,7 +68,7 @@ Zero or more complete parsed responses.
 
 [ParseError](ParseError.md) When a malformed standalone response line is received.
 
-***
+---
 
 ### reset()
 

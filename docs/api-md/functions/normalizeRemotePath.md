@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / normalizeRemotePath
 
@@ -16,9 +16,9 @@ Normalizes a remote path using POSIX-style separators without escaping absolute 
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | `string` | Remote path that may contain duplicate separators or dot segments. |
+| Parameter | Type     | Description                                                        |
+| --------- | -------- | ------------------------------------------------------------------ |
+| `input`   | `string` | Remote path that may contain duplicate separators or dot segments. |
 
 ## Returns
 

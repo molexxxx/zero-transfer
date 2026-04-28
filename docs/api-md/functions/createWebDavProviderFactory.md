@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / createWebDavProviderFactory
 
@@ -16,8 +16,8 @@ Creates a WebDAV provider factory.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                              | Description                      |
+| --------- | ----------------------------------------------------------------- | -------------------------------- |
 | `options` | [`WebDavProviderOptions`](../interfaces/WebDavProviderOptions.md) | Optional provider configuration. |
 
 ## Returns

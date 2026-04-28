@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / validateConnectionProfile
 
@@ -16,8 +16,8 @@ Validates provider-neutral connection profile fields before provider lookup.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter | Type                                                      | Description          |
+| --------- | --------------------------------------------------------- | -------------------- |
 | `profile` | [`ConnectionProfile`](../interfaces/ConnectionProfile.md) | Profile to validate. |
 
 ## Returns

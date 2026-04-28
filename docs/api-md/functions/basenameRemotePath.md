@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / basenameRemotePath
 
@@ -16,9 +16,9 @@ Extracts the final name segment from a normalized remote path.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `input` | `string` | Remote path to inspect. |
+| Parameter | Type     | Description             |
+| --------- | -------- | ----------------------- |
+| `input`   | `string` | Remote path to inspect. |
 
 ## Returns
 

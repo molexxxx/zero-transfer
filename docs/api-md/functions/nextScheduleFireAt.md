@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / nextScheduleFireAt
 
@@ -16,10 +16,10 @@ Computes the next fire time for a schedule strictly after `from`.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `schedule` | [`MftSchedule`](../interfaces/MftSchedule.md) | Schedule whose next fire time should be computed. |
-| `from` | `Date` | Reference time. Defaults to the current wall clock. |
+| Parameter  | Type                                          | Description                                         |
+| ---------- | --------------------------------------------- | --------------------------------------------------- |
+| `schedule` | [`MftSchedule`](../interfaces/MftSchedule.md) | Schedule whose next fire time should be computed.   |
+| `from`     | `Date`                                        | Reference time. Defaults to the current wall clock. |
 
 ## Returns
 

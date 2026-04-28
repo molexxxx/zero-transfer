@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / WinScpSession
 
@@ -12,10 +12,10 @@ Imported WinSCP session entry.
 
 ## Properties
 
-| Property | Type | Description | Defined in |
-| ------ | ------ | ------ | ------ |
-| <a id="folder"></a> `folder` | readonly `string`[] | Hierarchical path segments derived from the session name (folders separated by `/`). | [src/profiles/importers/WinScpImporter.ts:17](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/WinScpImporter.ts#L17) |
-| <a id="fsprotocol"></a> `fsProtocol?` | `number` | Raw FSProtocol code preserved from the file. | [src/profiles/importers/WinScpImporter.ts:21](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/WinScpImporter.ts#L21) |
-| <a id="ftps"></a> `ftps?` | `number` | Raw Ftps code preserved from the file (`0`=none, `1`=implicit, `2`/`3`=explicit). | [src/profiles/importers/WinScpImporter.ts:23](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/WinScpImporter.ts#L23) |
-| <a id="name"></a> `name` | `string` | Decoded session name (URL-decoded path under the `Sessions\\` namespace). | [src/profiles/importers/WinScpImporter.ts:15](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/WinScpImporter.ts#L15) |
-| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Generated connection profile. | [src/profiles/importers/WinScpImporter.ts:19](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/WinScpImporter.ts#L19) |
+| Property                              | Type                                        | Description                                                                          | Defined in                                                                                                                                                                            |
+| ------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <a id="folder"></a> `folder`          | readonly `string`[]                         | Hierarchical path segments derived from the session name (folders separated by `/`). | [src/profiles/importers/WinScpImporter.ts:17](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/WinScpImporter.ts#L17) |
+| <a id="fsprotocol"></a> `fsProtocol?` | `number`                                    | Raw FSProtocol code preserved from the file.                                         | [src/profiles/importers/WinScpImporter.ts:21](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/WinScpImporter.ts#L21) |
+| <a id="ftps"></a> `ftps?`             | `number`                                    | Raw Ftps code preserved from the file (`0`=none, `1`=implicit, `2`/`3`=explicit).    | [src/profiles/importers/WinScpImporter.ts:23](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/WinScpImporter.ts#L23) |
+| <a id="name"></a> `name`              | `string`                                    | Decoded session name (URL-decoded path under the `Sessions\\` namespace).            | [src/profiles/importers/WinScpImporter.ts:15](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/WinScpImporter.ts#L15) |
+| <a id="profile"></a> `profile`        | [`ConnectionProfile`](ConnectionProfile.md) | Generated connection profile.                                                        | [src/profiles/importers/WinScpImporter.ts:19](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/WinScpImporter.ts#L19) |

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
 [ZeroTransfer SDK](../README.md) / ProviderRegistry
 
@@ -24,9 +24,9 @@ Creates a registry and optionally seeds it with provider factories.
 
 #### Parameters
 
-| Parameter | Type | Default value | Description |
-| ------ | ------ | ------ | ------ |
-| `providers` | `Iterable`\<[`ProviderFactory`](../interfaces/ProviderFactory.md)\<[`TransferProvider`](../interfaces/TransferProvider.md)\<[`TransferSession`](../interfaces/TransferSession.md)\<`unknown`\>\>\>\> | `[]` | Provider factories to register immediately. |
+| Parameter   | Type                                                                                                                                                                                                 | Default value | Description                                 |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------------------------------------------- |
+| `providers` | `Iterable`\<[`ProviderFactory`](../interfaces/ProviderFactory.md)\<[`TransferProvider`](../interfaces/TransferProvider.md)\<[`TransferSession`](../interfaces/TransferSession.md)\<`unknown`\>\>\>\> | `[]`          | Provider factories to register immediately. |
 
 #### Returns
 
@@ -37,7 +37,7 @@ Creates a registry and optionally seeds it with provider factories.
 ### get()
 
 ```ts
-get(providerId): 
+get(providerId):
   | ProviderFactory<TransferProvider<TransferSession<unknown>>>
   | undefined;
 ```
@@ -48,18 +48,18 @@ Gets a provider factory when registered.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type                                          | Description              |
+| ------------ | --------------------------------------------- | ------------------------ |
 | `providerId` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id to retrieve. |
 
 #### Returns
 
-  \| [`ProviderFactory`](../interfaces/ProviderFactory.md)\<[`TransferProvider`](../interfaces/TransferProvider.md)\<[`TransferSession`](../interfaces/TransferSession.md)\<`unknown`\>\>\>
-  \| `undefined`
+\| [`ProviderFactory`](../interfaces/ProviderFactory.md)\<[`TransferProvider`](../interfaces/TransferProvider.md)\<[`TransferSession`](../interfaces/TransferSession.md)\<`unknown`\>\>\>
+\| `undefined`
 
 The provider factory, or `undefined` when missing.
 
-***
+---
 
 ### getCapabilities()
 
@@ -73,8 +73,8 @@ Gets a provider capability snapshot when registered.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type                                          | Description             |
+| ------------ | --------------------------------------------- | ----------------------- |
 | `providerId` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id to inspect. |
 
 #### Returns
@@ -83,7 +83,7 @@ Gets a provider capability snapshot when registered.
 
 Capability snapshot, or `undefined` when missing.
 
-***
+---
 
 ### has()
 
@@ -97,8 +97,8 @@ Checks whether a provider id is registered.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type                                          | Description             |
+| ------------ | --------------------------------------------- | ----------------------- |
 | `providerId` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id to inspect. |
 
 #### Returns
@@ -107,7 +107,7 @@ Checks whether a provider id is registered.
 
 `true` when a provider factory exists.
 
-***
+---
 
 ### list()
 
@@ -125,7 +125,7 @@ Lists registered provider factories in insertion order.
 
 Registered provider factories.
 
-***
+---
 
 ### listCapabilities()
 
@@ -143,7 +143,7 @@ Lists registered provider capabilities in insertion order.
 
 Capability snapshots for every registered provider.
 
-***
+---
 
 ### register()
 
@@ -157,8 +157,8 @@ Registers a provider factory.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter  | Type                                                  | Description              |
+| ---------- | ----------------------------------------------------- | ------------------------ |
 | `provider` | [`ProviderFactory`](../interfaces/ProviderFactory.md) | Provider factory to add. |
 
 #### Returns
@@ -171,7 +171,7 @@ This registry for fluent setup.
 
 [ConfigurationError](ConfigurationError.md) When a provider id is registered twice.
 
-***
+---
 
 ### require()
 
@@ -185,8 +185,8 @@ Gets a registered provider factory or throws a typed SDK error.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type                                          | Description              |
+| ------------ | --------------------------------------------- | ------------------------ |
 | `providerId` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id to retrieve. |
 
 #### Returns
@@ -199,7 +199,7 @@ The registered provider factory.
 
 [UnsupportedFeatureError](UnsupportedFeatureError.md) When no provider has been registered.
 
-***
+---
 
 ### requireCapabilities()
 
@@ -213,8 +213,8 @@ Gets a provider capability snapshot or throws a typed SDK error.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type                                          | Description             |
+| ------------ | --------------------------------------------- | ----------------------- |
 | `providerId` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id to inspect. |
 
 #### Returns
@@ -227,7 +227,7 @@ Capability snapshot for the registered provider.
 
 [UnsupportedFeatureError](UnsupportedFeatureError.md) When no provider has been registered.
 
-***
+---
 
 ### unregister()
 
@@ -241,8 +241,8 @@ Removes a provider factory from the registry.
 
 #### Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
+| Parameter    | Type                                          | Description            |
+| ------------ | --------------------------------------------- | ---------------------- |
 | `providerId` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id to remove. |
 
 #### Returns

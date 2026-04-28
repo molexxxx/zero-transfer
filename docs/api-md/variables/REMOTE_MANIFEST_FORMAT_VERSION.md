@@ -1,10 +1,10 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
-***
+---
 
-[ZeroTransfer SDK](../README.md) / REMOTE\_MANIFEST\_FORMAT\_VERSION
+[ZeroTransfer SDK](../README.md) / REMOTE_MANIFEST_FORMAT_VERSION
 
-# Variable: REMOTE\_MANIFEST\_FORMAT\_VERSION
+# Variable: REMOTE_MANIFEST_FORMAT_VERSION
 
 ```ts
 const REMOTE_MANIFEST_FORMAT_VERSION: 1 = 1;
