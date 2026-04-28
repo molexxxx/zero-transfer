@@ -317,6 +317,14 @@ export {
   type MftOutboxConvention,
 } from "./mft";
 export {
+  evaluateRetention,
+  type AgeRetentionPolicy,
+  type CountRetentionPolicy,
+  type EvaluateRetentionOptions,
+  type RetentionEvaluation,
+  type RetentionPolicy,
+} from "./mft";
+export {
   MftScheduler,
   ScheduleRegistry,
   nextCronFireAt,

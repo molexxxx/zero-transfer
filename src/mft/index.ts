@@ -20,6 +20,14 @@ export {
   type MftOutboxConvention,
 } from "./conventions";
 export {
+  evaluateRetention,
+  type AgeRetentionPolicy,
+  type CountRetentionPolicy,
+  type EvaluateRetentionOptions,
+  type RetentionEvaluation,
+  type RetentionPolicy,
+} from "./retention";
+export {
   nextScheduleFireAt,
   validateSchedule,
   type CronScheduleTrigger,
