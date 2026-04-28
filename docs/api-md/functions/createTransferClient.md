@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / createTransferClient
 
@@ -10,7 +10,7 @@
 function createTransferClient(options?): TransferClient;
 ```
 
-Defined in: [src/core/createTransferClient.ts:56](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/core/createTransferClient.ts#L56)
+Defined in: [src/core/createTransferClient.ts:56](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/core/createTransferClient.ts#L56)
 
 Creates a provider-neutral transfer client.
 
@@ -21,8 +21,8 @@ Registering only the providers you actually use keeps bundle size small
 
 ## Parameters
 
-| Parameter | Type                                                              | Description                                        |
-| --------- | ----------------------------------------------------------------- | -------------------------------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`TransferClientOptions`](../interfaces/TransferClientOptions.md) | Optional registry, provider factories, and logger. |
 
 ## Returns

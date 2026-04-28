@@ -1,18 +1,18 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / MftRouteFilter
 
 # Interface: MftRouteFilter
 
-Defined in: [src/mft/MftRoute.ts:23](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/MftRoute.ts#L23)
+Defined in: [src/mft/MftRoute.ts:23](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/mft/MftRoute.ts#L23)
 
 Optional filter metadata reserved for tree-aware route execution.
 
 ## Properties
 
-| Property                        | Type                | Description                                     | Defined in                                                                                                                                  |
-| ------------------------------- | ------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| <a id="exclude"></a> `exclude?` | readonly `string`[] | Glob patterns whose matches should be excluded. | [src/mft/MftRoute.ts:27](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/MftRoute.ts#L27) |
-| <a id="include"></a> `include?` | readonly `string`[] | Glob patterns whose matches should be included. | [src/mft/MftRoute.ts:25](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/MftRoute.ts#L25) |
+| Property | Type | Description | Defined in |
+| ------ | ------ | ------ | ------ |
+| <a id="exclude"></a> `exclude?` | readonly `string`[] | Glob patterns whose matches should be excluded. | [src/mft/MftRoute.ts:27](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/mft/MftRoute.ts#L27) |
+| <a id="include"></a> `include?` | readonly `string`[] | Glob patterns whose matches should be included. | [src/mft/MftRoute.ts:25](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/mft/MftRoute.ts#L25) |

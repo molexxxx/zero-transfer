@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / createSftpJumpHostSocketFactory
 
@@ -10,14 +10,14 @@
 function createSftpJumpHostSocketFactory(options): SshSocketFactory;
 ```
 
-Defined in: [src/providers/classic/sftp/jumpHost.ts:38](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/sftp/jumpHost.ts#L38)
+Defined in: [src/providers/classic/sftp/jumpHost.ts:38](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/classic/sftp/jumpHost.ts#L38)
 
 Builds an [SshSocketFactory](../type-aliases/SshSocketFactory.md) that tunnels SFTP connections through a bastion host.
 
 ## Parameters
 
-| Parameter | Type                                                          | Description                          |
-| --------- | ------------------------------------------------------------- | ------------------------------------ |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`SftpJumpHostOptions`](../interfaces/SftpJumpHostOptions.md) | Bastion configuration and overrides. |
 
 ## Returns

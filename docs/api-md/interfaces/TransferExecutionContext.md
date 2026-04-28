@@ -1,12 +1,12 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / TransferExecutionContext
 
 # Interface: TransferExecutionContext
 
-Defined in: [src/transfers/TransferEngine.ts:26](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L26)
+Defined in: [src/transfers/TransferEngine.ts:26](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/TransferEngine.ts#L26)
 
 Context passed to a concrete transfer operation.
 
@@ -22,22 +22,22 @@ Context passed to a concrete transfer operation.
 reportProgress(bytesTransferred, totalBytes?): TransferProgressEvent;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:38](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L38)
+Defined in: [src/transfers/TransferEngine.ts:38](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/TransferEngine.ts#L38)
 
 Emits a normalized progress event through engine options.
 
 #### Parameters
 
-| Parameter          | Type     |
-| ------------------ | -------- |
+| Parameter | Type |
+| ------ | ------ |
 | `bytesTransferred` | `number` |
-| `totalBytes?`      | `number` |
+| `totalBytes?` | `number` |
 
 #### Returns
 
 [`TransferProgressEvent`](TransferProgressEvent.md)
 
----
+***
 
 ### throwIfAborted()
 
@@ -45,7 +45,7 @@ Emits a normalized progress event through engine options.
 throwIfAborted(): void;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:36](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L36)
+Defined in: [src/transfers/TransferEngine.ts:36](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/TransferEngine.ts#L36)
 
 Throws an SDK abort error when the active signal has been cancelled.
 
@@ -55,9 +55,9 @@ Throws an SDK abort error when the active signal has been cancelled.
 
 ## Properties
 
-| Property                                      | Type                                                  | Description                                                      | Defined in                                                                                                                                                          |
-| --------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <a id="attempt"></a> `attempt`                | `number`                                              | One-based attempt number.                                        | [src/transfers/TransferEngine.ts:30](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L30) |
-| <a id="bandwidthlimit"></a> `bandwidthLimit?` | [`TransferBandwidthLimit`](TransferBandwidthLimit.md) | Optional throughput limit shape for concrete executors to honor. | [src/transfers/TransferEngine.ts:34](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L34) |
-| <a id="job"></a> `job`                        | [`TransferJob`](TransferJob.md)                       | Job being executed.                                              | [src/transfers/TransferEngine.ts:28](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L28) |
-| <a id="signal"></a> `signal?`                 | `AbortSignal`                                         | Abort signal active for this execution when supplied.            | [src/transfers/TransferEngine.ts:32](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L32) |
+| Property | Type | Description | Defined in |
+| ------ | ------ | ------ | ------ |
+| <a id="attempt"></a> `attempt` | `number` | One-based attempt number. | [src/transfers/TransferEngine.ts:30](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/TransferEngine.ts#L30) |
+| <a id="bandwidthlimit"></a> `bandwidthLimit?` | [`TransferBandwidthLimit`](TransferBandwidthLimit.md) | Optional throughput limit shape for concrete executors to honor. | [src/transfers/TransferEngine.ts:34](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/TransferEngine.ts#L34) |
+| <a id="job"></a> `job` | [`TransferJob`](TransferJob.md) | Job being executed. | [src/transfers/TransferEngine.ts:28](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/TransferEngine.ts#L28) |
+| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal active for this execution when supplied. | [src/transfers/TransferEngine.ts:32](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/TransferEngine.ts#L32) |

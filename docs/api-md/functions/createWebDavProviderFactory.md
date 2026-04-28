@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / createWebDavProviderFactory
 
@@ -10,14 +10,14 @@
 function createWebDavProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/web/WebDavProvider.ts:70](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/web/WebDavProvider.ts#L70)
+Defined in: [src/providers/web/WebDavProvider.ts:70](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/web/WebDavProvider.ts#L70)
 
 Creates a WebDAV provider factory.
 
 ## Parameters
 
-| Parameter | Type                                                              | Description                      |
-| --------- | ----------------------------------------------------------------- | -------------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`WebDavProviderOptions`](../interfaces/WebDavProviderOptions.md) | Optional provider configuration. |
 
 ## Returns

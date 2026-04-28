@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / throttleByteIterable
 
@@ -8,13 +8,12 @@
 
 ```ts
 function throttleByteIterable(
-  source,
-  throttle,
-  signal?,
-): AsyncIterable<Uint8Array<ArrayBufferLike>>;
+   source, 
+   throttle, 
+signal?): AsyncIterable<Uint8Array<ArrayBufferLike>>;
 ```
 
-Defined in: [src/transfers/BandwidthThrottle.ts:125](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/BandwidthThrottle.ts#L125)
+Defined in: [src/transfers/BandwidthThrottle.ts:125](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/BandwidthThrottle.ts#L125)
 
 Wraps an async iterable of byte chunks so each chunk is released only after
 the throttle has admitted its byte count.
@@ -23,11 +22,11 @@ When `throttle` is `undefined`, the source iterable is returned unchanged.
 
 ## Parameters
 
-| Parameter  | Type                                                                     | Description                                       |
-| ---------- | ------------------------------------------------------------------------ | ------------------------------------------------- |
-| `source`   | `AsyncIterable`\<`Uint8Array`\<`ArrayBufferLike`\>\>                     | Async iterable that produces byte chunks.         |
-| `throttle` | [`BandwidthThrottle`](../interfaces/BandwidthThrottle.md) \| `undefined` | Optional throttle that paces chunk emission.      |
-| `signal?`  | `AbortSignal`                                                            | Optional abort signal interrupting pending waits. |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `source` | `AsyncIterable`\<`Uint8Array`\<`ArrayBufferLike`\>\> | Async iterable that produces byte chunks. |
+| `throttle` | [`BandwidthThrottle`](../interfaces/BandwidthThrottle.md) \| `undefined` | Optional throttle that paces chunk emission. |
+| `signal?` | `AbortSignal` | Optional abort signal interrupting pending waits. |
 
 ## Returns
 

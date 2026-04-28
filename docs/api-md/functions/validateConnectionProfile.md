@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / validateConnectionProfile
 
@@ -10,14 +10,14 @@
 function validateConnectionProfile(profile): ConnectionProfile;
 ```
 
-Defined in: [src/profiles/ProfileValidator.ts:25](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/ProfileValidator.ts#L25)
+Defined in: [src/profiles/ProfileValidator.ts:25](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/profiles/ProfileValidator.ts#L25)
 
 Validates provider-neutral connection profile fields before provider lookup.
 
 ## Parameters
 
-| Parameter | Type                                                      | Description          |
-| --------- | --------------------------------------------------------- | -------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `profile` | [`ConnectionProfile`](../interfaces/ConnectionProfile.md) | Profile to validate. |
 
 ## Returns

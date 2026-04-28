@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / createGoogleDriveProviderFactory
 
@@ -10,7 +10,7 @@
 function createGoogleDriveProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/cloud/GoogleDriveProvider.ts:83](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/cloud/GoogleDriveProvider.ts#L83)
+Defined in: [src/providers/cloud/GoogleDriveProvider.ts:83](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/cloud/GoogleDriveProvider.ts#L83)
 
 Creates a Google Drive provider factory.
 
@@ -19,8 +19,8 @@ The bearer token is resolved per-connection from `profile.password`
 
 ## Parameters
 
-| Parameter | Type                                                                        |
-| --------- | --------------------------------------------------------------------------- |
+| Parameter | Type |
+| ------ | ------ |
 | `options` | [`GoogleDriveProviderOptions`](../interfaces/GoogleDriveProviderOptions.md) |
 
 ## Returns

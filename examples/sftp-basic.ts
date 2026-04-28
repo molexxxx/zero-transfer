@@ -1,16 +1,15 @@
 /**
- * @file Minimal SFTP example with password authentication.
+ * @file Minimal SFTP example with password authentication \u2014 the WinSCP-equivalent setup.
  *
- * This is the smallest viable SFTP profile: host, username, password, port.
+ * Just like connecting from a GUI client (WinSCP, FileZilla), all you need for
+ * a typical SFTP endpoint is host, username, password, and port 22. No SSH
+ * keys, fingerprints, or `known_hosts` files are required to get started.
+ *
  * Host-key verification is **not** configured here; the connection accepts any
- * key the server presents.
- *
- * For production, prefer either:
+ * key the server presents. That matches the WinSCP "first-connect" flow but
+ * leaves you exposed to MITM. For production, prefer either:
  *   - `sftp-private-key.ts` (key + host pin), or
- *   - a profile that supplies `ssh.knownHosts` or `ssh.pinnedHostKeySha256`.
- *
- * Both fields are optional in {@link SshProfile} but strongly recommended outside of
- * trusted, lab-only networks.
+ *   - add `ssh.knownHosts` or `ssh.pinnedHostKeySha256` to this profile.
  */
 import { fileURLToPath } from "node:url";
 import { createTransferClient, uploadFile, type ConnectionProfile } from "@zero-transfer/core";

@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / createFtpsProviderFactory
 
@@ -10,7 +10,7 @@
 function createFtpsProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/classic/ftp/FtpProvider.ts:234](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpProvider.ts#L234)
+Defined in: [src/providers/classic/ftp/FtpProvider.ts:234](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/classic/ftp/FtpProvider.ts#L234)
 
 Creates a provider factory for explicit or implicit FTPS connections.
 
@@ -19,8 +19,8 @@ sessions with `AUTH TLS`, and applies the configured `PROT` data-channel policy.
 
 ## Parameters
 
-| Parameter | Type                                                          | Description                 |
-| --------- | ------------------------------------------------------------- | --------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`FtpsProviderOptions`](../interfaces/FtpsProviderOptions.md) | Optional provider defaults. |
 
 ## Returns
@@ -55,8 +55,7 @@ await client.connect({
     cert: { path: "./certs/client.crt" },
     key: { path: "./certs/client.key" },
     // Optional but recommended:
-    pinnedFingerprint256:
-      "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99",
+    pinnedFingerprint256: "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99",
   },
 });
 ```

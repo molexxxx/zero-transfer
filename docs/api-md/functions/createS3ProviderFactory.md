@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / createS3ProviderFactory
 
@@ -10,7 +10,7 @@
 function createS3ProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/web/S3Provider.ts:177](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/web/S3Provider.ts#L177)
+Defined in: [src/providers/web/S3Provider.ts:177](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/web/S3Provider.ts#L177)
 
 Creates an S3-compatible provider factory.
 
@@ -23,8 +23,8 @@ Backblaze B2, DigitalOcean Spaces, Wasabi, etc.) via `options.endpoint`.
 
 ## Parameters
 
-| Parameter | Type                                                      |
-| --------- | --------------------------------------------------------- |
+| Parameter | Type |
+| ------ | ------ |
 | `options` | [`S3ProviderOptions`](../interfaces/S3ProviderOptions.md) |
 
 ## Returns
@@ -49,11 +49,9 @@ const session = await client.connect({
 
 ```ts
 const client = createTransferClient({
-  providers: [
-    createS3ProviderFactory({
-      endpoint: "https://minio.internal:9000",
-      pathStyle: true,
-    }),
-  ],
+  providers: [createS3ProviderFactory({
+    endpoint: "https://minio.internal:9000",
+    pathStyle: true,
+  })],
 });
 ```

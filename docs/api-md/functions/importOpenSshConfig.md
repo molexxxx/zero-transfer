@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / importOpenSshConfig
 
@@ -10,14 +10,14 @@
 function importOpenSshConfig(options): ImportOpenSshConfigResult;
 ```
 
-Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:167](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/importers/OpenSshConfigImporter.ts#L167)
+Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:167](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/profiles/importers/OpenSshConfigImporter.ts#L167)
 
 Builds a [ConnectionProfile](../interfaces/ConnectionProfile.md) for the given SSH alias from `ssh_config` text or pre-parsed entries.
 
 ## Parameters
 
-| Parameter | Type                                                                        | Description     |
-| --------- | --------------------------------------------------------------------------- | --------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`ImportOpenSshConfigOptions`](../interfaces/ImportOpenSshConfigOptions.md) | Import options. |
 
 ## Returns

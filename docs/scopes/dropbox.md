@@ -16,10 +16,10 @@ Dropbox provider — RPC + content-host APIs, list-folder cursor pagination, ran
 
 This is the actual surface published by [`@zero-transfer/dropbox`](https://www.npmjs.com/package/@zero-transfer/dropbox). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
 
-| Symbol                                                                                | Kind      | Notes              |
-| ------------------------------------------------------------------------------------- | --------- | ------------------ |
-| [`createDropboxProviderFactory`](../api-md/functions/createDropboxProviderFactory.md) | Function  | See API reference. |
-| [`DropboxProviderOptions`](../api-md/interfaces/DropboxProviderOptions.md)            | Interface | See API reference. |
+| Symbol | Kind | Notes |
+| --- | --- | --- |
+| [`createDropboxProviderFactory`](../api-md/functions/createDropboxProviderFactory.md) | Function | See API reference. |
+| [`DropboxProviderOptions`](../api-md/interfaces/DropboxProviderOptions.md) | Interface | See API reference. |
 
 ## Examples
 

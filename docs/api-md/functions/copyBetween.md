@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / copyBetween
 
@@ -10,7 +10,7 @@
 function copyBetween(options): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/client/operations.ts:196](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/client/operations.ts#L196)
+Defined in: [src/client/operations.ts:196](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/client/operations.ts#L196)
 
 Copies a file between two remote endpoints in a single call.
 
@@ -20,8 +20,8 @@ on the local disk.
 
 ## Parameters
 
-| Parameter | Type                                                        | Description            |
-| --------- | ----------------------------------------------------------- | ---------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`CopyBetweenOptions`](../interfaces/CopyBetweenOptions.md) | Friendly copy options. |
 
 ## Returns

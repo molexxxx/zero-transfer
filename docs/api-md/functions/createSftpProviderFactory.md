@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / createSftpProviderFactory
 
@@ -10,14 +10,14 @@
 function createSftpProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/classic/sftp/SftpProvider.ts:137](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/sftp/SftpProvider.ts#L137)
+Defined in: [src/providers/classic/sftp/SftpProvider.ts:137](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/classic/sftp/SftpProvider.ts#L137)
 
 Creates an SFTP provider factory backed by the mature `ssh2` implementation.
 
 ## Parameters
 
-| Parameter | Type                                                          | Description                                           |
-| --------- | ------------------------------------------------------------- | ----------------------------------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`SftpProviderOptions`](../interfaces/SftpProviderOptions.md) | Optional ssh2 host-key verifier and timeout defaults. |
 
 ## Returns

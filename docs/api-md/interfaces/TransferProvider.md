@@ -1,20 +1,20 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / TransferProvider
 
 # Interface: TransferProvider\<TSession\>
 
-Defined in: [src/providers/Provider.ts:12](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/Provider.ts#L12)
+Defined in: [src/providers/Provider.ts:12](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/Provider.ts#L12)
 
 Provider implementation that can open transfer sessions.
 
 ## Type Parameters
 
-| Type Parameter                                               | Default type                            |
-| ------------------------------------------------------------ | --------------------------------------- |
-| `TSession` _extends_ [`TransferSession`](TransferSession.md) | [`TransferSession`](TransferSession.md) |
+| Type Parameter | Default type |
+| ------ | ------ |
+| `TSession` *extends* [`TransferSession`](TransferSession.md) | [`TransferSession`](TransferSession.md) |
 
 ## Methods
 
@@ -24,14 +24,14 @@ Provider implementation that can open transfer sessions.
 connect(profile): Promise<TSession>;
 ```
 
-Defined in: [src/providers/Provider.ts:18](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/Provider.ts#L18)
+Defined in: [src/providers/Provider.ts:18](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/Provider.ts#L18)
 
 Opens a connected provider session.
 
 #### Parameters
 
-| Parameter | Type                                        |
-| --------- | ------------------------------------------- |
+| Parameter | Type |
+| ------ | ------ |
 | `profile` | [`ConnectionProfile`](ConnectionProfile.md) |
 
 #### Returns
@@ -40,7 +40,7 @@ Opens a connected provider session.
 
 ## Properties
 
-| Property                                 | Type                                          | Description                                              | Defined in                                                                                                                                              |
-| ---------------------------------------- | --------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <a id="capabilities"></a> `capabilities` | [`CapabilitySet`](CapabilitySet.md)           | Capabilities advertised by this provider implementation. | [src/providers/Provider.ts:16](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/Provider.ts#L16) |
-| <a id="id"></a> `id`                     | [`ProviderId`](../type-aliases/ProviderId.md) | Stable provider id.                                      | [src/providers/Provider.ts:14](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/Provider.ts#L14) |
+| Property | Type | Description | Defined in |
+| ------ | ------ | ------ | ------ |
+| <a id="capabilities"></a> `capabilities` | [`CapabilitySet`](CapabilitySet.md) | Capabilities advertised by this provider implementation. | [src/providers/Provider.ts:16](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/Provider.ts#L16) |
+| <a id="id"></a> `id` | [`ProviderId`](../type-aliases/ProviderId.md) | Stable provider id. | [src/providers/Provider.ts:14](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/Provider.ts#L14) |

@@ -16,16 +16,16 @@ Read-only HTTP(S) provider with HEAD-based metadata, ranged GET resume, Basic au
 
 This is the actual surface published by [`@zero-transfer/http`](https://www.npmjs.com/package/@zero-transfer/http). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
 
-| Symbol                                                                          | Kind      | Notes              |
-| ------------------------------------------------------------------------------- | --------- | ------------------ |
-| [`createHttpProviderFactory`](../api-md/functions/createHttpProviderFactory.md) | Function  | See API reference. |
-| [`HttpProviderOptions`](../api-md/interfaces/HttpProviderOptions.md)            | Interface | See API reference. |
-| [`HttpFetch`](../api-md/type-aliases/HttpFetch.md)                              | Type      | See API reference. |
+| Symbol | Kind | Notes |
+| --- | --- | --- |
+| [`createHttpProviderFactory`](../api-md/functions/createHttpProviderFactory.md) | Function | See API reference. |
+| [`HttpProviderOptions`](../api-md/interfaces/HttpProviderOptions.md) | Interface | See API reference. |
+| [`HttpFetch`](../api-md/type-aliases/HttpFetch.md) | Type | See API reference. |
 
 ## Examples
 
-| Example                                                                    | What it shows                     |
-| -------------------------------------------------------------------------- | --------------------------------- |
+| Example | What it shows |
+| --- | --- |
 | [`examples/signed-url-download.ts`](../../examples/signed-url-download.ts) | Signed-URL HTTP download example. |
 
 ## See also

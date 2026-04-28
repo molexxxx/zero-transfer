@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / runConnectionDiagnostics
 
@@ -10,14 +10,14 @@
 function runConnectionDiagnostics(options): Promise<ConnectionDiagnosticsResult>;
 ```
 
-Defined in: [src/diagnostics/index.ts:87](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/diagnostics/index.ts#L87)
+Defined in: [src/diagnostics/index.ts:87](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/diagnostics/index.ts#L87)
 
 Connects to a profile, captures capability and listing samples, and returns a redaction-safe report.
 
 ## Parameters
 
-| Parameter | Type                                                                                  | Description               |
-| --------- | ------------------------------------------------------------------------------------- | ------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`RunConnectionDiagnosticsOptions`](../interfaces/RunConnectionDiagnosticsOptions.md) | Diagnostic probe options. |
 
 ## Returns

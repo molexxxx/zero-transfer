@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / diffRemoteTrees
 
@@ -8,15 +8,14 @@
 
 ```ts
 function diffRemoteTrees(
-  source,
-  sourcePath,
-  destination,
-  destinationPath,
-  options?,
-): Promise<RemoteTreeDiff>;
+   source, 
+   sourcePath, 
+   destination, 
+   destinationPath, 
+options?): Promise<RemoteTreeDiff>;
 ```
 
-Defined in: [src/sync/diffRemoteTrees.ts:96](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/diffRemoteTrees.ts#L96)
+Defined in: [src/sync/diffRemoteTrees.ts:96](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/sync/diffRemoteTrees.ts#L96)
 
 Compares two remote subtrees and produces an entry-level diff.
 
@@ -26,13 +25,13 @@ are equal when their relative paths match and the entry types agree.
 
 ## Parameters
 
-| Parameter         | Type                                                                | Description                                |
-| ----------------- | ------------------------------------------------------------------- | ------------------------------------------ |
-| `source`          | [`RemoteFileSystem`](../interfaces/RemoteFileSystem.md)             | Source-side remote file system.            |
-| `sourcePath`      | `string`                                                            | Source-side root path being compared.      |
-| `destination`     | [`RemoteFileSystem`](../interfaces/RemoteFileSystem.md)             | Destination-side remote file system.       |
-| `destinationPath` | `string`                                                            | Destination-side root path being compared. |
-| `options`         | [`DiffRemoteTreesOptions`](../interfaces/DiffRemoteTreesOptions.md) | Optional comparison controls.              |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `source` | [`RemoteFileSystem`](../interfaces/RemoteFileSystem.md) | Source-side remote file system. |
+| `sourcePath` | `string` | Source-side root path being compared. |
+| `destination` | [`RemoteFileSystem`](../interfaces/RemoteFileSystem.md) | Destination-side remote file system. |
+| `destinationPath` | `string` | Destination-side root path being compared. |
+| `options` | [`DiffRemoteTreesOptions`](../interfaces/DiffRemoteTreesOptions.md) | Optional comparison controls. |
 
 ## Returns
 

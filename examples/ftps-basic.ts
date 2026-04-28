@@ -1,15 +1,18 @@
 /**
- * @file Minimal FTPS example with username/password over a public-CA TLS endpoint.
+ * @file Minimal FTPS example with username/password \u2014 the WinSCP-equivalent setup.
  *
- * For an endpoint whose certificate is signed by a public certificate authority
- * (e.g. Let's Encrypt, DigiCert), no extra TLS material is required: Node's
- * built-in trust store validates the chain via `rejectUnauthorized: true`.
+ * Just like connecting from a GUI client (WinSCP, FileZilla), all you need for
+ * a typical FTPS endpoint is host, username, password, and port. The entire
+ * `tls` block is **optional**: for any server with a publicly-trusted
+ * certificate (Let's Encrypt, DigiCert, etc.) Node's built-in trust store
+ * validates the chain automatically.
  *
- * Both `tls.ca` (private CA bundle) and `tls.pinnedFingerprint256` (certificate
- * pinning) are **optional** in {@link TlsProfile}. Use them when:
- *   - the server uses a private/internal CA \u2192 supply `tls.ca`.
- *   - you want defence-in-depth against rogue trusted-CA certs \u2192 supply
- *     `tls.pinnedFingerprint256`. See `ftps-client-certificate.ts`.
+ * Add a `tls` block only if you need one of:
+ *   - `tls.ca` \u2014 server uses a private/internal CA.
+ *   - `tls.cert` + `tls.key` \u2014 server requires a client certificate (mTLS).
+ *   - `tls.pinnedFingerprint256` \u2014 defence-in-depth certificate pinning.
+ *   - `tls.minVersion` \u2014 raise the floor above the Node default.
+ * See `ftps-client-certificate.ts` for the production-hardened variant.
  */
 import { fileURLToPath } from "node:url";
 import { createTransferClient, uploadFile, type ConnectionProfile } from "@zero-transfer/core";
@@ -25,11 +28,9 @@ async function main(): Promise<void> {
     password: { env: "FTPS_PASSWORD" },
     port: 21,
     provider: "ftps",
-    tls: {
-      minVersion: "TLSv1.2",
-      // rejectUnauthorized defaults to true \u2014 public CA chain is enforced.
-    },
     username: "deploy",
+    // Optional. Omit entirely for public-CA endpoints \u2014 TLS still applies.
+    //   tls: { minVersion: "TLSv1.2" }
   };
 
   await uploadFile({

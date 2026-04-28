@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / createRemoteBrowser
 
@@ -10,7 +10,7 @@
 function createRemoteBrowser(options): RemoteBrowser;
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:172](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L172)
+Defined in: [src/sync/createRemoteBrowser.ts:172](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/sync/createRemoteBrowser.ts#L172)
 
 Creates a stateful directory browser around a remote file system.
 
@@ -20,8 +20,8 @@ render synchronously without re-reading state.
 
 ## Parameters
 
-| Parameter | Type                                                                        | Description            |
-| --------- | --------------------------------------------------------------------------- | ---------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`CreateRemoteBrowserOptions`](../interfaces/CreateRemoteBrowserOptions.md) | Browser configuration. |
 
 ## Returns

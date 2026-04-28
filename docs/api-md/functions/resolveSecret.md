@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / resolveSecret
 
@@ -10,15 +10,15 @@
 function resolveSecret(source, options?): Promise<SecretValue>;
 ```
 
-Defined in: [src/profiles/SecretSource.ts:68](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/SecretSource.ts#L68)
+Defined in: [src/profiles/SecretSource.ts:68](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/profiles/SecretSource.ts#L68)
 
 Resolves a secret source into a string or Buffer without logging the value.
 
 ## Parameters
 
-| Parameter | Type                                                            | Description                             |
-| --------- | --------------------------------------------------------------- | --------------------------------------- |
-| `source`  | [`SecretSource`](../type-aliases/SecretSource.md)               | Secret source to resolve.               |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `source` | [`SecretSource`](../type-aliases/SecretSource.md) | Secret source to resolve. |
 | `options` | [`ResolveSecretOptions`](../interfaces/ResolveSecretOptions.md) | Optional env and file-reader overrides. |
 
 ## Returns

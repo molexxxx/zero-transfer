@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / downloadFile
 
@@ -10,7 +10,7 @@
 function downloadFile(options): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/client/operations.ts:138](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/client/operations.ts#L138)
+Defined in: [src/client/operations.ts:138](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/client/operations.ts#L138)
 
 Downloads a single remote file to a local path.
 
@@ -19,8 +19,8 @@ destination path is created (including parent directories) on demand.
 
 ## Parameters
 
-| Parameter | Type                                                          | Description                |
-| --------- | ------------------------------------------------------------- | -------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`DownloadFileOptions`](../interfaces/DownloadFileOptions.md) | Friendly download options. |
 
 ## Returns
@@ -32,7 +32,11 @@ Receipt produced by the underlying transfer engine.
 ## Example
 
 ```ts
-import { createS3ProviderFactory, createTransferClient, downloadFile } from "@zero-transfer/sdk";
+import {
+  createS3ProviderFactory,
+  createTransferClient,
+  downloadFile,
+} from "@zero-transfer/sdk";
 
 const client = createTransferClient({ providers: [createS3ProviderFactory()] });
 

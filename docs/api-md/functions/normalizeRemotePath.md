@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / normalizeRemotePath
 
@@ -10,15 +10,15 @@
 function normalizeRemotePath(input): string;
 ```
 
-Defined in: [src/utils/path.ts:42](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/utils/path.ts#L42)
+Defined in: [src/utils/path.ts:42](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/utils/path.ts#L42)
 
 Normalizes a remote path using POSIX-style separators without escaping absolute roots.
 
 ## Parameters
 
-| Parameter | Type     | Description                                                        |
-| --------- | -------- | ------------------------------------------------------------------ |
-| `input`   | `string` | Remote path that may contain duplicate separators or dot segments. |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `input` | `string` | Remote path that may contain duplicate separators or dot segments. |
 
 ## Returns
 

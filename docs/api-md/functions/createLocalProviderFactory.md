@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / createLocalProviderFactory
 
@@ -10,7 +10,7 @@
 function createLocalProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/local/LocalProvider.ts:88](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/local/LocalProvider.ts#L88)
+Defined in: [src/providers/local/LocalProvider.ts:88](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/local/LocalProvider.ts#L88)
 
 Creates a provider factory backed by the local filesystem.
 
@@ -20,8 +20,8 @@ helper registers a local provider implicitly.
 
 ## Parameters
 
-| Parameter | Type                                                            | Description                                                 |
-| --------- | --------------------------------------------------------------- | ----------------------------------------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`LocalProviderOptions`](../interfaces/LocalProviderOptions.md) | Optional local root path exposed through provider sessions. |
 
 ## Returns

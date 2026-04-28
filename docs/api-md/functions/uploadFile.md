@@ -1,6 +1,6 @@
 [**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
 [ZeroTransfer SDK](../README.md) / uploadFile
 
@@ -10,7 +10,7 @@
 function uploadFile(options): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/client/operations.ts:83](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/client/operations.ts#L83)
+Defined in: [src/client/operations.ts:83](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/client/operations.ts#L83)
 
 Uploads a single local file to a remote endpoint.
 
@@ -20,8 +20,8 @@ as the destination.
 
 ## Parameters
 
-| Parameter | Type                                                      | Description              |
-| --------- | --------------------------------------------------------- | ------------------------ |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`UploadFileOptions`](../interfaces/UploadFileOptions.md) | Friendly upload options. |
 
 ## Returns
@@ -33,7 +33,11 @@ Receipt produced by the underlying transfer engine.
 ## Example
 
 ```ts
-import { createSftpProviderFactory, createTransferClient, uploadFile } from "@zero-transfer/sdk";
+import {
+  createSftpProviderFactory,
+  createTransferClient,
+  uploadFile,
+} from "@zero-transfer/sdk";
 
 const client = createTransferClient({ providers: [createSftpProviderFactory()] });
 
