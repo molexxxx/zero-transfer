@@ -91,6 +91,7 @@ export {
   type WebDavProviderOptions,
 } from "./providers/web";
 export {
+  createOAuthTokenSecretSource,
   redactConnectionProfile,
   redactSecretSource,
   resolveConnectionProfileSecrets,
@@ -99,6 +100,9 @@ export {
   type Base64EnvSecretSource,
   type EnvSecretSource,
   type FileSecretSource,
+  type OAuthAccessToken,
+  type OAuthRefreshCallback,
+  type OAuthTokenSecretSourceOptions,
   type ResolveSecretOptions,
   type ResolvedConnectionProfile,
   type ResolvedSshProfile,

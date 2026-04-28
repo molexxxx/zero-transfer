@@ -18,3 +18,9 @@ export {
   type ResolvedSshProfile,
   type ResolvedTlsProfile,
 } from "./resolveConnectionProfileSecrets";
+export {
+  createOAuthTokenSecretSource,
+  type OAuthAccessToken,
+  type OAuthRefreshCallback,
+  type OAuthTokenSecretSourceOptions,
+} from "./OAuthTokenSource";
