@@ -16,5 +16,9 @@ export default defineConfig({
     },
     environment: "node",
     include: ["test/**/*.test.ts"],
+    // Integration tests require live credentials or docker and are run via
+    // dedicated scripts (test:integration:*) — exclude them from the default
+    // suite so CI shows 0 skipped.
+    exclude: ["**/node_modules/**", "**/dist/**", "test/integration/**"],
   },
 });

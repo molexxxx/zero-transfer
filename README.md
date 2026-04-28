@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/tonywied17/zero-transfer/main/assets/zero-transfer-logo.svg" alt="ZeroTransfer file transfer SDK for Node.js" width="720">
+  <img src="https://tonywied17.github.io/zero-transfer/assets/zero-transfer-logo.svg" alt="ZeroTransfer file transfer SDK for Node.js" width="720">
 </p>
 
 <h1 align="center">ZeroTransfer</h1>
@@ -10,13 +10,14 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://img.shields.io/npm/v/@zero-transfer/sdk.svg?label=%40zero-transfer%2Fsdk" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://img.shields.io/npm/dm/@zero-transfer/sdk.svg" alt="npm downloads"></a>
-  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Ftonywied17.github.io%2Fzero-transfer%2Fbadges%2Ftests.json" alt="Tests"></a>
-  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Ftonywied17.github.io%2Fzero-transfer%2Fbadges%2Fcoverage.json" alt="Coverage"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
-  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg" alt="Node.js"></a>
+  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://img.shields.io/npm/v/@zero-transfer/sdk.svg?style=for-the-badge&labelColor=0d1117&color=00b4d8&logo=npm&logoColor=white&label=%40zero-transfer%2Fsdk" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://img.shields.io/npm/dm/@zero-transfer/sdk.svg?style=for-the-badge&labelColor=0d1117&color=00b4d8&logo=npm&logoColor=white" alt="npm downloads"></a>
+  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/tonywied17/zero-transfer/ci.yml?branch=main&style=for-the-badge&labelColor=0d1117&logo=githubactions&logoColor=white&label=CI" alt="CI"></a>
+  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Ftonywied17.github.io%2Fzero-transfer%2Fbadges%2Ftests.json&style=for-the-badge&labelColor=0d1117&logo=vitest&logoColor=white" alt="Tests"></a>
+  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Ftonywied17.github.io%2Fzero-transfer%2Fbadges%2Fcoverage.json&style=for-the-badge&labelColor=0d1117&logo=vitest&logoColor=white" alt="Coverage"></a>
+  <a href="https://tonywied17.github.io/zero-transfer/"><img src="https://img.shields.io/badge/docs-typedoc-00b4d8?style=for-the-badge&labelColor=0d1117&logo=readthedocs&logoColor=white" alt="Docs"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-00b4d8?style=for-the-badge&labelColor=0d1117" alt="License"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D20-339933?style=for-the-badge&labelColor=0d1117&logo=nodedotjs&logoColor=white" alt="Node.js"></a>
 </p>
 
 ZeroTransfer is a unified, TypeScript-first file transfer SDK for Node.js. One typed API speaks to every backend you actually deploy against — classic protocols, web endpoints, object storage, cloud drives, and local disks — with streaming, resume, verification, dry-run plans, MFT-style scheduling, audit logs, and webhook delivery built in.

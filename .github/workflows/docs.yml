@@ -47,6 +47,11 @@ jobs:
       - name: Generate shields.io badge JSON
         run: node scripts/generate-badges.mjs
 
+      - name: Stage public assets alongside docs
+        run: |
+          mkdir -p docs/api/assets
+          cp -R assets/. docs/api/assets/
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
