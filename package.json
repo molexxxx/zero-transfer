@@ -43,6 +43,7 @@
     "release:rc": "node scripts/release.mjs prerelease rc",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:report": "vitest run --reporter=default --reporter=json --outputFile=coverage/test-results.json --coverage",
     "test:integration:ftp": "vitest run test/integration/ftpProvider.docker.test.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

@@ -35,8 +35,17 @@ jobs:
       - name: Build SDK (needed for TypeDoc entry points)
         run: npm run build
 
+      - name: Generate scoped packages
+        run: npm run packages:generate
+
+      - name: Run tests with coverage + JSON report (for badges)
+        run: npm run test:report
+
       - name: Generate TypeDoc HTML
         run: npm run docs
+
+      - name: Generate shields.io badge JSON
+        run: node scripts/generate-badges.mjs
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

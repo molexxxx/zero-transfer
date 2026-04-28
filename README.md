@@ -13,6 +13,8 @@
   <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://img.shields.io/npm/v/@zero-transfer/sdk.svg?label=%40zero-transfer%2Fsdk" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://img.shields.io/npm/dm/@zero-transfer/sdk.svg" alt="npm downloads"></a>
   <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Ftonywied17.github.io%2Fzero-transfer%2Fbadges%2Ftests.json" alt="Tests"></a>
+  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://img.shields.io/endpoint?url=https%3A%2F%2Ftonywied17.github.io%2Fzero-transfer%2Fbadges%2Fcoverage.json" alt="Coverage"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg" alt="Node.js"></a>
 </p>
@@ -233,7 +235,7 @@ npm run docs:all      # HTML + Markdown api refs + per-scope pages + per-package
 
 ## Project status
 
-ZeroTransfer is in **alpha** under the `alpha` npm dist-tag. The provider-neutral foundation, transfer engine, queue, sync planner, atomic deploy planner, MFT layer, friendly client surface, and diagnostics module are stable. Phase work in progress: resumable upload sessions for Azure / GCS / OneDrive, broader real-server compatibility coverage, and the push to 95% coverage. Track the full plan in [`zero-transfer-remake.md`](zero-transfer-remake.md).
+ZeroTransfer is in **alpha** under the `alpha` npm dist-tag. The provider-neutral foundation, transfer engine, queue, sync planner, atomic deploy planner, MFT layer, friendly client surface, and diagnostics module are stable. Phase work in progress: resumable upload sessions for Azure / GCS / OneDrive, broader real-server compatibility coverage, and the push to higher coverage targets.
 
 ## Contributing
 
