@@ -12,6 +12,11 @@ import type {
   ProviderTransferWriteRequest,
   ProviderTransferWriteResult,
 } from "../providers/ProviderTransferOperations";
+import {
+  createBandwidthThrottle,
+  throttleByteIterable,
+  type BandwidthThrottleOptions,
+} from "./BandwidthThrottle";
 import type { TransferExecutionContext, TransferExecutor } from "./TransferEngine";
 import type {
   TransferEndpoint,
@@ -43,6 +48,8 @@ export type ProviderTransferSessionResolver = (
 export interface ProviderTransferExecutorOptions {
   /** Resolves connected provider sessions for source and destination endpoints. */
   resolveSession: ProviderTransferSessionResolver;
+  /** Optional clock/sleep overrides for the bandwidth throttle. */
+  throttle?: BandwidthThrottleOptions;
 }
 
 /**
@@ -88,11 +95,27 @@ export function createProviderTransferExecutor(
     context.throwIfAborted();
     const readResult = await sourceTransfers.read(createReadRequest(context, source));
     context.throwIfAborted();
+    const throttledReadResult = applyBandwidthThrottle(readResult, context, options.throttle);
     const writeResult = await destinationTransfers.write(
-      createWriteRequest(context, destination, readResult),
+      createWriteRequest(context, destination, throttledReadResult),
     );
 
     return mergeProviderTransferResult(readResult, writeResult, job);
+  };
+}
+
+function applyBandwidthThrottle(
+  readResult: ProviderTransferReadResult,
+  context: TransferExecutionContext,
+  options: BandwidthThrottleOptions | undefined,
+): ProviderTransferReadResult {
+  const throttle = createBandwidthThrottle(context.bandwidthLimit, options);
+
+  if (throttle === undefined) return readResult;
+
+  return {
+    ...readResult,
+    content: throttleByteIterable(readResult.content, throttle, context.signal),
   };
 }
 

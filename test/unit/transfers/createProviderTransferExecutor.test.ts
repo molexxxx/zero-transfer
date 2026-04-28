@@ -223,6 +223,50 @@ describe("createProviderTransferExecutor", () => {
       },
     });
   });
+
+  it("applies bandwidth throttle to the read stream before writing", async () => {
+    const sleepCalls: number[] = [];
+    const clock = { value: 0 };
+    const sourceTransfers: ProviderTransferOperations = {
+      read: () => ({ content: createContent([1, 2, 3, 4]), totalBytes: 4 }),
+      write: vi.fn(() => ({ bytesTransferred: 0 })),
+    };
+    const destinationTransfers: ProviderTransferOperations = {
+      read: vi.fn(() => ({ content: createContent([]) })),
+      write: async (request: ProviderTransferWriteRequest) => ({
+        bytesTransferred: await countBytes(request.content),
+      }),
+    };
+    const sessions = new Map([
+      ["local", createSession("local", sourceTransfers)],
+      ["memory", createSession("memory", destinationTransfers)],
+    ]);
+    const executor = createProviderTransferExecutor({
+      resolveSession: ({ endpoint }) => sessions.get(endpoint.provider ?? ""),
+      throttle: {
+        now: () => clock.value,
+        sleep: (delayMs: number) => {
+          sleepCalls.push(delayMs);
+          clock.value += Math.max(delayMs, 1);
+          return Promise.resolve();
+        },
+      },
+    });
+    const job: TransferJob = {
+      ...baseJob,
+      destination: { path: "/remote/throttled.bin", provider: "memory" },
+      source: { path: "/local/throttled.bin", provider: "local" },
+      totalBytes: 4,
+    };
+    const receipt = await new TransferEngine().execute(job, executor, {
+      bandwidthLimit: { burstBytes: 2, bytesPerSecond: 1024 },
+    });
+
+    expect(receipt.bytesTransferred).toBe(4);
+    // The 4-byte chunk exceeds the 2-byte burst, so the throttle waits at
+    // least once before the chunk is released downstream.
+    expect(sleepCalls.length).toBeGreaterThan(0);
+  });
 });
 
 async function* createContent(bytes: number[]): AsyncGenerator<Uint8Array> {

@@ -1,4 +1,11 @@
 export {
+  createBandwidthThrottle,
+  throttleByteIterable,
+  type BandwidthSleep,
+  type BandwidthThrottle,
+  type BandwidthThrottleOptions,
+} from "./BandwidthThrottle";
+export {
   createProviderTransferExecutor,
   type ProviderTransferEndpointRole,
   type ProviderTransferExecutorOptions,
