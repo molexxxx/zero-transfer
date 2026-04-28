@@ -28,6 +28,8 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "pack:dry": "npm pack --dry-run",
+    "packages:generate": "node scripts/generate-package-stubs.mjs",
+    "packages:publish": "node scripts/publish-package-stubs.mjs",
     "prepack": "npm run build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -64,6 +66,9 @@
   "engines": {
     "node": ">=20.0.0"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "provenance": true,

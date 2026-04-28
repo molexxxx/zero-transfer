@@ -1,0 +1,50 @@
+{
+  "name": "@zero-transfer/azure-blob",
+  "version": "0.1.0-alpha.0",
+  "description": "Azure Blob Storage provider for ZeroTransfer.",
+  "keywords": [
+    "zero-transfer",
+    "azure",
+    "azure-blob",
+    "blob"
+  ],
+  "author": "Tony Wiedman",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tonywied17/zero-transfer.git",
+    "directory": "packages/azure-blob"
+  },
+  "bugs": {
+    "url": "https://github.com/tonywied17/zero-transfer/issues"
+  },
+  "homepage": "https://github.com/tonywied17/zero-transfer#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "provenance": true,
+    "access": "public"
+  },
+  "sideEffects": false,
+  "dependencies": {
+    "@zero-transfer/sdk": "0.1.0-alpha.0"
+  }
+}

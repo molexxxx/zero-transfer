@@ -7,7 +7,15 @@ const configDirectory = path.dirname(fileURLToPath(import.meta.url));
 
 export default [
   {
-    ignores: ["coverage/**", "docs/api/**", "dist/**", "eslint.config.mjs", "node_modules/**"],
+    ignores: [
+      "coverage/**",
+      "docs/api/**",
+      "dist/**",
+      "eslint.config.mjs",
+      "node_modules/**",
+      "packages/**",
+      "scripts/**",
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
