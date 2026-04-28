@@ -99,13 +99,31 @@ describe("profile validation", () => {
         ssh: { keyboardInteractive: "prompt" as never },
       }),
     ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        ssh: { agent: " " },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        ssh: { agent: {} as never },
+      }),
+    ).toThrow(ConfigurationError);
   });
 
   it("accepts SHA-256 certificate and SSH host-key pinning profile fields", () => {
     const profile: ConnectionProfile = {
       host: "ftps.example.test",
       provider: "ftps",
-      ssh: { keyboardInteractive: () => ["123456"], pinnedHostKeySha256: [validHostKeyPin] },
+      ssh: {
+        agent: "pageant",
+        keyboardInteractive: () => ["123456"],
+        pinnedHostKeySha256: [validHostKeyPin],
+      },
       tls: { pinnedFingerprint256: [validFingerprint256] },
     };
 
@@ -250,6 +268,7 @@ describe("connection profile secrets", () => {
         provider: "ftp",
         signal: new AbortController().signal,
         ssh: {
+          agent: "pageant",
           knownHosts: [{ path: "known_hosts" }],
           keyboardInteractive: () => ["123456"],
           passphrase: { env: "ZT_SSH_KEY_PASS" },
@@ -275,6 +294,7 @@ describe("connection profile secrets", () => {
       provider: "ftp",
       signal: "[AbortSignal]",
       ssh: {
+        agent: "[REDACTED]",
         knownHosts: [{ encoding: undefined, path: "[REDACTED]" }],
         keyboardInteractive: "[REDACTED]",
         passphrase: { env: "[REDACTED]" },

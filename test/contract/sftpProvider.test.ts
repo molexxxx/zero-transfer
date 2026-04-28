@@ -1,6 +1,7 @@
 import { Buffer } from "node:buffer";
 import { createHmac } from "node:crypto";
-import { utils } from "ssh2";
+import { BaseAgent, utils } from "ssh2";
+import type { IdentityCallback, ParsedKey, SignCallback, SigningRequestOptions } from "ssh2";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   AuthenticationError,
@@ -47,7 +48,7 @@ afterEach(async () => {
 describeProviderContract("sftp", {
   createProviderFactory: () => createSftpProviderFactory(),
   expectedCapabilities: {
-    authentication: ["password", "private-key", "keyboard-interactive"],
+    authentication: ["password", "private-key", "agent", "keyboard-interactive"],
     list: true,
     provider: "sftp",
     readStream: true,
@@ -196,6 +197,33 @@ describe("createSftpProviderFactory", () => {
         type: "file",
       });
       expect(challenges).toEqual(["ZeroTransfer", "Verification code: "]);
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("authenticates with SSH agent keys", async () => {
+    const agentKeyPair = utils.generateKeyPairSync("ed25519");
+    const agent = new StaticSftpAgent(agentKeyPair.private);
+
+    await restartServer({ publicKey: agentKeyPair.public });
+
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      port: getProfilePort(),
+      provider: "sftp",
+      ssh: { agent },
+      timeoutMs: 5_000,
+      username: { value: "tester" },
+    });
+
+    try {
+      await expect(session.fs.stat("/incoming/report.csv")).resolves.toMatchObject({
+        path: "/incoming/report.csv",
+        type: "file",
+      });
+      expect(agent.signatures).toBeGreaterThan(0);
     } finally {
       await session.disconnect();
     }
@@ -578,6 +606,39 @@ function requireTransfers(session: TransferSession): ProviderTransferOperations 
   }
 
   return session.transfers;
+}
+
+class StaticSftpAgent extends BaseAgent<ParsedKey> {
+  readonly key: ParsedKey;
+  signatures = 0;
+
+  constructor(privateKey: string) {
+    super();
+    const parsed = utils.parseKey(privateKey);
+
+    if (parsed instanceof Error || Array.isArray(parsed)) {
+      throw new Error("Expected a single parsed SFTP agent key");
+    }
+
+    this.key = parsed;
+  }
+
+  getIdentities(callback: IdentityCallback<ParsedKey>): void {
+    callback(null, [this.key]);
+  }
+
+  sign(
+    _publicKey: ParsedKey,
+    data: Buffer,
+    optionsOrCallback: SigningRequestOptions | SignCallback,
+    callback?: SignCallback,
+  ): void {
+    const options = typeof optionsOrCallback === "function" ? undefined : optionsOrCallback;
+    const finish = typeof optionsOrCallback === "function" ? optionsOrCallback : callback;
+
+    this.signatures += 1;
+    finish?.(null, this.key.sign(data, options?.hash));
+  }
 }
 
 function createReadRequest(

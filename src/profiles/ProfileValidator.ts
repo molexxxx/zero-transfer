@@ -73,6 +73,10 @@ export function validateConnectionProfile(profile: ConnectionProfile): Connectio
 function validateSshProfile(profile: SshProfile): void {
   validatePinnedHostKeySha256(profile.pinnedHostKeySha256);
 
+  if (profile.agent !== undefined) {
+    validateSshAgentSource(profile.agent);
+  }
+
   if (
     profile.keyboardInteractive !== undefined &&
     typeof profile.keyboardInteractive !== "function"
@@ -83,6 +87,33 @@ function validateSshProfile(profile: SshProfile): void {
       retryable: false,
     });
   }
+}
+
+/**
+ * Validates SSH agent source values.
+ *
+ * @param value - Agent socket path or agent implementation.
+ * @throws {@link ConfigurationError} When the value is neither a non-empty path nor an agent object.
+ */
+function validateSshAgentSource(value: SshProfile["agent"]): void {
+  if (typeof value === "string") {
+    if (value.trim().length > 0) {
+      return;
+    }
+  } else if (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { getIdentities?: unknown }).getIdentities === "function" &&
+    typeof (value as { sign?: unknown }).sign === "function"
+  ) {
+    return;
+  }
+
+  throw new ConfigurationError({
+    details: { agent: typeof value },
+    message: "Connection profile ssh.agent must be a non-empty socket path or agent object",
+    retryable: false,
+  });
 }
 
 /**

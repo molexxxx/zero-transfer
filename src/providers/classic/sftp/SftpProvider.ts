@@ -1,9 +1,8 @@
 /**
  * SSH2-backed SFTP provider.
  *
- * This initial SFTP slice supports password/private-key authenticated sessions plus provider-neutral
+ * This initial SFTP slice supports password/private-key/agent authenticated sessions plus provider-neutral
  * directory listing, metadata reads, transfer streaming, and profile-level host-key policies.
- * Agent authentication can layer on this foundation in later slices.
  *
  * @module providers/classic/sftp/SftpProvider
  */
@@ -66,7 +65,7 @@ const SFTP_PROVIDER_ID = "sftp";
 const SFTP_DEFAULT_PORT = 22;
 const SFTP_PROVIDER_CAPABILITIES: CapabilitySet = {
   provider: SFTP_PROVIDER_ID,
-  authentication: ["password", "private-key", "keyboard-interactive"],
+  authentication: ["password", "private-key", "agent", "keyboard-interactive"],
   list: true,
   stat: true,
   readStream: true,
@@ -83,7 +82,7 @@ const SFTP_PROVIDER_CAPABILITIES: CapabilitySet = {
   metadata: ["accessedAt", "group", "modifiedAt", "owner", "permissions"],
   maxConcurrency: 8,
   notes: [
-    "Initial ssh2-backed SFTP provider with password/private-key authentication, metadata reads, and transfer streams",
+    "Initial ssh2-backed SFTP provider with password/private-key/agent authentication, metadata reads, and transfer streams",
   ],
 };
 
@@ -651,6 +650,7 @@ function createKnownHostsConfigurationError(
 }
 
 function resolveSftpAuthentication(profile: ResolvedConnectionProfile): SftpAuthenticationConfig {
+  const agent = profile.ssh?.agent;
   const password = resolveOptionalTextCredential(profile.password, "password");
   const privateKey = profile.ssh?.privateKey;
   const passphrase = profile.ssh?.passphrase;
@@ -678,6 +678,14 @@ function resolveSftpAuthentication(profile: ResolvedConnectionProfile): SftpAuth
     });
   }
 
+  if (agent !== undefined) {
+    authHandler.push({
+      agent,
+      type: "agent",
+      username,
+    });
+  }
+
   if (keyboardInteractive !== undefined) {
     authHandler.push({
       prompt: (name, instructions, language, prompts, finish) => {
@@ -700,7 +708,8 @@ function resolveSftpAuthentication(profile: ResolvedConnectionProfile): SftpAuth
   if (authHandler.length === 0) {
     throw new ConfigurationError({
       details: { provider: SFTP_PROVIDER_ID },
-      message: "SFTP profiles require a password, ssh.privateKey, or ssh.keyboardInteractive",
+      message:
+        "SFTP profiles require a password, ssh.privateKey, ssh.agent, or ssh.keyboardInteractive",
       protocol: "sftp",
       retryable: false,
     });

@@ -34,9 +34,10 @@ export function redactConnectionProfile(profile: ConnectionProfile): Record<stri
  * @returns Plain object safe to include in diagnostics.
  */
 function redactSshProfile(profile: SshProfile): Record<string, unknown> {
-  const { keyboardInteractive, knownHosts, passphrase, privateKey, ...rest } = profile;
+  const { agent, keyboardInteractive, knownHosts, passphrase, privateKey, ...rest } = profile;
   const redacted = redactObject(rest);
 
+  if (agent !== undefined) redacted.agent = REDACTED;
   if (privateKey !== undefined) redacted.privateKey = redactSecretSource(privateKey);
   if (passphrase !== undefined) redacted.passphrase = redactSecretSource(passphrase);
   if (knownHosts !== undefined) redacted.knownHosts = redactSshKnownHostsSource(knownHosts);
