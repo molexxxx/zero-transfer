@@ -22,8 +22,11 @@ const packagesDir = join(repoRoot, "packages");
 
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has("--dry-run");
+const noProvenance = args.has("--no-provenance");
 const tagIndex = process.argv.indexOf("--tag");
 const tag = tagIndex >= 0 ? process.argv[tagIndex + 1] : undefined;
+const userconfigIndex = process.argv.indexOf("--userconfig");
+const userconfig = userconfigIndex >= 0 ? process.argv[userconfigIndex + 1] : undefined;
 
 const dirs = readdirSync(packagesDir).filter((entry) =>
   statSync(join(packagesDir, entry)).isDirectory(),
@@ -37,6 +40,8 @@ for (const entry of dirs) {
   const argv = ["publish", "--access=public"];
   if (dryRun) argv.push("--dry-run");
   if (tag) argv.push(`--tag=${tag}`);
+  if (noProvenance) argv.push("--provenance=false");
+  if (userconfig) argv.push(`--userconfig=${userconfig}`);
 
   console.log(`\n→ ${pkg.name}@${pkg.version}`);
   const result = spawnSync("npm", argv, { cwd: dir, shell: true, stdio: "inherit" });
