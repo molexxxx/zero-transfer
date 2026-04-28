@@ -77,6 +77,65 @@ export interface S3MultipartOptions {
   thresholdBytes?: number;
   /** Target part size in bytes. Must be ≥ 5 MiB except for the final part. Defaults to 8 MiB. */
   partSizeBytes?: number;
+  /**
+   * Optional persistent store enabling cross-process resume of incomplete
+   * multipart uploads. When provided, in-flight `uploadId` plus uploaded part
+   * etags are checkpointed after every part; on retry the upload reuses the
+   * stored state and skips the bytes already transferred.
+   */
+  resumeStore?: S3MultipartResumeStore;
+}
+
+/** Resume key identifying an in-flight multipart upload. */
+export interface S3MultipartResumeKey {
+  bucket: string;
+  jobId: string;
+  path: string;
+}
+
+/** Persisted multipart-upload checkpoint. */
+export interface S3MultipartCheckpoint {
+  uploadId: string;
+  /** Parts already accepted by S3, in upload order. */
+  parts: ReadonlyArray<S3MultipartPart>;
+}
+
+/** Single part recorded in a multipart-upload checkpoint. */
+export interface S3MultipartPart {
+  partNumber: number;
+  etag: string;
+  /** Cumulative byte offset reached after this part (exclusive). */
+  byteEnd: number;
+}
+
+/**
+ * Persistence contract for resuming partial multipart uploads across
+ * processes or retries. Implementations may be synchronous or asynchronous;
+ * `clear` is invoked once the multipart upload completes successfully (or is
+ * explicitly aborted via {@link abortS3MultipartUpload}).
+ */
+export interface S3MultipartResumeStore {
+  load(
+    key: S3MultipartResumeKey,
+  ): Promise<S3MultipartCheckpoint | undefined> | S3MultipartCheckpoint | undefined;
+  save(key: S3MultipartResumeKey, checkpoint: S3MultipartCheckpoint): Promise<void> | void;
+  clear(key: S3MultipartResumeKey): Promise<void> | void;
+}
+
+/** Creates an in-memory {@link S3MultipartResumeStore}. */
+export function createMemoryS3MultipartResumeStore(): S3MultipartResumeStore {
+  const map = new Map<string, S3MultipartCheckpoint>();
+  const stringify = (key: S3MultipartResumeKey): string =>
+    `${key.bucket}\u0000${key.jobId}\u0000${key.path}`;
+  return {
+    clear: (key) => {
+      map.delete(stringify(key));
+    },
+    load: (key) => map.get(stringify(key)),
+    save: (key, checkpoint) => {
+      map.set(stringify(key), checkpoint);
+    },
+  };
 }
 
 const DEFAULT_MULTIPART_PART_SIZE = 8 * 1024 * 1024;
@@ -122,6 +181,9 @@ export function createS3ProviderFactory(options: S3ProviderOptions = {}): Provid
     enabled: multipartEnabled,
     partSizeBytes: options.multipart?.partSizeBytes ?? DEFAULT_MULTIPART_PART_SIZE,
     thresholdBytes: options.multipart?.thresholdBytes ?? DEFAULT_MULTIPART_THRESHOLD,
+    ...(options.multipart?.resumeStore !== undefined
+      ? { resumeStore: options.multipart.resumeStore }
+      : {}),
   };
 
   const capabilities: CapabilitySet = {
@@ -175,6 +237,7 @@ interface ResolvedMultipartOptions {
   enabled: boolean;
   partSizeBytes: number;
   thresholdBytes: number;
+  resumeStore?: S3MultipartResumeStore;
 }
 
 interface S3ProviderInternalOptions {
@@ -361,17 +424,22 @@ class S3TransferOperations implements ProviderTransferOperations {
 
   async write(request: ProviderTransferWriteRequest): Promise<ProviderTransferWriteResult> {
     request.throwIfAborted();
-    if (request.offset !== undefined && request.offset > 0) {
-      throw new UnsupportedFeatureError({
-        details: { offset: request.offset },
-        message: "S3 provider does not yet support resuming a prior multipart upload",
-        retryable: false,
-      });
-    }
     const normalized = normalizeRemotePath(request.endpoint.path);
     const multipart = this.options.multipart;
+    const offset = request.offset ?? 0;
+    if (offset > 0) {
+      if (!multipart.enabled || multipart.resumeStore === undefined) {
+        throw new UnsupportedFeatureError({
+          details: { offset },
+          message:
+            "S3 provider requires multipart.enabled and multipart.resumeStore to resume an upload",
+          retryable: false,
+        });
+      }
+      return this.writeMultipart(request, normalized, offset);
+    }
     if (multipart.enabled) {
-      return this.writeMultipart(request, normalized);
+      return this.writeMultipart(request, normalized, 0);
     }
     return this.writeSingleShot(request, normalized);
   }
@@ -401,53 +469,100 @@ class S3TransferOperations implements ProviderTransferOperations {
   private async writeMultipart(
     request: ProviderTransferWriteRequest,
     normalized: string,
+    requestedOffset: number,
   ): Promise<ProviderTransferWriteResult> {
     const multipart = this.options.multipart;
     const partSize = multipart.partSizeBytes;
     const objectUrl = buildObjectUrl(this.options, normalized);
+    const resumeStore = multipart.resumeStore;
+    const resumeKey: S3MultipartResumeKey = {
+      bucket: this.options.bucket,
+      jobId: request.job.id,
+      path: normalized,
+    };
 
-    // Buffer chunks until we either reach `thresholdBytes` (single-shot) or
-    // the part size for the first part (multipart upload).
+    // Look up a checkpoint when a resume store is configured.
+    let existing: S3MultipartCheckpoint | undefined;
+    if (resumeStore !== undefined) {
+      existing = (await resumeStore.load(resumeKey)) ?? undefined;
+    }
+    if (requestedOffset > 0) {
+      if (existing === undefined) {
+        throw new UnsupportedFeatureError({
+          details: { offset: requestedOffset },
+          message: "S3 provider has no resume checkpoint for this transfer",
+          retryable: false,
+        });
+      }
+      const lastByteEnd = existing.parts[existing.parts.length - 1]?.byteEnd ?? 0;
+      if (lastByteEnd !== requestedOffset) {
+        throw new UnsupportedFeatureError({
+          details: { checkpointOffset: lastByteEnd, requestedOffset },
+          message: "S3 resume offset does not match the stored multipart checkpoint",
+          retryable: false,
+        });
+      }
+    }
+
+    const iterator = request.content[Symbol.asyncIterator]();
+
+    // When resuming, we trust the caller has already advanced the source past
+    // `requestedOffset`. When starting fresh, buffer up to `thresholdBytes` so
+    // small payloads can fall back to single-shot PUT.
     const initialBuffer: Uint8Array[] = [];
     let initialSize = 0;
-    const iterator = request.content[Symbol.asyncIterator]();
-    while (initialSize <= multipart.thresholdBytes) {
-      const next = await iterator.next();
-      if (next.done === true) break;
-      const chunk = next.value;
-      if (chunk.byteLength === 0) continue;
-      initialBuffer.push(chunk);
-      initialSize += chunk.byteLength;
+    if (existing === undefined) {
+      while (initialSize <= multipart.thresholdBytes) {
+        const next = await iterator.next();
+        if (next.done === true) break;
+        const chunk = next.value;
+        if (chunk.byteLength === 0) continue;
+        initialBuffer.push(chunk);
+        initialSize += chunk.byteLength;
+      }
+      if (initialSize <= multipart.thresholdBytes) {
+        const buffered = concat(initialBuffer, initialSize);
+        return this.singleShotFromBuffer(request, normalized, buffered);
+      }
     }
-    if (initialSize <= multipart.thresholdBytes) {
-      // Source ended below the threshold: fall back to single-shot PUT.
-      const buffered = concat(initialBuffer, initialSize);
-      return this.singleShotFromBuffer(request, normalized, buffered);
-    }
-    const trailing = concat(initialBuffer, initialSize);
 
-    // Initiate multipart upload.
-    const initiateUrl = new URL(objectUrl.toString());
-    initiateUrl.searchParams.set("uploads", "");
-    const initiateResponse = await s3Fetch(this.options, "POST", initiateUrl, {
-      ...(request.signal !== undefined ? { signal: request.signal } : {}),
-      extraHeaders: { "content-type": "application/octet-stream" },
-    });
-    if (!initiateResponse.ok) throw mapResponseError(initiateResponse, normalized);
-    const initiateBody = await initiateResponse.text();
-    const uploadId = innerText(initiateBody, "UploadId");
-    if (uploadId === undefined || uploadId === "") {
-      throw new ConnectionError({
-        message: "S3 CreateMultipartUpload returned no UploadId",
-        retryable: true,
+    // Establish (or reuse) the upload id.
+    let uploadId: string;
+    if (existing !== undefined) {
+      uploadId = existing.uploadId;
+    } else {
+      const initiateUrl = new URL(objectUrl.toString());
+      initiateUrl.searchParams.set("uploads", "");
+      const initiateResponse = await s3Fetch(this.options, "POST", initiateUrl, {
+        ...(request.signal !== undefined ? { signal: request.signal } : {}),
+        extraHeaders: { "content-type": "application/octet-stream" },
       });
+      if (!initiateResponse.ok) throw mapResponseError(initiateResponse, normalized);
+      const initiateBody = await initiateResponse.text();
+      const initiated = innerText(initiateBody, "UploadId");
+      if (initiated === undefined || initiated === "") {
+        throw new ConnectionError({
+          message: "S3 CreateMultipartUpload returned no UploadId",
+          retryable: true,
+        });
+      }
+      uploadId = initiated;
+      if (resumeStore !== undefined) {
+        await resumeStore.save(resumeKey, { parts: [], uploadId });
+      }
     }
 
-    const parts: Array<{ partNumber: number; etag: string }> = [];
-    let bytesTransferred = 0;
-    let partNumber = 1;
-    let buffer: Uint8Array[] = [trailing];
-    let bufferSize = trailing.byteLength;
+    const parts: S3MultipartPart[] = existing !== undefined ? [...existing.parts] : [];
+    const startedBytes = parts.length > 0 ? (parts[parts.length - 1]?.byteEnd ?? 0) : 0;
+    let bytesTransferred = startedBytes;
+    let partNumber = parts.length + 1;
+    let buffer: Uint8Array[] = [];
+    let bufferSize = 0;
+    if (existing === undefined) {
+      const trailing = concat(initialBuffer, initialSize);
+      buffer = [trailing];
+      bufferSize = trailing.byteLength;
+    }
 
     const flushPart = async (final: boolean): Promise<void> => {
       while (bufferSize >= partSize || (final && bufferSize > 0)) {
@@ -472,8 +587,11 @@ class S3TransferOperations implements ProviderTransferOperations {
             retryable: true,
           });
         }
-        parts.push({ etag: partEtag, partNumber });
         bytesTransferred += partBytes.bytes.byteLength;
+        parts.push({ byteEnd: bytesTransferred, etag: partEtag, partNumber });
+        if (resumeStore !== undefined) {
+          await resumeStore.save(resumeKey, { parts: [...parts], uploadId });
+        }
         request.reportProgress(bytesTransferred, undefined);
         partNumber += 1;
       }
@@ -492,11 +610,17 @@ class S3TransferOperations implements ProviderTransferOperations {
       }
       await flushPart(true);
     } catch (error) {
-      await abortMultipart(this.options, objectUrl, uploadId).catch(() => undefined);
+      // When a resume store is wired the checkpoint is preserved so a future
+      // retry can pick up where this one left off; otherwise we must clean up
+      // the orphaned multipart upload immediately.
+      if (resumeStore === undefined) {
+        await abortMultipart(this.options, objectUrl, uploadId).catch(() => undefined);
+      }
       throw error;
     }
 
     if (parts.length === 0) {
+      if (resumeStore !== undefined) await resumeStore.clear(resumeKey);
       await abortMultipart(this.options, objectUrl, uploadId).catch(() => undefined);
       throw new ConnectionError({
         message: "S3 multipart upload completed with zero parts",
@@ -513,9 +637,12 @@ class S3TransferOperations implements ProviderTransferOperations {
       extraHeaders: { "content-type": "application/xml" },
     });
     if (!completeResponse.ok) {
-      await abortMultipart(this.options, objectUrl, uploadId).catch(() => undefined);
+      if (resumeStore === undefined) {
+        await abortMultipart(this.options, objectUrl, uploadId).catch(() => undefined);
+      }
       throw mapResponseError(completeResponse, normalized);
     }
+    if (resumeStore !== undefined) await resumeStore.clear(resumeKey);
     const completeBody = await completeResponse.text();
     const finalEtag = innerText(completeBody, "ETag");
     const result: ProviderTransferWriteResult = {

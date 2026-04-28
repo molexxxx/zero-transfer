@@ -59,11 +59,16 @@ export {
 } from "./providers/memory";
 export {
   createHttpProviderFactory,
+  createMemoryS3MultipartResumeStore,
   createS3ProviderFactory,
   createWebDavProviderFactory,
   type HttpFetch,
   type HttpProviderOptions,
+  type S3MultipartCheckpoint,
   type S3MultipartOptions,
+  type S3MultipartPart,
+  type S3MultipartResumeKey,
+  type S3MultipartResumeStore,
   type S3ProviderOptions,
   type WebDavProviderOptions,
 } from "./providers/web";
