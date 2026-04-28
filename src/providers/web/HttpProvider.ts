@@ -12,12 +12,8 @@ import type { CapabilitySet, ChecksumCapability } from "../../core/CapabilitySet
 import type { ProviderId } from "../../core/ProviderId";
 import type { TransferSession } from "../../core/TransferSession";
 import {
-  AuthenticationError,
   ConfigurationError,
   ConnectionError,
-  PathNotFoundError,
-  PermissionDeniedError,
-  TimeoutError,
   UnsupportedFeatureError,
 } from "../../errors/ZeroTransferError";
 import { resolveSecret } from "../../profiles/SecretSource";
@@ -33,9 +29,20 @@ import type {
   TransferDataSource,
 } from "../ProviderTransferOperations";
 import type { RemoteFileSystem } from "../RemoteFileSystem";
+import {
+  buildBaseUrl,
+  dispatchRequest,
+  formatRangeHeader,
+  mapResponseError,
+  parseTotalBytes,
+  resolveUrl,
+  secretToString,
+  webStreamToAsyncIterable,
+  type HttpFetch,
+  type HttpSessionTransport,
+} from "./httpInternals";
 
-/** Fetch implementation accepted by the HTTP provider. Defaults to global `fetch`. */
-export type HttpFetch = (input: string, init?: RequestInit) => Promise<Response>;
+export type { HttpFetch };
 
 /** Options accepted by {@link createHttpProviderFactory}. */
 export interface HttpProviderOptions {
@@ -136,7 +143,7 @@ class HttpProvider implements TransferProvider {
       headers["Authorization"] = `Basic ${Buffer.from(`${usernameText}:${passwordText}`).toString("base64")}`;
     }
 
-    const baseUrl = buildBaseUrl(profile, this.internals);
+    const baseUrl = buildSessionBaseUrl(profile, this.internals);
     const sessionOptions: HttpSessionOptions = {
       baseUrl,
       capabilities: this.internals.capabilities,
@@ -150,13 +157,9 @@ class HttpProvider implements TransferProvider {
   }
 }
 
-interface HttpSessionOptions {
-  baseUrl: URL;
+interface HttpSessionOptions extends HttpSessionTransport {
   capabilities: CapabilitySet;
-  fetch: HttpFetch;
-  headers: Record<string, string>;
   id: ProviderId;
-  timeoutMs?: number;
 }
 
 class HttpTransferSession implements TransferSession {
@@ -257,79 +260,11 @@ class HttpTransferOperations implements ProviderTransferOperations {
   }
 }
 
-function buildBaseUrl(
+function buildSessionBaseUrl(
   profile: ConnectionProfile,
   internals: HttpProviderInternalOptions,
 ): URL {
-  const protocol = internals.secure ? "https:" : "http:";
-  const portSegment = profile.port !== undefined ? `:${profile.port}` : "";
-  const path = internals.basePath.length === 0 ? "/" : ensureLeadingSlash(internals.basePath);
-  try {
-    return new URL(`${protocol}//${profile.host}${portSegment}${path}`);
-  } catch (error) {
-    throw new ConfigurationError({
-      cause: error,
-      details: { host: profile.host, port: profile.port },
-      message: "HTTP provider received an invalid host or basePath",
-      retryable: false,
-    });
-  }
-}
-
-function resolveUrl(baseUrl: URL, remotePath: string): URL {
-  const trimmedBase = baseUrl.pathname.replace(/\/+$/, "");
-  const suffix = remotePath === "/" ? "" : remotePath;
-  const merged = new URL(baseUrl.toString());
-  merged.pathname = `${trimmedBase}${suffix}`;
-  return merged;
-}
-
-function ensureLeadingSlash(value: string): string {
-  return value.startsWith("/") ? value : `/${value}`;
-}
-
-async function dispatchRequest(
-  options: HttpSessionOptions,
-  url: URL,
-  init: RequestInit & { headers?: Record<string, string> },
-): Promise<Response> {
-  const headers = { ...options.headers, ...(init.headers ?? {}) };
-  const controller = new AbortController();
-  const upstreamSignal = init.signal ?? null;
-  if (upstreamSignal !== null) {
-    if (upstreamSignal.aborted) controller.abort(upstreamSignal.reason);
-    else upstreamSignal.addEventListener("abort", () => controller.abort(upstreamSignal.reason));
-  }
-
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  if (options.timeoutMs !== undefined && options.timeoutMs > 0) {
-    timer = setTimeout(() => controller.abort(new Error("HTTP request timed out")), options.timeoutMs);
-  }
-
-  try {
-    return await options.fetch(url.toString(), {
-      ...init,
-      headers,
-      signal: controller.signal,
-    });
-  } catch (error) {
-    if (controller.signal.aborted && upstreamSignal?.aborted !== true) {
-      throw new TimeoutError({
-        cause: error,
-        details: { timeoutMs: options.timeoutMs, url: url.toString() },
-        message: `HTTP request to ${url.toString()} timed out after ${String(options.timeoutMs)}ms`,
-        retryable: true,
-      });
-    }
-    throw new ConnectionError({
-      cause: error,
-      details: { url: url.toString() },
-      message: `HTTP request to ${url.toString()} failed`,
-      retryable: true,
-    });
-  } finally {
-    if (timer !== undefined) clearTimeout(timer);
-  }
+  return buildBaseUrl(profile, { basePath: internals.basePath, secure: internals.secure });
 }
 
 function responseToStat(response: Response, normalizedPath: string): RemoteStat {
@@ -352,87 +287,6 @@ function responseToStat(response: Response, normalizedPath: string): RemoteStat 
   const etag = response.headers.get("etag");
   if (etag !== null) stat.uniqueId = etag;
   return stat;
-}
-
-function parseTotalBytes(response: Response, rangeOffset: number | undefined): number | undefined {
-  if (response.status === 206) {
-    const contentRange = response.headers.get("content-range");
-    if (contentRange !== null) {
-      const total = parseContentRangeTotal(contentRange);
-      if (total !== undefined) return total;
-    }
-  }
-  const contentLength = response.headers.get("content-length");
-  if (contentLength === null) return undefined;
-  const length = Number.parseInt(contentLength, 10);
-  if (!Number.isFinite(length) || length < 0) return undefined;
-  return rangeOffset !== undefined && rangeOffset > 0 ? length + rangeOffset : length;
-}
-
-function parseContentRangeTotal(value: string): number | undefined {
-  const match = /\/(\d+)\s*$/.exec(value);
-  if (match === null) return undefined;
-  const total = Number.parseInt(match[1] ?? "", 10);
-  return Number.isFinite(total) ? total : undefined;
-}
-
-function formatRangeHeader(offset: number, length: number | undefined): string {
-  if (length === undefined) return `bytes=${String(offset)}-`;
-  const end = offset + length - 1;
-  return `bytes=${String(offset)}-${String(end)}`;
-}
-
-function mapResponseError(response: Response, path: string): Error {
-  const details = { path, status: response.status, statusText: response.statusText };
-  if (response.status === 401) {
-    return new AuthenticationError({
-      details,
-      message: `HTTP authentication failed for ${path} (${String(response.status)})`,
-      retryable: false,
-    });
-  }
-  if (response.status === 403) {
-    return new PermissionDeniedError({
-      details,
-      message: `HTTP access forbidden for ${path} (${String(response.status)})`,
-      retryable: false,
-    });
-  }
-  if (response.status === 404) {
-    return new PathNotFoundError({
-      details,
-      message: `HTTP path not found: ${path}`,
-      retryable: false,
-    });
-  }
-  return new ConnectionError({
-    details,
-    message: `HTTP request for ${path} failed with status ${String(response.status)}`,
-    retryable: response.status >= 500,
-  });
-}
-
-async function* webStreamToAsyncIterable(
-  body: ReadableStream<Uint8Array>,
-): AsyncIterable<Uint8Array> {
-  const reader = body.getReader();
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value !== undefined) yield value;
-    }
-  } finally {
-    reader.releaseLock();
-  }
-}
-
-function secretToString(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (value instanceof Uint8Array || Buffer.isBuffer(value)) {
-    return Buffer.from(value as Uint8Array).toString("utf8");
-  }
-  return String(value);
 }
 
 // Placeholder export so TypeScript treats the module import as side-effect free.

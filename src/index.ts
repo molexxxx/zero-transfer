@@ -59,8 +59,10 @@ export {
 } from "./providers/memory";
 export {
   createHttpProviderFactory,
+  createWebDavProviderFactory,
   type HttpFetch,
   type HttpProviderOptions,
+  type WebDavProviderOptions,
 } from "./providers/web";
 export {
   redactConnectionProfile,
