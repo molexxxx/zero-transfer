@@ -220,8 +220,8 @@ Real-world examples live in [`examples/`](examples/). Run them with `tsx example
 
 ## Documentation
 
+- [Full API reference (HTML)](https://tonywied17.github.io/zero-transfer/) — TypeDoc HTML site, deployed from `main` on every push.
 - [Full API reference (Markdown)](docs/api-md/README.md) — every public symbol with parameter / property / type tables.
-- [Full API reference (HTML)](docs/api/index.html) — TypeDoc HTML site.
 - [Per-scope pages](docs/scopes/README.md) — one page per `@zero-transfer/*` package.
 - [Examples directory](examples/) — runnable real-world flows.
 
