@@ -22,11 +22,7 @@ import {
   UnsupportedFeatureError,
 } from "../../errors/ZeroTransferError";
 import { resolveSecret } from "../../profiles/SecretSource";
-import type {
-  ConnectionProfile,
-  RemoteEntry,
-  RemoteStat,
-} from "../../types/public";
+import type { ConnectionProfile, RemoteEntry, RemoteStat } from "../../types/public";
 import { basenameRemotePath, normalizeRemotePath } from "../../utils/path";
 import type { TransferProvider } from "../Provider";
 import type { ProviderFactory } from "../ProviderFactory";
@@ -95,8 +91,7 @@ export function createGoogleDriveProviderFactory(
 
   if (typeof fetchImpl !== "function") {
     throw new ConfigurationError({
-      message:
-        "Global fetch is unavailable; supply GoogleDriveProviderOptions.fetch explicitly",
+      message: "Global fetch is unavailable; supply GoogleDriveProviderOptions.fetch explicitly",
       retryable: false,
     });
   }
@@ -288,18 +283,19 @@ class GoogleDrivePathResolver {
     return parent.id;
   }
 
-  private async findChild(
-    parentId: string,
-    name: string,
-  ): Promise<DriveFileResource | undefined> {
+  private async findChild(parentId: string, name: string): Promise<DriveFileResource | undefined> {
     const q = `'${escapeDriveQ(parentId)}' in parents and name = '${escapeDriveQ(name)}' and trashed = false`;
-    const response = await driveApi(this.options, "GET", `/files?${buildSearch({
-      fields: GDRIVE_LIST_FIELDS,
-      pageSize: "10",
-      q,
-      supportsAllDrives: "true",
-      includeItemsFromAllDrives: "true",
-    })}`);
+    const response = await driveApi(
+      this.options,
+      "GET",
+      `/files?${buildSearch({
+        fields: GDRIVE_LIST_FIELDS,
+        pageSize: "10",
+        q,
+        supportsAllDrives: "true",
+        includeItemsFromAllDrives: "true",
+      })}`,
+    );
     const parsed = (await response.json()) as DriveListResponse;
     return parsed.files.find((f) => f.name === name);
   }

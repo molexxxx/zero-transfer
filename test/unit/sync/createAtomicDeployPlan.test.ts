@@ -33,9 +33,7 @@ describe("createAtomicDeployPlan", () => {
     expect(plan.provider).toBe("ftp");
 
     expect(plan.uploadPlan.steps).toHaveLength(2);
-    const uploadDestinationPaths = plan.uploadPlan.steps.map(
-      (step) => step.destination?.path,
-    );
+    const uploadDestinationPaths = plan.uploadPlan.steps.map((step) => step.destination?.path);
     expect(uploadDestinationPaths).toEqual(
       expect.arrayContaining([
         "/var/www/site/.releases/2030-06-01T12-00-00-000Z/index.html",

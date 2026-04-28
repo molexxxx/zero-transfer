@@ -17,9 +17,19 @@ describe("manifest", () => {
     it("captures a deterministic snapshot of a remote subtree", async () => {
       const fs = await createSession([
         { path: "/site", type: "directory" },
-        { path: "/site/index.html", type: "file", content: "<h1>", modifiedAt: new Date("2030-01-01T00:00:00Z") },
+        {
+          path: "/site/index.html",
+          type: "file",
+          content: "<h1>",
+          modifiedAt: new Date("2030-01-01T00:00:00Z"),
+        },
         { path: "/site/assets", type: "directory" },
-        { path: "/site/assets/app.js", type: "file", content: "x", modifiedAt: new Date("2030-01-02T00:00:00Z") },
+        {
+          path: "/site/assets/app.js",
+          type: "file",
+          content: "x",
+          modifiedAt: new Date("2030-01-02T00:00:00Z"),
+        },
       ]);
 
       const manifest = await createRemoteManifest(fs, "/site", {
@@ -65,7 +75,12 @@ describe("manifest", () => {
     it("round-trips a manifest through JSON", async () => {
       const fs = await createSession([
         { path: "/site", type: "directory" },
-        { path: "/site/index.html", type: "file", content: "x", modifiedAt: new Date("2030-01-01T00:00:00Z") },
+        {
+          path: "/site/index.html",
+          type: "file",
+          content: "x",
+          modifiedAt: new Date("2030-01-01T00:00:00Z"),
+        },
       ]);
       const original = await createRemoteManifest(fs, "/site", { provider: "memory" });
 
@@ -184,10 +199,7 @@ async function createSession(entries: FixtureEntry[]): Promise<RemoteFileSystem>
   return session.fs;
 }
 
-function manifestFromEntries(
-  root: string,
-  entries: RemoteManifest["entries"],
-): RemoteManifest {
+function manifestFromEntries(root: string, entries: RemoteManifest["entries"]): RemoteManifest {
   return {
     entries: [...entries].sort((left, right) =>
       left.path < right.path ? -1 : left.path > right.path ? 1 : 0,

@@ -3,10 +3,7 @@ export {
   type HttpFetch,
   type HttpProviderOptions,
 } from "./HttpProvider";
-export {
-  createWebDavProviderFactory,
-  type WebDavProviderOptions,
-} from "./WebDavProvider";
+export { createWebDavProviderFactory, type WebDavProviderOptions } from "./WebDavProvider";
 export {
   createMemoryS3MultipartResumeStore,
   createS3ProviderFactory,

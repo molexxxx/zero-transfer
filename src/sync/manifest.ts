@@ -63,12 +63,7 @@ export interface CreateRemoteManifestOptions {
   /** Optional traversal controls forwarded to {@link walkRemoteTree}. */
   walk?: Pick<
     WalkRemoteTreeOptions,
-    | "filter"
-    | "followSymlinks"
-    | "includeDirectories"
-    | "includeFiles"
-    | "maxDepth"
-    | "recursive"
+    "filter" | "followSymlinks" | "includeDirectories" | "includeFiles" | "maxDepth" | "recursive"
   >;
   /** Filter applied during traversal. Overrides `walk.filter` when provided. */
   filter?: RemoteTreeFilter;

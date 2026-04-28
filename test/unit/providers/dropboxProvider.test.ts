@@ -39,9 +39,10 @@ describe("createDropboxProviderFactory", () => {
     const requests: Array<{ url: string; body: string }> = [];
     const fetchImpl: HttpFetch = (input, init) => {
       requests.push({
-        body: typeof init?.body === "string"
-          ? init.body
-          : new TextDecoder().decode(init?.body as Uint8Array),
+        body:
+          typeof init?.body === "string"
+            ? init.body
+            : new TextDecoder().decode(init?.body as Uint8Array),
         url: input,
       });
       if (input.endsWith("/2/files/list_folder")) {
@@ -233,10 +234,9 @@ describe("createDropboxProviderFactory", () => {
       if (attempt === 1) return Promise.resolve(new Response("unauthorized", { status: 401 }));
       if (attempt === 2) return Promise.resolve(new Response("forbidden", { status: 403 }));
       return Promise.resolve(
-        new Response(
-          JSON.stringify({ error: { ".tag": "path", path: { ".tag": "not_found" } } }),
-          { status: 409 },
-        ),
+        new Response(JSON.stringify({ error: { ".tag": "path", path: { ".tag": "not_found" } } }), {
+          status: 409,
+        }),
       );
     };
     const session = await connect({ fetch: fetchImpl });

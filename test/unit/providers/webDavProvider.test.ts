@@ -145,9 +145,7 @@ describe("createWebDavProviderFactory", () => {
     const captured: Array<{ url: string; init?: RequestInit }> = [];
     const fetchImpl: HttpFetch = (input, init) => {
       captured.push({ ...(init !== undefined ? { init } : {}), url: input });
-      return Promise.resolve(
-        new Response(null, { headers: { etag: '"new-etag"' }, status: 201 }),
-      );
+      return Promise.resolve(new Response(null, { headers: { etag: '"new-etag"' }, status: 201 }));
     };
     const session = await connect({ fetch: fetchImpl });
     const transfers = session.transfers;
@@ -180,8 +178,10 @@ describe("createWebDavProviderFactory", () => {
   });
 
   it("maps 401, 403, 404 to typed errors on PROPFIND", async () => {
-    const make = (status: number): HttpFetch =>
-      () => Promise.resolve(new Response(null, { status }));
+    const make =
+      (status: number): HttpFetch =>
+      () =>
+        Promise.resolve(new Response(null, { status }));
 
     const auth = await connect({ fetch: make(401) });
     await expect(auth.fs.stat("/x")).rejects.toBeInstanceOf(AuthenticationError);
@@ -208,9 +208,7 @@ describe("createWebDavProviderFactory", () => {
     });
     await session.fs.list("/").catch(() => undefined);
     const headers = captured[0]?.init?.headers as Record<string, string> | undefined;
-    expect(headers?.["Authorization"]).toBe(
-      `Basic ${Buffer.from("alice:pw").toString("base64")}`,
-    );
+    expect(headers?.["Authorization"]).toBe(`Basic ${Buffer.from("alice:pw").toString("base64")}`);
   });
 });
 

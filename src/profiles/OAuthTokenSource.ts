@@ -31,9 +31,7 @@ export interface OAuthAccessToken {
 }
 
 /** Refresh callback invoked when no valid cached token is available. */
-export type OAuthRefreshCallback = () =>
-  | OAuthAccessToken
-  | Promise<OAuthAccessToken>;
+export type OAuthRefreshCallback = () => OAuthAccessToken | Promise<OAuthAccessToken>;
 
 /** Options accepted by {@link createOAuthTokenSecretSource}. */
 export interface OAuthTokenSecretSourceOptions {

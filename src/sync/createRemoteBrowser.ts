@@ -207,9 +207,7 @@ export function createRemoteBrowser(options: CreateRemoteBrowserOptions): Remote
 
   async function open(entry: RemoteEntry): Promise<RemoteBrowserSnapshot> {
     if (entry.type !== "directory") {
-      throw new TypeError(
-        `Cannot open non-directory entry "${entry.path}" (type: ${entry.type})`,
-      );
+      throw new TypeError(`Cannot open non-directory entry "${entry.path}" (type: ${entry.type})`);
     }
     return navigate(entry.path);
   }

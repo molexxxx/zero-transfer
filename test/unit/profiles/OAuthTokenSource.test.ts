@@ -76,14 +76,12 @@ describe("createOAuthTokenSecretSource", () => {
   it("coalesces concurrent renewals into a single refresh call", async () => {
     let calls = 0;
     let resolveRefresh: ((value: { accessToken: string }) => void) | undefined;
-    const password = createOAuthTokenSecretSource(
-      () => {
-        calls += 1;
-        return new Promise((resolve) => {
-          resolveRefresh = resolve;
-        });
-      },
-    );
+    const password = createOAuthTokenSecretSource(() => {
+      calls += 1;
+      return new Promise((resolve) => {
+        resolveRefresh = resolve;
+      });
+    });
 
     const a = resolveSecret(password);
     const b = resolveSecret(password);

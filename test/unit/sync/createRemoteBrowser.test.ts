@@ -108,9 +108,7 @@ describe("createRemoteBrowser navigation", () => {
   });
 
   it("rejects opening non-directory entries", async () => {
-    const fs = await createSession([
-      { path: "/file.txt", type: "file", content: "x" },
-    ]);
+    const fs = await createSession([{ path: "/file.txt", type: "file", content: "x" }]);
 
     const browser = createRemoteBrowser({ fs });
     const snapshot = await browser.refresh();

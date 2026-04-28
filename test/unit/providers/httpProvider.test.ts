@@ -33,7 +33,7 @@ describe("createHttpProviderFactory", () => {
       captured.push({ ...(init !== undefined ? { init } : {}), url: input });
       const headers = new Headers({
         "content-length": "1024",
-        etag: "\"abc123\"",
+        etag: '"abc123"',
         "last-modified": "Mon, 01 Jan 2030 00:00:00 GMT",
       });
       return Promise.resolve(new Response(null, { headers, status: 200 }));
@@ -51,7 +51,7 @@ describe("createHttpProviderFactory", () => {
       path: "/files/report.pdf",
       size: 1024,
       type: "file",
-      uniqueId: "\"abc123\"",
+      uniqueId: '"abc123"',
     });
     expect(stat.modifiedAt?.toISOString()).toBe("2030-01-01T00:00:00.000Z");
   });
@@ -60,7 +60,7 @@ describe("createHttpProviderFactory", () => {
     const fetchImpl: HttpFetch = () =>
       Promise.resolve(
         new Response("hello world", {
-          headers: { "content-length": "11", etag: "\"e\"" },
+          headers: { "content-length": "11", etag: '"e"' },
           status: 200,
         }),
       );
@@ -70,7 +70,7 @@ describe("createHttpProviderFactory", () => {
 
     const result = await transfers.read(makeReadRequest("/file.txt"));
     expect(result.totalBytes).toBe(11);
-    expect(result.checksum).toBe("\"e\"");
+    expect(result.checksum).toBe('"e"');
 
     const collected = await collectChunks(result.content);
     expect(new TextDecoder().decode(collected)).toBe("hello world");
@@ -124,8 +124,10 @@ describe("createHttpProviderFactory", () => {
   });
 
   it("maps 401, 403, 404 status codes to typed errors", async () => {
-    const fetchOverride = (status: number): HttpFetch =>
-      () => Promise.resolve(new Response(null, { status }));
+    const fetchOverride =
+      (status: number): HttpFetch =>
+      () =>
+        Promise.resolve(new Response(null, { status }));
 
     const auth = await connectHttp({ fetch: fetchOverride(401) });
     await expect(auth.fs.stat("/x")).rejects.toBeInstanceOf(AuthenticationError);

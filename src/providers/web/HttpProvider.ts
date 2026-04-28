@@ -140,7 +140,8 @@ class HttpProvider implements TransferProvider {
       const password = profile.password !== undefined ? await resolveSecret(profile.password) : "";
       const usernameText = secretToString(username);
       const passwordText = secretToString(password);
-      headers["Authorization"] = `Basic ${Buffer.from(`${usernameText}:${passwordText}`).toString("base64")}`;
+      headers["Authorization"] =
+        `Basic ${Buffer.from(`${usernameText}:${passwordText}`).toString("base64")}`;
     }
 
     const baseUrl = buildSessionBaseUrl(profile, this.internals);

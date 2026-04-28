@@ -152,9 +152,7 @@ describe("createS3ProviderFactory", () => {
     const captured: Array<{ url: string; init?: RequestInit }> = [];
     const fetchImpl: HttpFetch = (input, init) => {
       captured.push({ ...(init !== undefined ? { init } : {}), url: input });
-      return Promise.resolve(
-        new Response(null, { headers: { etag: '"new-etag"' }, status: 200 }),
-      );
+      return Promise.resolve(new Response(null, { headers: { etag: '"new-etag"' }, status: 200 }));
     };
     const session = await connect({ fetch: fetchImpl });
     const transfers = session.transfers;
@@ -334,8 +332,8 @@ describe("createS3ProviderFactory", () => {
     const xml = new TextDecoder().decode(completeBody);
     expect(xml).toContain("<PartNumber>1</PartNumber>");
     expect(xml).toContain("<PartNumber>4</PartNumber>");
-    expect(xml).toContain('<ETag>&quot;part-1-etag&quot;</ETag>');
-    expect(xml).toContain('<ETag>&quot;part-4-etag&quot;</ETag>');
+    expect(xml).toContain("<ETag>&quot;part-1-etag&quot;</ETag>");
+    expect(xml).toContain("<ETag>&quot;part-4-etag&quot;</ETag>");
   });
 
   it("aborts multipart upload via DELETE when a part fails", async () => {
@@ -449,9 +447,7 @@ describe("createS3ProviderFactory", () => {
       path: "/x.bin",
     });
     expect(checkpoint?.uploadId).toBe("resume-1");
-    expect(checkpoint?.parts).toEqual([
-      { byteEnd: partSize, etag: '"part-1-ok"', partNumber: 1 },
-    ]);
+    expect(checkpoint?.parts).toEqual([{ byteEnd: partSize, etag: '"part-1-ok"', partNumber: 1 }]);
   });
 
   it("resumes multipart upload from a stored checkpoint and completes successfully", async () => {
@@ -516,9 +512,7 @@ describe("createS3ProviderFactory", () => {
     expect(result.checksum).toBe('"final"');
 
     // No CreateMultipartUpload should have been issued — we resumed.
-    const initiates = captured.filter(
-      (c) => c.method === "POST" && c.url.includes("uploads="),
-    );
+    const initiates = captured.filter((c) => c.method === "POST" && c.url.includes("uploads="));
     expect(initiates).toHaveLength(0);
 
     const parts = captured.filter((c) => c.method === "PUT");

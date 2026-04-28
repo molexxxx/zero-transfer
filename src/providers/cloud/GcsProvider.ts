@@ -21,11 +21,7 @@ import {
   UnsupportedFeatureError,
 } from "../../errors/ZeroTransferError";
 import { resolveSecret } from "../../profiles/SecretSource";
-import type {
-  ConnectionProfile,
-  RemoteEntry,
-  RemoteStat,
-} from "../../types/public";
+import type { ConnectionProfile, RemoteEntry, RemoteStat } from "../../types/public";
 import { normalizeRemotePath } from "../../utils/path";
 import type { TransferProvider } from "../Provider";
 import type { ProviderFactory } from "../ProviderFactory";
@@ -394,11 +390,7 @@ async function gcsFetch(
   }
 }
 
-function objectToEntry(
-  item: GcsObject,
-  prefix: string,
-  parent: string,
-): RemoteEntry | undefined {
+function objectToEntry(item: GcsObject, prefix: string, parent: string): RemoteEntry | undefined {
   const tail = item.name.startsWith(prefix) ? item.name.slice(prefix.length) : item.name;
   if (tail === "" || tail.includes("/")) return undefined;
   const entry: RemoteEntry = {
@@ -466,11 +458,7 @@ function buildSearch(params: Record<string, string>): string {
   return search.toString();
 }
 
-function mapGcsResponseError(
-  response: Response,
-  contextPath: string,
-  bodyText: string,
-): Error {
+function mapGcsResponseError(response: Response, contextPath: string, bodyText: string): Error {
   const details = {
     bodyText: bodyText.slice(0, 500),
     path: contextPath,

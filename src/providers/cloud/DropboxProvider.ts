@@ -22,11 +22,7 @@ import {
   UnsupportedFeatureError,
 } from "../../errors/ZeroTransferError";
 import { resolveSecret } from "../../profiles/SecretSource";
-import type {
-  ConnectionProfile,
-  RemoteEntry,
-  RemoteStat,
-} from "../../types/public";
+import type { ConnectionProfile, RemoteEntry, RemoteStat } from "../../types/public";
 import { basenameRemotePath, normalizeRemotePath } from "../../utils/path";
 import type { TransferProvider } from "../Provider";
 import type { ProviderFactory } from "../ProviderFactory";
@@ -84,8 +80,7 @@ export function createDropboxProviderFactory(
 
   if (typeof fetchImpl !== "function") {
     throw new ConfigurationError({
-      message:
-        "Global fetch is unavailable; supply DropboxProviderOptions.fetch explicitly",
+      message: "Global fetch is unavailable; supply DropboxProviderOptions.fetch explicitly",
       retryable: false,
     });
   }
@@ -212,12 +207,12 @@ class DropboxFileSystem implements RemoteFileSystem {
     const entries: RemoteEntry[] = [];
     let cursor: string | undefined;
     do {
-      const body = cursor === undefined
-        ? { include_media_info: false, path: apiPath, recursive: false }
-        : { cursor };
-      const endpoint = cursor === undefined
-        ? "/2/files/list_folder"
-        : "/2/files/list_folder/continue";
+      const body =
+        cursor === undefined
+          ? { include_media_info: false, path: apiPath, recursive: false }
+          : { cursor };
+      const endpoint =
+        cursor === undefined ? "/2/files/list_folder" : "/2/files/list_folder/continue";
       const response = await dropboxRpc(this.options, endpoint, body);
       const parsed = (await response.json()) as DropboxListFolderResponse;
       for (const raw of parsed.entries) {
@@ -404,11 +399,7 @@ async function dropboxRpc(
   return response;
 }
 
-function mapDropboxResponseError(
-  response: Response,
-  contextPath: string,
-  bodyText: string,
-): Error {
+function mapDropboxResponseError(response: Response, contextPath: string, bodyText: string): Error {
   const details = {
     bodyText: bodyText.slice(0, 500),
     path: contextPath,

@@ -29,9 +29,7 @@ import {
 } from "./web";
 
 /** Identifier for an entry in {@link getBuiltinCapabilityMatrix}. */
-export type BuiltinProviderMatrixId =
-  | ProviderId
-  | "s3:multipart";
+export type BuiltinProviderMatrixId = ProviderId | "s3:multipart";
 
 /** Single entry in the built-in capability matrix. */
 export interface BuiltinCapabilityMatrixEntry {
@@ -149,8 +147,7 @@ export function formatCapabilityMatrixMarkdown(
 ): string {
   const header =
     "| Provider | list | stat | read | write | resume↓ | resume↑ | server-side copy/move | checksums | auth |";
-  const divider =
-    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |";
+  const divider = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |";
   const rows = matrix.map((entry) => {
     const c = entry.capabilities;
     const yesNo = (value: boolean): string => (value ? "✅" : "❌");

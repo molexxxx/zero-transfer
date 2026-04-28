@@ -17,11 +17,7 @@ import {
   UnsupportedFeatureError,
 } from "../../errors/ZeroTransferError";
 import { resolveSecret, type SecretSource } from "../../profiles/SecretSource";
-import type {
-  ConnectionProfile,
-  RemoteEntry,
-  RemoteStat,
-} from "../../types/public";
+import type { ConnectionProfile, RemoteEntry, RemoteStat } from "../../types/public";
 import { basenameRemotePath, normalizeRemotePath } from "../../utils/path";
 import type { TransferProvider } from "../Provider";
 import type { ProviderFactory } from "../ProviderFactory";
@@ -277,10 +273,12 @@ class S3Provider implements TransferProvider {
         ? secretToString(await resolveSecret(this.internals.sessionToken))
         : undefined;
 
-    const bucket = profile.host !== undefined && profile.host !== "" ? profile.host : this.internals.bucket;
+    const bucket =
+      profile.host !== undefined && profile.host !== "" ? profile.host : this.internals.bucket;
     if (bucket === undefined || bucket === "") {
       throw new ConfigurationError({
-        message: "S3 provider requires a bucket via S3ProviderOptions.bucket or ConnectionProfile.host",
+        message:
+          "S3 provider requires a bucket via S3ProviderOptions.bucket or ConnectionProfile.host",
         retryable: false,
       });
     }
@@ -719,7 +717,10 @@ async function s3Fetch(
   }
   let timer: ReturnType<typeof setTimeout> | undefined;
   if (options.timeoutMs !== undefined && options.timeoutMs > 0) {
-    timer = setTimeout(() => controller.abort(new Error("S3 request timed out")), options.timeoutMs);
+    timer = setTimeout(
+      () => controller.abort(new Error("S3 request timed out")),
+      options.timeoutMs,
+    );
   }
 
   try {

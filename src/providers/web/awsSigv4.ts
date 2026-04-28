@@ -110,10 +110,10 @@ function canonicalizeQuery(params: URLSearchParams): string {
   params.forEach((value, key) => {
     entries.push([key, value]);
   });
-  entries.sort(([ka, va], [kb, vb]) => (ka === kb ? (va < vb ? -1 : va > vb ? 1 : 0) : ka < kb ? -1 : 1));
-  return entries
-    .map(([key, value]) => `${encodeRfc3986(key)}=${encodeRfc3986(value)}`)
-    .join("&");
+  entries.sort(([ka, va], [kb, vb]) =>
+    ka === kb ? (va < vb ? -1 : va > vb ? 1 : 0) : ka < kb ? -1 : 1,
+  );
+  return entries.map(([key, value]) => `${encodeRfc3986(key)}=${encodeRfc3986(value)}`).join("&");
 }
 
 function encodeRfc3986(value: string): string {

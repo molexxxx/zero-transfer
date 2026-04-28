@@ -24,11 +24,7 @@ import {
   UnsupportedFeatureError,
 } from "../../errors/ZeroTransferError";
 import { resolveSecret } from "../../profiles/SecretSource";
-import type {
-  ConnectionProfile,
-  RemoteEntry,
-  RemoteStat,
-} from "../../types/public";
+import type { ConnectionProfile, RemoteEntry, RemoteStat } from "../../types/public";
 import { normalizeRemotePath } from "../../utils/path";
 import type { TransferProvider } from "../Provider";
 import type { ProviderFactory } from "../ProviderFactory";
@@ -51,11 +47,7 @@ import {
 export type { HttpFetch };
 
 const ONEDRIVE_DRIVE_BASE = "https://graph.microsoft.com/v1.0/me/drive";
-const ONEDRIVE_CHECKSUM_CAPABILITIES: ChecksumCapability[] = [
-  "sha1",
-  "sha256",
-  "quickxorhash",
-];
+const ONEDRIVE_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["sha1", "sha256", "quickxorhash"];
 
 /** Options accepted by {@link createOneDriveProviderFactory}. */
 export interface OneDriveProviderOptions {
@@ -88,8 +80,7 @@ export function createOneDriveProviderFactory(
 
   if (typeof fetchImpl !== "function") {
     throw new ConfigurationError({
-      message:
-        "Global fetch is unavailable; supply OneDriveProviderOptions.fetch explicitly",
+      message: "Global fetch is unavailable; supply OneDriveProviderOptions.fetch explicitly",
       retryable: false,
     });
   }

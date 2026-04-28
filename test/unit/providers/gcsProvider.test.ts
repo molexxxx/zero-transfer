@@ -30,15 +30,15 @@ describe("createGcsProviderFactory", () => {
 
   it("rejects connect() without a bearer token", async () => {
     const factory = createGcsProviderFactory({ bucket: "data", fetch: notImplementedFetch });
-    await expect(
-      factory.create().connect({ host: "", protocol: "ftp" }),
-    ).rejects.toBeInstanceOf(ConfigurationError);
+    await expect(factory.create().connect({ host: "", protocol: "ftp" })).rejects.toBeInstanceOf(
+      ConfigurationError,
+    );
   });
 
   it("throws ConfigurationError when bucket is missing", () => {
-    expect(() =>
-      createGcsProviderFactory({ bucket: "", fetch: notImplementedFetch }),
-    ).toThrow(ConfigurationError);
+    expect(() => createGcsProviderFactory({ bucket: "", fetch: notImplementedFetch })).toThrow(
+      ConfigurationError,
+    );
   });
 
   it("list() paginates GCS objects.list and splits prefixes from items", async () => {
@@ -48,29 +48,33 @@ describe("createGcsProviderFactory", () => {
       const url = new URL(input);
       const pageToken = url.searchParams.get("pageToken");
       if (pageToken === null) {
-        return Promise.resolve(jsonResponse({
+        return Promise.resolve(
+          jsonResponse({
+            items: [
+              {
+                etag: "etag-a",
+                md5Hash: "md5-a",
+                name: "folder/a.txt",
+                size: "10",
+                updated: "2030-01-01T00:00:00Z",
+              },
+            ],
+            nextPageToken: "tok-2",
+            prefixes: ["folder/sub/"],
+          }),
+        );
+      }
+      return Promise.resolve(
+        jsonResponse({
           items: [
             {
-              etag: "etag-a",
-              md5Hash: "md5-a",
-              name: "folder/a.txt",
-              size: "10",
-              updated: "2030-01-01T00:00:00Z",
+              etag: "etag-b",
+              name: "folder/b.txt",
+              size: "5",
             },
           ],
-          nextPageToken: "tok-2",
-          prefixes: ["folder/sub/"],
-        }));
-      }
-      return Promise.resolve(jsonResponse({
-        items: [
-          {
-            etag: "etag-b",
-            name: "folder/b.txt",
-            size: "5",
-          },
-        ],
-      }));
+        }),
+      );
     };
     const session = await connect({ fetch: fetchImpl });
 
@@ -104,13 +108,15 @@ describe("createGcsProviderFactory", () => {
   it("stat() GETs the object resource and returns md5/etag uniqueId", async () => {
     const fetchImpl: HttpFetch = (input) => {
       expect(input).toContain("/storage/v1/b/data/o/file.bin");
-      return Promise.resolve(jsonResponse({
-        etag: "etag-1",
-        md5Hash: "md5-1",
-        name: "file.bin",
-        size: "1024",
-        updated: "2030-01-01T00:00:00Z",
-      }));
+      return Promise.resolve(
+        jsonResponse({
+          etag: "etag-1",
+          md5Hash: "md5-1",
+          name: "file.bin",
+          size: "1024",
+          updated: "2030-01-01T00:00:00Z",
+        }),
+      );
     };
     const session = await connect({ fetch: fetchImpl });
 
@@ -158,11 +164,13 @@ describe("createGcsProviderFactory", () => {
     let captured: { url: string; init: RequestInit | undefined } | undefined;
     const fetchImpl: HttpFetch = (input, init) => {
       captured = { init, url: input };
-      return Promise.resolve(jsonResponse({
-        md5Hash: "md5-up",
-        name: "file.bin",
-        size: "5",
-      }));
+      return Promise.resolve(
+        jsonResponse({
+          md5Hash: "md5-up",
+          name: "file.bin",
+          size: "5",
+        }),
+      );
     };
     const session = await connect({ fetch: fetchImpl });
     const transfers = session.transfers;

@@ -11,13 +11,23 @@ describe("diffRemoteTrees", () => {
     const source = await createSession([
       { path: "/a", type: "directory" },
       { path: "/a/keep.txt", type: "file", content: "same" },
-      { path: "/a/changed.txt", type: "file", content: "new", modifiedAt: new Date("2030-01-02T00:00:00Z") },
+      {
+        path: "/a/changed.txt",
+        type: "file",
+        content: "new",
+        modifiedAt: new Date("2030-01-02T00:00:00Z"),
+      },
       { path: "/a/added.txt", type: "file", content: "added" },
     ]);
     const destination = await createSession([
       { path: "/a", type: "directory" },
       { path: "/a/keep.txt", type: "file", content: "same" },
-      { path: "/a/changed.txt", type: "file", content: "old-content", modifiedAt: new Date("2030-01-01T00:00:00Z") },
+      {
+        path: "/a/changed.txt",
+        type: "file",
+        content: "old-content",
+        modifiedAt: new Date("2030-01-01T00:00:00Z"),
+      },
       { path: "/a/removed.txt", type: "file", content: "gone" },
     ]);
 
@@ -71,12 +81,8 @@ describe("diffRemoteTrees", () => {
   });
 
   it("flags type mismatches as modified", async () => {
-    const source = await createSession([
-      { path: "/thing", type: "directory" },
-    ]);
-    const destination = await createSession([
-      { path: "/thing", type: "file", content: "data" },
-    ]);
+    const source = await createSession([{ path: "/thing", type: "directory" }]);
+    const destination = await createSession([{ path: "/thing", type: "file", content: "data" }]);
 
     const diff = await diffRemoteTrees(source, "/", destination, "/");
 

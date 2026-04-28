@@ -30,9 +30,9 @@ describe("createOneDriveProviderFactory", () => {
 
   it("rejects connect() without a bearer token", async () => {
     const factory = createOneDriveProviderFactory({ fetch: notImplementedFetch });
-    await expect(
-      factory.create().connect({ host: "", protocol: "ftp" }),
-    ).rejects.toBeInstanceOf(ConfigurationError);
+    await expect(factory.create().connect({ host: "", protocol: "ftp" })).rejects.toBeInstanceOf(
+      ConfigurationError,
+    );
   });
 
   it("list() paginates via @odata.nextLink", async () => {
@@ -40,29 +40,34 @@ describe("createOneDriveProviderFactory", () => {
     const fetchImpl: HttpFetch = (input) => {
       requests.push(input);
       if (input.endsWith("/me/drive/root:/folder:/children")) {
-        return Promise.resolve(jsonResponse({
-          "@odata.nextLink": "https://graph.microsoft.com/v1.0/me/drive/root:/folder:/children?$skiptoken=tok-2",
-          value: [
-            {
-              file: { hashes: { sha256Hash: "sha-a" } },
-              id: "id-a",
-              lastModifiedDateTime: "2030-01-01T00:00:00Z",
-              name: "a.txt",
-              size: 10,
-            },
-          ],
-        }));
+        return Promise.resolve(
+          jsonResponse({
+            "@odata.nextLink":
+              "https://graph.microsoft.com/v1.0/me/drive/root:/folder:/children?$skiptoken=tok-2",
+            value: [
+              {
+                file: { hashes: { sha256Hash: "sha-a" } },
+                id: "id-a",
+                lastModifiedDateTime: "2030-01-01T00:00:00Z",
+                name: "a.txt",
+                size: 10,
+              },
+            ],
+          }),
+        );
       }
       if (input.includes("$skiptoken=tok-2")) {
-        return Promise.resolve(jsonResponse({
-          value: [
-            {
-              folder: { childCount: 0 },
-              id: "id-sub",
-              name: "sub",
-            },
-          ],
-        }));
+        return Promise.resolve(
+          jsonResponse({
+            value: [
+              {
+                folder: { childCount: 0 },
+                id: "id-sub",
+                name: "sub",
+              },
+            ],
+          }),
+        );
       }
       return Promise.reject(new Error(`unexpected url: ${input}`));
     };
@@ -90,13 +95,15 @@ describe("createOneDriveProviderFactory", () => {
   it("stat() returns RemoteStat with sha256 checksum and modifiedAt", async () => {
     const fetchImpl: HttpFetch = (input) => {
       expect(input).toBe("https://graph.microsoft.com/v1.0/me/drive/root:/file.bin:");
-      return Promise.resolve(jsonResponse({
-        file: { hashes: { sha256Hash: "sha-1" } },
-        id: "id-1",
-        lastModifiedDateTime: "2030-01-01T00:00:00Z",
-        name: "file.bin",
-        size: 1024,
-      }));
+      return Promise.resolve(
+        jsonResponse({
+          file: { hashes: { sha256Hash: "sha-1" } },
+          id: "id-1",
+          lastModifiedDateTime: "2030-01-01T00:00:00Z",
+          name: "file.bin",
+          size: 1024,
+        }),
+      );
     };
     const session = await connect({ fetch: fetchImpl });
 
@@ -118,12 +125,14 @@ describe("createOneDriveProviderFactory", () => {
     const fetchImpl: HttpFetch = (input, init) => {
       captured.push({ init, url: input });
       if (input.endsWith("/file.bin:")) {
-        return Promise.resolve(jsonResponse({
-          file: { hashes: { sha256Hash: "sha-x" } },
-          id: "id-1",
-          name: "file.bin",
-          size: 4,
-        }));
+        return Promise.resolve(
+          jsonResponse({
+            file: { hashes: { sha256Hash: "sha-x" } },
+            id: "id-1",
+            name: "file.bin",
+            size: 4,
+          }),
+        );
       }
       return Promise.resolve(
         new Response(new Uint8Array([1, 2, 3, 4]), {
@@ -156,12 +165,14 @@ describe("createOneDriveProviderFactory", () => {
     const captured: Array<{ url: string; init: RequestInit | undefined }> = [];
     const fetchImpl: HttpFetch = (input, init) => {
       captured.push({ init, url: input });
-      return Promise.resolve(jsonResponse({
-        file: { hashes: { sha256Hash: "sha-up" } },
-        id: "id-up",
-        name: "file.bin",
-        size: 5,
-      }));
+      return Promise.resolve(
+        jsonResponse({
+          file: { hashes: { sha256Hash: "sha-up" } },
+          id: "id-up",
+          name: "file.bin",
+          size: 5,
+        }),
+      );
     };
     const session = await connect({ fetch: fetchImpl });
     const transfers = session.transfers;

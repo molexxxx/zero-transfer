@@ -6,7 +6,11 @@
 import type { RemoteFileSystem } from "../providers/RemoteFileSystem";
 import type { RemoteEntry } from "../types/public";
 import { normalizeRemotePath } from "../utils/path";
-import { walkRemoteTree, type RemoteTreeFilter, type WalkRemoteTreeOptions } from "./walkRemoteTree";
+import {
+  walkRemoteTree,
+  type RemoteTreeFilter,
+  type WalkRemoteTreeOptions,
+} from "./walkRemoteTree";
 
 /** Outcome category for an entry across the two compared trees. */
 export type RemoteTreeDiffStatus = "added" | "removed" | "modified" | "unchanged";
@@ -55,12 +59,7 @@ export interface DiffRemoteTreesOptions {
   /** Optional traversal controls applied to both sides. */
   walk?: Pick<
     WalkRemoteTreeOptions,
-    | "filter"
-    | "followSymlinks"
-    | "includeDirectories"
-    | "includeFiles"
-    | "maxDepth"
-    | "recursive"
+    "filter" | "followSymlinks" | "includeDirectories" | "includeFiles" | "maxDepth" | "recursive"
   >;
   /** Filter applied only to the source side. Overrides `walk.filter` when set. */
   sourceFilter?: RemoteTreeFilter;

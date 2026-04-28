@@ -67,9 +67,7 @@ const WEBDAV_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["etag"];
  * @param options - Optional provider configuration.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
  */
-export function createWebDavProviderFactory(
-  options: WebDavProviderOptions = {},
-): ProviderFactory {
+export function createWebDavProviderFactory(options: WebDavProviderOptions = {}): ProviderFactory {
   const id: ProviderId = options.id ?? "webdav";
   const secure = options.secure ?? false;
   const basePath = options.basePath ?? "";
@@ -91,9 +89,7 @@ export function createWebDavProviderFactory(
     list: true,
     maxConcurrency: 8,
     metadata: ["modifiedAt", "mimeType", "uniqueId"],
-    notes: [
-      "WebDAV provider buffers PUT bodies in memory; chunked uploads are not yet supported.",
-    ],
+    notes: ["WebDAV provider buffers PUT bodies in memory; chunked uploads are not yet supported."],
     provider: id,
     readStream: true,
     resumeDownload: true,
@@ -142,13 +138,12 @@ class WebDavProvider implements TransferProvider {
     const headers = { ...this.internals.defaultHeaders };
     if (profile.username !== undefined) {
       const username = await resolveSecret(profile.username);
-      const password =
-        profile.password !== undefined ? await resolveSecret(profile.password) : "";
+      const password = profile.password !== undefined ? await resolveSecret(profile.password) : "";
       const usernameText = secretToString(username);
       const passwordText = secretToString(password);
-      headers["Authorization"] = `Basic ${Buffer.from(
-        `${usernameText}:${passwordText}`,
-      ).toString("base64")}`;
+      headers["Authorization"] = `Basic ${Buffer.from(`${usernameText}:${passwordText}`).toString(
+        "base64",
+      )}`;
     }
 
     const baseUrl = buildBaseUrl(profile, {
@@ -353,7 +348,8 @@ interface PropfindEntry {
 
 function parsePropfindResponses(xml: string, baseUrl: URL): PropfindEntry[] {
   const entries: PropfindEntry[] = [];
-  const responseRegex = /<(?:[a-zA-Z0-9-]+:)?response\b[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9-]+:)?response>/gi;
+  const responseRegex =
+    /<(?:[a-zA-Z0-9-]+:)?response\b[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9-]+:)?response>/gi;
   let match: RegExpExecArray | null;
   while ((match = responseRegex.exec(xml)) !== null) {
     const inner = match[1] ?? "";

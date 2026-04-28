@@ -5,7 +5,11 @@
  */
 import type { ProviderId } from "../core/ProviderId";
 import { ConfigurationError } from "../errors/ZeroTransferError";
-import { createTransferPlan, type TransferPlan, type TransferPlanStep } from "../transfers/TransferPlan";
+import {
+  createTransferPlan,
+  type TransferPlan,
+  type TransferPlanStep,
+} from "../transfers/TransferPlan";
 import { joinRemotePath, normalizeRemotePath } from "../utils/path";
 import type { RemoteTreeDiff, RemoteTreeDiffEntry } from "./diffRemoteTrees";
 

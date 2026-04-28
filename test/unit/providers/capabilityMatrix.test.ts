@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  formatCapabilityMatrixMarkdown,
-  getBuiltinCapabilityMatrix,
-} from "../../../src/index";
+import { formatCapabilityMatrixMarkdown, getBuiltinCapabilityMatrix } from "../../../src/index";
 
 describe("getBuiltinCapabilityMatrix", () => {
   it("includes every shipped provider plus an S3 multipart variant", () => {

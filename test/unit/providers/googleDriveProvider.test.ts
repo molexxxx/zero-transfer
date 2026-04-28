@@ -30,9 +30,9 @@ describe("createGoogleDriveProviderFactory", () => {
 
   it("rejects connect() without a bearer token", async () => {
     const factory = createGoogleDriveProviderFactory({ fetch: notImplementedFetch });
-    await expect(
-      factory.create().connect({ host: "", protocol: "ftp" }),
-    ).rejects.toBeInstanceOf(ConfigurationError);
+    await expect(factory.create().connect({ host: "", protocol: "ftp" })).rejects.toBeInstanceOf(
+      ConfigurationError,
+    );
   });
 
   it("list() walks the path and paginates files.list", async () => {
@@ -44,43 +44,49 @@ describe("createGoogleDriveProviderFactory", () => {
       const pageToken = url.searchParams.get("pageToken");
       // Path resolution: find "folder" under root.
       if (q.includes("'root' in parents") && q.includes("name = 'folder'")) {
-        return Promise.resolve(jsonResponse({
-          files: [
-            {
-              id: "id-folder",
-              mimeType: "application/vnd.google-apps.folder",
-              name: "folder",
-            },
-          ],
-        }));
+        return Promise.resolve(
+          jsonResponse({
+            files: [
+              {
+                id: "id-folder",
+                mimeType: "application/vnd.google-apps.folder",
+                name: "folder",
+              },
+            ],
+          }),
+        );
       }
       // First listing page.
       if (q.includes("'id-folder' in parents") && pageToken === null) {
-        return Promise.resolve(jsonResponse({
-          files: [
-            {
-              id: "id-a",
-              md5Checksum: "md5-a",
-              mimeType: "text/plain",
-              modifiedTime: "2030-01-01T00:00:00Z",
-              name: "a.txt",
-              size: "10",
-            },
-          ],
-          nextPageToken: "tok-2",
-        }));
+        return Promise.resolve(
+          jsonResponse({
+            files: [
+              {
+                id: "id-a",
+                md5Checksum: "md5-a",
+                mimeType: "text/plain",
+                modifiedTime: "2030-01-01T00:00:00Z",
+                name: "a.txt",
+                size: "10",
+              },
+            ],
+            nextPageToken: "tok-2",
+          }),
+        );
       }
       // Second listing page.
       if (q.includes("'id-folder' in parents") && pageToken === "tok-2") {
-        return Promise.resolve(jsonResponse({
-          files: [
-            {
-              id: "id-sub",
-              mimeType: "application/vnd.google-apps.folder",
-              name: "sub",
-            },
-          ],
-        }));
+        return Promise.resolve(
+          jsonResponse({
+            files: [
+              {
+                id: "id-sub",
+                mimeType: "application/vnd.google-apps.folder",
+                name: "sub",
+              },
+            ],
+          }),
+        );
       }
       return Promise.reject(new Error(`unexpected url: ${input}`));
     };
@@ -110,18 +116,20 @@ describe("createGoogleDriveProviderFactory", () => {
       const url = new URL(input);
       const q = url.searchParams.get("q") ?? "";
       if (q.includes("name = 'file.bin'")) {
-        return Promise.resolve(jsonResponse({
-          files: [
-            {
-              id: "id-1",
-              md5Checksum: "md5-1",
-              mimeType: "application/octet-stream",
-              modifiedTime: "2030-01-01T00:00:00Z",
-              name: "file.bin",
-              size: "1024",
-            },
-          ],
-        }));
+        return Promise.resolve(
+          jsonResponse({
+            files: [
+              {
+                id: "id-1",
+                md5Checksum: "md5-1",
+                mimeType: "application/octet-stream",
+                modifiedTime: "2030-01-01T00:00:00Z",
+                name: "file.bin",
+                size: "1024",
+              },
+            ],
+          }),
+        );
       }
       return Promise.reject(new Error(`unexpected url: ${input}`));
     };
@@ -147,17 +155,19 @@ describe("createGoogleDriveProviderFactory", () => {
       const url = new URL(input);
       const q = url.searchParams.get("q");
       if (q !== null) {
-        return Promise.resolve(jsonResponse({
-          files: [
-            {
-              id: "id-1",
-              md5Checksum: "md5-x",
-              mimeType: "application/octet-stream",
-              name: "file.bin",
-              size: "4",
-            },
-          ],
-        }));
+        return Promise.resolve(
+          jsonResponse({
+            files: [
+              {
+                id: "id-1",
+                md5Checksum: "md5-x",
+                mimeType: "application/octet-stream",
+                name: "file.bin",
+                size: "4",
+              },
+            ],
+          }),
+        );
       }
       return Promise.resolve(
         new Response(new Uint8Array([1, 2, 3, 4]), {
@@ -196,13 +206,15 @@ describe("createGoogleDriveProviderFactory", () => {
         return Promise.resolve(jsonResponse({ files: [] }));
       }
       // Upload response.
-      return Promise.resolve(jsonResponse({
-        id: "id-new",
-        md5Checksum: "md5-up",
-        mimeType: "application/octet-stream",
-        name: "file.bin",
-        size: "5",
-      }));
+      return Promise.resolve(
+        jsonResponse({
+          id: "id-new",
+          md5Checksum: "md5-up",
+          mimeType: "application/octet-stream",
+          name: "file.bin",
+          size: "5",
+        }),
+      );
     };
     const session = await connect({ fetch: fetchImpl });
     const transfers = session.transfers;

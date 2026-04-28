@@ -21,11 +21,7 @@ import {
   UnsupportedFeatureError,
 } from "../../errors/ZeroTransferError";
 import { resolveSecret } from "../../profiles/SecretSource";
-import type {
-  ConnectionProfile,
-  RemoteEntry,
-  RemoteStat,
-} from "../../types/public";
+import type { ConnectionProfile, RemoteEntry, RemoteStat } from "../../types/public";
 import { normalizeRemotePath } from "../../utils/path";
 import type { TransferProvider } from "../Provider";
 import type { ProviderFactory } from "../ProviderFactory";
@@ -75,9 +71,7 @@ export interface AzureBlobProviderOptions {
 }
 
 /** Creates an Azure Blob Storage provider factory. */
-export function createAzureBlobProviderFactory(
-  options: AzureBlobProviderOptions,
-): ProviderFactory {
+export function createAzureBlobProviderFactory(options: AzureBlobProviderOptions): ProviderFactory {
   if (typeof options.container !== "string" || options.container === "") {
     throw new ConfigurationError({
       message: "AzureBlobProviderOptions.container is required",
@@ -88,8 +82,7 @@ export function createAzureBlobProviderFactory(
   const fetchImpl = options.fetch ?? globalThis.fetch;
   if (typeof fetchImpl !== "function") {
     throw new ConfigurationError({
-      message:
-        "Global fetch is unavailable; supply AzureBlobProviderOptions.fetch explicitly",
+      message: "Global fetch is unavailable; supply AzureBlobProviderOptions.fetch explicitly",
       retryable: false,
     });
   }
@@ -508,7 +501,7 @@ function decodeXmlText(value: string): string {
   return value
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, "\"")
+    .replace(/&quot;/g, '"')
     .replace(/&apos;/g, "'")
     .replace(/&amp;/g, "&");
 }
@@ -568,11 +561,7 @@ function basenameRemotePath(normalized: string): string {
   return idx === -1 ? trimmed : trimmed.slice(idx + 1);
 }
 
-function mapAzureResponseError(
-  response: Response,
-  contextPath: string,
-  bodyText: string,
-): Error {
+function mapAzureResponseError(response: Response, contextPath: string, bodyText: string): Error {
   const details = {
     bodyText: bodyText.slice(0, 500),
     path: contextPath,

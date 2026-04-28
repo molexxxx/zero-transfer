@@ -39,9 +39,9 @@ describe("createAzureBlobProviderFactory", () => {
       container: "data",
       fetch: notImplementedFetch,
     });
-    await expect(
-      factory.create().connect({ host: "", protocol: "ftp" }),
-    ).rejects.toBeInstanceOf(ConfigurationError);
+    await expect(factory.create().connect({ host: "", protocol: "ftp" })).rejects.toBeInstanceOf(
+      ConfigurationError,
+    );
   });
 
   it("throws ConfigurationError when container is missing", () => {
@@ -60,7 +60,8 @@ describe("createAzureBlobProviderFactory", () => {
       const url = new URL(input);
       const marker = url.searchParams.get("marker");
       if (marker === null) {
-        return Promise.resolve(xmlResponse(`<?xml version="1.0"?>
+        return Promise.resolve(
+          xmlResponse(`<?xml version="1.0"?>
           <EnumerationResults>
             <Blobs>
               <Blob>
@@ -77,9 +78,11 @@ describe("createAzureBlobProviderFactory", () => {
               </BlobPrefix>
             </Blobs>
             <NextMarker>tok-2</NextMarker>
-          </EnumerationResults>`));
+          </EnumerationResults>`),
+        );
       }
-      return Promise.resolve(xmlResponse(`<?xml version="1.0"?>
+      return Promise.resolve(
+        xmlResponse(`<?xml version="1.0"?>
         <EnumerationResults>
           <Blobs>
             <Blob>
@@ -91,7 +94,8 @@ describe("createAzureBlobProviderFactory", () => {
             </Blob>
           </Blobs>
           <NextMarker></NextMarker>
-        </EnumerationResults>`));
+        </EnumerationResults>`),
+      );
     };
     const session = await connect({ fetch: fetchImpl });
 
@@ -245,9 +249,11 @@ describe("createAzureBlobProviderFactory", () => {
     const captured: string[] = [];
     const fetchImpl: HttpFetch = (input) => {
       captured.push(input);
-      return Promise.resolve(xmlResponse(
-        `<EnumerationResults><Blobs></Blobs><NextMarker></NextMarker></EnumerationResults>`,
-      ));
+      return Promise.resolve(
+        xmlResponse(
+          `<EnumerationResults><Blobs></Blobs><NextMarker></NextMarker></EnumerationResults>`,
+        ),
+      );
     };
     const factory = createAzureBlobProviderFactory({
       account: "acct",

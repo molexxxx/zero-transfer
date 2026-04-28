@@ -129,9 +129,7 @@ const DEFAULT_RETAIN = 3;
  * @returns Structured deploy plan ready for execution by the calling host.
  * @throws {@link ConfigurationError} When `retain` is less than `1` or the destination root is empty.
  */
-export function createAtomicDeployPlan(
-  options: CreateAtomicDeployPlanOptions,
-): AtomicDeployPlan {
+export function createAtomicDeployPlan(options: CreateAtomicDeployPlanOptions): AtomicDeployPlan {
   const retain = options.retain ?? DEFAULT_RETAIN;
   if (retain < 1) {
     throw new ConfigurationError({
@@ -152,9 +150,13 @@ export function createAtomicDeployPlan(
   const strategy: AtomicDeployStrategy = options.strategy ?? "rename";
   const now = options.now?.() ?? new Date();
   const releaseId = options.releaseId ?? defaultReleaseId(now);
-  const releasesRoot = joinRemotePath(livePath, options.releasesDirectory ?? DEFAULT_RELEASES_DIRECTORY);
+  const releasesRoot = joinRemotePath(
+    livePath,
+    options.releasesDirectory ?? DEFAULT_RELEASES_DIRECTORY,
+  );
   const stagingPath = joinRemotePath(releasesRoot, releaseId);
-  const backupPath = strategy === "rename" ? joinRemotePath(releasesRoot, `${releaseId}.previous`) : undefined;
+  const backupPath =
+    strategy === "rename" ? joinRemotePath(releasesRoot, `${releaseId}.previous`) : undefined;
   const provider = options.destination.provider ?? options.source.provider;
   const warnings: string[] = [];
 
@@ -162,7 +164,9 @@ export function createAtomicDeployPlan(
     conflictPolicy: "overwrite",
     deletePolicy: "never",
     destination: {
-      ...(options.destination.provider !== undefined ? { provider: options.destination.provider } : {}),
+      ...(options.destination.provider !== undefined
+        ? { provider: options.destination.provider }
+        : {}),
       rootPath: stagingPath,
     },
     diff: options.diff,

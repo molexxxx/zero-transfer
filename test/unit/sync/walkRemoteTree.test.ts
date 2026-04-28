@@ -22,13 +22,7 @@ describe("walkRemoteTree", () => {
       paths.push(`${record.depth}:${record.entry.path}`);
     }
 
-    expect(paths).toEqual([
-      "0:/a",
-      "1:/a/b.txt",
-      "1:/a/c",
-      "2:/a/c/d.txt",
-      "0:/e.txt",
-    ]);
+    expect(paths).toEqual(["0:/a", "1:/a/b.txt", "1:/a/c", "2:/a/c/d.txt", "0:/e.txt"]);
   });
 
   it("respects maxDepth and recursive=false", async () => {
