@@ -209,6 +209,181 @@ describe("createS3ProviderFactory", () => {
     await session.fs.stat("/file.txt");
     expect(captured[0]).toBe("https://bucket-a.s3.us-east-1.amazonaws.com/file.txt");
   });
+
+  it("advertises resumeUpload when multipart is enabled", () => {
+    const factory = createS3ProviderFactory({
+      fetch: notImplementedFetch,
+      multipart: { enabled: true },
+    });
+    expect(factory.capabilities.resumeUpload).toBe(true);
+  });
+
+  it("falls back to single-shot PUT when payload is below the multipart threshold", async () => {
+    const captured: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}), url: input });
+      return Promise.resolve(
+        new Response(null, { headers: { etag: '"small-etag"' }, status: 200 }),
+      );
+    };
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      multipart: { enabled: true, partSizeBytes: 5 * 1024 * 1024, thresholdBytes: 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    const payload = new Uint8Array(512);
+    const result = await transfers.write(makeWriteRequest("/small.bin", payload));
+
+    expect(captured).toHaveLength(1);
+    expect(captured[0]?.init?.method).toBe("PUT");
+    expect(captured[0]?.url).toBe("https://s3.us-east-1.amazonaws.com/bucket-a/small.bin");
+    expect(result.bytesTransferred).toBe(512);
+    expect(result.checksum).toBe('"small-etag"');
+  });
+
+  it("performs CreateMultipartUpload + UploadPart + CompleteMultipartUpload for large payloads", async () => {
+    const partSize = 1024;
+    const threshold = 1024;
+    const totalBytes = partSize * 3 + 100; // 4 parts (3 full + 1 final 100B)
+    const captured: Array<{ url: string; method: string; body: RequestInit["body"] }> = [];
+    const fetchImpl: HttpFetch = (input, init) => {
+      const url = input;
+      const method = init?.method ?? "GET";
+      captured.push({ body: init?.body ?? null, method, url });
+      const parsed = new URL(url);
+      if (method === "POST" && parsed.searchParams.has("uploads")) {
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0" encoding="UTF-8"?>
+             <InitiateMultipartUploadResult>
+               <UploadId>upload-xyz</UploadId>
+             </InitiateMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      if (method === "PUT" && parsed.searchParams.has("partNumber")) {
+        const partNumber = parsed.searchParams.get("partNumber") ?? "0";
+        return Promise.resolve(
+          new Response(null, {
+            headers: { etag: `"part-${partNumber}-etag"` },
+            status: 200,
+          }),
+        );
+      }
+      if (method === "POST" && parsed.searchParams.has("uploadId")) {
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0" encoding="UTF-8"?>
+             <CompleteMultipartUploadResult>
+               <ETag>"final-etag"</ETag>
+             </CompleteMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.reject(new Error(`unexpected request: ${method} ${url}`));
+    };
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      multipart: { enabled: true, partSizeBytes: partSize, thresholdBytes: threshold },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    const payload = new Uint8Array(totalBytes);
+    for (let i = 0; i < payload.byteLength; i += 1) payload[i] = i & 0xff;
+    const result = await transfers.write(makeWriteRequest("/large.bin", payload));
+
+    expect(result.bytesTransferred).toBe(totalBytes);
+    expect(result.checksum).toBe('"final-etag"');
+
+    const initiate = captured[0];
+    expect(initiate?.method).toBe("POST");
+    expect(initiate?.url).toContain("uploads=");
+
+    const parts = captured.filter((c) => c.method === "PUT");
+    expect(parts).toHaveLength(4);
+    expect(parts[0]?.url).toContain("partNumber=1");
+    expect(parts[1]?.url).toContain("partNumber=2");
+    expect(parts[2]?.url).toContain("partNumber=3");
+    expect(parts[3]?.url).toContain("partNumber=4");
+
+    const complete = captured[captured.length - 1];
+    expect(complete?.method).toBe("POST");
+    expect(complete?.url).toContain("uploadId=upload-xyz");
+    const completeBody = complete?.body;
+    if (!(completeBody instanceof Uint8Array)) {
+      throw new Error("expected Uint8Array body for CompleteMultipartUpload");
+    }
+    const xml = new TextDecoder().decode(completeBody);
+    expect(xml).toContain("<PartNumber>1</PartNumber>");
+    expect(xml).toContain("<PartNumber>4</PartNumber>");
+    expect(xml).toContain('<ETag>&quot;part-1-etag&quot;</ETag>');
+    expect(xml).toContain('<ETag>&quot;part-4-etag&quot;</ETag>');
+  });
+
+  it("aborts multipart upload via DELETE when a part fails", async () => {
+    const captured: Array<{ url: string; method: string }> = [];
+    const fetchImpl: HttpFetch = (input, init) => {
+      const url = input;
+      const method = init?.method ?? "GET";
+      captured.push({ method, url });
+      const parsed = new URL(url);
+      if (method === "POST" && parsed.searchParams.has("uploads")) {
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0" encoding="UTF-8"?>
+             <InitiateMultipartUploadResult>
+               <UploadId>upload-abort</UploadId>
+             </InitiateMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      if (method === "PUT" && parsed.searchParams.has("partNumber")) {
+        return Promise.resolve(new Response(null, { status: 500 }));
+      }
+      if (method === "DELETE" && parsed.searchParams.has("uploadId")) {
+        return Promise.resolve(new Response(null, { status: 204 }));
+      }
+      return Promise.reject(new Error(`unexpected request: ${method} ${url}`));
+    };
+    const partSize = 1024;
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      multipart: { enabled: true, partSizeBytes: partSize, thresholdBytes: partSize },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    const payload = new Uint8Array(partSize * 2 + 1);
+    await expect(transfers.write(makeWriteRequest("/x.bin", payload))).rejects.toThrow();
+
+    const deletes = captured.filter((c) => c.method === "DELETE");
+    expect(deletes).toHaveLength(1);
+    expect(deletes[0]?.url).toContain("uploadId=upload-abort");
+  });
 });
 
 const notImplementedFetch: HttpFetch = () =>

@@ -6,6 +6,7 @@
 
 - Prepared the package to publish under the `zero-transfer` npm organization as `@zero-transfer/sdk`.
 - Updated repository metadata and documentation for the `tonywied17/zero-transfer` GitHub repository.
+- Refreshed the animated ZeroTransfer logo and package tagline around a unified file-transfer SDK identity.
 - Renamed package foundation from legacy FTP-first naming to `@zero-transfer/sdk`.
 - Switched the package entry point to the new TypeScript `src/` rebuild output.
 - Removed the old CommonJS FTP implementation after the TypeScript foundation became the package surface.
@@ -16,7 +17,7 @@
 - TypeScript, build, lint, format, typecheck, test, coverage, and package dry-run scripts.
 - Initial parser-first test harness with 90% coverage gates.
 - Verbose JSDoc comments for the TypeScript API foundation.
-- Animated ZeroTransfer SVG logo for the repository README.
+- Animated ZeroTransfer SVG logo assets for the repository README and package.
 - npmjs-only publishing metadata with provenance enabled.
 - CI, release, CodeQL, Dependabot, and integration-server scaffolding.
 

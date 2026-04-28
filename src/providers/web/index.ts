@@ -9,5 +9,6 @@ export {
 } from "./WebDavProvider";
 export {
   createS3ProviderFactory,
+  type S3MultipartOptions,
   type S3ProviderOptions,
 } from "./S3Provider";

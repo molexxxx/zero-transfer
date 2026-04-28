@@ -65,7 +65,22 @@ export interface S3ProviderOptions {
   defaultHeaders?: Record<string, string>;
   /** Optional STS session token applied to every request. */
   sessionToken?: SecretSource;
+  /** Multipart upload tuning. Disabled by default; enable for objects above ~5 GiB or when streaming. */
+  multipart?: S3MultipartOptions;
 }
+
+/** Multipart upload tuning for the S3 provider. */
+export interface S3MultipartOptions {
+  /** Enable multipart upload. Defaults to `false`. */
+  enabled?: boolean;
+  /** Object size threshold in bytes above which multipart is used. Defaults to 8 MiB. */
+  thresholdBytes?: number;
+  /** Target part size in bytes. Must be ≥ 5 MiB except for the final part. Defaults to 8 MiB. */
+  partSizeBytes?: number;
+}
+
+const DEFAULT_MULTIPART_PART_SIZE = 8 * 1024 * 1024;
+const DEFAULT_MULTIPART_THRESHOLD = 8 * 1024 * 1024;
 
 const S3_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["etag"];
 
@@ -102,6 +117,13 @@ export function createS3ProviderFactory(options: S3ProviderOptions = {}): Provid
     });
   }
 
+  const multipartEnabled = options.multipart?.enabled ?? false;
+  const multipart: ResolvedMultipartOptions = {
+    enabled: multipartEnabled,
+    partSizeBytes: options.multipart?.partSizeBytes ?? DEFAULT_MULTIPART_PART_SIZE,
+    thresholdBytes: options.multipart?.thresholdBytes ?? DEFAULT_MULTIPART_THRESHOLD,
+  };
+
   const capabilities: CapabilitySet = {
     atomicRename: false,
     authentication: ["password", "token"],
@@ -111,13 +133,17 @@ export function createS3ProviderFactory(options: S3ProviderOptions = {}): Provid
     list: true,
     maxConcurrency: 16,
     metadata: ["modifiedAt", "mimeType", "uniqueId"],
-    notes: [
-      "S3 provider performs single-shot PUT uploads; multipart upload is not yet supported.",
-    ],
+    notes: multipartEnabled
+      ? [
+          `S3 multipart upload enabled (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`,
+        ]
+      : [
+          "S3 provider performs single-shot PUT uploads; pass multipart.enabled to stream large objects.",
+        ],
     provider: id,
     readStream: true,
     resumeDownload: true,
-    resumeUpload: false,
+    resumeUpload: multipartEnabled,
     serverSideCopy: false,
     serverSideMove: false,
     stat: true,
@@ -134,6 +160,7 @@ export function createS3ProviderFactory(options: S3ProviderOptions = {}): Provid
         endpointUrl,
         fetch: fetchImpl,
         id,
+        multipart,
         pathStyle,
         region,
         service,
@@ -144,6 +171,12 @@ export function createS3ProviderFactory(options: S3ProviderOptions = {}): Provid
   };
 }
 
+interface ResolvedMultipartOptions {
+  enabled: boolean;
+  partSizeBytes: number;
+  thresholdBytes: number;
+}
+
 interface S3ProviderInternalOptions {
   bucket?: string;
   capabilities: CapabilitySet;
@@ -151,6 +184,7 @@ interface S3ProviderInternalOptions {
   endpointUrl: URL;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedMultipartOptions;
   pathStyle: boolean;
   region: string;
   service: string;
@@ -196,6 +230,7 @@ class S3Provider implements TransferProvider {
       endpointUrl: this.internals.endpointUrl,
       fetch: this.internals.fetch,
       id: this.internals.id,
+      multipart: this.internals.multipart,
       pathStyle: this.internals.pathStyle,
       region: this.internals.region,
       secretAccessKey,
@@ -215,6 +250,7 @@ interface S3SessionOptions {
   endpointUrl: URL;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedMultipartOptions;
   pathStyle: boolean;
   region: string;
   secretAccessKey: string;
@@ -328,13 +364,174 @@ class S3TransferOperations implements ProviderTransferOperations {
     if (request.offset !== undefined && request.offset > 0) {
       throw new UnsupportedFeatureError({
         details: { offset: request.offset },
-        message: "S3 provider does not yet support multipart/resume uploads",
+        message: "S3 provider does not yet support resuming a prior multipart upload",
         retryable: false,
       });
     }
     const normalized = normalizeRemotePath(request.endpoint.path);
+    const multipart = this.options.multipart;
+    if (multipart.enabled) {
+      return this.writeMultipart(request, normalized);
+    }
+    return this.writeSingleShot(request, normalized);
+  }
+
+  private async writeSingleShot(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+  ): Promise<ProviderTransferWriteResult> {
     const url = buildObjectUrl(this.options, normalized);
     const buffered = await collectChunks(request.content);
+    const response = await s3Fetch(this.options, "PUT", url, {
+      ...(request.signal !== undefined ? { signal: request.signal } : {}),
+      body: buffered,
+      extraHeaders: { "content-type": "application/octet-stream" },
+    });
+    if (!response.ok) throw mapResponseError(response, normalized);
+    request.reportProgress(buffered.byteLength, buffered.byteLength);
+    const result: ProviderTransferWriteResult = {
+      bytesTransferred: buffered.byteLength,
+      totalBytes: buffered.byteLength,
+    };
+    const etag = response.headers.get("etag");
+    if (etag !== null) result.checksum = etag;
+    return result;
+  }
+
+  private async writeMultipart(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+  ): Promise<ProviderTransferWriteResult> {
+    const multipart = this.options.multipart;
+    const partSize = multipart.partSizeBytes;
+    const objectUrl = buildObjectUrl(this.options, normalized);
+
+    // Buffer chunks until we either reach `thresholdBytes` (single-shot) or
+    // the part size for the first part (multipart upload).
+    const initialBuffer: Uint8Array[] = [];
+    let initialSize = 0;
+    const iterator = request.content[Symbol.asyncIterator]();
+    while (initialSize <= multipart.thresholdBytes) {
+      const next = await iterator.next();
+      if (next.done === true) break;
+      const chunk = next.value;
+      if (chunk.byteLength === 0) continue;
+      initialBuffer.push(chunk);
+      initialSize += chunk.byteLength;
+    }
+    if (initialSize <= multipart.thresholdBytes) {
+      // Source ended below the threshold: fall back to single-shot PUT.
+      const buffered = concat(initialBuffer, initialSize);
+      return this.singleShotFromBuffer(request, normalized, buffered);
+    }
+    const trailing = concat(initialBuffer, initialSize);
+
+    // Initiate multipart upload.
+    const initiateUrl = new URL(objectUrl.toString());
+    initiateUrl.searchParams.set("uploads", "");
+    const initiateResponse = await s3Fetch(this.options, "POST", initiateUrl, {
+      ...(request.signal !== undefined ? { signal: request.signal } : {}),
+      extraHeaders: { "content-type": "application/octet-stream" },
+    });
+    if (!initiateResponse.ok) throw mapResponseError(initiateResponse, normalized);
+    const initiateBody = await initiateResponse.text();
+    const uploadId = innerText(initiateBody, "UploadId");
+    if (uploadId === undefined || uploadId === "") {
+      throw new ConnectionError({
+        message: "S3 CreateMultipartUpload returned no UploadId",
+        retryable: true,
+      });
+    }
+
+    const parts: Array<{ partNumber: number; etag: string }> = [];
+    let bytesTransferred = 0;
+    let partNumber = 1;
+    let buffer: Uint8Array[] = [trailing];
+    let bufferSize = trailing.byteLength;
+
+    const flushPart = async (final: boolean): Promise<void> => {
+      while (bufferSize >= partSize || (final && bufferSize > 0)) {
+        const take = final ? bufferSize : partSize;
+        const partBytes = sliceFromBuffers(buffer, take);
+        buffer = partBytes.remaining;
+        bufferSize -= partBytes.bytes.byteLength;
+        const partUrl = new URL(objectUrl.toString());
+        partUrl.searchParams.set("partNumber", String(partNumber));
+        partUrl.searchParams.set("uploadId", uploadId);
+        const partResponse = await s3Fetch(this.options, "PUT", partUrl, {
+          ...(request.signal !== undefined ? { signal: request.signal } : {}),
+          body: partBytes.bytes,
+        });
+        if (!partResponse.ok) {
+          throw mapResponseError(partResponse, normalized);
+        }
+        const partEtag = partResponse.headers.get("etag");
+        if (partEtag === null) {
+          throw new ConnectionError({
+            message: `S3 UploadPart returned no ETag for part ${String(partNumber)}`,
+            retryable: true,
+          });
+        }
+        parts.push({ etag: partEtag, partNumber });
+        bytesTransferred += partBytes.bytes.byteLength;
+        request.reportProgress(bytesTransferred, undefined);
+        partNumber += 1;
+      }
+    };
+
+    try {
+      await flushPart(false);
+      while (true) {
+        request.throwIfAborted();
+        const next = await iterator.next();
+        if (next.done === true) break;
+        if (next.value.byteLength === 0) continue;
+        buffer.push(next.value);
+        bufferSize += next.value.byteLength;
+        await flushPart(false);
+      }
+      await flushPart(true);
+    } catch (error) {
+      await abortMultipart(this.options, objectUrl, uploadId).catch(() => undefined);
+      throw error;
+    }
+
+    if (parts.length === 0) {
+      await abortMultipart(this.options, objectUrl, uploadId).catch(() => undefined);
+      throw new ConnectionError({
+        message: "S3 multipart upload completed with zero parts",
+        retryable: false,
+      });
+    }
+
+    const completeUrl = new URL(objectUrl.toString());
+    completeUrl.searchParams.set("uploadId", uploadId);
+    const xmlBody = buildCompleteMultipartBody(parts);
+    const completeResponse = await s3Fetch(this.options, "POST", completeUrl, {
+      ...(request.signal !== undefined ? { signal: request.signal } : {}),
+      body: new TextEncoder().encode(xmlBody),
+      extraHeaders: { "content-type": "application/xml" },
+    });
+    if (!completeResponse.ok) {
+      await abortMultipart(this.options, objectUrl, uploadId).catch(() => undefined);
+      throw mapResponseError(completeResponse, normalized);
+    }
+    const completeBody = await completeResponse.text();
+    const finalEtag = innerText(completeBody, "ETag");
+    const result: ProviderTransferWriteResult = {
+      bytesTransferred,
+      totalBytes: bytesTransferred,
+    };
+    if (finalEtag !== undefined) result.checksum = finalEtag;
+    return result;
+  }
+
+  private async singleShotFromBuffer(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+    buffered: Uint8Array,
+  ): Promise<ProviderTransferWriteResult> {
+    const url = buildObjectUrl(this.options, normalized);
     const response = await s3Fetch(this.options, "PUT", url, {
       ...(request.signal !== undefined ? { signal: request.signal } : {}),
       body: buffered,
@@ -448,6 +645,76 @@ async function collectChunks(source: AsyncIterable<Uint8Array>): Promise<Uint8Ar
     offset += chunk.byteLength;
   }
   return out;
+}
+
+function concat(chunks: Uint8Array[], totalSize: number): Uint8Array {
+  const out = new Uint8Array(totalSize);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
+function sliceFromBuffers(
+  buffers: Uint8Array[],
+  size: number,
+): { bytes: Uint8Array; remaining: Uint8Array[] } {
+  const out = new Uint8Array(size);
+  let offset = 0;
+  let i = 0;
+  while (offset < size && i < buffers.length) {
+    const chunk = buffers[i];
+    if (chunk === undefined) {
+      i += 1;
+      continue;
+    }
+    const remaining = size - offset;
+    if (chunk.byteLength <= remaining) {
+      out.set(chunk, offset);
+      offset += chunk.byteLength;
+      i += 1;
+    } else {
+      out.set(chunk.subarray(0, remaining), offset);
+      const leftover = chunk.subarray(remaining);
+      const next = buffers.slice(i + 1);
+      next.unshift(leftover);
+      return { bytes: out, remaining: next };
+    }
+  }
+  return { bytes: out.subarray(0, offset), remaining: buffers.slice(i) };
+}
+
+async function abortMultipart(
+  options: S3SessionOptions,
+  objectUrl: URL,
+  uploadId: string,
+): Promise<void> {
+  const url = new URL(objectUrl.toString());
+  url.searchParams.set("uploadId", uploadId);
+  await s3Fetch(options, "DELETE", url);
+}
+
+function buildCompleteMultipartBody(
+  parts: ReadonlyArray<{ partNumber: number; etag: string }>,
+): string {
+  const partsXml = parts
+    .map(
+      (part) =>
+        `<Part><PartNumber>${String(part.partNumber)}</PartNumber><ETag>${escapeXml(part.etag)}</ETag></Part>`,
+    )
+    .join("");
+  return `<?xml version="1.0" encoding="UTF-8"?><CompleteMultipartUpload>${partsXml}</CompleteMultipartUpload>`;
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
 function parseListObjectsV2(xml: string, prefix: string): RemoteEntry[] {

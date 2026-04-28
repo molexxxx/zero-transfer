@@ -63,6 +63,7 @@ export {
   createWebDavProviderFactory,
   type HttpFetch,
   type HttpProviderOptions,
+  type S3MultipartOptions,
   type S3ProviderOptions,
   type WebDavProviderOptions,
 } from "./providers/web";
