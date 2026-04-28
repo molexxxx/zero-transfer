@@ -325,6 +325,17 @@ export {
   type RetentionPolicy,
 } from "./mft";
 export {
+  InMemoryAuditLog,
+  composeAuditLogs,
+  createJsonlAuditLog,
+  freezeReceipt,
+  summarizeError,
+  type JsonlWriter,
+  type MftAuditEntry,
+  type MftAuditEntryType,
+  type MftAuditLog,
+} from "./mft";
+export {
   MftScheduler,
   ScheduleRegistry,
   nextCronFireAt,

@@ -28,6 +28,17 @@ export {
   type RetentionPolicy,
 } from "./retention";
 export {
+  InMemoryAuditLog,
+  composeAuditLogs,
+  createJsonlAuditLog,
+  freezeReceipt,
+  summarizeError,
+  type JsonlWriter,
+  type MftAuditEntry,
+  type MftAuditEntryType,
+  type MftAuditLog,
+} from "./audit";
+export {
   nextScheduleFireAt,
   validateSchedule,
   type CronScheduleTrigger,
