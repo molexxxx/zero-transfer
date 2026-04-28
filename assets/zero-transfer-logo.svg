@@ -67,7 +67,7 @@
       <animate attributeName="opacity" values="0.08;0.4;0.08" dur="2.1s" begin="1.2s" repeatCount="indefinite"/>
     </circle>
 
-    <!-- ─── RING A  (cyan, plane gyrates CW 18 s, ry starts phase 0) ─── -->
+    <!-- --- RING A  (cyan, plane gyrates CW 18 s, ry starts phase 0) --- -->
     <g>
       <animateTransform attributeName="transform" type="rotate"
         from="0" to="360" dur="18s" repeatCount="indefinite"/>
@@ -92,7 +92,7 @@
       </ellipse>
     </g>
 
-    <!-- ─── RING B  (indigo, plane gyrates CCW 24 s, ry phase +2.33 s) ─── -->
+    <!-- --- RING B  (indigo, plane gyrates CCW 24 s, ry phase +2.33 s) --- -->
     <g>
       <animateTransform attributeName="transform" type="rotate"
         from="60" to="-300" dur="24s" repeatCount="indefinite"/>
@@ -114,7 +114,7 @@
       </ellipse>
     </g>
 
-    <!-- ─── RING C  (violet, plane gyrates CW 21 s, ry phase +4.67 s) ─── -->
+    <!-- --- RING C  (violet, plane gyrates CW 21 s, ry phase +4.67 s) --- -->
     <g>
       <animateTransform attributeName="transform" type="rotate"
         from="120" to="480" dur="21s" repeatCount="indefinite"/>

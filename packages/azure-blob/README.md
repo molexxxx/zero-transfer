@@ -1,14 +1,10 @@
 # @zero-transfer/azure-blob
 
-Azure Blob Storage provider for ZeroTransfer.
+> Azure Blob Storage with SAS or AAD bearer auth.
 
-> **Alpha umbrella package.** This package currently re-exports the entire
-> [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk)
-> public surface. Future releases will narrow this package to only its
-> dedicated subset (see the
-> [ZeroTransfer remake plan](https://github.com/tonywied17/zero-transfer/blob/main/zero-transfer-remake.md#future-monorepo-shape)).
-> If you want every provider in one install today, depend on
-> `@zero-transfer/sdk` directly.
+Azure Blob Storage provider — SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, and single-shot block-blob uploads. Wire OAuth refresh via `createOAuthTokenSecretSource()`.
+
+> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
 
 ## Install
 
@@ -24,8 +20,11 @@ import { createTransferClient } from "@zero-transfer/azure-blob";
 const client = createTransferClient();
 ```
 
-See the [main README](https://github.com/tonywied17/zero-transfer#readme) for
-full documentation.
+## Documentation
+
+- [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/azure-blob.md)
+- [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)
+- [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)
 
 ## License
 

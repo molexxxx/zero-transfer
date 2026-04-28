@@ -38,7 +38,7 @@ const logger: ZeroTransferLogger = {
 };
 
 async function main(): Promise<void> {
-  // ── 1. Build a single client that speaks SFTP, S3, Azure Blob, and the local FS.
+  // -- 1. Build a single client that speaks SFTP, S3, Azure Blob, and the local FS.
   const azureToken = createOAuthTokenSecretSource(
     () => ({
       accessToken: process.env["AZURE_AAD_TOKEN"] ?? "demo-token",
@@ -65,7 +65,7 @@ async function main(): Promise<void> {
     ],
   });
 
-  // ── 2. Profiles for each side. Real apps load these from a vault / env.
+  // -- 2. Profiles for each side. Real apps load these from a vault / env.
   const sftp: ConnectionProfile = {
     host: "sftp.partner.example.com",
     password: { env: "PARTNER_PASSWORD" },
@@ -85,7 +85,7 @@ async function main(): Promise<void> {
   };
   const local: ConnectionProfile = { host: "local", provider: "local" };
 
-  // ── 3. Open every session up front so the queue can resolve providers fast.
+  // -- 3. Open every session up front so the queue can resolve providers fast.
   const sessions = await Promise.all([
     client.connect(sftp),
     client.connect(s3),
@@ -116,7 +116,7 @@ async function main(): Promise<void> {
   };
   const executor = createProviderTransferExecutor({ resolveSession });
 
-  // ── 4. Webhook audit fan-out — receipts and errors go to the ops channel.
+  // -- 4. Webhook audit fan-out — receipts and errors go to the ops channel.
   const audit = createWebhookAuditLog({
     onDelivery: ({ entry, result }) =>
       logger.info?.({
@@ -136,7 +136,7 @@ async function main(): Promise<void> {
     void audit.record(entry);
   };
 
-  // ── 5. Build a batch of cross-provider transfers and run them concurrently.
+  // -- 5. Build a batch of cross-provider transfers and run them concurrently.
   const queue = new TransferQueue({
     concurrency: 3,
     executor,
@@ -196,7 +196,7 @@ async function main(): Promise<void> {
     message: `Drained ${summary.completed}/${summary.total} (failed=${summary.failed})`,
   });
 
-  // ── 6. Shut the world down cleanly even if some sessions errored.
+  // -- 6. Shut the world down cleanly even if some sessions errored.
   await wait(50);
   await Promise.allSettled(sessions.map((session) => session.disconnect()));
 }

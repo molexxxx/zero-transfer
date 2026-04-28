@@ -5,6 +5,15 @@ on:
     types:
       - published
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "npm dist-tag to publish under (e.g. latest, alpha, next)"
+        required: true
+        default: alpha
+      dry_run:
+        description: "Run npm publish with --dry-run only"
+        required: false
+        default: "false"
 
 permissions:
   contents: read
@@ -12,7 +21,7 @@ permissions:
 
 jobs:
   publish:
-    name: Publish to npmjs
+    name: Publish @zero-transfer/* to npmjs (OIDC)
     runs-on: ubuntu-latest
 
     steps:
@@ -32,7 +41,52 @@ jobs:
       - name: Validate package
         run: npm run ci
 
-      - name: Publish package
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Resolve dist-tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            VER="${{ github.event.release.tag_name }}"
+            if echo "$VER" | grep -qE 'alpha|beta|rc|next|dev|pre'; then
+              echo "tag=alpha" >> "$GITHUB_OUTPUT"
+            else
+              echo "tag=latest" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Regenerate workspace stubs at SDK version
+        run: npm run packages:generate
+
+      - name: Publish @zero-transfer/sdk
+        run: |
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            npm publish --dry-run --provenance --access public --tag "${{ steps.tag.outputs.tag }}"
+          else
+            npm publish --provenance --access public --tag "${{ steps.tag.outputs.tag }}"
+          fi
+
+      - name: Publish @zero-transfer/* workspace stubs
+        run: |
+          for dir in packages/*/; do
+            name=$(node -p "require('./$dir/package.json').name")
+            version=$(node -p "require('./$dir/package.json').version")
+            echo "Publishing $name@$version with tag ${{ steps.tag.outputs.tag }}"
+            if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+              ( cd "$dir" && npm publish --dry-run --provenance --access public --tag "${{ steps.tag.outputs.tag }}" )
+            else
+              ( cd "$dir" && npm publish --provenance --access public --tag "${{ steps.tag.outputs.tag }}" )
+            fi
+          done
+
+      - name: Summary
+        run: |
+          {
+            echo "## Released ${{ steps.tag.outputs.tag }}"
+            echo ""
+            echo "- @zero-transfer/sdk"
+            for dir in packages/*/; do
+              name=$(node -p "require('./$dir/package.json').name")
+              echo "- $name"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"

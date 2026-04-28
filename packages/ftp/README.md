@@ -1,14 +1,10 @@
 # @zero-transfer/ftp
 
-FTP provider for ZeroTransfer.
+> Classic FTP provider with EPSV/PASV streaming and REST resume.
 
-> **Alpha umbrella package.** This package currently re-exports the entire
-> [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk)
-> public surface. Future releases will narrow this package to only its
-> dedicated subset (see the
-> [ZeroTransfer remake plan](https://github.com/tonywied17/zero-transfer/blob/main/zero-transfer-remake.md#future-monorepo-shape)).
-> If you want every provider in one install today, depend on
-> `@zero-transfer/sdk` directly.
+Plain FTP with EPSV/PASV streaming, REST-resume, MLST/MLSD listings, Unix LIST fallback, and full profile timeout enforcement. Use `createFtpProviderFactory()`.
+
+> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
 
 ## Install
 
@@ -24,8 +20,11 @@ import { createTransferClient } from "@zero-transfer/ftp";
 const client = createTransferClient();
 ```
 
-See the [main README](https://github.com/tonywied17/zero-transfer#readme) for
-full documentation.
+## Documentation
+
+- [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/ftp.md)
+- [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)
+- [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)
 
 ## License
 

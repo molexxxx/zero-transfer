@@ -2,157 +2,111 @@
   <img src="assets/zero-transfer-logo.svg" alt="ZeroTransfer file transfer SDK for Node.js" width="720">
 </p>
 
-# ZeroTransfer
+<h1 align="center">ZeroTransfer</h1>
 
-[![npm version](https://img.shields.io/npm/v/@zero-transfer/sdk.svg)](https://www.npmjs.com/package/@zero-transfer/sdk)
-[![npm downloads](https://img.shields.io/npm/dm/@zero-transfer/sdk.svg)](https://www.npmjs.com/package/@zero-transfer/sdk)
-[![CI](https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml/badge.svg)](https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org)
+<p align="center">
+  <strong>One TypeScript SDK for moving files across every storage system you actually use.</strong><br/>
+  FTP · FTPS · SFTP · HTTP(S) · WebDAV · S3-compatible · Azure Blob · GCS · Google Drive · Dropbox · OneDrive · Local
+</p>
 
-ZeroTransfer is a unified TypeScript-first Node.js SDK for moving files across classic protocols, web transfer endpoints, object storage, cloud drives, and future MFT-style workflows. The project is being rebuilt from the original FTP-first implementation into a safer, typed, observable transfer platform with parser-first tests, npmjs-only publishing, and generated API documentation in mind.
+<p align="center">
+  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://img.shields.io/npm/v/@zero-transfer/sdk.svg?label=%40zero-transfer%2Fsdk" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://img.shields.io/npm/dm/@zero-transfer/sdk.svg" alt="npm downloads"></a>
+  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
+  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg" alt="Node.js"></a>
+</p>
 
-## Status
-
-This repository is in the ZeroTransfer alpha foundation phase. The old CommonJS package surface has been removed so the project can move forward around the TypeScript `src/` foundation and generated `dist/` output.
-
-The current foundation includes:
-
-- TypeScript source, declarations, and dual ESM/CJS package output.
-- Vitest coverage gates at 90% across statements, branches, functions, and lines.
-- ESLint, Prettier, typecheck, build, package dry-run, and CI scripts.
-- Typed error classes, safe remote argument validation, structured logging redaction helpers, FTP parser tests, and an initial classic FTP provider contract slice.
-- Provider-neutral core contracts, provider registry, `TransferClient`, `createTransferClient()`, provider capability discovery, deterministic memory and local providers with read/write transfer operations, an MLST/MLSD/EPSV/PASV-based FTP provider with streaming read/write transfer operations, profile secret utilities, transfer plans, transfer queue primitives, and the initial transfer engine.
-- Verbose JSDoc across the public TypeScript API for future generated documentation.
-- Initial GitHub Actions scaffolding for CI, CodeQL, and npmjs release provenance.
-
-## Installation
-
-```bash
-npm install @zero-transfer/sdk
-```
-
-## Intended API Direction
-
-```ts
-import { ZeroTransfer } from "@zero-transfer/sdk";
-
-const client = await ZeroTransfer.connect({
-  provider: "ftps",
-  host: "ftp.example.com",
-  username: "deploy",
-  password: { env: "FTP_PASSWORD" },
-  secure: true,
-});
-
-const entries = await client.list("/releases");
-const artifact = await client.stat("/releases/app.zip");
-await client.disconnect();
-```
-
-`ZeroTransfer` is the facade for new provider-neutral code. Protocol-specific behavior lives behind providers and adapters rather than a protocol-named client class.
-
-The first provider-neutral core path is also available for provider registration and capability discovery:
-
-```ts
-import { createTransferClient } from "@zero-transfer/sdk";
-
-const client = createTransferClient();
-const capabilities = client.getCapabilities();
-```
-
-Provider factories can be registered with `createTransferClient({ providers: [...] })`. Classic network providers are being added incrementally; the FTP provider supports login, `fs.stat()` through MLST, `fs.list()` through EPSV/PASV MLSD, streaming provider transfer reads/writes through EPSV/PASV `RETR`/`STOR` with REST offsets, and profile `timeoutMs` enforcement across control replies and passive transfers. The first FTPS slice supports explicit `AUTH TLS`, `PBSZ 0`, encrypted `PROT P` data channels, and TLS profile fields for CA bundles, client certificates, keys, PFX/P12 bundles, passphrases, SNI, TLS versions, and certificate validation controls. The SFTP provider supports password, private-key, agent, and keyboard-interactive authentication, SSH transport algorithm overrides, custom socket factories for proxy and tunnel integrations, provider transfer streams, and profile-level host-key verification with known_hosts content or pinned SHA-256 host-key fingerprints.
-
-```ts
-import { createFtpProviderFactory, createTransferClient } from "@zero-transfer/sdk";
-
-const client = createTransferClient({
-  providers: [createFtpProviderFactory()],
-});
-
-const session = await client.connect({
-  provider: "ftp",
-  host: "ftp.example.com",
-  username: { env: "FTP_USERNAME" },
-  password: { env: "FTP_PASSWORD" },
-});
-
-const releases = await session.fs.list("/releases");
-const artifact = await session.fs.stat("/releases/app.zip");
-await session.disconnect();
-```
-
-Explicit FTPS can use the same provider-neutral session API with TLS settings on the connection profile:
-
-```ts
-import { createFtpsProviderFactory, createTransferClient } from "@zero-transfer/sdk";
-
-const client = createTransferClient({
-  providers: [createFtpsProviderFactory()],
-});
-
-const session = await client.connect({
-  provider: "ftps",
-  host: "ftp.example.com",
-  username: { env: "FTP_USERNAME" },
-  password: { env: "FTP_PASSWORD" },
-  tls: {
-    ca: { path: "./certs/private-ca.pem" },
-    servername: "ftp.example.com",
-  },
-});
-
-const releases = await session.fs.list("/releases");
-await session.disconnect();
-```
-
-For deterministic contract and unit tests, the SDK exports a fixture-backed memory provider factory:
-
-```ts
-import { createMemoryProviderFactory, createTransferClient } from "@zero-transfer/sdk";
-
-const client = createTransferClient({
-  providers: [
-    createMemoryProviderFactory({
-      entries: [{ path: "/fixtures/report.csv", type: "file", size: 24 }],
-    }),
-  ],
-});
-
-const session = await client.connect({ provider: "memory", host: "memory.local" });
-const entries = await session.fs.list("/fixtures");
-const report = await session.fs.stat("/fixtures/report.csv");
-await session.disconnect();
-```
-
-The memory provider is intentionally test-focused: it supports connection lifecycle, capability discovery, `fs.list()`, `fs.stat()`, typed missing-path errors, and deterministic in-memory transfer reads/writes over fixture state.
-
-The local provider exposes a configured local root as `/` for local-only tests and early provider contract coverage:
-
-```ts
-import { createLocalProviderFactory, createTransferClient } from "@zero-transfer/sdk";
-
-const client = createTransferClient({
-  providers: [createLocalProviderFactory({ rootPath: process.cwd() })],
-});
-
-const session = await client.connect({ provider: "local", host: "local" });
-const files = await session.fs.list("/");
-await session.disconnect();
-```
-
-The local provider also exposes provider transfer reads/writes under `session.transfers` for local-only workflow tests and early transfer-engine coverage.
-
-Profile helpers are also available for validating connection profiles, resolving deferred secret sources, and redacting diagnostics:
+ZeroTransfer is a unified, TypeScript-first file transfer SDK for Node.js. One typed API speaks to every backend you actually deploy against — classic protocols, web endpoints, object storage, cloud drives, and local disks — with streaming, resume, verification, dry-run plans, MFT-style scheduling, audit logs, and webhook delivery built in.
 
 ```ts
 import {
-  redactConnectionProfile,
-  resolveConnectionProfileSecrets,
-  validateConnectionProfile,
+  createS3ProviderFactory,
+  createSftpProviderFactory,
+  createTransferClient,
+  uploadFile,
 } from "@zero-transfer/sdk";
 
-const profile = validateConnectionProfile({
+const client = createTransferClient({
+  providers: [createSftpProviderFactory(), createS3ProviderFactory({ region: "us-east-1" })],
+});
+
+// Same call, any pair of providers.
+await uploadFile({
+  client,
+  localPath: "./dist/app.tar.gz",
+  destination: {
+    path: "/lake/bronze/app.tar.gz",
+    profile: {
+      provider: "s3",
+      host: "data-lake-bronze",
+      username: { env: "AWS_ACCESS_KEY_ID" },
+      password: { env: "AWS_SECRET_ACCESS_KEY" },
+    },
+  },
+});
+```
+
+---
+
+## Why ZeroTransfer
+
+- **One API, every provider.** Replace bespoke FTP, SFTP, S3, and cloud-drive code with a single `TransferClient` and provider-neutral sessions.
+- **TypeScript-first.** Strict types, exact optional properties, exhaustive capability discovery, and typed errors for every protocol failure mode.
+- **Streaming + resume.** Backpressure via `stream.pipeline`, byte-range downloads, multipart uploads, and cross-process resume stores for object storage.
+- **Dry-run-first sync.** Diff remote trees, generate `TransferPlan`s, and review every step before any byte moves.
+- **MFT batteries.** Routes, cron + interval schedules, audit logs, HMAC-signed webhooks, retention policies, and approval gates that block on human sign-off.
+- **Security by default.** Profile redaction in every log, host-key pinning, certificate fingerprint pinning, OAuth refresh, and SecretSource adapters for vaults / env / files / commands.
+- **Observable.** Structured logger, redaction-safe diagnostics, immutable transfer receipts, and per-attempt history for compliance.
+
+## Install
+
+```bash
+# Batteries-included SDK (every provider):
+npm install @zero-transfer/sdk
+
+# Or pick a scoped slice (today these re-export the full SDK; future releases will narrow):
+npm install @zero-transfer/sftp
+npm install @zero-transfer/s3
+npm install @zero-transfer/mft
+```
+
+Requires Node.js **>=20**.
+
+## Scoped packages
+
+ZeroTransfer publishes 13 scoped packages under the [`@zero-transfer`](https://www.npmjs.com/org/zero-transfer) npm organization. Today every scoped package is an umbrella that re-exports the full [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) surface so the names are claimable without breaking consumers; future releases narrow each package to its own subset.
+
+| Package                                                                                    | Summary                                                                       | Docs                                      |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ----------------------------------------- |
+| [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk)                   | Batteries-included distribution. Every provider, every helper.                | [API reference](docs/api-md/README.md)    |
+| [`@zero-transfer/core`](https://www.npmjs.com/package/@zero-transfer/core)                 | Provider-neutral contracts, transfer engine, queue, profiles, errors.         | [Scope page](docs/scopes/core.md)         |
+| [`@zero-transfer/classic`](https://www.npmjs.com/package/@zero-transfer/classic)           | FTP + FTPS + SFTP in one install.                                             | [Scope page](docs/scopes/classic.md)      |
+| [`@zero-transfer/ftp`](https://www.npmjs.com/package/@zero-transfer/ftp)                   | Classic FTP with EPSV/PASV streaming and REST resume.                         | [Scope page](docs/scopes/ftp.md)          |
+| [`@zero-transfer/ftps`](https://www.npmjs.com/package/@zero-transfer/ftps)                 | Explicit + implicit FTPS with full TLS profile support.                       | [Scope page](docs/scopes/ftps.md)         |
+| [`@zero-transfer/sftp`](https://www.npmjs.com/package/@zero-transfer/sftp)                 | SFTP with SSH key auth, known_hosts, and jump-host support.                   | [Scope page](docs/scopes/sftp.md)         |
+| [`@zero-transfer/http`](https://www.npmjs.com/package/@zero-transfer/http)                 | HTTP(S) and signed-URL provider with ranged downloads.                        | [Scope page](docs/scopes/http.md)         |
+| [`@zero-transfer/webdav`](https://www.npmjs.com/package/@zero-transfer/webdav)             | WebDAV with PROPFIND listings and ranged downloads.                           | [Scope page](docs/scopes/webdav.md)       |
+| [`@zero-transfer/s3`](https://www.npmjs.com/package/@zero-transfer/s3)                     | S3-compatible storage with SigV4, multipart upload, and cross-process resume. | [Scope page](docs/scopes/s3.md)           |
+| [`@zero-transfer/google-drive`](https://www.npmjs.com/package/@zero-transfer/google-drive) | Google Drive with OAuth, folder paths, md5 checksums.                         | [Scope page](docs/scopes/google-drive.md) |
+| [`@zero-transfer/dropbox`](https://www.npmjs.com/package/@zero-transfer/dropbox)           | Dropbox with content-hash verification.                                       | [Scope page](docs/scopes/dropbox.md)      |
+| [`@zero-transfer/azure-blob`](https://www.npmjs.com/package/@zero-transfer/azure-blob)     | Azure Blob Storage with SAS or AAD bearer auth.                               | [Scope page](docs/scopes/azure-blob.md)   |
+| [`@zero-transfer/mft`](https://www.npmjs.com/package/@zero-transfer/mft)                   | Routes, schedules, audit logs, webhooks, approval gates.                      | [Scope page](docs/scopes/mft.md)          |
+
+The full per-scope index lives at [`docs/scopes/`](docs/scopes/README.md).
+
+## Quick start
+
+### 1. Connect a provider-neutral client
+
+```ts
+import { createSftpProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+
+const client = createTransferClient({
+  providers: [createSftpProviderFactory()],
+});
+
+const session = await client.connect({
   provider: "sftp",
   host: "files.example.com",
   username: { env: "ZT_USER" },
@@ -163,123 +117,134 @@ const profile = validateConnectionProfile({
   },
 });
 
-const resolved = await resolveConnectionProfileSecrets(profile);
-const safeForLogs = redactConnectionProfile(profile);
+const releases = await session.fs.list("/releases");
+await session.disconnect();
 ```
 
-Protocol adapters are intentionally being added incrementally. Early releases focus on the package foundation, deterministic tests, parser correctness, typed errors, logging, provider contracts, and transfer-service primitives while FTP is hardened, FTPS/SFTP support is ported in focused slices, and broader provider families are added.
-
-The first transfer-engine foundation is available for adapters and higher-level workflows that need abort-aware execution, progress callbacks, retry hooks, timeout policy, bandwidth-limit handoff, verification details, and audit receipts around a concrete transfer operation:
+### 2. Move a file with one call
 
 ```ts
-import { TransferEngine, type TransferJob } from "@zero-transfer/sdk";
+import { uploadFile } from "@zero-transfer/sdk";
 
-const engine = new TransferEngine();
-const job: TransferJob = {
-  id: "upload-1",
-  operation: "upload",
-  source: { provider: "local", path: "./dist/app.zip" },
-  destination: { provider: "memory", path: "/releases/app.zip" },
-  totalBytes: 1024,
-};
-
-const receipt = await engine.execute(
-  job,
-  (context) => {
-    context.reportProgress(1024);
-    return {
-      bytesTransferred: 1024,
-      verification: { method: "checksum", verified: true },
-    };
-  },
-  {
-    bandwidthLimit: { bytesPerSecond: 1024 * 1024 },
-    retry: { maxAttempts: 2 },
-    timeout: { timeoutMs: 30_000 },
-  },
-);
+await uploadFile({
+  client,
+  localPath: "./dist/app.tar.gz",
+  destination: { path: "/releases/2026.04.28/app.tar.gz", profile: sftpProfile },
+  onProgress: (event) => console.log(`${event.bytesTransferred}/${event.totalBytes ?? "?"}`),
+});
 ```
 
-Provider sessions that can stream content expose `session.transfers.read()` and `session.transfers.write()`. The memory, local, and initial FTP providers implement that surface now, and the SDK exports `createProviderTransferExecutor()` to bridge provider operations into `TransferEngine` without hard-coding a concrete FTP, SFTP, or cloud implementation:
+### 3. Plan a sync without touching bytes
 
 ```ts
-import { createProviderTransferExecutor } from "@zero-transfer/sdk";
+import {
+  createMemoryProviderFactory,
+  diffRemoteTrees,
+  summarizeTransferPlan,
+} from "@zero-transfer/sdk";
 
-const executor = createProviderTransferExecutor({
-  resolveSession: ({ endpoint }) => connectedSessions.get(endpoint.provider ?? ""),
-});
-
-const receipt = await engine.execute(job, executor, {
-  retry: { maxAttempts: 2 },
-});
+const diff = await diffRemoteTrees(srcSession.fs, "/dist", dstSession.fs, "/releases/current");
+const plan = createSyncPlan({ diff, deletePolicy: "mirror" });
+console.table(summarizeTransferPlan(plan));
 ```
 
-Dry-run transfer plans can be converted into executable jobs and drained through a minimal queue with concurrency, pause/resume, cancellation, progress, retries, receipts, and per-job failure tracking:
+### 4. Schedule it as an MFT route with audit + approval
 
 ```ts
-import { TransferQueue, createTransferJobsFromPlan, createTransferPlan } from "@zero-transfer/sdk";
+import {
+  ApprovalRegistry,
+  MftScheduler,
+  RouteRegistry,
+  ScheduleRegistry,
+  createApprovalGate,
+  runRoute,
+} from "@zero-transfer/sdk";
 
-const plan = createTransferPlan({
-  id: "release-plan",
-  steps: [
-    {
-      id: "upload-app",
-      action: "upload",
-      source: { provider: "local", path: "./dist/app.zip" },
-      destination: { provider: "memory", path: "/releases/app.zip" },
-      expectedBytes: 1024,
-    },
-  ],
+const approvals = new ApprovalRegistry();
+const scheduler = new MftScheduler({
+  client,
+  routes: new RouteRegistry([route]),
+  schedules: scheduleRegistry,
+  runner: createApprovalGate({
+    approvalId: ({ route }) => `release:${route.id}:${Date.now()}`,
+    registry: approvals,
+    runner: ({ client: c, route: r, signal }) => runRoute({ client: c, route: r, signal }),
+  }),
+  onResult: ({ receipt }) => console.log(`Released ${receipt.jobId}`),
 });
 
-const queue = new TransferQueue({
-  concurrency: 2,
-  executor: (context) => {
-    const bytesTransferred = context.job.totalBytes ?? 0;
-    context.reportProgress(bytesTransferred);
-    return { bytesTransferred, verified: true };
-  },
-});
-
-for (const plannedJob of createTransferJobsFromPlan(plan)) {
-  queue.add(plannedJob);
-}
-
-const summary = await queue.run();
+scheduler.start();
 ```
 
-## Development
+## Capability matrix
+
+Every provider advertises its own [`CapabilitySet`](docs/api-md/interfaces/CapabilitySet.md). The full programmatic matrix is exposed via [`getBuiltinCapabilityMatrix()`](docs/api-md/functions/getBuiltinCapabilityMatrix.md) and renders to Markdown via [`formatCapabilityMatrixMarkdown()`](docs/api-md/functions/formatCapabilityMatrixMarkdown.md).
+
+| Provider      | Streaming |              Resume              | Server-side copy | Multipart upload |     Checksum exposed     |
+| ------------- | :-------: | :------------------------------: | :--------------: | :--------------: | :----------------------: |
+| FTP           |    ✅     |           ⬆/⬇ via REST           |        —         |        —         |            —             |
+| FTPS          |    ✅     |           ⬆/⬇ via REST           |        —         |        —         |            —             |
+| SFTP          |    ✅     |               ⬆/⬇                |      rename      |        —         |            —             |
+| HTTP(S)       | ✅ (read) |           ⬇ via Range            |        —         |        —         |           ETag           |
+| WebDAV        |    ✅     |           ⬇ via Range            |       COPY       |        —         |           ETag           |
+| S3-compatible |    ✅     | ⬆ via multipart resume / ⬇ Range |    CopyObject    |        ✅        |      SHA-256 / md5       |
+| Azure Blob    |    ✅     |           ⬇ via Range            |        —         |    (planned)     |           md5            |
+| GCS           |    ✅     |           ⬇ via Range            |        —         |    (planned)     |       crc32c / md5       |
+| Google Drive  |    ✅     |           ⬇ via Range            |        —         |        —         |           md5            |
+| Dropbox       |    ✅     |           ⬇ via Range            |        —         |        —         |       content_hash       |
+| OneDrive      |    ✅     |           ⬇ via Range            |        —         |    (planned)     | sha256 / sha1 / quickXor |
+| Local         |    ✅     |               ⬆/⬇                |        —         |        —         |            —             |
+| Memory        |    ✅     |               ⬆/⬇                |        —         |        —         |            —             |
+
+## Examples
+
+Real-world examples live in [`examples/`](examples/). Run them with `tsx examples/<file>`.
+
+| Example                                                                     | What it shows                                                     |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [`sftp-private-key.ts`](examples/sftp-private-key.ts)                       | SFTP with private-key auth + pinned host-key SHA-256.             |
+| [`ftps-client-certificate.ts`](examples/ftps-client-certificate.ts)         | FTPS with client certificate, CA bundle, fingerprint pinning.     |
+| [`s3-compatible-upload.ts`](examples/s3-compatible-upload.ts)               | S3 multipart upload with cross-process resume store.              |
+| [`webdav-sync.ts`](examples/webdav-sync.ts)                                 | WebDAV diff + sync plan with deterministic ordering.              |
+| [`signed-url-download.ts`](examples/signed-url-download.ts)                 | HTTPS signed-URL download with progress reporting.                |
+| [`transfer-queue.ts`](examples/transfer-queue.ts)                           | Concurrent transfers with `TransferQueue` + executor.             |
+| [`dry-run-sync.ts`](examples/dry-run-sync.ts)                               | Plan a sync, print a summary, never touch bytes.                  |
+| [`mft-route.ts`](examples/mft-route.ts)                                     | SFTP→S3 cron-scheduled MFT route with audit hooks.                |
+| [`profile-from-env.ts`](examples/profile-from-env.ts)                       | Build a `ConnectionProfile` from env / file / base64-env secrets. |
+| [`diagnose-connection.ts`](examples/diagnose-connection.ts)                 | Provider summary + redaction-safe connection probe.               |
+| [`approval-gated-route.ts`](examples/approval-gated-route.ts)               | Two-person rule: scheduled route blocks until approval lands.     |
+| [`multi-cloud-orchestration.ts`](examples/multi-cloud-orchestration.ts)     | Fan-out SFTP → S3 + Azure + Local with webhook audit.             |
+| [`atomic-deploy-with-rollback.ts`](examples/atomic-deploy-with-rollback.ts) | Blue/green-style deploy plan with rollback path.                  |
+
+## Documentation
+
+- [Full API reference (Markdown)](docs/api-md/README.md) — every public symbol with parameter / property / type tables.
+- [Full API reference (HTML)](docs/api/index.html) — TypeDoc HTML site.
+- [Per-scope pages](docs/scopes/README.md) — one page per `@zero-transfer/*` package.
+- [Examples directory](examples/) — runnable real-world flows.
+
+Regenerate everything locally:
 
 ```bash
+npm run docs:all      # HTML + Markdown api refs + per-scope pages + per-package READMEs
+```
+
+## Project status
+
+ZeroTransfer is in **alpha** under the `alpha` npm dist-tag. The provider-neutral foundation, transfer engine, queue, sync planner, atomic deploy planner, MFT layer, friendly client surface, and diagnostics module are stable. Phase work in progress: resumable upload sessions for Azure / GCS / OneDrive, broader real-server compatibility coverage, and the push to 95% coverage. Track the full plan in [`zero-transfer-remake.md`](zero-transfer-remake.md).
+
+## Contributing
+
+```bash
+git clone https://github.com/tonywied17/zero-transfer.git
+cd zero-transfer
 npm install
-npm run lint
-npm run format:check
-npm run typecheck
-npm run test:coverage
-npm run build
-npm run pack:dry
+npm run ci          # lint, format check, typecheck, tests with coverage, build, pack dry-run
+npm run test:watch  # iterate
 ```
 
-Use `npm run ci` to run the same local quality gate used by the CI workflow.
-
-Docker-backed FTP integration coverage is opt-in because it pulls and runs a real `pure-ftpd`
-container. With Docker running locally, use:
-
-```bash
-npm run test:integration:ftp
-```
-
-The script starts the FTP service from `test/servers/docker-compose.yml`, runs the provider
-metadata and transfer round-trip coverage, and tears the container down afterward.
-
-## Publishing
-
-ZeroTransfer publishes only to the public npm registry as `@zero-transfer/sdk`.
-
-The `zero-transfer` npm organization owns the package scope. The first package is the batteries-included SDK at `@zero-transfer/sdk`; future monorepo packages can split provider-neutral contracts into `@zero-transfer/core` and adapters such as `@zero-transfer/ftp`, `@zero-transfer/sftp`, and `@zero-transfer/s3` when the contracts prove out.
-
-Publishing is configured for npm provenance through GitHub Actions. For token-based test publishing, add the npm automation token as a repository secret named `NPM_TOKEN`; never commit npm tokens or place them in local config files. There is no GitHub Packages release target.
+Issues and PRs welcome. Provider integration tests are gated behind opt-in env vars — see [`test/integration/`](test/integration/) for the full list.
 
 ## License
 
-MIT License
+MIT © [Tony Wiedman](https://github.com/tonywied17)

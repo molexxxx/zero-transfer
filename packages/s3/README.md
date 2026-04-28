@@ -1,14 +1,10 @@
 # @zero-transfer/s3
 
-S3-compatible object storage provider with multipart resume for ZeroTransfer.
+> S3-compatible storage with SigV4, multipart upload, and resume.
 
-> **Alpha umbrella package.** This package currently re-exports the entire
-> [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk)
-> public surface. Future releases will narrow this package to only its
-> dedicated subset (see the
-> [ZeroTransfer remake plan](https://github.com/tonywied17/zero-transfer/blob/main/zero-transfer-remake.md#future-monorepo-shape)).
-> If you want every provider in one install today, depend on
-> `@zero-transfer/sdk` directly.
+S3-compatible object storage provider with SigV4 signing, multipart upload, and cross-process multipart resume. Supports AWS S3, MinIO, R2, Wasabi, Backblaze B2 S3, DigitalOcean Spaces, and any custom endpoint that speaks the S3 API. Includes the in-memory resume store; persistent stores can be swapped in.
+
+> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
 
 ## Install
 
@@ -24,8 +20,11 @@ import { createTransferClient } from "@zero-transfer/s3";
 const client = createTransferClient();
 ```
 
-See the [main README](https://github.com/tonywied17/zero-transfer#readme) for
-full documentation.
+## Documentation
+
+- [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/s3.md)
+- [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)
+- [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)
 
 ## License
 

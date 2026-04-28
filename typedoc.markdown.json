@@ -1,0 +1,16 @@
+{
+  "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+  "extends": ["./typedoc.json"],
+  "plugin": ["typedoc-plugin-markdown"],
+  "out": "docs/api-md",
+  "readme": "none",
+  "hideBreadcrumbs": false,
+  "hidePageHeader": false,
+  "useCodeBlocks": true,
+  "expandObjects": true,
+  "parametersFormat": "table",
+  "propertiesFormat": "table",
+  "enumMembersFormat": "table",
+  "typeDeclarationFormat": "table",
+  "indexFormat": "table"
+}
