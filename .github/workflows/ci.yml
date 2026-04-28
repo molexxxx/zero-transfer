@@ -43,11 +43,14 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-      - name: Test with coverage
-        run: npm run test:coverage
-
       - name: Build
         run: npm run build
+
+      - name: Generate scoped packages
+        run: npm run packages:generate
+
+      - name: Test with coverage
+        run: npm run test:coverage
 
       - name: Package dry run
         run: npm run pack:dry
