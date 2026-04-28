@@ -13,6 +13,16 @@ export {
   type ZeroTransferOptions,
 } from "./client/ZeroTransfer";
 export {
+  copyBetween,
+  downloadFile,
+  uploadFile,
+  type CopyBetweenOptions,
+  type DownloadFileOptions,
+  type FriendlyTransferOptions,
+  type RemoteFileEndpoint,
+  type UploadFileOptions,
+} from "./client/operations";
+export {
   CLASSIC_PROVIDER_IDS,
   isClassicProviderId,
   resolveProviderId,
