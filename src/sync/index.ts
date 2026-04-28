@@ -16,6 +16,17 @@ export {
   type RemoteTreeDiffSummary,
 } from "./diffRemoteTrees";
 export {
+  REMOTE_MANIFEST_FORMAT_VERSION,
+  compareRemoteManifests,
+  createRemoteManifest,
+  parseRemoteManifest,
+  serializeRemoteManifest,
+  type CompareRemoteManifestsOptions,
+  type CreateRemoteManifestOptions,
+  type RemoteManifest,
+  type RemoteManifestEntry,
+} from "./manifest";
+export {
   walkRemoteTree,
   type RemoteTreeEntry,
   type RemoteTreeFilter,
