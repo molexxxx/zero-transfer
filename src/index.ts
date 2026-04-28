@@ -187,6 +187,19 @@ export {
   type TransferTimeoutPolicy,
   type TransferVerificationResult,
 } from "./transfers";
+export {
+  diffRemoteTrees,
+  walkRemoteTree,
+  type DiffRemoteTreesOptions,
+  type RemoteTreeDiff,
+  type RemoteTreeDiffEntry,
+  type RemoteTreeDiffReason,
+  type RemoteTreeDiffStatus,
+  type RemoteTreeDiffSummary,
+  type RemoteTreeEntry,
+  type RemoteTreeFilter,
+  type WalkRemoteTreeOptions,
+} from "./sync";
 export type {
   ConnectionProfile,
   ListOptions,
