@@ -12,9 +12,9 @@ npm install @zero-transfer/mft
 
 Managed File Transfer workflow primitives: routes, schedules (interval + cron), inbox/outbox conventions, retention policies, audit logs (in-memory, JSONL, fan-out, webhook-backed), HMAC-signed webhook delivery, and approval gates that require human sign-off before a scheduled run executes.
 
-## Eventual public surface
+## Public surface
 
-Today this package re-exports the full [`@zero-transfer/sdk`](../api-md/README.md) so the scope is claimable on npm without breaking consumers. The list below is the eventual surface this package will narrow to:
+This is the actual surface published by [`@zero-transfer/mft`](https://www.npmjs.com/package/@zero-transfer/mft). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
 
 | Symbol                                                                  | Kind      | Notes              |
 | ----------------------------------------------------------------------- | --------- | ------------------ |

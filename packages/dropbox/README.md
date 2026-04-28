@@ -4,8 +4,6 @@
 
 Dropbox provider — RPC + content-host APIs, list-folder cursor pagination, ranged downloads, single-shot uploads in `overwrite` mode, and `content_hash` exposed as both `uniqueId` and `checksum`.
 
-> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
-
 ## Install
 
 ```bash
@@ -15,10 +13,12 @@ npm install @zero-transfer/dropbox
 ## Usage
 
 ```ts
-import { createTransferClient } from "@zero-transfer/dropbox";
-
-const client = createTransferClient();
+import { createDropboxProviderFactory } from "@zero-transfer/dropbox";
 ```
+
+## Public surface
+
+This package narrows the SDK to **2** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/dropbox.md#public-surface) for the full list with API-reference links.
 
 ## Documentation
 

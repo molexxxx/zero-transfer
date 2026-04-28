@@ -1,9 +1,10 @@
 {
   "name": "@zero-transfer/sftp",
   "version": "0.1.0-alpha.0",
-  "description": "SFTP provider with jump-host support for ZeroTransfer.",
+  "description": "SFTP with SSH key auth, known_hosts, and jump-host support.",
   "keywords": [
     "zero-transfer",
+    "sftp",
     "sftp",
     "ssh"
   ],
@@ -33,7 +34,7 @@
   "bugs": {
     "url": "https://github.com/tonywied17/zero-transfer/issues"
   },
-  "homepage": "https://github.com/tonywied17/zero-transfer#readme",
+  "homepage": "https://github.com/tonywied17/zero-transfer/tree/main/packages/sftp#readme",
   "engines": {
     "node": ">=20.0.0"
   },

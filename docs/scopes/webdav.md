@@ -12,9 +12,9 @@ npm install @zero-transfer/webdav
 
 WebDAV provider — PROPFIND-based `list`/`stat`, ranged GET, PUT uploads, Basic auth, and ETag preservation. Speaks remote filesystem semantics over HTTP.
 
-## Eventual public surface
+## Public surface
 
-Today this package re-exports the full [`@zero-transfer/sdk`](../api-md/README.md) so the scope is claimable on npm without breaking consumers. The list below is the eventual surface this package will narrow to:
+This is the actual surface published by [`@zero-transfer/webdav`](https://www.npmjs.com/package/@zero-transfer/webdav). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
 
 | Symbol                                                                              | Kind      | Notes              |
 | ----------------------------------------------------------------------------------- | --------- | ------------------ |

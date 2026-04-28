@@ -1,13 +1,13 @@
 {
   "name": "@zero-transfer/classic",
   "version": "0.1.0-alpha.0",
-  "description": "Classic transfer providers (FTP, FTPS, SFTP) for ZeroTransfer.",
+  "description": "FTP, FTPS, and SFTP providers in one install.",
   "keywords": [
     "zero-transfer",
+    "classic",
     "ftp",
     "ftps",
-    "sftp",
-    "classic"
+    "sftp"
   ],
   "author": "Tony Wiedman",
   "license": "MIT",
@@ -35,7 +35,7 @@
   "bugs": {
     "url": "https://github.com/tonywied17/zero-transfer/issues"
   },
-  "homepage": "https://github.com/tonywied17/zero-transfer#readme",
+  "homepage": "https://github.com/tonywied17/zero-transfer/tree/main/packages/classic#readme",
   "engines": {
     "node": ">=20.0.0"
   },

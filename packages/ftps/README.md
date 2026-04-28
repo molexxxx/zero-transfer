@@ -4,8 +4,6 @@
 
 FTPS over explicit `AUTH TLS` or implicit TLS, with PEM/PFX/P12 certificate sources, encrypted passive data channels, certificate fingerprint pinning, SNI/servername controls, and TLS min/max version configuration.
 
-> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
-
 ## Install
 
 ```bash
@@ -15,10 +13,12 @@ npm install @zero-transfer/ftps
 ## Usage
 
 ```ts
-import { createTransferClient } from "@zero-transfer/ftps";
-
-const client = createTransferClient();
+import { createFtpsProviderFactory } from "@zero-transfer/ftps";
 ```
+
+## Public surface
+
+This package narrows the SDK to **4** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/ftps.md#public-surface) for the full list with API-reference links.
 
 ## Documentation
 

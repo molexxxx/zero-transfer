@@ -12,9 +12,9 @@ npm install @zero-transfer/sftp
 
 SFTP over SSH with password / private-key / agent / keyboard-interactive authentication, SSH algorithm overrides, OpenSSH `known_hosts` parsing, SHA-256 host-key pinning, custom socket factories, and a first-class jump-host helper for bastion-mediated connections.
 
-## Eventual public surface
+## Public surface
 
-Today this package re-exports the full [`@zero-transfer/sdk`](../api-md/README.md) so the scope is claimable on npm without breaking consumers. The list below is the eventual surface this package will narrow to:
+This is the actual surface published by [`@zero-transfer/sftp`](https://www.npmjs.com/package/@zero-transfer/sftp). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
 
 | Symbol                                                                                      | Kind      | Notes              |
 | ------------------------------------------------------------------------------------------- | --------- | ------------------ |

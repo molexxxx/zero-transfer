@@ -17,4 +17,4 @@ Per-scope documentation for every package in the [`@zero-transfer/*`](../../pack
 | [`@zero-transfer/azure-blob`](./azure-blob.md)     | Azure Blob Storage with SAS or AAD bearer auth.                           |
 | [`@zero-transfer/mft`](./mft.md)                   | Routes, schedules, audit logs, webhooks, approval gates.                  |
 
-Each page lists the eventual public surface, capability notes, and the examples that exercise it.
+Each page lists the public surface for that package, capability notes, and the examples that exercise it.

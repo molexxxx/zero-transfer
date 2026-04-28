@@ -12,9 +12,9 @@ npm install @zero-transfer/dropbox
 
 Dropbox provider — RPC + content-host APIs, list-folder cursor pagination, ranged downloads, single-shot uploads in `overwrite` mode, and `content_hash` exposed as both `uniqueId` and `checksum`.
 
-## Eventual public surface
+## Public surface
 
-Today this package re-exports the full [`@zero-transfer/sdk`](../api-md/README.md) so the scope is claimable on npm without breaking consumers. The list below is the eventual surface this package will narrow to:
+This is the actual surface published by [`@zero-transfer/dropbox`](https://www.npmjs.com/package/@zero-transfer/dropbox). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
 
 | Symbol                                                                                | Kind      | Notes              |
 | ------------------------------------------------------------------------------------- | --------- | ------------------ |

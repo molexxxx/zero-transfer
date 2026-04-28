@@ -1,9 +1,10 @@
 {
   "name": "@zero-transfer/azure-blob",
   "version": "0.1.0-alpha.0",
-  "description": "Azure Blob Storage provider for ZeroTransfer.",
+  "description": "Azure Blob Storage with SAS or AAD bearer auth.",
   "keywords": [
     "zero-transfer",
+    "azure-blob",
     "azure",
     "azure-blob",
     "blob"
@@ -34,7 +35,7 @@
   "bugs": {
     "url": "https://github.com/tonywied17/zero-transfer/issues"
   },
-  "homepage": "https://github.com/tonywied17/zero-transfer#readme",
+  "homepage": "https://github.com/tonywied17/zero-transfer/tree/main/packages/azure-blob#readme",
   "engines": {
     "node": ">=20.0.0"
   },

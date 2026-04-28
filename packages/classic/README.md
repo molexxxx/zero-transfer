@@ -4,8 +4,6 @@
 
 Bundle of the three classic providers: FTP, FTPS, and SFTP. Wire `createFtpProviderFactory()`, `createFtpsProviderFactory()`, and `createSftpProviderFactory()` into a single `TransferClient` to talk to traditional file servers.
 
-> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
-
 ## Install
 
 ```bash
@@ -15,10 +13,12 @@ npm install @zero-transfer/classic
 ## Usage
 
 ```ts
-import { createTransferClient } from "@zero-transfer/classic";
-
-const client = createTransferClient();
+import { createFtpProviderFactory } from "@zero-transfer/classic";
 ```
+
+## Public surface
+
+This package narrows the SDK to **8** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/classic.md#public-surface) for the full list with API-reference links.
 
 ## Documentation
 

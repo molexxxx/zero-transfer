@@ -4,8 +4,6 @@
 
 Read-only HTTP(S) provider with HEAD-based metadata, ranged GET resume, Basic auth, Bearer-token auth via secret sources, and ETag exposed as both `uniqueId` and read-result `checksum`. Useful for signed-URL downloads and CDN ingest.
 
-> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
-
 ## Install
 
 ```bash
@@ -15,10 +13,12 @@ npm install @zero-transfer/http
 ## Usage
 
 ```ts
-import { createTransferClient } from "@zero-transfer/http";
-
-const client = createTransferClient();
+import { createHttpProviderFactory } from "@zero-transfer/http";
 ```
+
+## Public surface
+
+This package narrows the SDK to **3** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/http.md#public-surface) for the full list with API-reference links.
 
 ## Documentation
 

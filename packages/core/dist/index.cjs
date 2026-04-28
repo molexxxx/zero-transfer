@@ -1,3 +1,24 @@
-// AUTO-GENERATED stub. See packages/README.md.
+// AUTO-GENERATED. Edit scripts/scope-manifest.mjs and re-run packages:generate.
 "use strict";
-module.exports = require("@zero-transfer/sdk");
+Object.defineProperty(exports, "__esModule", { value: true });
+const sdk = require("@zero-transfer/sdk");
+Object.defineProperty(exports, "TransferClient", { enumerable: true, get: () => sdk["TransferClient"] });
+Object.defineProperty(exports, "createTransferClient", { enumerable: true, get: () => sdk["createTransferClient"] });
+Object.defineProperty(exports, "ProviderRegistry", { enumerable: true, get: () => sdk["ProviderRegistry"] });
+Object.defineProperty(exports, "TransferEngine", { enumerable: true, get: () => sdk["TransferEngine"] });
+Object.defineProperty(exports, "TransferQueue", { enumerable: true, get: () => sdk["TransferQueue"] });
+Object.defineProperty(exports, "createBandwidthThrottle", { enumerable: true, get: () => sdk["createBandwidthThrottle"] });
+Object.defineProperty(exports, "createProviderTransferExecutor", { enumerable: true, get: () => sdk["createProviderTransferExecutor"] });
+Object.defineProperty(exports, "createTransferJobsFromPlan", { enumerable: true, get: () => sdk["createTransferJobsFromPlan"] });
+Object.defineProperty(exports, "createTransferPlan", { enumerable: true, get: () => sdk["createTransferPlan"] });
+Object.defineProperty(exports, "summarizeTransferPlan", { enumerable: true, get: () => sdk["summarizeTransferPlan"] });
+Object.defineProperty(exports, "throttleByteIterable", { enumerable: true, get: () => sdk["throttleByteIterable"] });
+Object.defineProperty(exports, "validateConnectionProfile", { enumerable: true, get: () => sdk["validateConnectionProfile"] });
+Object.defineProperty(exports, "resolveConnectionProfileSecrets", { enumerable: true, get: () => sdk["resolveConnectionProfileSecrets"] });
+Object.defineProperty(exports, "redactConnectionProfile", { enumerable: true, get: () => sdk["redactConnectionProfile"] });
+Object.defineProperty(exports, "redactSecretSource", { enumerable: true, get: () => sdk["redactSecretSource"] });
+Object.defineProperty(exports, "resolveSecret", { enumerable: true, get: () => sdk["resolveSecret"] });
+Object.defineProperty(exports, "createOAuthTokenSecretSource", { enumerable: true, get: () => sdk["createOAuthTokenSecretSource"] });
+Object.defineProperty(exports, "ZeroTransferError", { enumerable: true, get: () => sdk["ZeroTransferError"] });
+Object.defineProperty(exports, "noopLogger", { enumerable: true, get: () => sdk["noopLogger"] });
+Object.defineProperty(exports, "emitLog", { enumerable: true, get: () => sdk["emitLog"] });

@@ -96,6 +96,21 @@ function frontmatterless(title, body) {
   return `# ${title}\n\n${body}\n`;
 }
 
+/**
+ * Picks a representative `import` snippet for a scope's README usage block.
+ * Prefers a `create*ProviderFactory` if present, otherwise falls back to the
+ * first three exports.
+ * @param {{ name: string; exports: string[] }} scope
+ */
+function pickUsageImport(scope) {
+  const factory = scope.exports.find((n) => /^create[A-Z].*ProviderFactory$/.test(n));
+  if (factory) {
+    return `import { ${factory} } from "@zero-transfer/${scope.name}";`;
+  }
+  const sample = scope.exports.slice(0, Math.min(3, scope.exports.length));
+  return `import { ${sample.join(", ")} } from "@zero-transfer/${scope.name}";`;
+}
+
 const scopeIndexRows = ["| Package | Summary |", "| --- | --- |"];
 
 for (const scope of scopes) {
@@ -116,9 +131,9 @@ for (const scope of scopes) {
     "",
     scope.description,
     "",
-    "## Eventual public surface",
+    "## Public surface",
     "",
-    "Today this package re-exports the full [`@zero-transfer/sdk`](../api-md/README.md) so the scope is claimable on npm without breaking consumers. The list below is the eventual surface this package will narrow to:",
+    `This is the actual surface published by [\`@zero-transfer/${scope.name}\`](https://www.npmjs.com/package/@zero-transfer/${scope.name}). Every symbol is re-exported from [\`@zero-transfer/sdk\`](../api-md/README.md) and links into the full API reference:`,
     "",
     exportsBlock,
     "",
@@ -144,8 +159,6 @@ for (const scope of scopes) {
     "",
     `${scope.description}`,
     "",
-    "> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.",
-    "",
     "## Install",
     "",
     "```bash",
@@ -155,10 +168,12 @@ for (const scope of scopes) {
     "## Usage",
     "",
     "```ts",
-    `import { createTransferClient } from "@zero-transfer/${scope.name}";`,
-    "",
-    "const client = createTransferClient();",
+    pickUsageImport(scope),
     "```",
+    "",
+    "## Public surface",
+    "",
+    `This package narrows the SDK to **${scope.exports.length}** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/${scope.name}.md#public-surface) for the full list with API-reference links.`,
     "",
     "## Documentation",
     "",
@@ -190,7 +205,7 @@ const indexBody = [
   "",
   scopeIndexRows.join("\n"),
   "",
-  "Each page lists the eventual public surface, capability notes, and the examples that exercise it.",
+  "Each page lists the public surface for that package, capability notes, and the examples that exercise it.",
   "",
 ].join("\n");
 writeFileSync(

@@ -4,8 +4,6 @@
 
 The provider-neutral foundation: `TransferClient`, `createTransferClient`, the provider registry, capability sets, transfer engine, queue, planning primitives, profile resolution, secret redaction, structured logging, and typed errors. Every other scoped package builds on this surface.
 
-> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
-
 ## Install
 
 ```bash
@@ -15,10 +13,12 @@ npm install @zero-transfer/core
 ## Usage
 
 ```ts
-import { createTransferClient } from "@zero-transfer/core";
-
-const client = createTransferClient();
+import { TransferClient, TransferClientOptions, createTransferClient } from "@zero-transfer/core";
 ```
+
+## Public surface
+
+This package narrows the SDK to **45** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/core.md#public-surface) for the full list with API-reference links.
 
 ## Documentation
 

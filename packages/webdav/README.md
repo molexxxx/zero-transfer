@@ -4,8 +4,6 @@
 
 WebDAV provider — PROPFIND-based `list`/`stat`, ranged GET, PUT uploads, Basic auth, and ETag preservation. Speaks remote filesystem semantics over HTTP.
 
-> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
-
 ## Install
 
 ```bash
@@ -15,10 +13,12 @@ npm install @zero-transfer/webdav
 ## Usage
 
 ```ts
-import { createTransferClient } from "@zero-transfer/webdav";
-
-const client = createTransferClient();
+import { createWebDavProviderFactory } from "@zero-transfer/webdav";
 ```
+
+## Public surface
+
+This package narrows the SDK to **2** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/webdav.md#public-surface) for the full list with API-reference links.
 
 ## Documentation
 

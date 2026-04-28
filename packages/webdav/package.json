@@ -1,9 +1,10 @@
 {
   "name": "@zero-transfer/webdav",
   "version": "0.1.0-alpha.0",
-  "description": "WebDAV provider for ZeroTransfer.",
+  "description": "WebDAV provider with PROPFIND listings and ranged downloads.",
   "keywords": [
     "zero-transfer",
+    "webdav",
     "webdav"
   ],
   "author": "Tony Wiedman",
@@ -32,7 +33,7 @@
   "bugs": {
     "url": "https://github.com/tonywied17/zero-transfer/issues"
   },
-  "homepage": "https://github.com/tonywied17/zero-transfer#readme",
+  "homepage": "https://github.com/tonywied17/zero-transfer/tree/main/packages/webdav#readme",
   "engines": {
     "node": ">=20.0.0"
   },

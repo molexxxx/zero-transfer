@@ -4,8 +4,6 @@
 
 Azure Blob Storage provider — SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, and single-shot block-blob uploads. Wire OAuth refresh via `createOAuthTokenSecretSource()`.
 
-> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
-
 ## Install
 
 ```bash
@@ -15,10 +13,12 @@ npm install @zero-transfer/azure-blob
 ## Usage
 
 ```ts
-import { createTransferClient } from "@zero-transfer/azure-blob";
-
-const client = createTransferClient();
+import { createAzureBlobProviderFactory } from "@zero-transfer/azure-blob";
 ```
+
+## Public surface
+
+This package narrows the SDK to **2** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/azure-blob.md#public-surface) for the full list with API-reference links.
 
 ## Documentation
 

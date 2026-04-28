@@ -1,2 +1,3 @@
-// AUTO-GENERATED stub. See packages/README.md.
-export * from "@zero-transfer/sdk";
+// AUTO-GENERATED. Edit scripts/scope-manifest.mjs and re-run packages:generate.
+export { TransferClient, createTransferClient, ProviderRegistry, TransferEngine, TransferQueue, createBandwidthThrottle, createProviderTransferExecutor, createTransferJobsFromPlan, createTransferPlan, summarizeTransferPlan, throttleByteIterable, validateConnectionProfile, resolveConnectionProfileSecrets, redactConnectionProfile, redactSecretSource, resolveSecret, createOAuthTokenSecretSource, ZeroTransferError, noopLogger, emitLog } from "@zero-transfer/sdk";
+export type { TransferClientOptions, TransferSession, TransferProvider, ProviderCapabilities, ProviderFactory, ProviderTransferOperations, RemoteFileSystem, CapabilitySet, AuthenticationCapability, ChecksumCapability, MetadataCapability, BuiltInProviderId, ProviderId, ProviderSelection, TransferJob, TransferPlan, TransferReceipt, TransferEndpoint, TransferOperation, TransferAttempt, TransferRetryPolicy, TransferTimeoutPolicy, TransferBandwidthLimit, TransferVerificationResult, ZeroTransferLogger } from "@zero-transfer/sdk";

@@ -4,8 +4,6 @@
 
 Plain FTP with EPSV/PASV streaming, REST-resume, MLST/MLSD listings, Unix LIST fallback, and full profile timeout enforcement. Use `createFtpProviderFactory()`.
 
-> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
-
 ## Install
 
 ```bash
@@ -15,10 +13,12 @@ npm install @zero-transfer/ftp
 ## Usage
 
 ```ts
-import { createTransferClient } from "@zero-transfer/ftp";
-
-const client = createTransferClient();
+import { createFtpProviderFactory } from "@zero-transfer/ftp";
 ```
+
+## Public surface
+
+This package narrows the SDK to **14** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/ftp.md#public-surface) for the full list with API-reference links.
 
 ## Documentation
 

@@ -1,11 +1,11 @@
 {
   "name": "@zero-transfer/ftps",
   "version": "0.1.0-alpha.0",
-  "description": "FTPS (explicit + implicit TLS) provider for ZeroTransfer.",
+  "description": "Explicit and implicit FTPS with full TLS profile support.",
   "keywords": [
     "zero-transfer",
     "ftps",
-    "ftp",
+    "ftps",
     "tls"
   ],
   "author": "Tony Wiedman",
@@ -34,7 +34,7 @@
   "bugs": {
     "url": "https://github.com/tonywied17/zero-transfer/issues"
   },
-  "homepage": "https://github.com/tonywied17/zero-transfer#readme",
+  "homepage": "https://github.com/tonywied17/zero-transfer/tree/main/packages/ftps#readme",
   "engines": {
     "node": ">=20.0.0"
   },

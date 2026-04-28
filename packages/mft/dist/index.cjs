@@ -1,3 +1,26 @@
-// AUTO-GENERATED stub. See packages/README.md.
+// AUTO-GENERATED. Edit scripts/scope-manifest.mjs and re-run packages:generate.
 "use strict";
-module.exports = require("@zero-transfer/sdk");
+Object.defineProperty(exports, "__esModule", { value: true });
+const sdk = require("@zero-transfer/sdk");
+Object.defineProperty(exports, "RouteRegistry", { enumerable: true, get: () => sdk["RouteRegistry"] });
+Object.defineProperty(exports, "runRoute", { enumerable: true, get: () => sdk["runRoute"] });
+Object.defineProperty(exports, "ScheduleRegistry", { enumerable: true, get: () => sdk["ScheduleRegistry"] });
+Object.defineProperty(exports, "MftScheduler", { enumerable: true, get: () => sdk["MftScheduler"] });
+Object.defineProperty(exports, "parseCronExpression", { enumerable: true, get: () => sdk["parseCronExpression"] });
+Object.defineProperty(exports, "nextScheduleFireAt", { enumerable: true, get: () => sdk["nextScheduleFireAt"] });
+Object.defineProperty(exports, "createInboxRoute", { enumerable: true, get: () => sdk["createInboxRoute"] });
+Object.defineProperty(exports, "createOutboxRoute", { enumerable: true, get: () => sdk["createOutboxRoute"] });
+Object.defineProperty(exports, "inboxProcessedPath", { enumerable: true, get: () => sdk["inboxProcessedPath"] });
+Object.defineProperty(exports, "inboxFailedPath", { enumerable: true, get: () => sdk["inboxFailedPath"] });
+Object.defineProperty(exports, "evaluateRetention", { enumerable: true, get: () => sdk["evaluateRetention"] });
+Object.defineProperty(exports, "InMemoryAuditLog", { enumerable: true, get: () => sdk["InMemoryAuditLog"] });
+Object.defineProperty(exports, "createJsonlAuditLog", { enumerable: true, get: () => sdk["createJsonlAuditLog"] });
+Object.defineProperty(exports, "composeAuditLogs", { enumerable: true, get: () => sdk["composeAuditLogs"] });
+Object.defineProperty(exports, "freezeReceipt", { enumerable: true, get: () => sdk["freezeReceipt"] });
+Object.defineProperty(exports, "summarizeError", { enumerable: true, get: () => sdk["summarizeError"] });
+Object.defineProperty(exports, "dispatchWebhook", { enumerable: true, get: () => sdk["dispatchWebhook"] });
+Object.defineProperty(exports, "signWebhookPayload", { enumerable: true, get: () => sdk["signWebhookPayload"] });
+Object.defineProperty(exports, "createWebhookAuditLog", { enumerable: true, get: () => sdk["createWebhookAuditLog"] });
+Object.defineProperty(exports, "ApprovalRegistry", { enumerable: true, get: () => sdk["ApprovalRegistry"] });
+Object.defineProperty(exports, "createApprovalGate", { enumerable: true, get: () => sdk["createApprovalGate"] });
+Object.defineProperty(exports, "ApprovalRejectedError", { enumerable: true, get: () => sdk["ApprovalRejectedError"] });

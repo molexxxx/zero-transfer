@@ -1,20 +1,20 @@
-# `packages/*` — Scoped Workspace Stubs
+# `packages/*` — Scoped @zero-transfer packages
 
-This directory holds the npm workspace stubs for the future
-[`@zero-transfer/*` monorepo shape](../zero-transfer-remake.md#future-monorepo-shape).
+This directory holds the npm workspace folders for every package in the
+[`@zero-transfer/*`](https://www.npmjs.com/org/zero-transfer) family.
 
-Each stub is currently an **umbrella package** that re-exports the entire
-[`@zero-transfer/sdk`](../package.json) public surface. The intent is twofold:
+Each package is **narrowly scoped**: its `dist/index.{mjs,cjs,d.ts}` re-exports
+**only** the named symbols listed for that scope in
+[`scripts/scope-manifest.mjs`](../scripts/scope-manifest.mjs). The full SDK is
+declared as a runtime dependency, so the surface is real (not a re-export of
+everything) and tree-shakable consumers only pay for what they import.
 
-1. **Claim the scoped names** on npm so nobody else can squat them.
-2. **Forward path** — future releases narrow each stub to its own provider
-   surface without breaking consumers.
-
-| Package                       | Eventual surface                                               |
+| Package                       | Public surface                                                 |
 | ----------------------------- | -------------------------------------------------------------- |
+| `@zero-transfer/sdk`          | Batteries-included — every provider and helper                 |
 | `@zero-transfer/core`         | `TransferClient`, providers, profiles, errors, transfer engine |
 | `@zero-transfer/classic`      | FTP + FTPS + SFTP                                              |
-| `@zero-transfer/ftp`          | `createFtpProviderFactory`                                     |
+| `@zero-transfer/ftp`          | `createFtpProviderFactory` + parsers                           |
 | `@zero-transfer/ftps`         | `createFtpsProviderFactory`                                    |
 | `@zero-transfer/sftp`         | `createSftpProviderFactory` + jump-host helper                 |
 | `@zero-transfer/http`         | `createHttpProviderFactory`                                    |
@@ -25,12 +25,14 @@ Each stub is currently an **umbrella package** that re-exports the entire
 | `@zero-transfer/azure-blob`   | `createAzureBlobProviderFactory`                               |
 | `@zero-transfer/mft`          | Routes, schedules, audit logs, webhooks, approvals             |
 
-`@zero-transfer/sdk` remains the batteries-included distribution.
+See each package's [scope page](../docs/scopes/README.md) for the full list of
+exports with links into the API reference.
 
 ## Regenerate
 
 ```bash
-npm run packages:generate
+npm run packages:generate   # rewrites packages/*/dist + package.json
+npm run docs:scopes         # refreshes per-scope MD pages and READMEs
 ```
 
 This rewrites every stub's `package.json`, `dist/`, and `README.md` from

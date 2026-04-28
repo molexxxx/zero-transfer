@@ -1,9 +1,10 @@
 {
   "name": "@zero-transfer/http",
   "version": "0.1.0-alpha.0",
-  "description": "HTTP(S) provider with signed URL support for ZeroTransfer.",
+  "description": "HTTP(S) and signed-URL provider with ranged downloads.",
   "keywords": [
     "zero-transfer",
+    "http",
     "http",
     "https",
     "signed-url"
@@ -34,7 +35,7 @@
   "bugs": {
     "url": "https://github.com/tonywied17/zero-transfer/issues"
   },
-  "homepage": "https://github.com/tonywied17/zero-transfer#readme",
+  "homepage": "https://github.com/tonywied17/zero-transfer/tree/main/packages/http#readme",
   "engines": {
     "node": ">=20.0.0"
   },

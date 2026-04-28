@@ -4,8 +4,6 @@
 
 Google Drive provider over OAuth bearer tokens — paginated folder listings from a configurable root folder id, ranged downloads via `alt=media`, single-shot multipart uploads, and `md5Checksum` exposed as both `uniqueId` and `checksum`.
 
-> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
-
 ## Install
 
 ```bash
@@ -15,10 +13,12 @@ npm install @zero-transfer/google-drive
 ## Usage
 
 ```ts
-import { createTransferClient } from "@zero-transfer/google-drive";
-
-const client = createTransferClient();
+import { createGoogleDriveProviderFactory } from "@zero-transfer/google-drive";
 ```
+
+## Public surface
+
+This package narrows the SDK to **2** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/google-drive.md#public-surface) for the full list with API-reference links.
 
 ## Documentation
 

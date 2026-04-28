@@ -1,3 +1,5 @@
-// AUTO-GENERATED stub. See packages/README.md.
+// AUTO-GENERATED. Edit scripts/scope-manifest.mjs and re-run packages:generate.
 "use strict";
-module.exports = require("@zero-transfer/sdk");
+Object.defineProperty(exports, "__esModule", { value: true });
+const sdk = require("@zero-transfer/sdk");
+Object.defineProperty(exports, "createFtpsProviderFactory", { enumerable: true, get: () => sdk["createFtpsProviderFactory"] });

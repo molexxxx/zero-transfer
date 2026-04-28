@@ -75,7 +75,7 @@ Requires Node.js **>=20**.
 
 ## Scoped packages
 
-ZeroTransfer publishes 13 scoped packages under the [`@zero-transfer`](https://www.npmjs.com/org/zero-transfer) npm organization. Today every scoped package is an umbrella that re-exports the full [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) surface so the names are claimable without breaking consumers; future releases narrow each package to its own subset.
+ZeroTransfer publishes 13 scoped packages under the [`@zero-transfer`](https://www.npmjs.com/org/zero-transfer) npm organization. [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) is the batteries-included distribution; the other 12 are **narrowly scoped** packages that re-export only the symbols listed in their [scope page](docs/scopes/README.md). Pick one to keep your dependency tree tight, or install the SDK if you want every provider in one go.
 
 | Package                                                                                    | Summary                                                                       | Docs                                      |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ----------------------------------------- |

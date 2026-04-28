@@ -1,11 +1,12 @@
 {
   "name": "@zero-transfer/core",
   "version": "0.1.0-alpha.0",
-  "description": "Core ZeroTransfer contracts (TransferClient, providers, profiles, errors).",
+  "description": "Provider-neutral contracts, transfer engine, queue, profiles, and errors.",
   "keywords": [
     "zero-transfer",
-    "transfer",
     "core",
+    "core",
+    "transfer-client",
     "sdk"
   ],
   "author": "Tony Wiedman",
@@ -34,7 +35,7 @@
   "bugs": {
     "url": "https://github.com/tonywied17/zero-transfer/issues"
   },
-  "homepage": "https://github.com/tonywied17/zero-transfer#readme",
+  "homepage": "https://github.com/tonywied17/zero-transfer/tree/main/packages/core#readme",
   "engines": {
     "node": ">=20.0.0"
   },

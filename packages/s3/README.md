@@ -4,8 +4,6 @@
 
 S3-compatible object storage provider with SigV4 signing, multipart upload, and cross-process multipart resume. Supports AWS S3, MinIO, R2, Wasabi, Backblaze B2 S3, DigitalOcean Spaces, and any custom endpoint that speaks the S3 API. Includes the in-memory resume store; persistent stores can be swapped in.
 
-> **Alpha umbrella package.** Currently re-exports the full `@zero-transfer/sdk` surface so the name is claimable on npm. Future releases will narrow this package to its own subset.
-
 ## Install
 
 ```bash
@@ -15,10 +13,12 @@ npm install @zero-transfer/s3
 ## Usage
 
 ```ts
-import { createTransferClient } from "@zero-transfer/s3";
-
-const client = createTransferClient();
+import { createS3ProviderFactory } from "@zero-transfer/s3";
 ```
+
+## Public surface
+
+This package narrows the SDK to **8** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/s3.md#public-surface) for the full list with API-reference links.
 
 ## Documentation
 

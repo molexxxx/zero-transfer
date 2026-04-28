@@ -1,9 +1,10 @@
 {
   "name": "@zero-transfer/s3",
   "version": "0.1.0-alpha.0",
-  "description": "S3-compatible object storage provider with multipart resume for ZeroTransfer.",
+  "description": "S3-compatible storage with SigV4, multipart upload, and resume.",
   "keywords": [
     "zero-transfer",
+    "s3",
     "s3",
     "object-storage",
     "multipart"
@@ -34,7 +35,7 @@
   "bugs": {
     "url": "https://github.com/tonywied17/zero-transfer/issues"
   },
-  "homepage": "https://github.com/tonywied17/zero-transfer#readme",
+  "homepage": "https://github.com/tonywied17/zero-transfer/tree/main/packages/s3#readme",
   "engines": {
     "node": ">=20.0.0"
   },
