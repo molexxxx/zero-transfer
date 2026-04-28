@@ -190,6 +190,8 @@ export {
 export {
   diffRemoteTrees,
   walkRemoteTree,
+  createSyncPlan,
+  type CreateSyncPlanOptions,
   type DiffRemoteTreesOptions,
   type RemoteTreeDiff,
   type RemoteTreeDiffEntry,
@@ -198,6 +200,10 @@ export {
   type RemoteTreeDiffSummary,
   type RemoteTreeEntry,
   type RemoteTreeFilter,
+  type SyncConflictPolicy,
+  type SyncDeletePolicy,
+  type SyncDirection,
+  type SyncEndpointInput,
   type WalkRemoteTreeOptions,
 } from "./sync";
 export type {

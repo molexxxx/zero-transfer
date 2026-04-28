@@ -1,4 +1,12 @@
 export {
+  createSyncPlan,
+  type CreateSyncPlanOptions,
+  type SyncConflictPolicy,
+  type SyncDeletePolicy,
+  type SyncDirection,
+  type SyncEndpointInput,
+} from "./createSyncPlan";
+export {
   diffRemoteTrees,
   type DiffRemoteTreesOptions,
   type RemoteTreeDiff,
