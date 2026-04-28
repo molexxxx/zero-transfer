@@ -1,12 +1,12 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / TransferEngine
+[ZeroTransfer SDK](../README.md) / TransferEngine
 
 # Class: TransferEngine
 
-Defined in: [src/transfers/TransferEngine.ts:87](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferEngine.ts#L87)
+Defined in: [src/transfers/TransferEngine.ts:87](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L87)
 
 Executes transfer jobs and produces audit-friendly receipts.
 
@@ -18,14 +18,14 @@ Executes transfer jobs and produces audit-friendly receipts.
 new TransferEngine(options?): TransferEngine;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:95](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferEngine.ts#L95)
+Defined in: [src/transfers/TransferEngine.ts:95](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L95)
 
 Creates a transfer engine.
 
 #### Parameters
 
-| Parameter | Type                                                              | Description                                      |
-| --------- | ----------------------------------------------------------------- | ------------------------------------------------ |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`TransferEngineOptions`](../interfaces/TransferEngineOptions.md) | Optional clock override for deterministic tests. |
 
 #### Returns
@@ -38,22 +38,22 @@ Creates a transfer engine.
 
 ```ts
 execute(
-   job,
-   executor,
+   job, 
+   executor, 
 options?): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:109](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferEngine.ts#L109)
+Defined in: [src/transfers/TransferEngine.ts:109](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L109)
 
 Executes a transfer job through a caller-supplied operation.
 
 #### Parameters
 
-| Parameter  | Type                                                                            | Description                                     |
-| ---------- | ------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `job`      | [`TransferJob`](../interfaces/TransferJob.md)                                   | Job metadata used for correlation and receipts. |
-| `executor` | [`TransferExecutor`](../type-aliases/TransferExecutor.md)                       | Concrete transfer operation implementation.     |
-| `options`  | [`TransferEngineExecuteOptions`](../interfaces/TransferEngineExecuteOptions.md) | Optional abort, retry, and progress hooks.      |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `job` | [`TransferJob`](../interfaces/TransferJob.md) | Job metadata used for correlation and receipts. |
+| `executor` | [`TransferExecutor`](../type-aliases/TransferExecutor.md) | Concrete transfer operation implementation. |
+| `options` | [`TransferEngineExecuteOptions`](../interfaces/TransferEngineExecuteOptions.md) | Optional abort, retry, and progress hooks. |
 
 #### Returns
 

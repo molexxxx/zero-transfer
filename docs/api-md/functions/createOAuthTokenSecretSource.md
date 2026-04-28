@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / createOAuthTokenSecretSource
+[ZeroTransfer SDK](../README.md) / createOAuthTokenSecretSource
 
 # Function: createOAuthTokenSecretSource()
 
@@ -10,7 +10,7 @@
 function createOAuthTokenSecretSource(refresh, options?): SecretProvider;
 ```
 
-Defined in: [src/profiles/OAuthTokenSource.ts:71](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/profiles/OAuthTokenSource.ts#L71)
+Defined in: [src/profiles/OAuthTokenSource.ts:71](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/profiles/OAuthTokenSource.ts#L71)
 
 Builds a [SecretProvider](../type-aliases/SecretProvider.md) that exchanges a refresh callback for
 cached, auto-renewing access tokens.
@@ -21,9 +21,9 @@ Azure Blob via AAD).
 
 ## Parameters
 
-| Parameter | Type                                                                              |
-| --------- | --------------------------------------------------------------------------------- |
-| `refresh` | [`OAuthRefreshCallback`](../type-aliases/OAuthRefreshCallback.md)                 |
+| Parameter | Type |
+| ------ | ------ |
+| `refresh` | [`OAuthRefreshCallback`](../type-aliases/OAuthRefreshCallback.md) |
 | `options` | [`OAuthTokenSecretSourceOptions`](../interfaces/OAuthTokenSecretSourceOptions.md) |
 
 ## Returns

@@ -1,21 +1,21 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / ProgressEventInput
+[ZeroTransfer SDK](../README.md) / ProgressEventInput
 
 # Interface: ProgressEventInput
 
-Defined in: [src/services/TransferService.ts:36](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/services/TransferService.ts#L36)
+Defined in: [src/services/TransferService.ts:36](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/services/TransferService.ts#L36)
 
 Input used to create a transfer progress event.
 
 ## Properties
 
-| Property                                         | Type     | Description                                                         | Defined in                                                                                                                                                          |
-| ------------------------------------------------ | -------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <a id="bytestransferred"></a> `bytesTransferred` | `number` | Bytes transferred so far.                                           | [src/services/TransferService.ts:40](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/services/TransferService.ts#L40) |
-| <a id="now"></a> `now?`                          | `Date`   | Time to use for the progress calculation; defaults to current time. | [src/services/TransferService.ts:44](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/services/TransferService.ts#L44) |
-| <a id="startedat"></a> `startedAt`               | `Date`   | Time the transfer began.                                            | [src/services/TransferService.ts:42](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/services/TransferService.ts#L42) |
-| <a id="totalbytes"></a> `totalBytes?`            | `number` | Total expected bytes when known.                                    | [src/services/TransferService.ts:46](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/services/TransferService.ts#L46) |
-| <a id="transferid"></a> `transferId`             | `string` | Stable transfer identifier for correlation.                         | [src/services/TransferService.ts:38](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/services/TransferService.ts#L38) |
+| Property | Type | Description | Defined in |
+| ------ | ------ | ------ | ------ |
+| <a id="bytestransferred"></a> `bytesTransferred` | `number` | Bytes transferred so far. | [src/services/TransferService.ts:40](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/services/TransferService.ts#L40) |
+| <a id="now"></a> `now?` | `Date` | Time to use for the progress calculation; defaults to current time. | [src/services/TransferService.ts:44](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/services/TransferService.ts#L44) |
+| <a id="startedat"></a> `startedAt` | `Date` | Time the transfer began. | [src/services/TransferService.ts:42](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/services/TransferService.ts#L42) |
+| <a id="totalbytes"></a> `totalBytes?` | `number` | Total expected bytes when known. | [src/services/TransferService.ts:46](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/services/TransferService.ts#L46) |
+| <a id="transferid"></a> `transferId` | `string` | Stable transfer identifier for correlation. | [src/services/TransferService.ts:38](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/services/TransferService.ts#L38) |

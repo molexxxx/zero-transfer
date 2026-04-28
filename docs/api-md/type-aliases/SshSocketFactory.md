@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / SshSocketFactory
+[ZeroTransfer SDK](../README.md) / SshSocketFactory
 
 # Type Alias: SshSocketFactory
 
@@ -10,7 +10,7 @@
 type SshSocketFactory = (context) => Readable | Promise<Readable>;
 ```
 
-Defined in: [src/types/public.ts:112](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/types/public.ts#L112)
+Defined in: [src/types/public.ts:112](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/types/public.ts#L112)
 
 Creates a preconnected socket-like stream for SSH sessions.
 
@@ -18,8 +18,8 @@ Use this hook for HTTP CONNECT, SOCKS, bastion, or custom tunnel integrations.
 
 ## Parameters
 
-| Parameter | Type                                                                  | Description                                                  |
-| --------- | --------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `context` | [`SshSocketFactoryContext`](../interfaces/SshSocketFactoryContext.md) | Resolved SSH target information for the socket being opened. |
 
 ## Returns

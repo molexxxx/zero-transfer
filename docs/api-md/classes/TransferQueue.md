@@ -1,12 +1,12 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / TransferQueue
+[ZeroTransfer SDK](../README.md) / TransferQueue
 
 # Class: TransferQueue
 
-Defined in: [src/transfers/TransferQueue.ts:105](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L105)
+Defined in: [src/transfers/TransferQueue.ts:105](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L105)
 
 Minimal transfer queue with concurrency, pause/resume, cancellation, and drain summaries.
 
@@ -18,14 +18,14 @@ Minimal transfer queue with concurrency, pause/resume, cancellation, and drain s
 new TransferQueue(options?): TransferQueue;
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:124](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L124)
+Defined in: [src/transfers/TransferQueue.ts:124](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L124)
 
 Creates a transfer queue.
 
 #### Parameters
 
-| Parameter | Type                                                            | Description                                                |
-| --------- | --------------------------------------------------------------- | ---------------------------------------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`TransferQueueOptions`](../interfaces/TransferQueueOptions.md) | Queue engine, concurrency, executor, and observer options. |
 
 #### Returns
@@ -40,22 +40,22 @@ Creates a transfer queue.
 add(job, executor?): TransferQueueItem;
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:138](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L138)
+Defined in: [src/transfers/TransferQueue.ts:138](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L138)
 
 Adds a transfer job to the queue.
 
 #### Parameters
 
-| Parameter   | Type                                                      |
-| ----------- | --------------------------------------------------------- |
-| `job`       | [`TransferJob`](../interfaces/TransferJob.md)             |
+| Parameter | Type |
+| ------ | ------ |
+| `job` | [`TransferJob`](../interfaces/TransferJob.md) |
 | `executor?` | [`TransferExecutor`](../type-aliases/TransferExecutor.md) |
 
 #### Returns
 
 [`TransferQueueItem`](../interfaces/TransferQueueItem.md)
 
----
+***
 
 ### cancel()
 
@@ -63,21 +63,21 @@ Adds a transfer job to the queue.
 cancel(jobId): boolean;
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:178](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L178)
+Defined in: [src/transfers/TransferQueue.ts:178](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L178)
 
 Cancels a queued or running job.
 
 #### Parameters
 
-| Parameter | Type     |
-| --------- | -------- |
-| `jobId`   | `string` |
+| Parameter | Type |
+| ------ | ------ |
+| `jobId` | `string` |
 
 #### Returns
 
 `boolean`
 
----
+***
 
 ### get()
 
@@ -85,21 +85,21 @@ Cancels a queued or running job.
 get(jobId): TransferQueueItem | undefined;
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:200](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L200)
+Defined in: [src/transfers/TransferQueue.ts:200](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L200)
 
 Returns a queued item snapshot by id.
 
 #### Parameters
 
-| Parameter | Type     |
-| --------- | -------- |
-| `jobId`   | `string` |
+| Parameter | Type |
+| ------ | ------ |
+| `jobId` | `string` |
 
 #### Returns
 
 [`TransferQueueItem`](../interfaces/TransferQueueItem.md) \| `undefined`
 
----
+***
 
 ### list()
 
@@ -107,7 +107,7 @@ Returns a queued item snapshot by id.
 list(): TransferQueueItem[];
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:206](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L206)
+Defined in: [src/transfers/TransferQueue.ts:206](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L206)
 
 Lists queue item snapshots in insertion order.
 
@@ -115,7 +115,7 @@ Lists queue item snapshots in insertion order.
 
 [`TransferQueueItem`](../interfaces/TransferQueueItem.md)[]
 
----
+***
 
 ### pause()
 
@@ -123,7 +123,7 @@ Lists queue item snapshots in insertion order.
 pause(): void;
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:163](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L163)
+Defined in: [src/transfers/TransferQueue.ts:163](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L163)
 
 Pauses dispatch of new queued jobs. Running jobs are allowed to finish.
 
@@ -131,7 +131,7 @@ Pauses dispatch of new queued jobs. Running jobs are allowed to finish.
 
 `void`
 
----
+***
 
 ### resume()
 
@@ -139,7 +139,7 @@ Pauses dispatch of new queued jobs. Running jobs are allowed to finish.
 resume(): void;
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:168](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L168)
+Defined in: [src/transfers/TransferQueue.ts:168](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L168)
 
 Resumes dispatch of queued jobs on the next `run()` call.
 
@@ -147,7 +147,7 @@ Resumes dispatch of queued jobs on the next `run()` call.
 
 `void`
 
----
+***
 
 ### run()
 
@@ -155,21 +155,21 @@ Resumes dispatch of queued jobs on the next `run()` call.
 run(options?): Promise<TransferQueueSummary>;
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:211](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L211)
+Defined in: [src/transfers/TransferQueue.ts:211](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L211)
 
 Drains currently queued jobs until complete, failed, canceled, or paused.
 
 #### Parameters
 
-| Parameter | Type                                                                  |
-| --------- | --------------------------------------------------------------------- |
+| Parameter | Type |
+| ------ | ------ |
 | `options` | [`TransferQueueRunOptions`](../interfaces/TransferQueueRunOptions.md) |
 
 #### Returns
 
 `Promise`\<[`TransferQueueSummary`](../interfaces/TransferQueueSummary.md)\>
 
----
+***
 
 ### setConcurrency()
 
@@ -177,21 +177,21 @@ Drains currently queued jobs until complete, failed, canceled, or paused.
 setConcurrency(concurrency): void;
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:173](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L173)
+Defined in: [src/transfers/TransferQueue.ts:173](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L173)
 
 Updates queue concurrency for subsequent drains.
 
 #### Parameters
 
-| Parameter     | Type     |
-| ------------- | -------- |
+| Parameter | Type |
+| ------ | ------ |
 | `concurrency` | `number` |
 
 #### Returns
 
 `void`
 
----
+***
 
 ### summarize()
 
@@ -199,7 +199,7 @@ Updates queue concurrency for subsequent drains.
 summarize(): TransferQueueSummary;
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:220](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L220)
+Defined in: [src/transfers/TransferQueue.ts:220](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L220)
 
 Returns a queue summary without executing more work.
 

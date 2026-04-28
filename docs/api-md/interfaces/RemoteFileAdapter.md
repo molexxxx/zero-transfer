@@ -1,12 +1,12 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / RemoteFileAdapter
+[ZeroTransfer SDK](../README.md) / RemoteFileAdapter
 
 # Interface: RemoteFileAdapter
 
-Defined in: [src/protocols/RemoteFileAdapter.ts:20](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/protocols/RemoteFileAdapter.ts#L20)
+Defined in: [src/protocols/RemoteFileAdapter.ts:20](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/protocols/RemoteFileAdapter.ts#L20)
 
 Minimal remote-file adapter required by the current alpha facade.
 
@@ -18,14 +18,14 @@ Minimal remote-file adapter required by the current alpha facade.
 connect(profile): Promise<void>;
 ```
 
-Defined in: [src/protocols/RemoteFileAdapter.ts:27](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/protocols/RemoteFileAdapter.ts#L27)
+Defined in: [src/protocols/RemoteFileAdapter.ts:27](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/protocols/RemoteFileAdapter.ts#L27)
 
 Opens a remote connection.
 
 #### Parameters
 
-| Parameter | Type                                        | Description                                                           |
-| --------- | ------------------------------------------- | --------------------------------------------------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Host, authentication, protocol, timeout, signal, and logger settings. |
 
 #### Returns
@@ -34,7 +34,7 @@ Opens a remote connection.
 
 A promise that resolves when the remote session is ready for operations.
 
----
+***
 
 ### disconnect()
 
@@ -42,7 +42,7 @@ A promise that resolves when the remote session is ready for operations.
 disconnect(): Promise<void>;
 ```
 
-Defined in: [src/protocols/RemoteFileAdapter.ts:34](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/protocols/RemoteFileAdapter.ts#L34)
+Defined in: [src/protocols/RemoteFileAdapter.ts:34](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/protocols/RemoteFileAdapter.ts#L34)
 
 Closes the remote connection and releases protocol resources.
 
@@ -52,7 +52,7 @@ Closes the remote connection and releases protocol resources.
 
 A promise that resolves when the remote session is fully closed.
 
----
+***
 
 ### list()
 
@@ -60,15 +60,15 @@ A promise that resolves when the remote session is fully closed.
 list(path, options?): Promise<RemoteEntry[]>;
 ```
 
-Defined in: [src/protocols/RemoteFileAdapter.ts:43](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/protocols/RemoteFileAdapter.ts#L43)
+Defined in: [src/protocols/RemoteFileAdapter.ts:43](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/protocols/RemoteFileAdapter.ts#L43)
 
 Lists entries for a remote directory.
 
 #### Parameters
 
-| Parameter  | Type                            | Description                                                   |
-| ---------- | ------------------------------- | ------------------------------------------------------------- |
-| `path`     | `string`                        | Remote directory path to list.                                |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `path` | `string` | Remote directory path to list. |
 | `options?` | [`ListOptions`](ListOptions.md) | Optional listing controls such as recursion and abort signal. |
 
 #### Returns
@@ -77,7 +77,7 @@ Lists entries for a remote directory.
 
 Normalized remote entries contained by the requested path.
 
----
+***
 
 ### stat()
 
@@ -85,15 +85,15 @@ Normalized remote entries contained by the requested path.
 stat(path, options?): Promise<RemoteStat>;
 ```
 
-Defined in: [src/protocols/RemoteFileAdapter.ts:52](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/protocols/RemoteFileAdapter.ts#L52)
+Defined in: [src/protocols/RemoteFileAdapter.ts:52](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/protocols/RemoteFileAdapter.ts#L52)
 
 Reads metadata for a remote entry.
 
 #### Parameters
 
-| Parameter  | Type                            | Description                                  |
-| ---------- | ------------------------------- | -------------------------------------------- |
-| `path`     | `string`                        | Remote path to inspect.                      |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `path` | `string` | Remote path to inspect. |
 | `options?` | [`StatOptions`](StatOptions.md) | Optional stat controls such as abort signal. |
 
 #### Returns

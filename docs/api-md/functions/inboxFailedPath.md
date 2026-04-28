@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / inboxFailedPath
+[ZeroTransfer SDK](../README.md) / inboxFailedPath
 
 # Function: inboxFailedPath()
 
@@ -10,15 +10,15 @@
 function inboxFailedPath(inbox): string;
 ```
 
-Defined in: [src/mft/conventions.ts:109](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/conventions.ts#L109)
+Defined in: [src/mft/conventions.ts:109](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/conventions.ts#L109)
 
 Computes the absolute path used to quarantine failed files.
 
 ## Parameters
 
-| Parameter | Type                                                        | Description       |
-| --------- | ----------------------------------------------------------- | ----------------- |
-| `inbox`   | [`MftInboxConvention`](../interfaces/MftInboxConvention.md) | Inbox convention. |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `inbox` | [`MftInboxConvention`](../interfaces/MftInboxConvention.md) | Inbox convention. |
 
 ## Returns
 

@@ -1,16 +1,19 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / walkRemoteTree
+[ZeroTransfer SDK](../README.md) / walkRemoteTree
 
 # Function: walkRemoteTree()
 
 ```ts
-function walkRemoteTree(fs, rootPath, options?): AsyncGenerator<RemoteTreeEntry>;
+function walkRemoteTree(
+   fs, 
+   rootPath, 
+options?): AsyncGenerator<RemoteTreeEntry>;
 ```
 
-Defined in: [src/sync/walkRemoteTree.ts:55](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/sync/walkRemoteTree.ts#L55)
+Defined in: [src/sync/walkRemoteTree.ts:55](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/walkRemoteTree.ts#L55)
 
 Walks a remote file system depth-first, yielding entries in a stable order.
 
@@ -20,11 +23,11 @@ filter to skip directories that should not be traversed.
 
 ## Parameters
 
-| Parameter  | Type                                                              | Description                           |
-| ---------- | ----------------------------------------------------------------- | ------------------------------------- |
-| `fs`       | [`RemoteFileSystem`](../interfaces/RemoteFileSystem.md)           | Remote file system used for listings. |
-| `rootPath` | `string`                                                          | Root directory to walk.               |
-| `options`  | [`WalkRemoteTreeOptions`](../interfaces/WalkRemoteTreeOptions.md) | Optional traversal controls.          |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `fs` | [`RemoteFileSystem`](../interfaces/RemoteFileSystem.md) | Remote file system used for listings. |
+| `rootPath` | `string` | Root directory to walk. |
+| `options` | [`WalkRemoteTreeOptions`](../interfaces/WalkRemoteTreeOptions.md) | Optional traversal controls. |
 
 ## Returns
 

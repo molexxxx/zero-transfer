@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / TransferQueueItemStatus
+[ZeroTransfer SDK](../README.md) / TransferQueueItemStatus
 
 # Type Alias: TransferQueueItemStatus
 
@@ -10,6 +10,6 @@
 type TransferQueueItemStatus = "queued" | "running" | "completed" | "failed" | "canceled";
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:22](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferQueue.ts#L22)
+Defined in: [src/transfers/TransferQueue.ts:22](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferQueue.ts#L22)
 
 Queue item lifecycle state.

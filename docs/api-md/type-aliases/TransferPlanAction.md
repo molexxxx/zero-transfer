@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / TransferPlanAction
+[ZeroTransfer SDK](../README.md) / TransferPlanAction
 
 # Type Alias: TransferPlanAction
 
@@ -10,6 +10,6 @@
 type TransferPlanAction = TransferOperation | "skip";
 ```
 
-Defined in: [src/transfers/TransferPlan.ts:9](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferPlan.ts#L9)
+Defined in: [src/transfers/TransferPlan.ts:9](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferPlan.ts#L9)
 
 Non-executing plan action used to explain an intentionally skipped step.

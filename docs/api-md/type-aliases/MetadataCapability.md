@@ -1,13 +1,13 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / MetadataCapability
+[ZeroTransfer SDK](../README.md) / MetadataCapability
 
 # Type Alias: MetadataCapability
 
 ```ts
-type MetadataCapability =
+type MetadataCapability = 
   | "accessedAt"
   | "createdAt"
   | "group"
@@ -19,9 +19,10 @@ type MetadataCapability =
   | "symlinkTarget"
   | "tags"
   | "uniqueId"
-  | (string & {});
+  | string & {
+};
 ```
 
-Defined in: [src/core/CapabilitySet.ts:29](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/core/CapabilitySet.ts#L29)
+Defined in: [src/core/CapabilitySet.ts:29](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/core/CapabilitySet.ts#L29)
 
 Metadata fields a provider can preserve or report.

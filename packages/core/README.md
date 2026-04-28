@@ -13,12 +13,12 @@ npm install @zero-transfer/core
 ## Usage
 
 ```ts
-import { TransferClient, TransferClientOptions, createTransferClient } from "@zero-transfer/core";
+import { createLocalProviderFactory } from "@zero-transfer/core";
 ```
 
 ## Public surface
 
-This package narrows the SDK to **45** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/core.md#public-surface) for the full list with API-reference links.
+This package narrows the SDK to **92** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/core.md#public-surface) for the full list with API-reference links.
 
 ## Documentation
 

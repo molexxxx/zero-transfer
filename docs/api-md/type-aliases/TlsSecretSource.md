@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / TlsSecretSource
+[ZeroTransfer SDK](../README.md) / TlsSecretSource
 
 # Type Alias: TlsSecretSource
 
@@ -10,7 +10,7 @@
 type TlsSecretSource = SecretSource | SecretSource[];
 ```
 
-Defined in: [src/types/public.ts:82](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/types/public.ts#L82)
+Defined in: [src/types/public.ts:82](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/types/public.ts#L82)
 
 TLS material source accepted by certificate-aware connection profiles.
 

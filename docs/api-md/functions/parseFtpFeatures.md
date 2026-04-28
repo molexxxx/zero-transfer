@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / parseFtpFeatures
+[ZeroTransfer SDK](../README.md) / parseFtpFeatures
 
 # Function: parseFtpFeatures()
 
@@ -10,15 +10,15 @@
 function parseFtpFeatures(input): FtpFeatures;
 ```
 
-Defined in: [src/providers/classic/ftp/FtpFeatureParser.ts:36](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/providers/classic/ftp/FtpFeatureParser.ts#L36)
+Defined in: [src/providers/classic/ftp/FtpFeatureParser.ts:36](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpFeatureParser.ts#L36)
 
 Parses FTP FEAT output into a normalized feature set.
 
 ## Parameters
 
-| Parameter | Type                                                                    | Description                                                    |
-| --------- | ----------------------------------------------------------------------- | -------------------------------------------------------------- |
-| `input`   | `string` \| `string`[] \| [`FtpResponse`](../interfaces/FtpResponse.md) | Parsed FTP response, raw string, or individual response lines. |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `input` | `string` \| `string`[] \| [`FtpResponse`](../interfaces/FtpResponse.md) | Parsed FTP response, raw string, or individual response lines. |
 
 ## Returns
 

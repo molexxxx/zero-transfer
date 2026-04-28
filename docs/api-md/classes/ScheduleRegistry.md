@@ -1,36 +1,14 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / ScheduleRegistry
+[ZeroTransfer SDK](../README.md) / ScheduleRegistry
 
 # Class: ScheduleRegistry
 
-Defined in: [src/mft/ScheduleRegistry.ts:10](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/ScheduleRegistry.ts#L10)
+Defined in: [src/mft/ScheduleRegistry.ts:10](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/ScheduleRegistry.ts#L10)
 
 Mutable in-memory registry of MFT schedules.
-
-## Constructors
-
-### Constructor
-
-```ts
-new ScheduleRegistry(schedules?): ScheduleRegistry;
-```
-
-Defined in: [src/mft/ScheduleRegistry.ts:18](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/ScheduleRegistry.ts#L18)
-
-Creates a registry and optionally seeds it with schedules.
-
-#### Parameters
-
-| Parameter   | Type                                                        | Default value | Description                        |
-| ----------- | ----------------------------------------------------------- | ------------- | ---------------------------------- |
-| `schedules` | `Iterable`\<[`MftSchedule`](../interfaces/MftSchedule.md)\> | `[]`          | Schedules to register immediately. |
-
-#### Returns
-
-`ScheduleRegistry`
 
 ## Accessors
 
@@ -42,13 +20,35 @@ Creates a registry and optionally seeds it with schedules.
 get size(): number;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:93](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/ScheduleRegistry.ts#L93)
+Defined in: [src/mft/ScheduleRegistry.ts:93](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/ScheduleRegistry.ts#L93)
 
 Number of schedules currently registered.
 
 ##### Returns
 
 `number`
+
+## Constructors
+
+### Constructor
+
+```ts
+new ScheduleRegistry(schedules?): ScheduleRegistry;
+```
+
+Defined in: [src/mft/ScheduleRegistry.ts:18](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/ScheduleRegistry.ts#L18)
+
+Creates a registry and optionally seeds it with schedules.
+
+#### Parameters
+
+| Parameter | Type | Default value | Description |
+| ------ | ------ | ------ | ------ |
+| `schedules` | `Iterable`\<[`MftSchedule`](../interfaces/MftSchedule.md)\> | `[]` | Schedules to register immediately. |
+
+#### Returns
+
+`ScheduleRegistry`
 
 ## Methods
 
@@ -58,21 +58,21 @@ Number of schedules currently registered.
 get(scheduleId): MftSchedule | undefined;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:62](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/ScheduleRegistry.ts#L62)
+Defined in: [src/mft/ScheduleRegistry.ts:62](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/ScheduleRegistry.ts#L62)
 
 Gets a schedule when registered.
 
 #### Parameters
 
-| Parameter    | Type     |
-| ------------ | -------- |
+| Parameter | Type |
+| ------ | ------ |
 | `scheduleId` | `string` |
 
 #### Returns
 
 [`MftSchedule`](../interfaces/MftSchedule.md) \| `undefined`
 
----
+***
 
 ### has()
 
@@ -80,21 +80,21 @@ Gets a schedule when registered.
 has(scheduleId): boolean;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:57](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/ScheduleRegistry.ts#L57)
+Defined in: [src/mft/ScheduleRegistry.ts:57](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/ScheduleRegistry.ts#L57)
 
 Checks whether a schedule id is registered.
 
 #### Parameters
 
-| Parameter    | Type     |
-| ------------ | -------- |
+| Parameter | Type |
+| ------ | ------ |
 | `scheduleId` | `string` |
 
 #### Returns
 
 `boolean`
 
----
+***
 
 ### list()
 
@@ -102,7 +102,7 @@ Checks whether a schedule id is registered.
 list(): MftSchedule[];
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:88](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/ScheduleRegistry.ts#L88)
+Defined in: [src/mft/ScheduleRegistry.ts:88](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/ScheduleRegistry.ts#L88)
 
 Returns all schedules in registration order.
 
@@ -110,7 +110,7 @@ Returns all schedules in registration order.
 
 [`MftSchedule`](../interfaces/MftSchedule.md)[]
 
----
+***
 
 ### register()
 
@@ -118,14 +118,14 @@ Returns all schedules in registration order.
 register(schedule): this;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:31](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/ScheduleRegistry.ts#L31)
+Defined in: [src/mft/ScheduleRegistry.ts:31](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/ScheduleRegistry.ts#L31)
 
 Registers a schedule.
 
 #### Parameters
 
-| Parameter  | Type                                          | Description      |
-| ---------- | --------------------------------------------- | ---------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `schedule` | [`MftSchedule`](../interfaces/MftSchedule.md) | Schedule to add. |
 
 #### Returns
@@ -138,7 +138,7 @@ This registry for fluent setup.
 
 [ConfigurationError](ConfigurationError.md) When the schedule is malformed or a duplicate.
 
----
+***
 
 ### require()
 
@@ -146,14 +146,14 @@ This registry for fluent setup.
 require(scheduleId): MftSchedule;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:73](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/ScheduleRegistry.ts#L73)
+Defined in: [src/mft/ScheduleRegistry.ts:73](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/ScheduleRegistry.ts#L73)
 
 Gets a schedule or throws when missing.
 
 #### Parameters
 
-| Parameter    | Type     | Description              |
-| ------------ | -------- | ------------------------ |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `scheduleId` | `string` | Schedule id to retrieve. |
 
 #### Returns
@@ -166,7 +166,7 @@ The schedule.
 
 [ConfigurationError](ConfigurationError.md) When no schedule is registered under the id.
 
----
+***
 
 ### unregister()
 
@@ -174,14 +174,14 @@ The schedule.
 unregister(scheduleId): boolean;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:52](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/ScheduleRegistry.ts#L52)
+Defined in: [src/mft/ScheduleRegistry.ts:52](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/ScheduleRegistry.ts#L52)
 
 Removes a schedule.
 
 #### Parameters
 
-| Parameter    | Type     | Description            |
-| ------------ | -------- | ---------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `scheduleId` | `string` | Schedule id to remove. |
 
 #### Returns

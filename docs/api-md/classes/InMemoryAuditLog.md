@@ -1,18 +1,36 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / InMemoryAuditLog
+[ZeroTransfer SDK](../README.md) / InMemoryAuditLog
 
 # Class: InMemoryAuditLog
 
-Defined in: [src/mft/audit.ts:47](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/audit.ts#L47)
+Defined in: [src/mft/audit.ts:47](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/audit.ts#L47)
 
 In-memory implementation of [MftAuditLog](../interfaces/MftAuditLog.md).
 
 ## Implements
 
 - [`MftAuditLog`](../interfaces/MftAuditLog.md)
+
+## Accessors
+
+### size
+
+#### Get Signature
+
+```ts
+get size(): number;
+```
+
+Defined in: [src/mft/audit.ts:67](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/audit.ts#L67)
+
+Number of currently recorded entries.
+
+##### Returns
+
+`number`
 
 ## Constructors
 
@@ -26,24 +44,6 @@ new InMemoryAuditLog(): InMemoryAuditLog;
 
 `InMemoryAuditLog`
 
-## Accessors
-
-### size
-
-#### Get Signature
-
-```ts
-get size(): number;
-```
-
-Defined in: [src/mft/audit.ts:67](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/audit.ts#L67)
-
-Number of currently recorded entries.
-
-##### Returns
-
-`number`
-
 ## Methods
 
 ### clear()
@@ -52,7 +52,7 @@ Number of currently recorded entries.
 clear(): void;
 ```
 
-Defined in: [src/mft/audit.ts:62](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/audit.ts#L62)
+Defined in: [src/mft/audit.ts:62](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/audit.ts#L62)
 
 Drops all recorded entries.
 
@@ -60,7 +60,7 @@ Drops all recorded entries.
 
 `void`
 
----
+***
 
 ### list()
 
@@ -68,7 +68,7 @@ Drops all recorded entries.
 list(): Promise<readonly MftAuditEntry[]>;
 ```
 
-Defined in: [src/mft/audit.ts:57](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/audit.ts#L57)
+Defined in: [src/mft/audit.ts:57](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/audit.ts#L57)
 
 Returns recorded entries in insertion order.
 
@@ -80,7 +80,7 @@ Returns recorded entries in insertion order.
 
 [`MftAuditLog`](../interfaces/MftAuditLog.md).[`list`](../interfaces/MftAuditLog.md#list)
 
----
+***
 
 ### record()
 
@@ -88,15 +88,15 @@ Returns recorded entries in insertion order.
 record(entry): Promise<void>;
 ```
 
-Defined in: [src/mft/audit.ts:51](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/audit.ts#L51)
+Defined in: [src/mft/audit.ts:51](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/audit.ts#L51)
 
 Records a new audit entry.
 
 #### Parameters
 
-| Parameter | Type                                              |
-| --------- | ------------------------------------------------- |
-| `entry`   | [`MftAuditEntry`](../interfaces/MftAuditEntry.md) |
+| Parameter | Type |
+| ------ | ------ |
+| `entry` | [`MftAuditEntry`](../interfaces/MftAuditEntry.md) |
 
 #### Returns
 

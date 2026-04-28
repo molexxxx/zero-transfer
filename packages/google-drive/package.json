@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/google-drive",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0",
   "description": "Google Drive provider with OAuth, folder paths, and md5 checksums.",
   "keywords": [
     "zero-transfer",
@@ -46,6 +46,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@zero-transfer/sdk": "0.1.0-alpha.0"
+    "@zero-transfer/sdk": "0.1.0"
   }
 }

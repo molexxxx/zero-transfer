@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / FriendlyTransferOptions
+[ZeroTransfer SDK](../README.md) / FriendlyTransferOptions
 
 # Type Alias: FriendlyTransferOptions
 
@@ -13,13 +13,13 @@ type FriendlyTransferOptions = Omit<RunRouteOptions, "client" | "route"> & {
 };
 ```
 
-Defined in: [src/client/operations.ts:28](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/client/operations.ts#L28)
+Defined in: [src/client/operations.ts:28](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/client/operations.ts#L28)
 
 Shared options consumed by [uploadFile](../functions/uploadFile.md), [downloadFile](../functions/downloadFile.md), and [copyBetween](../functions/copyBetween.md).
 
 ## Type Declaration
 
-| Name         | Type     | Description                                                                                                     | Defined in                                                                                                                                            |
-| ------------ | -------- | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `routeId?`   | `string` | Stable route id assigned to the synthetic route. Defaults to `"upload:..."`, `"download:..."`, or `"copy:..."`. | [src/client/operations.ts:30](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/client/operations.ts#L30) |
-| `routeName?` | `string` | Optional human-readable route name forwarded to telemetry.                                                      | [src/client/operations.ts:32](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/client/operations.ts#L32) |
+| Name | Type | Description | Defined in |
+| ------ | ------ | ------ | ------ |
+| `routeId?` | `string` | Stable route id assigned to the synthetic route. Defaults to `"upload:..."`, `"download:..."`, or `"copy:..."`. | [src/client/operations.ts:30](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/client/operations.ts#L30) |
+| `routeName?` | `string` | Optional human-readable route name forwarded to telemetry. | [src/client/operations.ts:32](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/client/operations.ts#L32) |

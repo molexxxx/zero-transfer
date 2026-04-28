@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / FtpPassiveHostStrategy
+[ZeroTransfer SDK](../README.md) / FtpPassiveHostStrategy
 
 # Type Alias: FtpPassiveHostStrategy
 
@@ -10,7 +10,7 @@
 type FtpPassiveHostStrategy = "advertised" | "control";
 ```
 
-Defined in: [src/providers/classic/ftp/FtpProvider.ts:142](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/providers/classic/ftp/FtpProvider.ts#L142)
+Defined in: [src/providers/classic/ftp/FtpProvider.ts:142](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpProvider.ts#L142)
 
 Host selection strategy for PASV data endpoints.
 

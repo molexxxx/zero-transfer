@@ -1,20 +1,14 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / TransferRetryPolicy
+[ZeroTransfer SDK](../README.md) / TransferRetryPolicy
 
 # Interface: TransferRetryPolicy
 
-Defined in: [src/transfers/TransferEngine.ts:57](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferEngine.ts#L57)
+Defined in: [src/transfers/TransferEngine.ts:57](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L57)
 
 Retry policy for transfer execution.
-
-## Properties
-
-| Property                                | Type     | Description                                                           | Defined in                                                                                                                                                          |
-| --------------------------------------- | -------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <a id="maxattempts"></a> `maxAttempts?` | `number` | Maximum total attempts, including the first attempt. Defaults to `1`. | [src/transfers/TransferEngine.ts:59](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferEngine.ts#L59) |
 
 ## Methods
 
@@ -24,21 +18,21 @@ Retry policy for transfer execution.
 optional onRetry(input): void;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:63](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferEngine.ts#L63)
+Defined in: [src/transfers/TransferEngine.ts:63](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L63)
 
 Observes retry decisions before the next attempt starts.
 
 #### Parameters
 
-| Parameter | Type                                                          |
-| --------- | ------------------------------------------------------------- |
-| `input`   | [`TransferRetryDecisionInput`](TransferRetryDecisionInput.md) |
+| Parameter | Type |
+| ------ | ------ |
+| `input` | [`TransferRetryDecisionInput`](TransferRetryDecisionInput.md) |
 
 #### Returns
 
 `void`
 
----
+***
 
 ### shouldRetry()?
 
@@ -46,16 +40,22 @@ Observes retry decisions before the next attempt starts.
 optional shouldRetry(input): boolean;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:61](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/transfers/TransferEngine.ts#L61)
+Defined in: [src/transfers/TransferEngine.ts:61](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L61)
 
 Decides whether a failed attempt should be retried. Defaults to SDK retryability metadata.
 
 #### Parameters
 
-| Parameter | Type                                                          |
-| --------- | ------------------------------------------------------------- |
-| `input`   | [`TransferRetryDecisionInput`](TransferRetryDecisionInput.md) |
+| Parameter | Type |
+| ------ | ------ |
+| `input` | [`TransferRetryDecisionInput`](TransferRetryDecisionInput.md) |
 
 #### Returns
 
 `boolean`
+
+## Properties
+
+| Property | Type | Description | Defined in |
+| ------ | ------ | ------ | ------ |
+| <a id="maxattempts"></a> `maxAttempts?` | `number` | Maximum total attempts, including the first attempt. Defaults to `1`. | [src/transfers/TransferEngine.ts:59](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/transfers/TransferEngine.ts#L59) |

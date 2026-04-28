@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / SshAlgorithms
+[ZeroTransfer SDK](../README.md) / SshAlgorithms
 
 # Type Alias: SshAlgorithms
 
@@ -10,6 +10,6 @@
 type SshAlgorithms = Algorithms;
 ```
 
-Defined in: [src/types/public.ts:90](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/types/public.ts#L90)
+Defined in: [src/types/public.ts:90](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/types/public.ts#L90)
 
 SSH transport algorithm overrides accepted by SFTP providers.

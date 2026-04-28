@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / createTransferResult
+[ZeroTransfer SDK](../README.md) / createTransferResult
 
 # Function: createTransferResult()
 
@@ -10,15 +10,15 @@
 function createTransferResult(input): TransferResult;
 ```
 
-Defined in: [src/services/TransferService.ts:55](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/services/TransferService.ts#L55)
+Defined in: [src/services/TransferService.ts:55](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/services/TransferService.ts#L55)
 
 Creates a final transfer result with duration and average throughput.
 
 ## Parameters
 
-| Parameter | Type                                                          | Description                                                                 |
-| --------- | ------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `input`   | [`TransferResultInput`](../interfaces/TransferResultInput.md) | Transfer paths, byte count, timestamps, and optional verification metadata. |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `input` | [`TransferResultInput`](../interfaces/TransferResultInput.md) | Transfer paths, byte count, timestamps, and optional verification metadata. |
 
 ## Returns
 

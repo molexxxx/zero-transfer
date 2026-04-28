@@ -1,22 +1,22 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / CreateRemoteBrowserOptions
+[ZeroTransfer SDK](../README.md) / CreateRemoteBrowserOptions
 
 # Interface: CreateRemoteBrowserOptions
 
-Defined in: [src/sync/createRemoteBrowser.ts:32](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/sync/createRemoteBrowser.ts#L32)
+Defined in: [src/sync/createRemoteBrowser.ts:32](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L32)
 
 Options accepted by [createRemoteBrowser](../functions/createRemoteBrowser.md).
 
 ## Properties
 
-| Property                                | Type                                                              | Description                                                                         | Defined in                                                                                                                                                          |
-| --------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <a id="filter"></a> `filter?`           | [`RemoteBrowserFilter`](../type-aliases/RemoteBrowserFilter.md)   | Optional filter applied after sort/hidden filtering.                                | [src/sync/createRemoteBrowser.ts:44](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/sync/createRemoteBrowser.ts#L44) |
-| <a id="fs"></a> `fs`                    | [`RemoteFileSystem`](RemoteFileSystem.md)                         | Remote file system to browse.                                                       | [src/sync/createRemoteBrowser.ts:34](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/sync/createRemoteBrowser.ts#L34) |
-| <a id="initialpath"></a> `initialPath?` | `string`                                                          | Initial path. Defaults to `"/"`.                                                    | [src/sync/createRemoteBrowser.ts:36](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/sync/createRemoteBrowser.ts#L36) |
-| <a id="showhidden"></a> `showHidden?`   | `boolean`                                                         | Whether dotfile entries (names starting with `.`) are included. Defaults to `true`. | [src/sync/createRemoteBrowser.ts:42](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/sync/createRemoteBrowser.ts#L42) |
-| <a id="sortkey"></a> `sortKey?`         | [`RemoteEntrySortKey`](../type-aliases/RemoteEntrySortKey.md)     | Sort key applied to listings. Defaults to `"name"`.                                 | [src/sync/createRemoteBrowser.ts:38](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/sync/createRemoteBrowser.ts#L38) |
-| <a id="sortorder"></a> `sortOrder?`     | [`RemoteEntrySortOrder`](../type-aliases/RemoteEntrySortOrder.md) | Sort order applied to listings. Defaults to `"asc"`.                                | [src/sync/createRemoteBrowser.ts:40](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/sync/createRemoteBrowser.ts#L40) |
+| Property | Type | Description | Defined in |
+| ------ | ------ | ------ | ------ |
+| <a id="filter"></a> `filter?` | [`RemoteBrowserFilter`](../type-aliases/RemoteBrowserFilter.md) | Optional filter applied after sort/hidden filtering. | [src/sync/createRemoteBrowser.ts:44](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L44) |
+| <a id="fs"></a> `fs` | [`RemoteFileSystem`](RemoteFileSystem.md) | Remote file system to browse. | [src/sync/createRemoteBrowser.ts:34](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L34) |
+| <a id="initialpath"></a> `initialPath?` | `string` | Initial path. Defaults to `"/"`. | [src/sync/createRemoteBrowser.ts:36](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L36) |
+| <a id="showhidden"></a> `showHidden?` | `boolean` | Whether dotfile entries (names starting with `.`) are included. Defaults to `true`. | [src/sync/createRemoteBrowser.ts:42](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L42) |
+| <a id="sortkey"></a> `sortKey?` | [`RemoteEntrySortKey`](../type-aliases/RemoteEntrySortKey.md) | Sort key applied to listings. Defaults to `"name"`. | [src/sync/createRemoteBrowser.ts:38](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L38) |
+| <a id="sortorder"></a> `sortOrder?` | [`RemoteEntrySortOrder`](../type-aliases/RemoteEntrySortOrder.md) | Sort order applied to listings. Defaults to `"asc"`. | [src/sync/createRemoteBrowser.ts:40](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L40) |

@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / parseMlsdList
+[ZeroTransfer SDK](../README.md) / parseMlsdList
 
 # Function: parseMlsdList()
 
@@ -10,16 +10,16 @@
 function parseMlsdList(input, directory?): RemoteEntry[];
 ```
 
-Defined in: [src/providers/classic/ftp/FtpListParser.ts:27](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/providers/classic/ftp/FtpListParser.ts#L27)
+Defined in: [src/providers/classic/ftp/FtpListParser.ts:27](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpListParser.ts#L27)
 
 Parses an MLSD directory listing into normalized remote entries.
 
 ## Parameters
 
-| Parameter   | Type     | Default value | Description                                        |
-| ----------- | -------- | ------------- | -------------------------------------------------- |
-| `input`     | `string` | `undefined`   | Raw MLSD response body.                            |
-| `directory` | `string` | `"."`         | Parent remote directory used to build entry paths. |
+| Parameter | Type | Default value | Description |
+| ------ | ------ | ------ | ------ |
+| `input` | `string` | `undefined` | Raw MLSD response body. |
+| `directory` | `string` | `"."` | Parent remote directory used to build entry paths. |
 
 ## Returns
 

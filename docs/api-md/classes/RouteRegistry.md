@@ -1,36 +1,14 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / RouteRegistry
+[ZeroTransfer SDK](../README.md) / RouteRegistry
 
 # Class: RouteRegistry
 
-Defined in: [src/mft/RouteRegistry.ts:13](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/RouteRegistry.ts#L13)
+Defined in: [src/mft/RouteRegistry.ts:13](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/RouteRegistry.ts#L13)
 
 Mutable in-memory registry of MFT routes.
-
-## Constructors
-
-### Constructor
-
-```ts
-new RouteRegistry(routes?): RouteRegistry;
-```
-
-Defined in: [src/mft/RouteRegistry.ts:21](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/RouteRegistry.ts#L21)
-
-Creates a registry and optionally seeds it with route definitions.
-
-#### Parameters
-
-| Parameter | Type                                                  | Default value | Description                     |
-| --------- | ----------------------------------------------------- | ------------- | ------------------------------- |
-| `routes`  | `Iterable`\<[`MftRoute`](../interfaces/MftRoute.md)\> | `[]`          | Routes to register immediately. |
-
-#### Returns
-
-`RouteRegistry`
 
 ## Accessors
 
@@ -42,13 +20,35 @@ Creates a registry and optionally seeds it with route definitions.
 get size(): number;
 ```
 
-Defined in: [src/mft/RouteRegistry.ts:115](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/RouteRegistry.ts#L115)
+Defined in: [src/mft/RouteRegistry.ts:115](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/RouteRegistry.ts#L115)
 
 Returns the number of routes currently registered.
 
 ##### Returns
 
 `number`
+
+## Constructors
+
+### Constructor
+
+```ts
+new RouteRegistry(routes?): RouteRegistry;
+```
+
+Defined in: [src/mft/RouteRegistry.ts:21](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/RouteRegistry.ts#L21)
+
+Creates a registry and optionally seeds it with route definitions.
+
+#### Parameters
+
+| Parameter | Type | Default value | Description |
+| ------ | ------ | ------ | ------ |
+| `routes` | `Iterable`\<[`MftRoute`](../interfaces/MftRoute.md)\> | `[]` | Routes to register immediately. |
+
+#### Returns
+
+`RouteRegistry`
 
 ## Methods
 
@@ -58,14 +58,14 @@ Returns the number of routes currently registered.
 get(routeId): MftRoute | undefined;
 ```
 
-Defined in: [src/mft/RouteRegistry.ts:80](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/RouteRegistry.ts#L80)
+Defined in: [src/mft/RouteRegistry.ts:80](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/RouteRegistry.ts#L80)
 
 Gets a route definition when registered.
 
 #### Parameters
 
-| Parameter | Type     | Description           |
-| --------- | -------- | --------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `routeId` | `string` | Route id to retrieve. |
 
 #### Returns
@@ -74,7 +74,7 @@ Gets a route definition when registered.
 
 The route, or `undefined` when missing.
 
----
+***
 
 ### has()
 
@@ -82,14 +82,14 @@ The route, or `undefined` when missing.
 has(routeId): boolean;
 ```
 
-Defined in: [src/mft/RouteRegistry.ts:70](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/RouteRegistry.ts#L70)
+Defined in: [src/mft/RouteRegistry.ts:70](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/RouteRegistry.ts#L70)
 
 Checks whether a route id is registered.
 
 #### Parameters
 
-| Parameter | Type     | Description          |
-| --------- | -------- | -------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `routeId` | `string` | Route id to inspect. |
 
 #### Returns
@@ -98,7 +98,7 @@ Checks whether a route id is registered.
 
 `true` when a route exists.
 
----
+***
 
 ### list()
 
@@ -106,7 +106,7 @@ Checks whether a route id is registered.
 list(): MftRoute[];
 ```
 
-Defined in: [src/mft/RouteRegistry.ts:110](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/RouteRegistry.ts#L110)
+Defined in: [src/mft/RouteRegistry.ts:110](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/RouteRegistry.ts#L110)
 
 Returns all registered routes in registration order.
 
@@ -116,7 +116,7 @@ Returns all registered routes in registration order.
 
 Array of route definitions.
 
----
+***
 
 ### register()
 
@@ -124,15 +124,15 @@ Array of route definitions.
 register(route): this;
 ```
 
-Defined in: [src/mft/RouteRegistry.ts:34](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/RouteRegistry.ts#L34)
+Defined in: [src/mft/RouteRegistry.ts:34](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/RouteRegistry.ts#L34)
 
 Registers a route definition.
 
 #### Parameters
 
-| Parameter | Type                                    | Description   |
-| --------- | --------------------------------------- | ------------- |
-| `route`   | [`MftRoute`](../interfaces/MftRoute.md) | Route to add. |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `route` | [`MftRoute`](../interfaces/MftRoute.md) | Route to add. |
 
 #### Returns
 
@@ -144,7 +144,7 @@ This registry for fluent setup.
 
 [ConfigurationError](ConfigurationError.md) When the route id is already registered or empty.
 
----
+***
 
 ### require()
 
@@ -152,14 +152,14 @@ This registry for fluent setup.
 require(routeId): MftRoute;
 ```
 
-Defined in: [src/mft/RouteRegistry.ts:91](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/RouteRegistry.ts#L91)
+Defined in: [src/mft/RouteRegistry.ts:91](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/RouteRegistry.ts#L91)
 
 Gets a route definition or throws a typed SDK error.
 
 #### Parameters
 
-| Parameter | Type     | Description           |
-| --------- | -------- | --------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `routeId` | `string` | Route id to retrieve. |
 
 #### Returns
@@ -172,7 +172,7 @@ The registered route.
 
 [ConfigurationError](ConfigurationError.md) When no route is registered under the id.
 
----
+***
 
 ### unregister()
 
@@ -180,14 +180,14 @@ The registered route.
 unregister(routeId): boolean;
 ```
 
-Defined in: [src/mft/RouteRegistry.ts:60](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/RouteRegistry.ts#L60)
+Defined in: [src/mft/RouteRegistry.ts:60](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/RouteRegistry.ts#L60)
 
 Removes a route from the registry.
 
 #### Parameters
 
-| Parameter | Type     | Description         |
-| --------- | -------- | ------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `routeId` | `string` | Route id to remove. |
 
 #### Returns

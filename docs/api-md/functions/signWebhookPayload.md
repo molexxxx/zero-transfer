@@ -1,25 +1,28 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / signWebhookPayload
+[ZeroTransfer SDK](../README.md) / signWebhookPayload
 
 # Function: signWebhookPayload()
 
 ```ts
-function signWebhookPayload(payload, secret, timestamp?): WebhookSignature;
+function signWebhookPayload(
+   payload, 
+   secret, 
+   timestamp?): WebhookSignature;
 ```
 
-Defined in: [src/mft/webhooks.ts:82](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/webhooks.ts#L82)
+Defined in: [src/mft/webhooks.ts:82](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/webhooks.ts#L82)
 
 Computes the HMAC-SHA256 signature for a webhook payload.
 
 ## Parameters
 
-| Parameter   | Type     | Description                                                       |
-| ----------- | -------- | ----------------------------------------------------------------- |
-| `payload`   | `string` | Raw JSON string of the webhook body.                              |
-| `secret`    | `string` | Shared secret.                                                    |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `payload` | `string` | Raw JSON string of the webhook body. |
+| `secret` | `string` | Shared secret. |
 | `timestamp` | `string` | Optional fixed timestamp. Defaults to `new Date().toISOString()`. |
 
 ## Returns

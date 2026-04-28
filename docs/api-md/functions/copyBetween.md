@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / copyBetween
+[ZeroTransfer SDK](../README.md) / copyBetween
 
 # Function: copyBetween()
 
@@ -10,14 +10,18 @@
 function copyBetween(options): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/client/operations.ts:110](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/client/operations.ts#L110)
+Defined in: [src/client/operations.ts:196](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/client/operations.ts#L196)
 
 Copies a file between two remote endpoints in a single call.
 
+Both source and destination providers must be registered with the
+[TransferClient](../classes/TransferClient.md). Streams are piped end-to-end without staging the file
+on the local disk.
+
 ## Parameters
 
-| Parameter | Type                                                        | Description            |
-| --------- | ----------------------------------------------------------- | ---------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`CopyBetweenOptions`](../interfaces/CopyBetweenOptions.md) | Friendly copy options. |
 
 ## Returns
@@ -25,3 +29,30 @@ Copies a file between two remote endpoints in a single call.
 `Promise`\<[`TransferReceipt`](../interfaces/TransferReceipt.md)\>
 
 Receipt produced by the underlying transfer engine.
+
+## Example
+
+```ts
+import {
+  copyBetween,
+  createS3ProviderFactory,
+  createSftpProviderFactory,
+  createTransferClient,
+} from "@zero-transfer/sdk";
+
+const client = createTransferClient({
+  providers: [createSftpProviderFactory(), createS3ProviderFactory()],
+});
+
+await copyBetween({
+  client,
+  source: {
+    path: "/exports/daily.csv",
+    profile: { host: "sftp.example.com", provider: "sftp", username: "etl" },
+  },
+  destination: {
+    path: "warehouse/daily.csv",
+    profile: { host: "warehouse", provider: "s3", s3: { region: "us-east-1" } },
+  },
+});
+```

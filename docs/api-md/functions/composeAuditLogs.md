@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / composeAuditLogs
+[ZeroTransfer SDK](../README.md) / composeAuditLogs
 
 # Function: composeAuditLogs()
 
@@ -10,14 +10,14 @@
 function composeAuditLogs(...logs): MftAuditLog;
 ```
 
-Defined in: [src/mft/audit.ts:104](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/audit.ts#L104)
+Defined in: [src/mft/audit.ts:104](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/audit.ts#L104)
 
 Combines multiple audit logs into a single fan-out log.
 
 ## Parameters
 
-| Parameter | Type                                                     | Description                                         |
-| --------- | -------------------------------------------------------- | --------------------------------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | ...`logs` | readonly [`MftAuditLog`](../interfaces/MftAuditLog.md)[] | Logs that should each receive every recorded entry. |
 
 ## Returns
@@ -25,4 +25,4 @@ Combines multiple audit logs into a single fan-out log.
 [`MftAuditLog`](../interfaces/MftAuditLog.md)
 
 A composite log whose `record` writes to all targets in order and
-whose `list` returns the first non-empty result.
+         whose `list` returns the first non-empty result.

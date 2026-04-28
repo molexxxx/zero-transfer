@@ -1,26 +1,29 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / parseUnixListLine
+[ZeroTransfer SDK](../README.md) / parseUnixListLine
 
 # Function: parseUnixListLine()
 
 ```ts
-function parseUnixListLine(line, directory?, now?): RemoteEntry;
+function parseUnixListLine(
+   line, 
+   directory?, 
+   now?): RemoteEntry;
 ```
 
-Defined in: [src/providers/classic/ftp/FtpListParser.ts:66](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/providers/classic/ftp/FtpListParser.ts#L66)
+Defined in: [src/providers/classic/ftp/FtpListParser.ts:66](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpListParser.ts#L66)
 
 Parses one Unix-style FTP `LIST` line.
 
 ## Parameters
 
-| Parameter   | Type     | Default value | Description                                           |
-| ----------- | -------- | ------------- | ----------------------------------------------------- |
-| `line`      | `string` | `undefined`   | Raw listing line in an `ls -l` compatible format.     |
-| `directory` | `string` | `"."`         | Parent remote directory used to build the entry path. |
-| `now`       | `Date`   | `...`         | Reference date used when the line omits a year.       |
+| Parameter | Type | Default value | Description |
+| ------ | ------ | ------ | ------ |
+| `line` | `string` | `undefined` | Raw listing line in an `ls -l` compatible format. |
+| `directory` | `string` | `"."` | Parent remote directory used to build the entry path. |
+| `now` | `Date` | `...` | Reference date used when the line omits a year. |
 
 ## Returns
 

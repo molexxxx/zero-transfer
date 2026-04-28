@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / getBuiltinCapabilityMatrix
+[ZeroTransfer SDK](../README.md) / getBuiltinCapabilityMatrix
 
 # Function: getBuiltinCapabilityMatrix()
 
@@ -10,7 +10,7 @@
 function getBuiltinCapabilityMatrix(): BuiltinCapabilityMatrixEntry[];
 ```
 
-Defined in: [src/providers/capabilityMatrix.ts:54](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/providers/capabilityMatrix.ts#L54)
+Defined in: [src/providers/capabilityMatrix.ts:54](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/capabilityMatrix.ts#L54)
 
 Returns the capability matrix for every shipped provider factory.
 

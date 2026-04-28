@@ -1,12 +1,12 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / ZeroTransferError
+[ZeroTransfer SDK](../README.md) / ZeroTransferError
 
 # Class: ZeroTransferError
 
-Defined in: [src/errors/ZeroTransferError.ts:51](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L51)
+Defined in: [src/errors/ZeroTransferError.ts:51](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L51)
 
 Base class for all typed ZeroTransfer errors.
 
@@ -40,14 +40,14 @@ Base class for all typed ZeroTransfer errors.
 new ZeroTransferError(details): ZeroTransferError;
 ```
 
-Defined in: [src/errors/ZeroTransferError.ts:76](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L76)
+Defined in: [src/errors/ZeroTransferError.ts:76](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L76)
 
 Creates a structured SDK error.
 
 #### Parameters
 
-| Parameter | Type                                                                    | Description                                                 |
-| --------- | ----------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `details` | [`ZeroTransferErrorDetails`](../interfaces/ZeroTransferErrorDetails.md) | Code, message, retryability, and optional protocol context. |
 
 #### Returns
@@ -57,47 +57,10 @@ Creates a structured SDK error.
 #### Overrides
 
 ```ts
-Error.constructor;
+Error.constructor
 ```
-
-## Properties
-
-| Property                                       | Modifier   | Type                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                       | Inherited from          | Defined in                                                                                                                                                          |
-| ---------------------------------------------- | ---------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| <a id="cause"></a> `cause?`                    | `public`   | `unknown`                       | -                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `Error.cause`           | node_modules/typescript/lib/lib.es2022.error.d.ts:24                                                                                                                |
-| <a id="code"></a> `code`                       | `readonly` | `string`                        | Stable machine-readable error code.                                                                                                                                                                                                                                                                                                                                                                                                               | -                       | [src/errors/ZeroTransferError.ts:53](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L53) |
-| <a id="command"></a> `command?`                | `readonly` | `string`                        | Protocol command associated with the failure, if any.                                                                                                                                                                                                                                                                                                                                                                                             | -                       | [src/errors/ZeroTransferError.ts:59](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L59) |
-| <a id="details"></a> `details?`                | `readonly` | `Record`\<`string`, `unknown`\> | Additional structured details for diagnostics.                                                                                                                                                                                                                                                                                                                                                                                                    | -                       | [src/errors/ZeroTransferError.ts:69](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L69) |
-| <a id="ftpcode"></a> `ftpCode?`                | `readonly` | `number`                        | FTP response code associated with the failure.                                                                                                                                                                                                                                                                                                                                                                                                    | -                       | [src/errors/ZeroTransferError.ts:61](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L61) |
-| <a id="host"></a> `host?`                      | `readonly` | `string`                        | Remote host associated with the failing operation.                                                                                                                                                                                                                                                                                                                                                                                                | -                       | [src/errors/ZeroTransferError.ts:57](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L57) |
-| <a id="message"></a> `message`                 | `public`   | `string`                        | -                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `Error.message`         | node_modules/typescript/lib/lib.es5.d.ts:1075                                                                                                                       |
-| <a id="name"></a> `name`                       | `public`   | `string`                        | -                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `Error.name`            | node_modules/typescript/lib/lib.es5.d.ts:1074                                                                                                                       |
-| <a id="path"></a> `path?`                      | `readonly` | `string`                        | Remote path associated with the failure.                                                                                                                                                                                                                                                                                                                                                                                                          | -                       | [src/errors/ZeroTransferError.ts:65](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L65) |
-| <a id="protocol"></a> `protocol?`              | `readonly` | `"ftp"` \| `"ftps"` \| `"sftp"` | Protocol active when the error occurred.                                                                                                                                                                                                                                                                                                                                                                                                          | -                       | [src/errors/ZeroTransferError.ts:55](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L55) |
-| <a id="retryable"></a> `retryable`             | `readonly` | `boolean`                       | Whether retry policy may safely retry this failure.                                                                                                                                                                                                                                                                                                                                                                                               | -                       | [src/errors/ZeroTransferError.ts:67](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L67) |
-| <a id="sftpcode"></a> `sftpCode?`              | `readonly` | `number`                        | SFTP status code associated with the failure.                                                                                                                                                                                                                                                                                                                                                                                                     | -                       | [src/errors/ZeroTransferError.ts:63](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L63) |
-| <a id="stack"></a> `stack?`                    | `public`   | `string`                        | -                                                                                                                                                                                                                                                                                                                                                                                                                                                 | `Error.stack`           | node_modules/typescript/lib/lib.es5.d.ts:1076                                                                                                                       |
-| <a id="stacktracelimit"></a> `stackTraceLimit` | `static`   | `number`                        | The `Error.stackTraceLimit` property specifies the number of stack frames collected by a stack trace (whether generated by `new Error().stack` or `Error.captureStackTrace(obj)`). The default value is `10` but may be set to any valid JavaScript number. Changes will affect any stack trace captured _after_ the value has been changed. If set to a non-number value, or set to a negative number, stack traces will not capture any frames. | `Error.stackTraceLimit` | node_modules/@types/node/globals.d.ts:67                                                                                                                            |
 
 ## Methods
-
-### toJSON()
-
-```ts
-toJSON(): Record<string, unknown>;
-```
-
-Defined in: [src/errors/ZeroTransferError.ts:96](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/errors/ZeroTransferError.ts#L96)
-
-Serializes the error into a plain object suitable for logs or API responses.
-
-#### Returns
-
-`Record`\<`string`, `unknown`\>
-
-A JSON-safe object containing public structured error fields.
-
----
 
 ### captureStackTrace()
 
@@ -105,7 +68,7 @@ A JSON-safe object containing public structured error fields.
 static captureStackTrace(targetObject, constructorOpt?): void;
 ```
 
-Defined in: node_modules/@types/node/globals.d.ts:51
+Defined in: node\_modules/@types/node/globals.d.ts:51
 
 Creates a `.stack` property on `targetObject`, which when accessed returns
 a string representing the location in the code at which
@@ -114,7 +77,7 @@ a string representing the location in the code at which
 ```js
 const myObject = {};
 Error.captureStackTrace(myObject);
-myObject.stack; // Similar to `new Error().stack`
+myObject.stack;  // Similar to `new Error().stack`
 ```
 
 The first line of the trace will be prefixed with
@@ -153,9 +116,9 @@ a();
 
 #### Parameters
 
-| Parameter         | Type       |
-| ----------------- | ---------- |
-| `targetObject`    | `object`   |
+| Parameter | Type |
+| ------ | ------ |
+| `targetObject` | `object` |
 | `constructorOpt?` | `Function` |
 
 #### Returns
@@ -165,10 +128,10 @@ a();
 #### Inherited from
 
 ```ts
-Error.captureStackTrace;
+Error.captureStackTrace
 ```
 
----
+***
 
 ### prepareStackTrace()
 
@@ -176,13 +139,13 @@ Error.captureStackTrace;
 static prepareStackTrace(err, stackTraces): any;
 ```
 
-Defined in: node_modules/@types/node/globals.d.ts:55
+Defined in: node\_modules/@types/node/globals.d.ts:55
 
 #### Parameters
 
-| Parameter     | Type         |
-| ------------- | ------------ |
-| `err`         | `Error`      |
+| Parameter | Type |
+| ------ | ------ |
+| `err` | `Error` |
 | `stackTraces` | `CallSite`[] |
 
 #### Returns
@@ -196,5 +159,42 @@ https://v8.dev/docs/stack-trace-api#customizing-stack-traces
 #### Inherited from
 
 ```ts
-Error.prepareStackTrace;
+Error.prepareStackTrace
 ```
+
+***
+
+### toJSON()
+
+```ts
+toJSON(): Record<string, unknown>;
+```
+
+Defined in: [src/errors/ZeroTransferError.ts:96](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L96)
+
+Serializes the error into a plain object suitable for logs or API responses.
+
+#### Returns
+
+`Record`\<`string`, `unknown`\>
+
+A JSON-safe object containing public structured error fields.
+
+## Properties
+
+| Property | Modifier | Type | Description | Inherited from | Defined in |
+| ------ | ------ | ------ | ------ | ------ | ------ |
+| <a id="cause"></a> `cause?` | `public` | `unknown` | - | `Error.cause` | node\_modules/typescript/lib/lib.es2022.error.d.ts:24 |
+| <a id="code"></a> `code` | `readonly` | `string` | Stable machine-readable error code. | - | [src/errors/ZeroTransferError.ts:53](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L53) |
+| <a id="command"></a> `command?` | `readonly` | `string` | Protocol command associated with the failure, if any. | - | [src/errors/ZeroTransferError.ts:59](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L59) |
+| <a id="details"></a> `details?` | `readonly` | `Record`\<`string`, `unknown`\> | Additional structured details for diagnostics. | - | [src/errors/ZeroTransferError.ts:69](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L69) |
+| <a id="ftpcode"></a> `ftpCode?` | `readonly` | `number` | FTP response code associated with the failure. | - | [src/errors/ZeroTransferError.ts:61](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L61) |
+| <a id="host"></a> `host?` | `readonly` | `string` | Remote host associated with the failing operation. | - | [src/errors/ZeroTransferError.ts:57](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L57) |
+| <a id="message"></a> `message` | `public` | `string` | - | `Error.message` | node\_modules/typescript/lib/lib.es5.d.ts:1075 |
+| <a id="name"></a> `name` | `public` | `string` | - | `Error.name` | node\_modules/typescript/lib/lib.es5.d.ts:1074 |
+| <a id="path"></a> `path?` | `readonly` | `string` | Remote path associated with the failure. | - | [src/errors/ZeroTransferError.ts:65](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L65) |
+| <a id="protocol"></a> `protocol?` | `readonly` | `"ftp"` \| `"ftps"` \| `"sftp"` | Protocol active when the error occurred. | - | [src/errors/ZeroTransferError.ts:55](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L55) |
+| <a id="retryable"></a> `retryable` | `readonly` | `boolean` | Whether retry policy may safely retry this failure. | - | [src/errors/ZeroTransferError.ts:67](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L67) |
+| <a id="sftpcode"></a> `sftpCode?` | `readonly` | `number` | SFTP status code associated with the failure. | - | [src/errors/ZeroTransferError.ts:63](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/errors/ZeroTransferError.ts#L63) |
+| <a id="stack"></a> `stack?` | `public` | `string` | - | `Error.stack` | node\_modules/typescript/lib/lib.es5.d.ts:1076 |
+| <a id="stacktracelimit"></a> `stackTraceLimit` | `static` | `number` | The `Error.stackTraceLimit` property specifies the number of stack frames collected by a stack trace (whether generated by `new Error().stack` or `Error.captureStackTrace(obj)`). The default value is `10` but may be set to any valid JavaScript number. Changes will affect any stack trace captured _after_ the value has been changed. If set to a non-number value, or set to a negative number, stack traces will not capture any frames. | `Error.stackTraceLimit` | node\_modules/@types/node/globals.d.ts:67 |

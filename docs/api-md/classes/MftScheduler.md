@@ -1,36 +1,14 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / MftScheduler
+[ZeroTransfer SDK](../README.md) / MftScheduler
 
 # Class: MftScheduler
 
-Defined in: [src/mft/MftScheduler.ts:65](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/MftScheduler.ts#L65)
+Defined in: [src/mft/MftScheduler.ts:65](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/MftScheduler.ts#L65)
 
 Runs routes on configured schedules.
-
-## Constructors
-
-### Constructor
-
-```ts
-new MftScheduler(options): MftScheduler;
-```
-
-Defined in: [src/mft/MftScheduler.ts:80](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/MftScheduler.ts#L80)
-
-Creates a scheduler bound to a transfer client and registries.
-
-#### Parameters
-
-| Parameter | Type                                                          | Description                                                      |
-| --------- | ------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `options` | [`MftSchedulerOptions`](../interfaces/MftSchedulerOptions.md) | Client, registries, optional runner, observers, and timer hooks. |
-
-#### Returns
-
-`MftScheduler`
 
 ## Accessors
 
@@ -42,13 +20,35 @@ Creates a scheduler bound to a transfer client and registries.
 get isRunning(): boolean;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:91](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/MftScheduler.ts#L91)
+Defined in: [src/mft/MftScheduler.ts:91](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/MftScheduler.ts#L91)
 
 Whether the scheduler is currently running.
 
 ##### Returns
 
 `boolean`
+
+## Constructors
+
+### Constructor
+
+```ts
+new MftScheduler(options): MftScheduler;
+```
+
+Defined in: [src/mft/MftScheduler.ts:80](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/MftScheduler.ts#L80)
+
+Creates a scheduler bound to a transfer client and registries.
+
+#### Parameters
+
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `options` | [`MftSchedulerOptions`](../interfaces/MftSchedulerOptions.md) | Client, registries, optional runner, observers, and timer hooks. |
+
+#### Returns
+
+`MftScheduler`
 
 ## Methods
 
@@ -58,7 +58,7 @@ Whether the scheduler is currently running.
 start(): void;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:96](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/MftScheduler.ts#L96)
+Defined in: [src/mft/MftScheduler.ts:96](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/MftScheduler.ts#L96)
 
 Starts the scheduler. No-op when already running.
 
@@ -66,7 +66,7 @@ Starts the scheduler. No-op when already running.
 
 `void`
 
----
+***
 
 ### stop()
 
@@ -74,7 +74,7 @@ Starts the scheduler. No-op when already running.
 stop(): Promise<void>;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:111](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/mft/MftScheduler.ts#L111)
+Defined in: [src/mft/MftScheduler.ts:111](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/mft/MftScheduler.ts#L111)
 
 Stops the scheduler and aborts in-flight route executions.
 

@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / createFtpsProviderFactory
+[ZeroTransfer SDK](../README.md) / createFtpsProviderFactory
 
 # Function: createFtpsProviderFactory()
 
@@ -10,7 +10,7 @@
 function createFtpsProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/classic/ftp/FtpProvider.ts:189](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/providers/classic/ftp/FtpProvider.ts#L189)
+Defined in: [src/providers/classic/ftp/FtpProvider.ts:234](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/providers/classic/ftp/FtpProvider.ts#L234)
 
 Creates a provider factory for explicit or implicit FTPS connections.
 
@@ -19,8 +19,8 @@ sessions with `AUTH TLS`, and applies the configured `PROT` data-channel policy.
 
 ## Parameters
 
-| Parameter | Type                                                          | Description                 |
-| --------- | ------------------------------------------------------------- | --------------------------- |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
 | `options` | [`FtpsProviderOptions`](../interfaces/FtpsProviderOptions.md) | Optional provider defaults. |
 
 ## Returns
@@ -28,3 +28,34 @@ sessions with `AUTH TLS`, and applies the configured `PROT` data-channel policy.
 [`ProviderFactory`](../interfaces/ProviderFactory.md)
 
 Provider factory suitable for `createTransferClient({ providers: [...] })`.
+
+## Examples
+
+```ts
+import { createFtpsProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+
+const client = createTransferClient({ providers: [createFtpsProviderFactory()] });
+
+const session = await client.connect({
+  host: "ftps.example.com",
+  provider: "ftps",
+  username: "deploy",
+  password: { env: "FTPS_PASSWORD" },
+  tls: { minVersion: "TLSv1.2" },
+});
+```
+
+```ts
+await client.connect({
+  host: "ftps.internal.example",
+  provider: "ftps",
+  username: "audit",
+  tls: {
+    ca: { path: "./certs/ca-bundle.pem" },
+    cert: { path: "./certs/client.crt" },
+    key: { path: "./certs/client.key" },
+    // Optional but recommended:
+    pinnedFingerprint256: "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99",
+  },
+});
+```

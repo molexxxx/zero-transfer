@@ -1,8 +1,8 @@
-[**@zero-transfer/sdk**](../README.md)
+[**ZeroTransfer SDK v0.1.0**](../README.md)
 
----
+***
 
-[@zero-transfer/sdk](../README.md) / parentRemotePath
+[ZeroTransfer SDK](../README.md) / parentRemotePath
 
 # Function: parentRemotePath()
 
@@ -10,15 +10,15 @@
 function parentRemotePath(input): string;
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:85](https://github.com/tonywied17/zero-transfer/blob/228e6788135e03ac23cdff1b250339621f97317b/src/sync/createRemoteBrowser.ts#L85)
+Defined in: [src/sync/createRemoteBrowser.ts:85](https://github.com/tonywied17/zero-transfer/blob/1409be96b9cb3f76d6e94d27d5e243ebcbb41223/src/sync/createRemoteBrowser.ts#L85)
 
 Returns the parent directory of a remote path, or `"/"` for root inputs.
 
 ## Parameters
 
-| Parameter | Type     | Description             |
-| --------- | -------- | ----------------------- |
-| `input`   | `string` | Remote path to inspect. |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `input` | `string` | Remote path to inspect. |
 
 ## Returns
 
