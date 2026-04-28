@@ -92,17 +92,31 @@ describe("profile validation", () => {
         ssh: { pinnedHostKeySha256: [] },
       }),
     ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        ssh: { keyboardInteractive: "prompt" as never },
+      }),
+    ).toThrow(ConfigurationError);
   });
 
   it("accepts SHA-256 certificate and SSH host-key pinning profile fields", () => {
     const profile: ConnectionProfile = {
       host: "ftps.example.test",
       provider: "ftps",
-      ssh: { pinnedHostKeySha256: [validHostKeyPin] },
+      ssh: { keyboardInteractive: () => ["123456"], pinnedHostKeySha256: [validHostKeyPin] },
       tls: { pinnedFingerprint256: [validFingerprint256] },
     };
 
     expect(validateConnectionProfile(profile)).toBe(profile);
+    expect(
+      validateConnectionProfile({
+        host: "sftp.example.test",
+        provider: "sftp",
+        ssh: { pinnedHostKeySha256: Buffer.alloc(32, 9).toString("base64") },
+      }),
+    ).toMatchObject({ provider: "sftp" });
   });
 });
 
@@ -237,6 +251,7 @@ describe("connection profile secrets", () => {
         signal: new AbortController().signal,
         ssh: {
           knownHosts: [{ path: "known_hosts" }],
+          keyboardInteractive: () => ["123456"],
           passphrase: { env: "ZT_SSH_KEY_PASS" },
           pinnedHostKeySha256: validHostKeyPin,
           privateKey: { path: "id_ed25519" },
@@ -261,6 +276,7 @@ describe("connection profile secrets", () => {
       signal: "[AbortSignal]",
       ssh: {
         knownHosts: [{ encoding: undefined, path: "[REDACTED]" }],
+        keyboardInteractive: "[REDACTED]",
         passphrase: { env: "[REDACTED]" },
         pinnedHostKeySha256: validHostKeyPin,
         privateKey: { encoding: undefined, path: "[REDACTED]" },
@@ -297,6 +313,17 @@ describe("connection profile secrets", () => {
         ca: { encoding: undefined, path: "[REDACTED]" },
         pfx: { encoding: "buffer", path: "[REDACTED]" },
       },
+    });
+    expect(
+      redactConnectionProfile({
+        host: "sftp.example.test",
+        provider: "sftp",
+        ssh: { knownHosts: "sftp.example.test ssh-ed25519 AAAA" },
+      }),
+    ).toEqual({
+      host: "sftp.example.test",
+      provider: "sftp",
+      ssh: { knownHosts: "[REDACTED]" },
     });
   });
 });

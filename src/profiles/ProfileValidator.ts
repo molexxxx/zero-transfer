@@ -72,6 +72,17 @@ export function validateConnectionProfile(profile: ConnectionProfile): Connectio
  */
 function validateSshProfile(profile: SshProfile): void {
   validatePinnedHostKeySha256(profile.pinnedHostKeySha256);
+
+  if (
+    profile.keyboardInteractive !== undefined &&
+    typeof profile.keyboardInteractive !== "function"
+  ) {
+    throw new ConfigurationError({
+      details: { keyboardInteractive: typeof profile.keyboardInteractive },
+      message: "Connection profile ssh.keyboardInteractive must be a function when provided",
+      retryable: false,
+    });
+  }
 }
 
 /**

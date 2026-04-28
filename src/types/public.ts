@@ -82,6 +82,31 @@ export type TlsSecretSource = SecretSource | SecretSource[];
 /** Known-hosts material source accepted by SSH connection profiles. */
 export type SshKnownHostsSource = SecretSource | SecretSource[];
 
+/** Prompt metadata supplied by an SSH keyboard-interactive server challenge. */
+export interface SshKeyboardInteractivePrompt {
+  /** Human-readable prompt text supplied by the SSH server. */
+  prompt: string;
+  /** Whether the answer may be echoed to a terminal or UI. */
+  echo?: boolean;
+}
+
+/** Input passed to SSH keyboard-interactive answer providers. */
+export interface SshKeyboardInteractiveChallenge {
+  /** Server-provided challenge title. */
+  name: string;
+  /** Server-provided instructions for the prompt set. */
+  instructions: string;
+  /** Server-provided language tag, when supplied. */
+  language: string;
+  /** Ordered prompts that require answers. */
+  prompts: readonly SshKeyboardInteractivePrompt[];
+}
+
+/** Provides ordered answers for an SSH keyboard-interactive authentication challenge. */
+export type SshKeyboardInteractiveHandler = (
+  challenge: SshKeyboardInteractiveChallenge,
+) => readonly string[] | Promise<readonly string[]>;
+
 /**
  * TLS settings shared by certificate-aware providers such as FTPS and future HTTPS/WebDAV adapters.
  *
@@ -128,6 +153,8 @@ export interface SshProfile {
   knownHosts?: SshKnownHostsSource;
   /** Expected SSH host-key SHA-256 fingerprint or fingerprints, using OpenSSH `SHA256:` form, base64, or hex. */
   pinnedHostKeySha256?: string | readonly string[];
+  /** Runtime callback that answers SSH keyboard-interactive authentication prompts. */
+  keyboardInteractive?: SshKeyboardInteractiveHandler;
 }
 
 /**

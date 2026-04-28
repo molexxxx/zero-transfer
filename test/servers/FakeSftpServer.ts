@@ -10,7 +10,7 @@
  */
 import { Server as SshServer, utils } from "ssh2";
 import { createHash } from "node:crypto";
-import type { Attributes, Connection, FileEntry, ParsedKey, SFTPWrapper } from "ssh2";
+import type { Attributes, Connection, FileEntry, ParsedKey, Prompt, SFTPWrapper } from "ssh2";
 
 const DEFAULT_USERNAME = "tester";
 const DEFAULT_PASSWORD = "secret";
@@ -57,6 +57,10 @@ export interface FakeSftpServerOptions {
   password?: string;
   /** Accepted public key for public-key authentication. */
   publicKey?: Buffer | string;
+  /** Expected answers for keyboard-interactive authentication. */
+  keyboardInteractiveAnswers?: readonly string[];
+  /** Prompts issued for keyboard-interactive authentication. */
+  keyboardInteractivePrompts?: string | Prompt | Array<string | Prompt>;
   /** In-memory entries exposed by the SFTP subsystem. */
   entries?: Iterable<FakeSftpEntry>;
   /** Paths that should return SFTP permission-denied for OPENDIR, OPEN, STAT, and LSTAT. */
@@ -91,6 +95,8 @@ export class FakeSftpServer {
   private readonly entries: Map<string, FakeSftpNode>;
   private readonly password: string;
   private readonly publicKey: ParsedKey | undefined;
+  private readonly keyboardInteractiveAnswers: readonly string[] | undefined;
+  private readonly keyboardInteractivePrompts: string | Prompt | Array<string | Prompt>;
   private readonly deniedPaths: Set<string>;
   private readonly requests: string[] = [];
   private readonly rejectSftp: boolean;
@@ -108,6 +114,11 @@ export class FakeSftpServer {
     this.password = options.password ?? DEFAULT_PASSWORD;
     this.publicKey =
       options.publicKey === undefined ? undefined : parseFakeSftpPublicKey(options.publicKey);
+    this.keyboardInteractiveAnswers = options.keyboardInteractiveAnswers;
+    this.keyboardInteractivePrompts = options.keyboardInteractivePrompts ?? {
+      echo: false,
+      prompt: "Verification code: ",
+    };
     this.entries = createEntryMap(options.entries ?? createDefaultEntries());
     this.deniedPaths = new Set(Array.from(options.deniedPaths ?? [], normalizeFakeSftpPath));
     this.rejectSftp = options.rejectSftp ?? false;
@@ -197,6 +208,22 @@ export class FakeSftpServer {
           this.acceptsPublicKey(context)
         ) {
           context.accept();
+          return;
+        }
+
+        if (
+          context.method === "keyboard-interactive" &&
+          context.username === this.username &&
+          this.keyboardInteractiveAnswers !== undefined
+        ) {
+          context.prompt(this.keyboardInteractivePrompts, "ZeroTransfer", (answers) => {
+            if (arraysEqual(answers, this.keyboardInteractiveAnswers ?? [])) {
+              context.accept();
+              return;
+            }
+
+            context.reject();
+          });
           return;
         }
 
@@ -505,6 +532,10 @@ function hashSshPublicKey(publicKey: Buffer | string): string {
   const key = parseFakeSftpPublicKey(publicKey);
 
   return createHash("sha256").update(key.getPublicSSH()).digest("base64").replace(/=+$/g, "");
+}
+
+function arraysEqual(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 function createEntryMap(entries: Iterable<FakeSftpEntry>): Map<string, FakeSftpNode> {

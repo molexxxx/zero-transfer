@@ -47,7 +47,7 @@ afterEach(async () => {
 describeProviderContract("sftp", {
   createProviderFactory: () => createSftpProviderFactory(),
   expectedCapabilities: {
-    authentication: ["password", "private-key"],
+    authentication: ["password", "private-key", "keyboard-interactive"],
     list: true,
     provider: "sftp",
     readStream: true,
@@ -169,6 +169,66 @@ describe("createSftpProviderFactory", () => {
     } finally {
       await session.disconnect();
     }
+  });
+
+  it("authenticates with SSH keyboard-interactive prompts", async () => {
+    await restartServer({ keyboardInteractiveAnswers: ["123456"] });
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+    const challenges: string[] = [];
+    const session = await client.connect({
+      host: "127.0.0.1",
+      port: getProfilePort(),
+      provider: "sftp",
+      ssh: {
+        keyboardInteractive: ({ name, prompts }) => {
+          challenges.push(name, ...prompts.map((prompt) => prompt.prompt));
+
+          return ["123456"];
+        },
+      },
+      timeoutMs: 5_000,
+      username: { value: "tester" },
+    });
+
+    try {
+      await expect(session.fs.stat("/incoming/report.csv")).resolves.toMatchObject({
+        path: "/incoming/report.csv",
+        type: "file",
+      });
+      expect(challenges).toEqual(["ZeroTransfer", "Verification code: "]);
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("rejects failed SSH keyboard-interactive authentication", async () => {
+    await restartServer({ keyboardInteractiveAnswers: ["123456"] });
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+
+    await expect(
+      client.connect({
+        host: "127.0.0.1",
+        port: getProfilePort(),
+        provider: "sftp",
+        ssh: { keyboardInteractive: () => ["wrong"] },
+        timeoutMs: 5_000,
+        username: { value: "tester" },
+      }),
+    ).rejects.toBeInstanceOf(AuthenticationError);
+    await expect(
+      client.connect({
+        host: "127.0.0.1",
+        port: getProfilePort(),
+        provider: "sftp",
+        ssh: {
+          keyboardInteractive: () => {
+            throw new Error("token unavailable");
+          },
+        },
+        timeoutMs: 5_000,
+        username: { value: "tester" },
+      }),
+    ).rejects.toBeInstanceOf(AuthenticationError);
   });
 
   it("verifies SFTP host keys with SHA-256 pins and known_hosts entries", async () => {

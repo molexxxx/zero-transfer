@@ -11,9 +11,11 @@ import { Buffer } from "node:buffer";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { Client, utils } from "ssh2";
 import type {
+  AnyAuthMethod,
   ClientErrorExtensions,
   ConnectConfig,
   FileEntryWithStats,
+  KeyboardInteractiveCallback,
   ParsedKey,
   ReadStream,
   SFTPWrapper,
@@ -45,6 +47,7 @@ import type {
   RemoteEntry,
   RemoteEntryType,
   RemoteStat,
+  SshKeyboardInteractiveChallenge,
   StatOptions,
 } from "../../../types/public";
 import { basenameRemotePath, joinRemotePath, normalizeRemotePath } from "../../../utils/path";
@@ -63,7 +66,7 @@ const SFTP_PROVIDER_ID = "sftp";
 const SFTP_DEFAULT_PORT = 22;
 const SFTP_PROVIDER_CAPABILITIES: CapabilitySet = {
   provider: SFTP_PROVIDER_ID,
-  authentication: ["password", "private-key"],
+  authentication: ["password", "private-key", "keyboard-interactive"],
   list: true,
   stat: true,
   readStream: true,
@@ -278,9 +281,6 @@ interface SftpErrorBase {
 
 interface SftpAuthenticationConfig {
   authHandler: NonNullable<ConnectConfig["authHandler"]>;
-  password?: string;
-  privateKey?: SecretValue;
-  passphrase?: SecretValue;
 }
 
 interface SftpKnownHostEntry {
@@ -397,9 +397,6 @@ function createConnectConfig(
   }
 
   configureSftpHostKeyVerifier(config, profile, options);
-  if (authentication.password !== undefined) config.password = authentication.password;
-  if (authentication.privateKey !== undefined) config.privateKey = authentication.privateKey;
-  if (authentication.passphrase !== undefined) config.passphrase = authentication.passphrase;
 
   return config;
 }
@@ -657,32 +654,70 @@ function resolveSftpAuthentication(profile: ResolvedConnectionProfile): SftpAuth
   const password = resolveOptionalTextCredential(profile.password, "password");
   const privateKey = profile.ssh?.privateKey;
   const passphrase = profile.ssh?.passphrase;
-  const authHandler: Array<"password" | "publickey"> = [];
+  const keyboardInteractive = profile.ssh?.keyboardInteractive;
+  const username = requireTextCredential(profile.username, "username");
+  const authHandler: AnyAuthMethod[] = [];
 
   if (privateKey !== undefined) {
-    authHandler.push("publickey");
+    const method: AnyAuthMethod = {
+      key: privateKey,
+      type: "publickey",
+      username,
+    };
+
+    if (passphrase !== undefined) method.passphrase = passphrase;
+
+    authHandler.push(method);
   }
 
   if (password !== undefined) {
-    authHandler.push("password");
+    authHandler.push({
+      password,
+      type: "password",
+      username,
+    });
+  }
+
+  if (keyboardInteractive !== undefined) {
+    authHandler.push({
+      prompt: (name, instructions, language, prompts, finish) => {
+        handleKeyboardInteractiveChallenge(
+          {
+            instructions,
+            language,
+            name,
+            prompts,
+          },
+          keyboardInteractive,
+          finish,
+        );
+      },
+      type: "keyboard-interactive",
+      username,
+    });
   }
 
   if (authHandler.length === 0) {
     throw new ConfigurationError({
       details: { provider: SFTP_PROVIDER_ID },
-      message: "SFTP profiles require a password or ssh.privateKey",
+      message: "SFTP profiles require a password, ssh.privateKey, or ssh.keyboardInteractive",
       protocol: "sftp",
       retryable: false,
     });
   }
 
-  const authentication: SftpAuthenticationConfig = { authHandler };
+  return { authHandler };
+}
 
-  if (password !== undefined) authentication.password = password;
-  if (privateKey !== undefined) authentication.privateKey = privateKey;
-  if (passphrase !== undefined) authentication.passphrase = passphrase;
-
-  return authentication;
+function handleKeyboardInteractiveChallenge(
+  challenge: SshKeyboardInteractiveChallenge,
+  handler: NonNullable<NonNullable<ResolvedConnectionProfile["ssh"]>["keyboardInteractive"]>,
+  finish: KeyboardInteractiveCallback,
+): void {
+  Promise.resolve()
+    .then(() => handler(challenge))
+    .then((answers) => finish(Array.from(answers)))
+    .catch(() => finish([]));
 }
 
 function openSftpSession(client: Client, profile: ResolvedConnectionProfile): Promise<SFTPWrapper> {
