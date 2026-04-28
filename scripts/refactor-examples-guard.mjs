@@ -27,7 +27,7 @@ for (const file of files) {
   // 1. Add `import { fileURLToPath } from "node:url";` AFTER the first `from "..";` line.
   if (!text.includes(`from "node:url"`)) {
     const match = text.match(/^import [\s\S]*?from "[^"]+";\s*\n/m);
-    if (!match) {
+    if (!match || match.index === undefined) {
       console.warn(`no import block found in ${file}; skipping`);
       continue;
     }
