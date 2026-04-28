@@ -51,6 +51,12 @@ export type {
   TransferDataSource,
 } from "./providers/ProviderTransferOperations";
 export type { RemoteFileSystem } from "./providers/RemoteFileSystem";
+export {
+  formatCapabilityMatrixMarkdown,
+  getBuiltinCapabilityMatrix,
+  type BuiltinCapabilityMatrixEntry,
+  type BuiltinProviderMatrixId,
+} from "./providers/capabilityMatrix";
 export { createLocalProviderFactory, type LocalProviderOptions } from "./providers/local";
 export {
   createMemoryProviderFactory,
