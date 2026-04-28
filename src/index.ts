@@ -295,6 +295,15 @@ export type {
   TransferResult,
 } from "./types/public";
 export {
+  RouteRegistry,
+  runRoute,
+  type MftRoute,
+  type MftRouteEndpoint,
+  type MftRouteFilter,
+  type MftRouteOperation,
+  type RunRouteOptions,
+} from "./mft";
+export {
   assertSafeFtpArgument,
   basenameRemotePath,
   joinRemotePath,
