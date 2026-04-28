@@ -410,6 +410,19 @@ function normalizeLocalProviderPath(input: string): string {
 
 function resolveLocalPath(rootPath: string, remotePath: string): string {
   const normalizedRemotePath = normalizeLocalProviderPath(remotePath);
+
+  // If the remote path is already an absolute filesystem path inside rootPath
+  // (e.g. friendly upload/download passes the host path as the endpoint path),
+  // honour it directly instead of double-prepending rootPath.
+  const resolvedRootPath = path.resolve(rootPath);
+  const candidateAbsolute = path.resolve(normalizedRemotePath.split("/").join(path.sep));
+  if (
+    candidateAbsolute === resolvedRootPath ||
+    candidateAbsolute.startsWith(resolvedRootPath + path.sep)
+  ) {
+    return candidateAbsolute;
+  }
+
   const relativePath = normalizedRemotePath === "/" ? "." : normalizedRemotePath.slice(1);
   const resolvedPath = path.resolve(rootPath, relativePath.split("/").join(path.sep));
   const relativeToRoot = path.relative(rootPath, resolvedPath);
