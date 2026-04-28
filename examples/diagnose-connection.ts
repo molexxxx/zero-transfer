@@ -15,6 +15,7 @@ import {
   type ConnectionProfile,
 } from "../src/index";
 
+import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {
   const client = createTransferClient({
     providers: [createSftpProviderFactory(), createFtpProviderFactory()],
@@ -49,4 +50,8 @@ async function main(): Promise<void> {
   console.log("Redacted profile:", result.redactedProfile);
 }
 
-void main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void main();
+}
+
+export { main };

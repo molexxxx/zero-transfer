@@ -12,6 +12,7 @@ import {
   type ConnectionProfile,
 } from "../src/index";
 
+import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {
   const client = createTransferClient({
     providers: [createSftpProviderFactory()],
@@ -37,4 +38,8 @@ async function main(): Promise<void> {
   console.log(`Uploaded ${receipt.bytesTransferred} bytes (job=${receipt.jobId}).`);
 }
 
-void main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void main();
+}
+
+export { main };

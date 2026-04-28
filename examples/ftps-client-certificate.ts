@@ -12,6 +12,7 @@ import {
   type ConnectionProfile,
 } from "../src/index";
 
+import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {
   const client = createTransferClient({
     providers: [createFtpsProviderFactory()],
@@ -41,4 +42,8 @@ async function main(): Promise<void> {
   console.log("FTPS upload completed.");
 }
 
-void main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void main();
+}
+
+export { main };

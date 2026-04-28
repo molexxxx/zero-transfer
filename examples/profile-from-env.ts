@@ -12,6 +12,7 @@ import {
   type ConnectionProfile,
 } from "../src/index";
 
+import { fileURLToPath } from "node:url";
 function buildSftpProfile(): ConnectionProfile {
   return {
     host: process.env["SFTP_HOST"] ?? "sftp.example.com",
@@ -39,4 +40,8 @@ async function main(): Promise<void> {
   );
 }
 
-void main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void main();
+}
+
+export { main };

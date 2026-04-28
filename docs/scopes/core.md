@@ -68,6 +68,8 @@ Today this package re-exports the full [`@zero-transfer/sdk`](../api-md/README.m
 
 | Example                                                                    | What it shows                                                    |
 | -------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [`examples/local-copy-file.ts`](../../examples/local-copy-file.ts)         | Local-to-local file copy example.                                |
+| [`examples/ftp-basic.ts`](../../examples/ftp-basic.ts)                     | Basic FTP upload + download example.                             |
 | [`examples/transfer-queue.ts`](../../examples/transfer-queue.ts)           | Transfer queue with concurrency, progress, and per-job receipts. |
 | [`examples/dry-run-sync.ts`](../../examples/dry-run-sync.ts)               | Dry-run sync planner.                                            |
 | [`examples/diagnose-connection.ts`](../../examples/diagnose-connection.ts) | Diagnose a connection without exposing secrets.                  |

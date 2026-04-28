@@ -13,6 +13,7 @@ import {
   type ConnectionProfile,
 } from "../src/index";
 
+import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {
   const resumeStore = createMemoryS3MultipartResumeStore();
   const client = createTransferClient({
@@ -49,4 +50,8 @@ async function main(): Promise<void> {
   console.log(`Upload complete (job=${receipt.jobId}).`);
 }
 
-void main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void main();
+}
+
+export { main };

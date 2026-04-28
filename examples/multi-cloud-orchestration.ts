@@ -10,6 +10,7 @@
  * Run with: tsx examples/multi-cloud-orchestration.ts
  */
 import { setTimeout as wait } from "node:timers/promises";
+import { fileURLToPath } from "node:url";
 import {
   createAzureBlobProviderFactory,
   createLocalProviderFactory,
@@ -201,7 +202,11 @@ async function main(): Promise<void> {
   await Promise.allSettled(sessions.map((session) => session.disconnect()));
 }
 
-void main().catch((error: unknown) => {
-  console.error("Fatal:", error);
-  process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void main().catch((error: unknown) => {
+    console.error("Fatal:", error);
+    process.exit(1);
+  });
+}
+
+export { main };

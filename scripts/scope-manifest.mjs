@@ -26,7 +26,13 @@ export const scopes = [
   {
     description:
       "The provider-neutral foundation: `TransferClient`, `createTransferClient`, the provider registry, capability sets, transfer engine, queue, planning primitives, profile resolution, secret redaction, structured logging, and typed errors. Every other scoped package builds on this surface.",
-    examples: ["transfer-queue.ts", "dry-run-sync.ts", "diagnose-connection.ts"],
+    examples: [
+      "local-copy-file.ts",
+      "ftp-basic.ts",
+      "transfer-queue.ts",
+      "dry-run-sync.ts",
+      "diagnose-connection.ts",
+    ],
     exports: [
       "TransferClient",
       "TransferClientOptions",
@@ -99,7 +105,7 @@ export const scopes = [
   {
     description:
       "Plain FTP with EPSV/PASV streaming, REST-resume, MLST/MLSD listings, Unix LIST fallback, and full profile timeout enforcement. Use `createFtpProviderFactory()`.",
-    examples: ["transfer-queue.ts"],
+    examples: ["ftp-basic.ts", "transfer-queue.ts"],
     exports: [
       "createFtpProviderFactory",
       "FtpProviderOptions",

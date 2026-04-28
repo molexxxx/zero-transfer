@@ -10,6 +10,7 @@
  * Run with: tsx examples/atomic-deploy-with-rollback.ts
  */
 import { mkdir, readdir } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import {
   createAtomicDeployPlan,
@@ -102,7 +103,11 @@ async function main(): Promise<void> {
   }
 }
 
-void main().catch((error: unknown) => {
-  console.error("Deploy failed:", error);
-  process.exit(1);
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void main().catch((error: unknown) => {
+    console.error("Deploy failed:", error);
+    process.exit(1);
+  });
+}
+
+export { main };

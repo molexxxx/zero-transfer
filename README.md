@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/zero-transfer-logo.svg" alt="ZeroTransfer file transfer SDK for Node.js" width="720">
+  <img src="https://raw.githubusercontent.com/tonywied17/zero-transfer/main/assets/zero-transfer-logo.svg" alt="ZeroTransfer file transfer SDK for Node.js" width="720">
 </p>
 
 <h1 align="center">ZeroTransfer</h1>
@@ -202,6 +202,8 @@ Real-world examples live in [`examples/`](examples/). Run them with `tsx example
 
 | Example                                                                     | What it shows                                                     |
 | --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [`local-copy-file.ts`](examples/local-copy-file.ts)                         | Zero-config local-to-local copy via `copyBetween`.                |
+| [`ftp-basic.ts`](examples/ftp-basic.ts)                                     | Plain FTP upload + download round-trip with username/password.    |
 | [`sftp-private-key.ts`](examples/sftp-private-key.ts)                       | SFTP with private-key auth + pinned host-key SHA-256.             |
 | [`ftps-client-certificate.ts`](examples/ftps-client-certificate.ts)         | FTPS with client certificate, CA bundle, fingerprint pinning.     |
 | [`s3-compatible-upload.ts`](examples/s3-compatible-upload.ts)               | S3 multipart upload with cross-process resume store.              |

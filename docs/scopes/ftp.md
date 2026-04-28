@@ -37,6 +37,7 @@ Today this package re-exports the full [`@zero-transfer/sdk`](../api-md/README.m
 
 | Example                                                          | What it shows                                                    |
 | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [`examples/ftp-basic.ts`](../../examples/ftp-basic.ts)           | Basic FTP upload + download example.                             |
 | [`examples/transfer-queue.ts`](../../examples/transfer-queue.ts) | Transfer queue with concurrency, progress, and per-job receipts. |
 
 ## See also
