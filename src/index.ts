@@ -112,6 +112,26 @@ export {
   type SecretValue,
   type ValueSecretSource,
 } from "./profiles";
+export {
+  importFileZillaSites,
+  importOpenSshConfig,
+  importWinScpSessions,
+  matchKnownHosts,
+  matchKnownHostsEntry,
+  parseKnownHosts,
+  parseOpenSshConfig,
+  resolveOpenSshHost,
+  type FileZillaSite,
+  type ImportFileZillaSitesResult,
+  type ImportOpenSshConfigOptions,
+  type ImportOpenSshConfigResult,
+  type ImportWinScpSessionsResult,
+  type KnownHostsEntry,
+  type KnownHostsMarker,
+  type OpenSshConfigEntry,
+  type ResolvedOpenSshHost,
+  type WinScpSession,
+} from "./profiles";
 export { errorFromFtpReply, type FtpReplyErrorInput } from "./errors/errorFactory";
 export {
   AbortError,
