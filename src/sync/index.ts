@@ -1,4 +1,27 @@
 export {
+  buildRemoteBreadcrumbs,
+  createRemoteBrowser,
+  filterRemoteEntries,
+  parentRemotePath,
+  sortRemoteEntries,
+  type CreateRemoteBrowserOptions,
+  type RemoteBreadcrumb,
+  type RemoteBrowser,
+  type RemoteBrowserFilter,
+  type RemoteBrowserSnapshot,
+  type RemoteEntrySortKey,
+  type RemoteEntrySortOrder,
+} from "./createRemoteBrowser";
+export {
+  createAtomicDeployPlan,
+  type AtomicDeployActivateOperation,
+  type AtomicDeployActivateStep,
+  type AtomicDeployPlan,
+  type AtomicDeployPruneStep,
+  type AtomicDeployStrategy,
+  type CreateAtomicDeployPlanOptions,
+} from "./createAtomicDeployPlan";
+export {
   createSyncPlan,
   type CreateSyncPlanOptions,
   type SyncConflictPolicy,
