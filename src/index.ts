@@ -58,6 +58,11 @@ export {
   type MemoryProviderOptions,
 } from "./providers/memory";
 export {
+  createHttpProviderFactory,
+  type HttpFetch,
+  type HttpProviderOptions,
+} from "./providers/web";
+export {
   redactConnectionProfile,
   redactSecretSource,
   resolveConnectionProfileSecrets,
