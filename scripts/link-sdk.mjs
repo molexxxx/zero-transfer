@@ -30,10 +30,11 @@ if (existsSync(target)) {
 }
 
 try {
-  symlinkSync(repoRoot, target, "junction");
-  console.log("[link-sdk] junction created: node_modules/@zero-transfer/sdk -> repo root");
+  const linkType = process.platform === "win32" ? "junction" : "dir";
+  symlinkSync(repoRoot, target, linkType);
+  console.log(`[link-sdk] ${linkType} created: node_modules/@zero-transfer/sdk -> repo root`);
 } catch (error) {
   console.warn(
-    `[link-sdk] could not create junction: ${error instanceof Error ? error.message : String(error)}`,
+    `[link-sdk] could not create link: ${error instanceof Error ? error.message : String(error)}`,
   );
 }
