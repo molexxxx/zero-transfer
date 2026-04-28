@@ -58,6 +58,9 @@ jobs:
       - name: Regenerate workspace stubs at SDK version
         run: npm run packages:generate
 
+      - name: Regenerate documentation (HTML + Markdown + per-scope)
+        run: npm run docs:all
+
       - name: Publish @zero-transfer/sdk
         run: |
           if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then

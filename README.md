@@ -224,6 +224,7 @@ Real-world examples live in [`examples/`](examples/). Run them with `tsx example
 - [Full API reference (HTML)](docs/api/index.html) — TypeDoc HTML site.
 - [Per-scope pages](docs/scopes/README.md) — one page per `@zero-transfer/*` package.
 - [Examples directory](examples/) — runnable real-world flows.
+- [Publishing guide](PUBLISHING.md) — one-command release pipeline + OIDC trusted publishing.
 
 Regenerate everything locally:
 
