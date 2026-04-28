@@ -113,6 +113,41 @@ describe("profile validation", () => {
         ssh: { agent: {} as never },
       }),
     ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        ssh: { algorithms: [] as never },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        ssh: { algorithms: { cipher: [] } },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        ssh: { algorithms: { hmac: "hmac-sha2-256" } as never },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        ssh: { algorithms: { kex: { replace: "curve25519-sha256" } } as never },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        ssh: { algorithms: { cipher: { append: [] } } as never },
+      }),
+    ).toThrow(ConfigurationError);
   });
 
   it("accepts SHA-256 certificate and SSH host-key pinning profile fields", () => {
@@ -121,6 +156,7 @@ describe("profile validation", () => {
       provider: "ftps",
       ssh: {
         agent: "pageant",
+        algorithms: { cipher: ["aes256-gcm@openssh.com"] },
         keyboardInteractive: () => ["123456"],
         pinnedHostKeySha256: [validHostKeyPin],
       },

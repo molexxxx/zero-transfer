@@ -73,6 +73,10 @@ export function validateConnectionProfile(profile: ConnectionProfile): Connectio
 function validateSshProfile(profile: SshProfile): void {
   validatePinnedHostKeySha256(profile.pinnedHostKeySha256);
 
+  if (profile.algorithms !== undefined) {
+    validateSshAlgorithms(profile.algorithms);
+  }
+
   if (profile.agent !== undefined) {
     validateSshAgentSource(profile.agent);
   }
@@ -87,6 +91,57 @@ function validateSshProfile(profile: SshProfile): void {
       retryable: false,
     });
   }
+}
+
+/**
+ * Validates SSH algorithm override shape without duplicating ssh2's literal unions.
+ *
+ * @param value - Algorithm override object from an SSH profile.
+ * @throws {@link ConfigurationError} When overrides are not object-shaped or contain empty lists.
+ */
+function validateSshAlgorithms(value: SshProfile["algorithms"]): void {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw createSshAlgorithmsError(value);
+  }
+
+  const algorithms = value as Record<string, unknown>;
+
+  for (const [name, list] of Object.entries(algorithms)) {
+    if (list === undefined) {
+      continue;
+    }
+
+    if (Array.isArray(list)) {
+      if (!isNonEmptyStringArray(list)) {
+        throw createSshAlgorithmsError({ [name]: list });
+      }
+
+      continue;
+    }
+
+    if (typeof list !== "object" || list === null || Array.isArray(list)) {
+      throw createSshAlgorithmsError({ [name]: list });
+    }
+
+    const operationLists = list as Record<string, unknown>;
+
+    for (const [operation, operationList] of Object.entries(operationLists)) {
+      if (!["append", "prepend", "remove"].includes(operation)) {
+        throw createSshAlgorithmsError({ [name]: list });
+      }
+
+      if (
+        typeof operationList !== "string" &&
+        (!Array.isArray(operationList) || !isNonEmptyStringArray(operationList))
+      ) {
+        throw createSshAlgorithmsError({ [name]: list });
+      }
+    }
+  }
+}
+
+function isNonEmptyStringArray(value: unknown[]): value is string[] {
+  return value.length > 0 && value.every((item) => typeof item === "string" && item.length > 0);
 }
 
 /**
@@ -261,6 +316,20 @@ function createPinnedHostKeyError(value: unknown): ConfigurationError {
     details: { pinnedHostKeySha256: value },
     message:
       "Connection profile ssh.pinnedHostKeySha256 must be an OpenSSH SHA256, base64, or hex fingerprint or non-empty array of fingerprints",
+    retryable: false,
+  });
+}
+
+/**
+ * Creates a consistent validation error for invalid SSH algorithm overrides.
+ *
+ * @param value - Invalid profile value included in diagnostics.
+ * @returns Configuration error describing the expected ssh2-compatible shape.
+ */
+function createSshAlgorithmsError(value: unknown): ConfigurationError {
+  return new ConfigurationError({
+    details: { algorithms: value },
+    message: "Connection profile ssh.algorithms must use ssh2-compatible non-empty algorithm lists",
     retryable: false,
   });
 }

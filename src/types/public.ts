@@ -7,7 +7,7 @@
  * @module types/public
  */
 import type { PeerCertificate, SecureVersion } from "node:tls";
-import type { BaseAgent } from "ssh2";
+import type { Algorithms, BaseAgent } from "ssh2";
 import type { ZeroTransferLogger } from "../logging/Logger";
 import type { ClassicProviderId, ProviderId } from "../core/ProviderId";
 import type { SecretSource } from "../profiles/SecretSource";
@@ -85,6 +85,8 @@ export type SshKnownHostsSource = SecretSource | SecretSource[];
 
 /** SSH agent source accepted by SFTP providers. */
 export type SshAgentSource = string | BaseAgent;
+/** SSH transport algorithm overrides accepted by SFTP providers. */
+export type SshAlgorithms = Algorithms;
 
 /** Prompt metadata supplied by an SSH keyboard-interactive server challenge. */
 export interface SshKeyboardInteractivePrompt {
@@ -151,6 +153,8 @@ export interface TlsProfile {
 export interface SshProfile {
   /** SSH agent socket path or agent instance used for agent-based public-key authentication. */
   agent?: SshAgentSource;
+  /** Explicit SSH transport algorithm overrides for ciphers, KEX, host keys, MACs, and compression. */
+  algorithms?: SshAlgorithms;
   /** Private key material used for public-key authentication. */
   privateKey?: SecretSource;
   /** Passphrase used to decrypt an encrypted private key. */

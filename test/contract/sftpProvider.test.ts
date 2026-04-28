@@ -229,6 +229,28 @@ describe("createSftpProviderFactory", () => {
     }
   });
 
+  it("connects with explicit SSH algorithm overrides", async () => {
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+    const session = await client.connect({
+      ...profile,
+      ssh: {
+        algorithms: {
+          compress: ["none"],
+          serverHostKey: ["ssh-ed25519"],
+        },
+      },
+    });
+
+    try {
+      await expect(session.fs.stat("/incoming/report.csv")).resolves.toMatchObject({
+        path: "/incoming/report.csv",
+        type: "file",
+      });
+    } finally {
+      await session.disconnect();
+    }
+  });
+
   it("rejects failed SSH keyboard-interactive authentication", async () => {
     await restartServer({ keyboardInteractiveAnswers: ["123456"] });
     const client = createTransferClient({ providers: [createSftpProviderFactory()] });

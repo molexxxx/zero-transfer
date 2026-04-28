@@ -395,6 +395,10 @@ function createConnectConfig(
     config.timeout = timeoutMs;
   }
 
+  if (profile.ssh?.algorithms !== undefined) {
+    config.algorithms = profile.ssh.algorithms;
+  }
+
   configureSftpHostKeyVerifier(config, profile, options);
 
   return config;

@@ -191,6 +191,7 @@ export type {
   RemoteProtocol,
   RemoteStat,
   SshAgentSource,
+  SshAlgorithms,
   SshKeyboardInteractiveChallenge,
   SshKeyboardInteractiveHandler,
   SshKeyboardInteractivePrompt,
