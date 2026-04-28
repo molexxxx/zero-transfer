@@ -60,7 +60,9 @@ export {
 export { createLocalProviderFactory, type LocalProviderOptions } from "./providers/local";
 export {
   createDropboxProviderFactory,
+  createGoogleDriveProviderFactory,
   type DropboxProviderOptions,
+  type GoogleDriveProviderOptions,
 } from "./providers/cloud";
 export {
   createMemoryProviderFactory,

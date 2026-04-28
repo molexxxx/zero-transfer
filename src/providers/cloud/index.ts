@@ -7,3 +7,7 @@ export {
   createDropboxProviderFactory,
   type DropboxProviderOptions,
 } from "./DropboxProvider";
+export {
+  createGoogleDriveProviderFactory,
+  type GoogleDriveProviderOptions,
+} from "./GoogleDriveProvider";

@@ -13,7 +13,7 @@ import type { CapabilitySet } from "../core/CapabilitySet";
 import type { ProviderId } from "../core/ProviderId";
 import { createFtpProviderFactory, createFtpsProviderFactory } from "./classic/ftp";
 import { createSftpProviderFactory } from "./classic/sftp";
-import { createDropboxProviderFactory } from "./cloud";
+import { createDropboxProviderFactory, createGoogleDriveProviderFactory } from "./cloud";
 import { createLocalProviderFactory } from "./local";
 import { createMemoryProviderFactory } from "./memory";
 import {
@@ -101,6 +101,11 @@ export function getBuiltinCapabilityMatrix(): BuiltinCapabilityMatrixEntry[] {
       capabilities: createDropboxProviderFactory({ fetch: noopFetch }).capabilities,
       id: "dropbox",
       label: "Dropbox",
+    },
+    {
+      capabilities: createGoogleDriveProviderFactory({ fetch: noopFetch }).capabilities,
+      id: "google-drive",
+      label: "Google Drive",
     },
   ];
 }
