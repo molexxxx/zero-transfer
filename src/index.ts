@@ -196,6 +196,8 @@ export type {
   SshKeyboardInteractiveHandler,
   SshKeyboardInteractivePrompt,
   SshKnownHostsSource,
+  SshSocketFactory,
+  SshSocketFactoryContext,
   SshProfile,
   StatOptions,
   TlsProfile,

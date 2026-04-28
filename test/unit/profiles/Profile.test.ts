@@ -103,6 +103,13 @@ describe("profile validation", () => {
       validateConnectionProfile({
         host: "memory.local",
         provider: "memory",
+        ssh: { socketFactory: "proxy" as never },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
         ssh: { agent: " " },
       }),
     ).toThrow(ConfigurationError);
@@ -310,6 +317,9 @@ describe("connection profile secrets", () => {
           passphrase: { env: "ZT_SSH_KEY_PASS" },
           pinnedHostKeySha256: validHostKeyPin,
           privateKey: { path: "id_ed25519" },
+          socketFactory: () => {
+            throw new Error("not used");
+          },
         },
         tls: {
           ca: [{ env: "ZT_CA" }],
@@ -336,6 +346,7 @@ describe("connection profile secrets", () => {
         passphrase: { env: "[REDACTED]" },
         pinnedHostKeySha256: validHostKeyPin,
         privateKey: { encoding: undefined, path: "[REDACTED]" },
+        socketFactory: "[REDACTED]",
       },
       tls: {
         ca: [{ env: "[REDACTED]" }],

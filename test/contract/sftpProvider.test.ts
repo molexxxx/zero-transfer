@@ -1,5 +1,6 @@
 import { Buffer } from "node:buffer";
 import { createHmac } from "node:crypto";
+import { connect as connectTcp } from "node:net";
 import { BaseAgent, utils } from "ssh2";
 import type { IdentityCallback, ParsedKey, SignCallback, SigningRequestOptions } from "ssh2";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -246,6 +247,39 @@ describe("createSftpProviderFactory", () => {
         path: "/incoming/report.csv",
         type: "file",
       });
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("connects through a custom SSH socket factory", async () => {
+    const socketFactoryContexts: Array<{ host: string; port: number; username?: string }> = [];
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+    const session = await client.connect({
+      ...profile,
+      ssh: {
+        socketFactory: ({ host, port, username }) =>
+          new Promise((resolve, reject) => {
+            const socket = connectTcp({ host, port }, () => {
+              socketFactoryContexts.push(
+                username === undefined ? { host, port } : { host, port, username },
+              );
+              resolve(socket);
+            });
+
+            socket.once("error", reject);
+          }),
+      },
+    });
+
+    try {
+      await expect(session.fs.stat("/incoming/report.csv")).resolves.toMatchObject({
+        path: "/incoming/report.csv",
+        type: "file",
+      });
+      expect(socketFactoryContexts).toEqual([
+        { host: "127.0.0.1", port: getProfilePort(), username: "tester" },
+      ]);
     } finally {
       await session.disconnect();
     }

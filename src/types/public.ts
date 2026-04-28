@@ -7,6 +7,7 @@
  * @module types/public
  */
 import type { PeerCertificate, SecureVersion } from "node:tls";
+import type { Readable } from "node:stream";
 import type { Algorithms, BaseAgent } from "ssh2";
 import type { ZeroTransferLogger } from "../logging/Logger";
 import type { ClassicProviderId, ProviderId } from "../core/ProviderId";
@@ -88,6 +89,28 @@ export type SshAgentSource = string | BaseAgent;
 /** SSH transport algorithm overrides accepted by SFTP providers. */
 export type SshAlgorithms = Algorithms;
 
+/** Context passed to SSH socket factories before opening an SSH session. */
+export interface SshSocketFactoryContext {
+  /** Target SSH host from the resolved connection profile. */
+  host: string;
+  /** Target SSH port from the resolved connection profile. */
+  port: number;
+  /** Resolved username, when configured on the connection profile. */
+  username?: string;
+  /** Abort signal from the connection profile, when one is configured. */
+  signal?: AbortSignal;
+}
+
+/**
+ * Creates a preconnected socket-like stream for SSH sessions.
+ *
+ * Use this hook for HTTP CONNECT, SOCKS, bastion, or custom tunnel integrations.
+ *
+ * @param context - Resolved SSH target information for the socket being opened.
+ * @returns Preconnected readable stream, or a promise for one, passed to ssh2's `sock` option.
+ */
+export type SshSocketFactory = (context: SshSocketFactoryContext) => Readable | Promise<Readable>;
+
 /** Prompt metadata supplied by an SSH keyboard-interactive server challenge. */
 export interface SshKeyboardInteractivePrompt {
   /** Human-readable prompt text supplied by the SSH server. */
@@ -165,6 +188,8 @@ export interface SshProfile {
   pinnedHostKeySha256?: string | readonly string[];
   /** Runtime callback that answers SSH keyboard-interactive authentication prompts. */
   keyboardInteractive?: SshKeyboardInteractiveHandler;
+  /** Runtime callback that returns a preconnected stream used instead of opening a direct TCP socket. */
+  socketFactory?: SshSocketFactory;
 }
 
 /**

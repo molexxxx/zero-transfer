@@ -1,8 +1,8 @@
 /**
  * SSH2-backed SFTP provider.
  *
- * This initial SFTP slice supports password/private-key/agent authenticated sessions plus provider-neutral
- * directory listing, metadata reads, transfer streaming, and profile-level host-key policies.
+ * This initial SFTP slice supports password/private-key/agent authenticated sessions, custom sockets,
+ * provider-neutral directory listing, metadata reads, transfer streaming, and profile-level host-key policies.
  *
  * @module providers/classic/sftp/SftpProvider
  */
@@ -302,14 +302,21 @@ interface ResolvedSftpReadRange {
   length: number;
 }
 
-function connectSshClient(
+async function connectSshClient(
   profile: ResolvedConnectionProfile,
   options: SftpProviderOptions,
   username: string,
   authentication: SftpAuthenticationConfig,
 ): Promise<Client> {
   const client = new Client();
-  const config = createConnectConfig(profile, options, username, authentication);
+  let config: ConnectConfig;
+
+  try {
+    config = await createConnectConfig(profile, options, username, authentication);
+  } catch (error) {
+    client.end();
+    throw mapSftpConnectionError(error, profile.host);
+  }
 
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -376,12 +383,12 @@ function connectSshClient(
   });
 }
 
-function createConnectConfig(
+async function createConnectConfig(
   profile: ResolvedConnectionProfile,
   options: SftpProviderOptions,
   username: string,
   authentication: SftpAuthenticationConfig,
-): ConnectConfig {
+): Promise<ConnectConfig> {
   const config: ConnectConfig = {
     authHandler: authentication.authHandler,
     host: profile.host,
@@ -399,9 +406,64 @@ function createConnectConfig(
     config.algorithms = profile.ssh.algorithms;
   }
 
+  const socket = await createSftpSocket(profile, username);
+
+  if (socket !== undefined) {
+    config.sock = socket;
+  }
+
   configureSftpHostKeyVerifier(config, profile, options);
 
   return config;
+}
+
+/**
+ * Resolves an optional profile-provided SSH socket before connecting.
+ *
+ * @param profile - Resolved connection profile containing the optional socket factory.
+ * @param username - Resolved username passed to the factory context.
+ * @returns Socket-like readable stream for ssh2's `sock` option, when configured.
+ */
+async function createSftpSocket(
+  profile: ResolvedConnectionProfile,
+  username: string,
+): Promise<ConnectConfig["sock"]> {
+  const socketFactory = profile.ssh?.socketFactory;
+
+  if (socketFactory === undefined) {
+    return undefined;
+  }
+
+  if (profile.signal?.aborted === true) {
+    throw new AbortError({
+      details: { operation: "connect" },
+      host: profile.host,
+      message: "SFTP connection was aborted",
+      protocol: "sftp",
+      retryable: false,
+    });
+  }
+
+  const context = {
+    host: profile.host,
+    port: profile.port ?? SFTP_DEFAULT_PORT,
+    username,
+  };
+
+  const socket = await socketFactory(
+    profile.signal === undefined ? context : { ...context, signal: profile.signal },
+  );
+
+  if (typeof socket !== "object" || socket === null || typeof socket.pipe !== "function") {
+    throw new ConfigurationError({
+      details: { socket: typeof socket },
+      message: "Connection profile ssh.socketFactory must return a socket-like readable stream",
+      protocol: "sftp",
+      retryable: false,
+    });
+  }
+
+  return socket;
 }
 
 function configureSftpHostKeyVerifier(

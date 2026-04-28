@@ -91,6 +91,14 @@ function validateSshProfile(profile: SshProfile): void {
       retryable: false,
     });
   }
+
+  if (profile.socketFactory !== undefined && typeof profile.socketFactory !== "function") {
+    throw new ConfigurationError({
+      details: { socketFactory: typeof profile.socketFactory },
+      message: "Connection profile ssh.socketFactory must be a function when provided",
+      retryable: false,
+    });
+  }
 }
 
 /**
