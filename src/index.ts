@@ -59,9 +59,11 @@ export {
 } from "./providers/memory";
 export {
   createHttpProviderFactory,
+  createS3ProviderFactory,
   createWebDavProviderFactory,
   type HttpFetch,
   type HttpProviderOptions,
+  type S3ProviderOptions,
   type WebDavProviderOptions,
 } from "./providers/web";
 export {

@@ -7,3 +7,7 @@ export {
   createWebDavProviderFactory,
   type WebDavProviderOptions,
 } from "./WebDavProvider";
+export {
+  createS3ProviderFactory,
+  type S3ProviderOptions,
+} from "./S3Provider";
