@@ -19,6 +19,7 @@ describe("getBuiltinCapabilityMatrix", () => {
       "s3:multipart",
       "dropbox",
       "google-drive",
+      "one-drive",
     ]);
   });
 
@@ -43,10 +44,11 @@ describe("formatCapabilityMatrixMarkdown", () => {
     const lines = markdown.split("\n");
     expect(lines[0]).toContain("Provider");
     expect(lines[1]).toMatch(/^\| --- \|/);
-    // header + divider + 11 entries
-    expect(lines).toHaveLength(2 + 11);
+    // header + divider + 12 entries
+    expect(lines).toHaveLength(2 + 12);
     expect(markdown).toContain("S3-compatible (multipart uploads)");
     expect(markdown).toContain("Dropbox");
     expect(markdown).toContain("Google Drive");
+    expect(markdown).toContain("OneDrive / SharePoint");
   });
 });

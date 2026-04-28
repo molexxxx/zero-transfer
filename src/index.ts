@@ -61,8 +61,10 @@ export { createLocalProviderFactory, type LocalProviderOptions } from "./provide
 export {
   createDropboxProviderFactory,
   createGoogleDriveProviderFactory,
+  createOneDriveProviderFactory,
   type DropboxProviderOptions,
   type GoogleDriveProviderOptions,
+  type OneDriveProviderOptions,
 } from "./providers/cloud";
 export {
   createMemoryProviderFactory,

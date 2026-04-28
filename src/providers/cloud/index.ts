@@ -11,3 +11,7 @@ export {
   createGoogleDriveProviderFactory,
   type GoogleDriveProviderOptions,
 } from "./GoogleDriveProvider";
+export {
+  createOneDriveProviderFactory,
+  type OneDriveProviderOptions,
+} from "./OneDriveProvider";
