@@ -23,6 +23,14 @@ export {
   type UploadFileOptions,
 } from "./client/operations";
 export {
+  runConnectionDiagnostics,
+  summarizeClientDiagnostics,
+  type ClientDiagnostics,
+  type ConnectionDiagnosticTimings,
+  type ConnectionDiagnosticsResult,
+  type RunConnectionDiagnosticsOptions,
+} from "./diagnostics";
+export {
   CLASSIC_PROVIDER_IDS,
   isClassicProviderId,
   resolveProviderId,
