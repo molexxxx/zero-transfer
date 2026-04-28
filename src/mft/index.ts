@@ -7,6 +7,19 @@ export type { MftRoute, MftRouteEndpoint, MftRouteFilter, MftRouteOperation } fr
 export { RouteRegistry } from "./RouteRegistry";
 export { runRoute, type RunRouteOptions } from "./runRoute";
 export {
+  DEFAULT_FAILED_SUBDIR,
+  DEFAULT_PROCESSED_SUBDIR,
+  createInboxRoute,
+  createOutboxRoute,
+  inboxFailedPath,
+  inboxProcessedPath,
+  type ConventionEndpoint,
+  type CreateInboxRouteOptions,
+  type CreateOutboxRouteOptions,
+  type MftInboxConvention,
+  type MftOutboxConvention,
+} from "./conventions";
+export {
   nextScheduleFireAt,
   validateSchedule,
   type CronScheduleTrigger,
