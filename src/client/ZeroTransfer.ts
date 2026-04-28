@@ -1,17 +1,18 @@
 /**
- * Compatibility client facade for the ZeroTransfer SDK foundation.
+ * Client facade for the ZeroTransfer SDK foundation.
  *
  * This module intentionally keeps the top-level API small while protocol-specific
  * behavior is delegated to injected adapters. The facade owns lifecycle state,
  * event emission, logging coordination, and common capability discovery.
  *
- * @module client/ZeroFTP
+ * @module client/ZeroTransfer
  */
 import { EventEmitter } from "node:events";
+import { createTransferClient } from "../core/createTransferClient";
+import { isClassicProviderId } from "../core/ProviderId";
 import { UnsupportedFeatureError } from "../errors/ZeroTransferError";
 import { emitLog, noopLogger, type ZeroTransferLogger } from "../logging/Logger";
 import type { RemoteFileAdapter } from "../protocols/RemoteFileAdapter";
-import { isClassicProviderId } from "../core/ProviderId";
 import type {
   ConnectionProfile,
   ListOptions,
@@ -22,14 +23,14 @@ import type {
 } from "../types/public";
 
 /**
- * Construction options for a {@link ZeroFTP} instance.
+ * Construction options for a {@link ZeroTransfer} instance.
  *
  * @remarks
  * The adapter option is primarily used by protocol implementations and tests. Until
  * the built-in FTP, FTPS, and SFTP adapters are implemented, callers can inject a
  * compatible adapter to exercise the facade contract.
  */
-export interface ZeroFTPOptions {
+export interface ZeroTransferOptions {
   /** Protocol used when the connection profile does not provide one. */
   protocol?: RemoteProtocol;
   /** Structured logger used for lifecycle and operation records. */
@@ -41,7 +42,7 @@ export interface ZeroFTPOptions {
 /**
  * Lightweight capability snapshot for the current client instance.
  */
-export interface ZeroFTPCapabilities {
+export interface ZeroTransferCapabilities {
   /** The protocol selected for this client facade. */
   protocol: RemoteProtocol;
   /** Whether a concrete protocol adapter has been supplied. */
@@ -49,17 +50,19 @@ export interface ZeroFTPCapabilities {
 }
 
 /**
- * Compatibility SDK entry point for FTP, FTPS, and SFTP workflows.
+ * SDK entry point for FTP, FTPS, and SFTP workflows.
  *
  * @remarks
- * ZeroFTP extends Node.js EventEmitter so applications can observe lifecycle
+ * ZeroTransfer extends Node.js EventEmitter so applications can observe lifecycle
  * events while still using promise-based APIs for operations. The facade is
  * deliberately protocol-neutral; concrete behavior lives behind
  * {@link RemoteFileAdapter}.
  *
- * @deprecated Import `ZeroTransfer` from `@zero-transfer/sdk` for new code.
  */
-export class ZeroFTP extends EventEmitter {
+export class ZeroTransfer extends EventEmitter {
+  /** Creates a provider-neutral transfer client with the built-in provider registry. */
+  static readonly createTransferClient = createTransferClient;
+
   /** Protocol selected for this client instance. */
   readonly protocol: RemoteProtocol;
 
@@ -72,7 +75,7 @@ export class ZeroFTP extends EventEmitter {
    *
    * @param options - Optional facade configuration, logger, and protocol adapter.
    */
-  constructor(options: ZeroFTPOptions = {}) {
+  constructor(options: ZeroTransferOptions = {}) {
     super();
     this.protocol = options.protocol ?? "ftp";
     this.logger = options.logger ?? noopLogger;
@@ -83,10 +86,10 @@ export class ZeroFTP extends EventEmitter {
    * Creates a new client facade using the provided options.
    *
    * @param options - Optional facade configuration, logger, and adapter.
-   * @returns A disconnected {@link ZeroFTP} instance.
+   * @returns A disconnected {@link ZeroTransfer} instance.
    */
-  static create(options: ZeroFTPOptions = {}): ZeroFTP {
-    return new ZeroFTP(options);
+  static create(options: ZeroTransferOptions = {}): ZeroTransfer {
+    return new ZeroTransfer(options);
   }
 
   /**
@@ -94,11 +97,14 @@ export class ZeroFTP extends EventEmitter {
    *
    * @param profile - Remote host, authentication, and protocol connection settings.
    * @param options - Optional facade settings that can be overridden by the profile.
-   * @returns A connected {@link ZeroFTP} instance.
+   * @returns A connected {@link ZeroTransfer} instance.
    * @throws {@link UnsupportedFeatureError} When no adapter is available for the protocol.
    */
-  static async connect(profile: ConnectionProfile, options: ZeroFTPOptions = {}): Promise<ZeroFTP> {
-    const clientOptions: ZeroFTPOptions = { ...options };
+  static async connect(
+    profile: ConnectionProfile,
+    options: ZeroTransferOptions = {},
+  ): Promise<ZeroTransfer> {
+    const clientOptions: ZeroTransferOptions = { ...options };
 
     if (profile.logger !== undefined) {
       clientOptions.logger = profile.logger;
@@ -110,7 +116,7 @@ export class ZeroFTP extends EventEmitter {
       clientOptions.protocol = profile.provider;
     }
 
-    const client = new ZeroFTP(clientOptions);
+    const client = new ZeroTransfer(clientOptions);
     await client.connect(profile);
     return client;
   }
@@ -172,7 +178,7 @@ export class ZeroFTP extends EventEmitter {
    *
    * @returns A capability snapshot for diagnostics and UI state.
    */
-  getCapabilities(): ZeroFTPCapabilities {
+  getCapabilities(): ZeroTransferCapabilities {
     return {
       adapterReady: this.adapter !== undefined,
       protocol: this.protocol,

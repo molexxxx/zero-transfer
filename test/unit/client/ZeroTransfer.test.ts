@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   TransferClient,
-  ZeroFTP,
   ZeroTransfer,
   type RemoteFileAdapter,
   UnsupportedFeatureError,
@@ -41,18 +40,17 @@ function createAdapter(): {
   return { adapter, connect, disconnect };
 }
 
-describe("ZeroFTP", () => {
-  it("exports ZeroTransfer as the preferred facade", () => {
+describe("ZeroTransfer", () => {
+  it("exports ZeroTransfer as the SDK facade", () => {
     const client = ZeroTransfer.create();
 
-    expect(ZeroTransfer).toBe(ZeroFTP);
-    expect(client).toBeInstanceOf(ZeroFTP);
+    expect(client).toBeInstanceOf(ZeroTransfer);
     expect(ZeroTransfer.createTransferClient()).toBeInstanceOf(TransferClient);
     expect(client.getCapabilities()).toEqual({ adapterReady: false, protocol: "ftp" });
   });
 
   it("exposes default capabilities before adapters are implemented", async () => {
-    const client = ZeroFTP.create();
+    const client = ZeroTransfer.create();
 
     expect(client.getCapabilities()).toEqual({ adapterReady: false, protocol: "ftp" });
     expect(client.isConnected()).toBe(false);
@@ -62,7 +60,7 @@ describe("ZeroFTP", () => {
   it("connects, emits lifecycle events, and delegates metadata calls to an adapter", async () => {
     const { adapter, connect, disconnect } = createAdapter();
     const info = vi.fn();
-    const client = ZeroFTP.create({ adapter, logger: { info }, protocol: "ftps" });
+    const client = ZeroTransfer.create({ adapter, logger: { info }, protocol: "ftps" });
     const connectEvent = vi.fn();
     const disconnectEvent = vi.fn();
 
@@ -91,7 +89,7 @@ describe("ZeroFTP", () => {
 
   it("supports a static connect helper", async () => {
     const { adapter, connect } = createAdapter();
-    const client = await ZeroFTP.connect(
+    const client = await ZeroTransfer.connect(
       { host: "sftp.example.com", protocol: "sftp" },
       { adapter },
     );
@@ -100,9 +98,23 @@ describe("ZeroFTP", () => {
     expect(connect).toHaveBeenCalledOnce();
   });
 
+  it("lets profiles override the static connect logger", async () => {
+    const { adapter } = createAdapter();
+    const optionsLogger = vi.fn();
+    const profileLogger = vi.fn();
+    const client = await ZeroTransfer.connect(
+      { host: "ftp.example.com", logger: { info: profileLogger }, protocol: "ftp" },
+      { adapter, logger: { info: optionsLogger } },
+    );
+
+    expect(client.isConnected()).toBe(true);
+    expect(profileLogger).toHaveBeenCalledOnce();
+    expect(optionsLogger).not.toHaveBeenCalled();
+  });
+
   it("accepts provider as a protocol compatibility field", async () => {
     const { adapter, connect } = createAdapter();
-    const client = await ZeroFTP.connect(
+    const client = await ZeroTransfer.connect(
       { host: "sftp.example.com", provider: "sftp" },
       { adapter },
     );
@@ -117,7 +129,7 @@ describe("ZeroFTP", () => {
 
   it("does not call disconnect on adapters that are not connected", async () => {
     const { adapter, disconnect } = createAdapter();
-    const client = ZeroFTP.create({ adapter });
+    const client = ZeroTransfer.create({ adapter });
 
     await client.disconnect();
 

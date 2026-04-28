@@ -50,7 +50,7 @@ const artifact = await client.stat("/releases/app.zip");
 await client.disconnect();
 ```
 
-`ZeroTransfer` is the preferred facade for new code. `ZeroFTP` remains exported as a temporary compatibility alias while the provider-neutral API takes shape.
+`ZeroTransfer` is the facade for new provider-neutral code. Protocol-specific behavior lives behind providers and adapters rather than a protocol-named client class.
 
 The first provider-neutral core path is also available for provider registration and capability discovery:
 
@@ -61,7 +61,7 @@ const client = createTransferClient();
 const capabilities = client.getCapabilities();
 ```
 
-Provider factories can be registered with `createTransferClient({ providers: [...] })`. Classic network providers are being added incrementally; the FTP provider supports login, `fs.stat()` through MLST, `fs.list()` through EPSV/PASV MLSD, streaming provider transfer reads/writes through EPSV/PASV `RETR`/`STOR` with REST offsets, and profile `timeoutMs` enforcement across control replies and passive transfers. The first FTPS slice supports explicit `AUTH TLS`, `PBSZ 0`, encrypted `PROT P` data channels, and TLS profile fields for CA bundles, client certificates, keys, PFX/P12 bundles, passphrases, SNI, TLS versions, and certificate validation controls. SFTP remains later alpha work.
+Provider factories can be registered with `createTransferClient({ providers: [...] })`. Classic network providers are being added incrementally; the FTP provider supports login, `fs.stat()` through MLST, `fs.list()` through EPSV/PASV MLSD, streaming provider transfer reads/writes through EPSV/PASV `RETR`/`STOR` with REST offsets, and profile `timeoutMs` enforcement across control replies and passive transfers. The first FTPS slice supports explicit `AUTH TLS`, `PBSZ 0`, encrypted `PROT P` data channels, and TLS profile fields for CA bundles, client certificates, keys, PFX/P12 bundles, passphrases, SNI, TLS versions, and certificate validation controls. The SFTP provider supports password and private-key authentication, provider transfer streams, and profile-level host-key verification with known_hosts content or pinned SHA-256 host-key fingerprints.
 
 ```ts
 import { createFtpProviderFactory, createTransferClient } from "@zero-transfer/sdk";
@@ -157,6 +157,10 @@ const profile = validateConnectionProfile({
   host: "files.example.com",
   username: { env: "ZT_USER" },
   password: { env: "ZT_PASSWORD" },
+  ssh: {
+    knownHosts: { path: "./known_hosts" },
+    pinnedHostKeySha256: "SHA256:base64-encoded-host-key-digest",
+  },
 });
 
 const resolved = await resolveConnectionProfileSecrets(profile);

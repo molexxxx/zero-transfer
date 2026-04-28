@@ -9,6 +9,7 @@
  * @module test/servers/FakeSftpServer
  */
 import { Server as SshServer, utils } from "ssh2";
+import { createHash } from "node:crypto";
 import type { Attributes, Connection, FileEntry, ParsedKey, SFTPWrapper } from "ssh2";
 
 const DEFAULT_USERNAME = "tester";
@@ -19,7 +20,9 @@ const FILE_TYPE_BITS = 0o100000;
 const SYMLINK_TYPE_BITS = 0o120000;
 const OPEN_MODE = utils.sftp.OPEN_MODE;
 const STATUS_CODE = utils.sftp.STATUS_CODE;
-const HOST_KEY = utils.generateKeyPairSync("ed25519").private;
+const HOST_KEY_PAIR = utils.generateKeyPairSync("ed25519");
+const HOST_KEY = HOST_KEY_PAIR.private;
+const HOST_PUBLIC_KEY = HOST_KEY_PAIR.public;
 
 /** Entry kind accepted by the fake SFTP filesystem. */
 export type FakeSftpEntryType = "directory" | "file" | "symlink" | "unknown";
@@ -158,6 +161,16 @@ export class FakeSftpServer {
     return this.requests;
   }
 
+  /** Gets the server host public key in OpenSSH known_hosts key format. */
+  get hostPublicKey(): string {
+    return HOST_PUBLIC_KEY;
+  }
+
+  /** Gets the server host key SHA-256 fingerprint in OpenSSH `SHA256:` form. */
+  get hostKeySha256(): string {
+    return `SHA256:${hashSshPublicKey(HOST_PUBLIC_KEY)}`;
+  }
+
   /** Reads a file from the fake backing store for assertions. */
   readFile(path: string): Buffer | undefined {
     const node = this.entries.get(normalizeFakeSftpPath(path));
@@ -201,6 +214,9 @@ export class FakeSftpServer {
             this.handleSftp(acceptSftp());
           });
         });
+      })
+      .on("error", () => {
+        this.sessions.delete(client);
       })
       .on("close", () => {
         this.sessions.delete(client);
@@ -483,6 +499,12 @@ function parseFakeSftpPublicKey(publicKey: Buffer | string): ParsedKey {
   }
 
   return parsed;
+}
+
+function hashSshPublicKey(publicKey: Buffer | string): string {
+  const key = parseFakeSftpPublicKey(publicKey);
+
+  return createHash("sha256").update(key.getPublicSSH()).digest("base64").replace(/=+$/g, "");
 }
 
 function createEntryMap(entries: Iterable<FakeSftpEntry>): Map<string, FakeSftpNode> {

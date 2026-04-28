@@ -34,13 +34,28 @@ export function redactConnectionProfile(profile: ConnectionProfile): Record<stri
  * @returns Plain object safe to include in diagnostics.
  */
 function redactSshProfile(profile: SshProfile): Record<string, unknown> {
-  const { passphrase, privateKey, ...rest } = profile;
+  const { knownHosts, passphrase, privateKey, ...rest } = profile;
   const redacted = redactObject(rest);
 
   if (privateKey !== undefined) redacted.privateKey = redactSecretSource(privateKey);
   if (passphrase !== undefined) redacted.passphrase = redactSecretSource(passphrase);
+  if (knownHosts !== undefined) redacted.knownHosts = redactSshKnownHostsSource(knownHosts);
 
   return redacted;
+}
+
+/**
+ * Redacts an SSH known_hosts source, preserving array shape for diagnostics.
+ *
+ * @param source - Single known_hosts source or ordered source array.
+ * @returns Redacted source descriptor.
+ */
+function redactSshKnownHostsSource(source: NonNullable<SshProfile["knownHosts"]>): unknown {
+  if (Array.isArray(source)) {
+    return source.map((item) => redactSecretSource(item));
+  }
+
+  return redactSecretSource(source);
 }
 
 /**

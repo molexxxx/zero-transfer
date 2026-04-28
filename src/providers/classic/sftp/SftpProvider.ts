@@ -2,17 +2,19 @@
  * SSH2-backed SFTP provider.
  *
  * This initial SFTP slice supports password/private-key authenticated sessions plus provider-neutral
- * directory listing, metadata reads, and transfer streaming. Host-key policy helpers
- * and agent authentication can layer on this foundation in later slices.
+ * directory listing, metadata reads, transfer streaming, and profile-level host-key policies.
+ * Agent authentication can layer on this foundation in later slices.
  *
  * @module providers/classic/sftp/SftpProvider
  */
 import { Buffer } from "node:buffer";
-import { Client } from "ssh2";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { Client, utils } from "ssh2";
 import type {
   ClientErrorExtensions,
   ConnectConfig,
   FileEntryWithStats,
+  ParsedKey,
   ReadStream,
   SFTPWrapper,
   Stats,
@@ -281,6 +283,21 @@ interface SftpAuthenticationConfig {
   passphrase?: SecretValue;
 }
 
+interface SftpKnownHostEntry {
+  key: ParsedKey;
+  patterns: string[];
+}
+
+interface SftpHostKeyPolicy {
+  host: string;
+  knownHosts?: SftpKnownHostEntry[];
+  pinnedHostKeySha256?: Set<string>;
+  port: number;
+}
+
+type ResolvedSshKnownHosts = NonNullable<ResolvedConnectionProfile["ssh"]>["knownHosts"];
+type ResolvedSshHostKeyPins = NonNullable<ResolvedConnectionProfile["ssh"]>["pinnedHostKeySha256"];
+
 interface ResolvedSftpReadRange {
   offset: number;
   length: number;
@@ -379,13 +396,261 @@ function createConnectConfig(
     config.timeout = timeoutMs;
   }
 
-  if (options.hostHash !== undefined) config.hostHash = options.hostHash;
-  if (options.hostVerifier !== undefined) config.hostVerifier = options.hostVerifier;
+  configureSftpHostKeyVerifier(config, profile, options);
   if (authentication.password !== undefined) config.password = authentication.password;
   if (authentication.privateKey !== undefined) config.privateKey = authentication.privateKey;
   if (authentication.passphrase !== undefined) config.passphrase = authentication.passphrase;
 
   return config;
+}
+
+function configureSftpHostKeyVerifier(
+  config: ConnectConfig,
+  profile: ResolvedConnectionProfile,
+  options: SftpProviderOptions,
+): void {
+  const policy = createSftpHostKeyPolicy(profile);
+
+  if (policy === undefined) {
+    if (options.hostHash !== undefined) config.hostHash = options.hostHash;
+    if (options.hostVerifier !== undefined) config.hostVerifier = options.hostVerifier;
+    return;
+  }
+
+  if (options.hostHash !== undefined || options.hostVerifier !== undefined) {
+    throw new ConfigurationError({
+      details: { provider: SFTP_PROVIDER_ID },
+      message:
+        "SFTP profile host-key policies cannot be combined with provider-level hostHash or hostVerifier options",
+      protocol: "sftp",
+      retryable: false,
+    });
+  }
+
+  config.hostVerifier = (key: Buffer) => verifySftpHostKey(policy, key);
+}
+
+function createSftpHostKeyPolicy(
+  profile: ResolvedConnectionProfile,
+): SftpHostKeyPolicy | undefined {
+  const knownHosts = parseKnownHosts(profile.ssh?.knownHosts);
+  const pins = normalizeHostKeyPins(profile.ssh?.pinnedHostKeySha256);
+
+  if (knownHosts === undefined && pins === undefined) {
+    return undefined;
+  }
+
+  const policy: SftpHostKeyPolicy = {
+    host: profile.host,
+    port: profile.port ?? SFTP_DEFAULT_PORT,
+  };
+
+  if (knownHosts !== undefined) policy.knownHosts = knownHosts;
+  if (pins !== undefined) policy.pinnedHostKeySha256 = pins;
+
+  return policy;
+}
+
+function verifySftpHostKey(policy: SftpHostKeyPolicy, key: Buffer): boolean {
+  if (
+    policy.pinnedHostKeySha256 !== undefined &&
+    !policy.pinnedHostKeySha256.has(hashHostKey(key))
+  ) {
+    return false;
+  }
+
+  if (policy.knownHosts !== undefined && !matchesKnownHosts(policy, key)) {
+    return false;
+  }
+
+  return true;
+}
+
+function parseKnownHosts(source: ResolvedSshKnownHosts): SftpKnownHostEntry[] | undefined {
+  if (source === undefined) {
+    return undefined;
+  }
+
+  const values = Array.isArray(source) ? source : [source];
+  const entries: SftpKnownHostEntry[] = [];
+
+  for (const value of values) {
+    const text = Buffer.isBuffer(value) ? value.toString("utf8") : value;
+    const lines = text.split(/\r?\n/);
+
+    lines.forEach((line, index) => {
+      const entry = parseKnownHostsLine(line, index + 1);
+
+      if (entry !== undefined) {
+        entries.push(entry);
+      }
+    });
+  }
+
+  return entries;
+}
+
+function parseKnownHostsLine(line: string, lineNumber: number): SftpKnownHostEntry | undefined {
+  const trimmed = line.trim();
+
+  if (trimmed.length === 0 || trimmed.startsWith("#")) {
+    return undefined;
+  }
+
+  const fields = trimmed.split(/\s+/);
+  const offset = fields[0]?.startsWith("@") === true ? 1 : 0;
+  const hosts = fields[offset];
+  const keyType = fields[offset + 1];
+  const keyData = fields[offset + 2];
+
+  if (hosts === undefined || keyType === undefined || keyData === undefined) {
+    throw createKnownHostsConfigurationError(lineNumber, "is malformed");
+  }
+
+  const key = parseKnownHostPublicKey(`${keyType} ${keyData}`, lineNumber);
+
+  return {
+    key,
+    patterns: hosts.split(",").filter((pattern) => pattern.length > 0),
+  };
+}
+
+function parseKnownHostPublicKey(value: string, lineNumber: number): ParsedKey {
+  const parsed = utils.parseKey(value) as unknown;
+
+  if (parsed instanceof Error) {
+    throw createKnownHostsConfigurationError(lineNumber, parsed.message);
+  }
+
+  const parsedValues: readonly unknown[] = Array.isArray(parsed) ? parsed : [parsed];
+  const parsedKey = parsedValues[0];
+
+  if (!isParsedKey(parsedKey)) {
+    throw createKnownHostsConfigurationError(lineNumber, "does not contain a public key");
+  }
+
+  return parsedKey;
+}
+
+function isParsedKey(value: unknown): value is ParsedKey {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    typeof (value as { getPublicSSH?: unknown }).getPublicSSH === "function"
+  );
+}
+
+function matchesKnownHosts(policy: SftpHostKeyPolicy, key: Buffer): boolean {
+  return policy.knownHosts?.some((entry) => knownHostEntryMatches(entry, policy, key)) === true;
+}
+
+function knownHostEntryMatches(
+  entry: SftpKnownHostEntry,
+  policy: SftpHostKeyPolicy,
+  key: Buffer,
+): boolean {
+  const candidates = createKnownHostCandidates(policy.host, policy.port);
+  let hostMatched = false;
+
+  for (const pattern of entry.patterns) {
+    const negated = pattern.startsWith("!");
+    const hostPattern = negated ? pattern.slice(1) : pattern;
+    const patternMatched = candidates.some((candidate) =>
+      knownHostPatternMatches(hostPattern, candidate),
+    );
+
+    if (negated && patternMatched) {
+      return false;
+    }
+
+    if (patternMatched) {
+      hostMatched = true;
+    }
+  }
+
+  return hostMatched && entry.key.getPublicSSH().equals(key);
+}
+
+function createKnownHostCandidates(host: string, port: number): string[] {
+  const candidates = [host, `[${host}]:${port}`];
+
+  return port === SFTP_DEFAULT_PORT ? candidates : [`[${host}]:${port}`, host];
+}
+
+function knownHostPatternMatches(pattern: string, candidate: string): boolean {
+  if (pattern.startsWith("|1|")) {
+    return hashedKnownHostPatternMatches(pattern, candidate);
+  }
+
+  return wildcardKnownHostPatternToRegExp(pattern).test(candidate);
+}
+
+function wildcardKnownHostPatternToRegExp(pattern: string): RegExp {
+  const escaped = pattern
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*/g, ".*")
+    .replace(/\?/g, ".");
+
+  return new RegExp(`^${escaped}$`, "i");
+}
+
+function hashedKnownHostPatternMatches(pattern: string, candidate: string): boolean {
+  const [, version, saltText, hashText] = pattern.split("|");
+
+  if (version !== "1" || saltText === undefined || hashText === undefined) {
+    return false;
+  }
+
+  const salt = Buffer.from(saltText, "base64");
+  const expected = Buffer.from(hashText, "base64");
+  const actual = createHmac("sha1", salt).update(candidate).digest();
+
+  return expected.byteLength === actual.byteLength && timingSafeEqual(expected, actual);
+}
+
+function normalizeHostKeyPins(value: ResolvedSshHostKeyPins): Set<string> | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const pins: readonly string[] = typeof value === "string" ? [value] : value;
+
+  return new Set(pins.map((pin) => normalizeHostKeyPin(pin)));
+}
+
+function normalizeHostKeyPin(value: string): string {
+  const trimmed = value.trim();
+  const hex = trimmed.replace(/:/g, "");
+
+  if (hex.length === 64 && /^[a-f0-9]+$/i.test(hex)) {
+    return Buffer.from(hex, "hex").toString("base64").replace(/=+$/g, "");
+  }
+
+  const bare = trimmed.startsWith("SHA256:") ? trimmed.slice("SHA256:".length) : trimmed;
+
+  return Buffer.from(padBase64(bare), "base64").toString("base64").replace(/=+$/g, "");
+}
+
+function hashHostKey(key: Buffer): string {
+  return createHash("sha256").update(key).digest("base64").replace(/=+$/g, "");
+}
+
+function padBase64(value: string): string {
+  const remainder = value.length % 4;
+
+  return remainder === 0 ? value : `${value}${"=".repeat(4 - remainder)}`;
+}
+
+function createKnownHostsConfigurationError(
+  lineNumber: number,
+  reason: string,
+): ConfigurationError {
+  return new ConfigurationError({
+    details: { lineNumber, provider: SFTP_PROVIDER_ID },
+    message: `SFTP known_hosts line ${lineNumber} ${reason}`,
+    protocol: "sftp",
+    retryable: false,
+  });
 }
 
 function resolveSftpAuthentication(profile: ResolvedConnectionProfile): SftpAuthenticationConfig {

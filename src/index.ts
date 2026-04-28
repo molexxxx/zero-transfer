@@ -7,11 +7,11 @@
  *
  * @module @zero-transfer/sdk
  */
-import { ZeroFTP } from "./client/ZeroFTP";
-import type { ZeroFTPCapabilities, ZeroFTPOptions } from "./client/ZeroFTP";
-import { createTransferClient } from "./core/createTransferClient";
-
-export { ZeroFTP, type ZeroFTPCapabilities, type ZeroFTPOptions } from "./client/ZeroFTP";
+export {
+  ZeroTransfer,
+  type ZeroTransferCapabilities,
+  type ZeroTransferOptions,
+} from "./client/ZeroTransfer";
 export {
   CLASSIC_PROVIDER_IDS,
   isClassicProviderId,
@@ -75,12 +75,6 @@ export {
   type SecretValue,
   type ValueSecretSource,
 } from "./profiles";
-/** Preferred high-level SDK facade for new ZeroTransfer code. */
-export const ZeroTransfer = Object.assign(ZeroFTP, { createTransferClient });
-/** Preferred options type for the ZeroTransfer facade. */
-export type ZeroTransferOptions = ZeroFTPOptions;
-/** Preferred capability snapshot type for the ZeroTransfer facade. */
-export type ZeroTransferCapabilities = ZeroFTPCapabilities;
 export { errorFromFtpReply, type FtpReplyErrorInput } from "./errors/errorFactory";
 export {
   AbortError,
@@ -196,6 +190,7 @@ export type {
   RemotePermissions,
   RemoteProtocol,
   RemoteStat,
+  SshKnownHostsSource,
   SshProfile,
   StatOptions,
   TlsProfile,

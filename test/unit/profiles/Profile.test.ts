@@ -12,6 +12,7 @@ import {
 
 const validFingerprint256 =
   "11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11:11";
+const validHostKeyPin = `SHA256:${Buffer.alloc(32, 7).toString("base64").replace(/=+$/g, "")}`;
 
 describe("profile validation", () => {
   it("accepts provider-neutral and compatibility profiles", () => {
@@ -77,12 +78,27 @@ describe("profile validation", () => {
         tls: { pinnedFingerprint256: [] },
       }),
     ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        ssh: { pinnedHostKeySha256: "not-a-sha256-host-key-pin" },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      validateConnectionProfile({
+        host: "memory.local",
+        provider: "memory",
+        ssh: { pinnedHostKeySha256: [] },
+      }),
+    ).toThrow(ConfigurationError);
   });
 
-  it("accepts SHA-256 certificate pinning profile fields", () => {
+  it("accepts SHA-256 certificate and SSH host-key pinning profile fields", () => {
     const profile: ConnectionProfile = {
       host: "ftps.example.test",
       provider: "ftps",
+      ssh: { pinnedHostKeySha256: [validHostKeyPin] },
       tls: { pinnedFingerprint256: [validFingerprint256] },
     };
 
@@ -149,7 +165,9 @@ describe("connection profile secrets", () => {
       password: { env: "ZT_PASSWORD" },
       provider: "sftp",
       ssh: {
+        knownHosts: [{ env: "ZT_KNOWN_HOSTS" }, { path: "known_hosts" }],
         passphrase: { env: "ZT_SSH_PASSPHRASE" },
+        pinnedHostKeySha256: validHostKeyPin,
         privateKey: { base64Env: "ZT_SSH_KEY" },
       },
       tls: {
@@ -170,6 +188,7 @@ describe("connection profile secrets", () => {
         ZT_KEY: Buffer.from("private-key").toString("base64"),
         ZT_PASSWORD: "super-secret",
         ZT_PASSPHRASE: "key-passphrase",
+        ZT_KNOWN_HOSTS: "sftp.example.test ssh-ed25519 AAAA",
         ZT_SSH_KEY: Buffer.from("ssh-private-key").toString("base64"),
         ZT_SSH_PASSPHRASE: "ssh-key-passphrase",
       },
@@ -181,7 +200,9 @@ describe("connection profile secrets", () => {
       password: "super-secret",
       provider: "sftp",
       ssh: {
+        knownHosts: ["sftp.example.test ssh-ed25519 AAAA", "file-ca"],
         passphrase: "ssh-key-passphrase",
+        pinnedHostKeySha256: validHostKeyPin,
         privateKey: Buffer.from("ssh-private-key"),
       },
       tls: {
@@ -195,6 +216,7 @@ describe("connection profile secrets", () => {
       username: "deploy",
     });
     expect(profile.password).toEqual({ env: "ZT_PASSWORD" });
+    expect(profile.ssh?.knownHosts).toEqual([{ env: "ZT_KNOWN_HOSTS" }, { path: "known_hosts" }]);
     expect(profile.ssh?.privateKey).toEqual({ base64Env: "ZT_SSH_KEY" });
     expect(profile.tls?.key).toEqual({ base64Env: "ZT_KEY" });
   });
@@ -214,7 +236,9 @@ describe("connection profile secrets", () => {
         provider: "ftp",
         signal: new AbortController().signal,
         ssh: {
+          knownHosts: [{ path: "known_hosts" }],
           passphrase: { env: "ZT_SSH_KEY_PASS" },
+          pinnedHostKeySha256: validHostKeyPin,
           privateKey: { path: "id_ed25519" },
         },
         tls: {
@@ -236,7 +260,9 @@ describe("connection profile secrets", () => {
       provider: "ftp",
       signal: "[AbortSignal]",
       ssh: {
+        knownHosts: [{ encoding: undefined, path: "[REDACTED]" }],
         passphrase: { env: "[REDACTED]" },
+        pinnedHostKeySha256: validHostKeyPin,
         privateKey: { encoding: undefined, path: "[REDACTED]" },
       },
       tls: {

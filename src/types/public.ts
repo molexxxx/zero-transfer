@@ -79,6 +79,9 @@ export interface RemoteStat extends RemoteEntry {
  */
 export type TlsSecretSource = SecretSource | SecretSource[];
 
+/** Known-hosts material source accepted by SSH connection profiles. */
+export type SshKnownHostsSource = SecretSource | SecretSource[];
+
 /**
  * TLS settings shared by certificate-aware providers such as FTPS and future HTTPS/WebDAV adapters.
  *
@@ -121,6 +124,10 @@ export interface SshProfile {
   privateKey?: SecretSource;
   /** Passphrase used to decrypt an encrypted private key. */
   passphrase?: SecretSource;
+  /** OpenSSH known_hosts content used for strict SFTP host-key verification. */
+  knownHosts?: SshKnownHostsSource;
+  /** Expected SSH host-key SHA-256 fingerprint or fingerprints, using OpenSSH `SHA256:` form, base64, or hex. */
+  pinnedHostKeySha256?: string | readonly string[];
 }
 
 /**

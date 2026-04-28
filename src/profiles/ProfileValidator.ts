@@ -3,14 +3,17 @@
  *
  * @module profiles/ProfileValidator
  */
+import { Buffer } from "node:buffer";
 import { ConfigurationError } from "../errors/ZeroTransferError";
-import type { ConnectionProfile, TlsProfile } from "../types/public";
+import type { ConnectionProfile, SshProfile, TlsProfile } from "../types/public";
 import { resolveProviderId } from "../core/ProviderId";
 
 /** TLS protocol versions accepted by Node's `SecureVersion` option. */
 const TLS_VERSIONS = new Set(["TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"]);
 /** Hex characters in a SHA-256 certificate fingerprint after separators are removed. */
 const SHA256_FINGERPRINT_HEX_LENGTH = 64;
+/** Raw SHA-256 digest byte length. */
+const SHA256_DIGEST_BYTE_LENGTH = 32;
 
 /**
  * Validates provider-neutral connection profile fields before provider lookup.
@@ -54,7 +57,21 @@ export function validateConnectionProfile(profile: ConnectionProfile): Connectio
     validateTlsProfile(profile.tls);
   }
 
+  if (profile.ssh !== undefined) {
+    validateSshProfile(profile.ssh);
+  }
+
   return profile;
+}
+
+/**
+ * Validates SSH profile policy fields that can be checked without resolving secrets.
+ *
+ * @param profile - SSH profile to validate.
+ * @throws {@link ConfigurationError} When host-key pin values are invalid.
+ */
+function validateSshProfile(profile: SshProfile): void {
+  validatePinnedHostKeySha256(profile.pinnedHostKeySha256);
 }
 
 /**
@@ -109,6 +126,30 @@ function validatePinnedFingerprint256(value: TlsProfile["pinnedFingerprint256"])
 }
 
 /**
+ * Validates SHA-256 SSH host-key pinning values.
+ *
+ * @param value - Single fingerprint or allowed fingerprint set from the SSH profile.
+ * @throws {@link ConfigurationError} When a fingerprint is empty or not a SHA-256 digest.
+ */
+function validatePinnedHostKeySha256(value: SshProfile["pinnedHostKeySha256"]): void {
+  if (value === undefined) {
+    return;
+  }
+
+  const fingerprints = Array.isArray(value) ? value : [value];
+
+  if (fingerprints.length === 0) {
+    throw createPinnedHostKeyError(value);
+  }
+
+  for (const fingerprint of fingerprints) {
+    if (typeof fingerprint !== "string" || !isSshHostKeySha256Fingerprint(fingerprint)) {
+      throw createPinnedHostKeyError(value);
+    }
+  }
+}
+
+/**
  * Checks whether a string is a supported SHA-256 certificate fingerprint.
  *
  * @param value - Candidate fingerprint string.
@@ -117,6 +158,39 @@ function validatePinnedFingerprint256(value: TlsProfile["pinnedFingerprint256"])
 function isSha256Fingerprint(value: string): boolean {
   const normalized = value.trim().replace(/:/g, "");
   return normalized.length === SHA256_FINGERPRINT_HEX_LENGTH && /^[a-f0-9]+$/i.test(normalized);
+}
+
+/**
+ * Checks whether a string is a supported SSH SHA-256 host-key fingerprint.
+ *
+ * @param value - Candidate fingerprint string.
+ * @returns `true` when the value is OpenSSH SHA256 base64, bare base64, or SHA-256 hex.
+ */
+function isSshHostKeySha256Fingerprint(value: string): boolean {
+  const trimmed = value.trim();
+
+  if (isSha256Fingerprint(trimmed)) {
+    return true;
+  }
+
+  const bare = trimmed.startsWith("SHA256:") ? trimmed.slice("SHA256:".length) : trimmed;
+  const padded = padBase64(bare);
+
+  if (!/^[a-z0-9+/]+={0,2}$/i.test(padded)) {
+    return false;
+  }
+
+  try {
+    return Buffer.from(padded, "base64").byteLength === SHA256_DIGEST_BYTE_LENGTH;
+  } catch {
+    return false;
+  }
+}
+
+function padBase64(value: string): string {
+  const remainder = value.length % 4;
+
+  return remainder === 0 ? value : `${value}${"=".repeat(4 - remainder)}`;
 }
 
 /**
@@ -130,6 +204,21 @@ function createPinnedFingerprintError(value: unknown): ConfigurationError {
     details: { pinnedFingerprint256: value },
     message:
       "Connection profile tls.pinnedFingerprint256 must be a SHA-256 hex fingerprint or non-empty array of fingerprints",
+    retryable: false,
+  });
+}
+
+/**
+ * Creates a consistent validation error for invalid SSH host-key pin values.
+ *
+ * @param value - Invalid profile value included in diagnostics.
+ * @returns Configuration error describing the supported fingerprint formats.
+ */
+function createPinnedHostKeyError(value: unknown): ConfigurationError {
+  return new ConfigurationError({
+    details: { pinnedHostKeySha256: value },
+    message:
+      "Connection profile ssh.pinnedHostKeySha256 must be an OpenSSH SHA256, base64, or hex fingerprint or non-empty array of fingerprints",
     retryable: false,
   });
 }

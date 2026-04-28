@@ -6,12 +6,17 @@
 import type { ConnectionProfile, SshProfile, TlsProfile, TlsSecretSource } from "../types/public";
 import { resolveSecret, type ResolveSecretOptions, type SecretValue } from "./SecretSource";
 
-/** SSH profile with private-key material resolved. */
-export interface ResolvedSshProfile extends Omit<SshProfile, "passphrase" | "privateKey"> {
+/** SSH profile with private-key and known-host material resolved. */
+export interface ResolvedSshProfile extends Omit<
+  SshProfile,
+  "knownHosts" | "passphrase" | "privateKey"
+> {
   /** Resolved private key material. */
   privateKey?: SecretValue;
   /** Resolved private-key passphrase. */
   passphrase?: SecretValue;
+  /** Resolved OpenSSH known_hosts material. */
+  knownHosts?: SecretValue | SecretValue[];
 }
 
 /** TLS profile with certificate-bearing secret sources resolved. */
@@ -80,7 +85,7 @@ export async function resolveConnectionProfileSecrets(
 }
 
 /**
- * Resolves SSH private-key material and passphrase source descriptors.
+ * Resolves SSH private-key, passphrase, and known-host source descriptors.
  *
  * @param profile - SSH profile containing optional secret-backed material.
  * @param options - Optional env and file-reader overrides.
@@ -90,13 +95,33 @@ async function resolveSshProfile(
   profile: SshProfile,
   options: ResolveSecretOptions,
 ): Promise<ResolvedSshProfile> {
-  const { passphrase, privateKey, ...rest } = profile;
+  const { knownHosts, passphrase, privateKey, ...rest } = profile;
   const resolved: ResolvedSshProfile = { ...rest };
 
   if (privateKey !== undefined) resolved.privateKey = await resolveSecret(privateKey, options);
   if (passphrase !== undefined) resolved.passphrase = await resolveSecret(passphrase, options);
+  if (knownHosts !== undefined)
+    resolved.knownHosts = await resolveKnownHostsSource(knownHosts, options);
 
   return resolved;
+}
+
+/**
+ * Resolves known_hosts material while preserving ordered source arrays.
+ *
+ * @param source - Single known_hosts source or source array.
+ * @param options - Optional env and file-reader overrides.
+ * @returns Resolved known_hosts value or value array.
+ */
+async function resolveKnownHostsSource(
+  source: NonNullable<SshProfile["knownHosts"]>,
+  options: ResolveSecretOptions,
+): Promise<SecretValue | SecretValue[]> {
+  if (Array.isArray(source)) {
+    return Promise.all(source.map((item) => resolveSecret(item, options)));
+  }
+
+  return resolveSecret(source, options);
 }
 
 /**

@@ -1,4 +1,5 @@
 import { Buffer } from "node:buffer";
+import { createHmac } from "node:crypto";
 import { utils } from "ssh2";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
@@ -168,6 +169,93 @@ describe("createSftpProviderFactory", () => {
     } finally {
       await session.disconnect();
     }
+  });
+
+  it("verifies SFTP host keys with SHA-256 pins and known_hosts entries", async () => {
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+    const session = await client.connect({
+      ...profile,
+      ssh: {
+        knownHosts: { value: createKnownHostsLine() },
+        pinnedHostKeySha256: server.hostKeySha256,
+      },
+    });
+
+    try {
+      await expect(session.fs.stat("/incoming/report.csv")).resolves.toMatchObject({
+        path: "/incoming/report.csv",
+        type: "file",
+      });
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("accepts SFTP host-key pin and known_hosts variants", async () => {
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+    const profiles: ConnectionProfile[] = [
+      { ...profile, ssh: { pinnedHostKeySha256: createBareHostKeyPin() } },
+      { ...profile, ssh: { pinnedHostKeySha256: createHexHostKeyPin() } },
+      { ...profile, ssh: { knownHosts: { value: createKnownHostsLine("*.0.0.1") } } },
+      { ...profile, ssh: { knownHosts: { value: createHashedKnownHostsLine() } } },
+    ];
+
+    for (const sftpProfile of profiles) {
+      const session = await client.connect(sftpProfile);
+
+      try {
+        await expect(session.fs.stat("/incoming/report.csv")).resolves.toMatchObject({
+          path: "/incoming/report.csv",
+          type: "file",
+        });
+      } finally {
+        await session.disconnect();
+      }
+    }
+  });
+
+  it("rejects mismatched or malformed SFTP host-key policies", async () => {
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+    const wrongPin = `SHA256:${Buffer.alloc(32, 9).toString("base64").replace(/=+$/g, "")}`;
+
+    await expect(
+      client.connect({
+        ...profile,
+        ssh: { pinnedHostKeySha256: wrongPin },
+      }),
+    ).rejects.toBeInstanceOf(ConnectionError);
+    await expect(
+      client.connect({
+        ...profile,
+        ssh: { knownHosts: { value: "malformed-known-hosts-line" } },
+      }),
+    ).rejects.toBeInstanceOf(ConfigurationError);
+    await expect(
+      client.connect({
+        ...profile,
+        ssh: { knownHosts: { value: createKnownHostsLine("sftp.example.test") } },
+      }),
+    ).rejects.toBeInstanceOf(ConnectionError);
+    await expect(
+      client.connect({
+        ...profile,
+        ssh: { knownHosts: { value: createKnownHostsLine("!127.0.0.1,127.0.0.1") } },
+      }),
+    ).rejects.toBeInstanceOf(ConnectionError);
+    await expect(
+      client.connect({
+        ...profile,
+        ssh: { knownHosts: { value: createKnownHostsLine("|2|invalid|invalid") } },
+      }),
+    ).rejects.toBeInstanceOf(ConnectionError);
+    await expect(
+      createTransferClient({
+        providers: [createSftpProviderFactory({ hostVerifier: () => true })],
+      }).connect({
+        ...profile,
+        ssh: { pinnedHostKeySha256: server.hostKeySha256 },
+      }),
+    ).rejects.toBeInstanceOf(ConfigurationError);
   });
 
   it("reads, writes, resumes, and copies SFTP transfer streams", async () => {
@@ -532,6 +620,32 @@ async function restartServer(options: FakeSftpServerOptions): Promise<void> {
   await server.stop();
   server = new FakeSftpServer(options);
   profile.port = await server.start();
+}
+
+function createKnownHostsLine(hostPattern = `[127.0.0.1]:${getProfilePort()}`): string {
+  return `${hostPattern} ${server.hostPublicKey}`;
+}
+
+function createHashedKnownHostsLine(): string {
+  const hostPattern = `[127.0.0.1]:${getProfilePort()}`;
+  const salt = Buffer.from("zero-transfer-sftp-host-key-test", "utf8");
+  const hash = createHmac("sha1", salt).update(hostPattern).digest("base64");
+
+  return createKnownHostsLine(`|1|${salt.toString("base64")}|${hash}`);
+}
+
+function createBareHostKeyPin(): string {
+  return server.hostKeySha256.slice("SHA256:".length);
+}
+
+function createHexHostKeyPin(): string {
+  return Buffer.from(padBase64(createBareHostKeyPin()), "base64").toString("hex");
+}
+
+function padBase64(value: string): string {
+  const remainder = value.length % 4;
+
+  return remainder === 0 ? value : `${value}${"=".repeat(4 - remainder)}`;
 }
 
 function getProfilePort(): number {
