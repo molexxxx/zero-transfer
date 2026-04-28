@@ -162,6 +162,20 @@ export interface FtpsProviderOptions extends FtpProviderOptions {
  *
  * @param options - Optional provider defaults.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example Plain FTP (cleartext — prefer FTPS or SFTP whenever possible)
+ * ```ts
+ * import { createFtpProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+ *
+ * const session = await client.connect({
+ *   host: "ftp.example.com",
+ *   provider: "ftp",
+ *   username: "deploy",
+ *   password: { env: "FTP_PASSWORD" },
+ * });
+ * ```
  */
 export function createFtpProviderFactory(options: FtpProviderOptions = {}): ProviderFactory {
   return {
@@ -185,6 +199,37 @@ export function createFtpProviderFactory(options: FtpProviderOptions = {}): Prov
  *
  * @param options - Optional provider defaults.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example FTPS with public-CA TLS (no extra TLS material needed)
+ * ```ts
+ * import { createFtpsProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({ providers: [createFtpsProviderFactory()] });
+ *
+ * const session = await client.connect({
+ *   host: "ftps.example.com",
+ *   provider: "ftps",
+ *   username: "deploy",
+ *   password: { env: "FTPS_PASSWORD" },
+ *   tls: { minVersion: "TLSv1.2" },
+ * });
+ * ```
+ *
+ * @example FTPS with private CA + certificate pinning (defence-in-depth)
+ * ```ts
+ * await client.connect({
+ *   host: "ftps.internal.example",
+ *   provider: "ftps",
+ *   username: "audit",
+ *   tls: {
+ *     ca: { path: "./certs/ca-bundle.pem" },
+ *     cert: { path: "./certs/client.crt" },
+ *     key: { path: "./certs/client.key" },
+ *     // Optional but recommended:
+ *     pinnedFingerprint256: "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99",
+ *   },
+ * });
+ * ```
  */
 export function createFtpsProviderFactory(options: FtpsProviderOptions = {}): ProviderFactory {
   const mode = options.mode ?? "explicit";

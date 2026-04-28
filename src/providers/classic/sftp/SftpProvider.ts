@@ -109,6 +109,28 @@ export interface SftpRawSession {
  *
  * @param options - Optional ssh2 host-key verifier and timeout defaults.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example Register and use
+ * ```ts
+ * import { createSftpProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+ *
+ * const session = await client.connect({
+ *   host: "sftp.example.com",
+ *   provider: "sftp",
+ *   username: "deploy",
+ *   ssh: {
+ *     privateKey: { path: "./keys/id_ed25519" },
+ *     // Optional but recommended for production:
+ *     pinnedHostKeySha256: "SHA256:abc123basesixfourpinFromKnownHosts=",
+ *   },
+ * });
+ * ```
+ *
+ * Host-key verification (`ssh.knownHosts` and/or `ssh.pinnedHostKeySha256`) is
+ * optional; without either, the client trusts whatever host key the server
+ * presents. Use one for any non-lab deployment.
  */
 export function createSftpProviderFactory(options: SftpProviderOptions = {}): ProviderFactory {
   validateSftpProviderOptions(options);

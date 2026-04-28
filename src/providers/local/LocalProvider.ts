@@ -66,8 +66,24 @@ export interface LocalProviderOptions {
 /**
  * Creates a provider factory backed by the local filesystem.
  *
+ * Useful for copying files between two remote endpoints via a local staging
+ * area, or as the destination for `downloadFile`. The friendly `uploadFile`
+ * helper registers a local provider implicitly.
+ *
  * @param options - Optional local root path exposed through provider sessions.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example Use a fixed root directory
+ * ```ts
+ * import { createLocalProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({
+ *   providers: [createLocalProviderFactory({ rootPath: "/var/lib/zt-staging" })],
+ * });
+ *
+ * const session = await client.connect({ host: "staging", provider: "local" });
+ * const list = await session.fs.list("/");
+ * ```
  */
 export function createLocalProviderFactory(options: LocalProviderOptions = {}): ProviderFactory {
   return {

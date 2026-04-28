@@ -1,9 +1,12 @@
 /**
- * @file SFTP private-key authentication example.
+ * @file SFTP private-key authentication example with host-key pinning.
  *
- * Demonstrates how to construct a `ConnectionProfile` for the SFTP provider
- * using a private key file, optional passphrase, and a SHA-256 host key pin,
- * then upload a single local file with the friendly `uploadFile` helper.
+ * This is the **production-hardened** form: public-key auth + a SHA-256 host-key
+ * pin. For the minimal connect-only form, see `sftp-basic.ts`.
+ *
+ * `ssh.privateKey` is required for key-based auth. `ssh.pinnedHostKeySha256` is
+ * **optional but strongly recommended** — without it (or `ssh.knownHosts`) the
+ * SSH session does not verify the server's host key.
  */
 import {
   createSftpProviderFactory,
@@ -23,6 +26,8 @@ async function main(): Promise<void> {
     port: 22,
     provider: "sftp",
     ssh: {
+      // Optional but strongly recommended: copy the SHA256 line from your
+      // known_hosts file or `ssh-keyscan -t ed25519 host | ssh-keygen -lf -`.
       pinnedHostKeySha256: "SHA256:abc123basesixfourpinFromKnownHosts=",
       privateKey: { path: "./keys/id_ed25519" },
     },

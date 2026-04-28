@@ -201,14 +201,16 @@ Every provider advertises its own [`CapabilitySet`](docs/api-md/interfaces/Capab
 
 ## Examples
 
-Real-world examples live in [`examples/`](examples/). Run them with `tsx examples/<file>`.
+Real-world examples live in [`examples/`](https://github.com/tonywied17/zero-transfer/tree/main/examples). Run them with `tsx examples/<file>`.
 
 | Example                                                                     | What it shows                                                     |
 | --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | [`local-copy-file.ts`](examples/local-copy-file.ts)                         | Zero-config local-to-local copy via `copyBetween`.                |
 | [`ftp-basic.ts`](examples/ftp-basic.ts)                                     | Plain FTP upload + download round-trip with username/password.    |
-| [`sftp-private-key.ts`](examples/sftp-private-key.ts)                       | SFTP with private-key auth + pinned host-key SHA-256.             |
-| [`ftps-client-certificate.ts`](examples/ftps-client-certificate.ts)         | FTPS with client certificate, CA bundle, fingerprint pinning.     |
+| [`ftps-basic.ts`](examples/ftps-basic.ts)                                   | FTPS with username/password over a public-CA endpoint.            |
+| [`ftps-client-certificate.ts`](examples/ftps-client-certificate.ts)         | FTPS hardened: mTLS + private CA bundle + fingerprint pinning.    |
+| [`sftp-basic.ts`](examples/sftp-basic.ts)                                   | Minimal SFTP with username/password (no host-key pinning).        |
+| [`sftp-private-key.ts`](examples/sftp-private-key.ts)                       | SFTP hardened: private-key auth + pinned host-key SHA-256.        |
 | [`s3-compatible-upload.ts`](examples/s3-compatible-upload.ts)               | S3 multipart upload with cross-process resume store.              |
 | [`webdav-sync.ts`](examples/webdav-sync.ts)                                 | WebDAV diff + sync plan with deterministic ordering.              |
 | [`signed-url-download.ts`](examples/signed-url-download.ts)                 | HTTPS signed-URL download with progress reporting.                |
@@ -226,7 +228,7 @@ Real-world examples live in [`examples/`](examples/). Run them with `tsx example
 - [Full API reference (HTML)](https://tonywied17.github.io/zero-transfer/) — TypeDoc HTML site, deployed from `main` on every push.
 - [Full API reference (Markdown)](docs/api-md/README.md) — every public symbol with parameter / property / type tables.
 - [Per-scope pages](docs/scopes/README.md) — one page per `@zero-transfer/*` package.
-- [Examples directory](examples/) — runnable real-world flows.
+- [Examples directory](https://github.com/tonywied17/zero-transfer/tree/main/examples) — runnable real-world flows.
 
 Regenerate everything locally:
 
@@ -248,7 +250,7 @@ npm run ci          # lint, format check, typecheck, tests with coverage, build,
 npm run test:watch  # iterate
 ```
 
-Issues and PRs welcome. Provider integration tests are gated behind opt-in env vars — see [`test/integration/`](test/integration/) for the full list.
+Issues and PRs welcome. Provider integration tests are gated behind opt-in env vars — see [`test/integration/`](https://github.com/tonywied17/zero-transfer/tree/main/test/integration) for the full list.
 
 ## License
 

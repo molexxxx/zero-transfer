@@ -161,7 +161,17 @@ export interface TlsProfile {
   minVersion?: SecureVersion;
   /** Maximum TLS protocol version accepted by the client. */
   maxVersion?: SecureVersion;
-  /** Expected server certificate SHA-256 fingerprint or fingerprints, using hex with optional colons. */
+  /**
+   * Optional. Expected server certificate SHA-256 fingerprint(s) for **certificate pinning**, in
+   * hex form with or without colons. When present, the TLS handshake additionally requires the
+   * leaf certificate's SHA-256 fingerprint to match one of these values.
+   *
+   * Not required for normal CA-trusted endpoints — public CAs and `ca` bundles already gate
+   * trust via `rejectUnauthorized`. Pinning is **recommended for production** when you control
+   * the server and want defence-in-depth against rogue certificates issued by trusted CAs.
+   *
+   * @example "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99"
+   */
   pinnedFingerprint256?: string | readonly string[];
   /** Optional custom server identity checker for private PKI or certificate pinning. */
   checkServerIdentity?: (host: string, cert: PeerCertificate) => Error | undefined;
@@ -182,9 +192,25 @@ export interface SshProfile {
   privateKey?: SecretSource;
   /** Passphrase used to decrypt an encrypted private key. */
   passphrase?: SecretSource;
-  /** OpenSSH known_hosts content used for strict SFTP host-key verification. */
+  /**
+   * Optional. OpenSSH `known_hosts` content used for **strict SFTP host-key verification**.
+   * Mutually exclusive with provider-level `hostHash`/`hostVerifier` options.
+   *
+   * Not required for the connection to succeed, but **strongly recommended for production**:
+   * without `knownHosts` (and without {@link SshProfile.pinnedHostKeySha256 | pinnedHostKeySha256}),
+   * the SSH session accepts any host key the server presents, leaving you exposed to MITM.
+   */
   knownHosts?: SshKnownHostsSource;
-  /** Expected SSH host-key SHA-256 fingerprint or fingerprints, using OpenSSH `SHA256:` form, base64, or hex. */
+  /**
+   * Optional. SSH host-key SHA-256 fingerprint(s) the remote must present, in OpenSSH
+   * `SHA256:<base64>` form, raw base64, or hex.
+   *
+   * Use this as a lighter-weight alternative to a full `known_hosts` file when you only need
+   * to pin a single host. Like `knownHosts`, it is **optional but recommended for production**;
+   * leaving both unset disables host-key verification entirely.
+   *
+   * @example "SHA256:abc123basesixfourpinFromKnownHosts="
+   */
   pinnedHostKeySha256?: string | readonly string[];
   /** Runtime callback that answers SSH keyboard-interactive authentication prompts. */
   keyboardInteractive?: SshKeyboardInteractiveHandler;
@@ -194,6 +220,46 @@ export interface SshProfile {
 
 /**
  * Connection settings accepted by facade and adapter implementations.
+ *
+ * Every `ConnectionProfile` has a `host` and a `provider` (or `protocol`).
+ * Authentication and transport-specific material is layered on via the
+ * optional `ssh`, `tls`, `oauth`, and provider-specific blocks (e.g. `s3`,
+ * `azure`, `dropbox`).
+ *
+ * @example SFTP with public-key auth
+ * ```ts
+ * const profile: ConnectionProfile = {
+ *   host: "sftp.example.com",
+ *   provider: "sftp",
+ *   username: "deploy",
+ *   ssh: {
+ *     privateKey: { path: "./keys/id_ed25519" },
+ *     pinnedHostKeySha256: "SHA256:abc123basesixfourpinFromKnownHosts=",
+ *   },
+ * };
+ * ```
+ *
+ * @example FTPS with username/password and public-CA TLS
+ * ```ts
+ * const profile: ConnectionProfile = {
+ *   host: "ftps.example.com",
+ *   provider: "ftps",
+ *   username: "deploy",
+ *   password: { env: "FTPS_PASSWORD" },
+ *   tls: { minVersion: "TLSv1.2" },
+ * };
+ * ```
+ *
+ * @example S3-compatible
+ * ```ts
+ * const profile: ConnectionProfile = {
+ *   host: "my-bucket",
+ *   provider: "s3",
+ *   username: process.env.AWS_ACCESS_KEY_ID,
+ *   password: { env: "AWS_SECRET_ACCESS_KEY" },
+ *   s3: { region: "us-east-1" },
+ * };
+ * ```
  */
 export interface ConnectionProfile {
   /** Provider to use for this connection. Prefer this over the compatibility protocol field. */

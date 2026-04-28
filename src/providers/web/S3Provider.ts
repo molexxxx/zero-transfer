@@ -108,7 +108,7 @@ export interface S3MultipartPart {
  * Persistence contract for resuming partial multipart uploads across
  * processes or retries. Implementations may be synchronous or asynchronous;
  * `clear` is invoked once the multipart upload completes successfully (or is
- * explicitly aborted via {@link abortS3MultipartUpload}).
+ * explicitly aborted).
  */
 export interface S3MultipartResumeStore {
   load(
@@ -145,6 +145,34 @@ const S3_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["etag"];
  * Credentials must be supplied via the connection profile: `username` is the
  * access key id and `password` is the secret access key. `profile.host` may
  * be set to the bucket name (taking precedence over `options.bucket`).
+ *
+ * Works with AWS S3 and any S3-compatible API (MinIO, Cloudflare R2,
+ * Backblaze B2, DigitalOcean Spaces, Wasabi, etc.) via `options.endpoint`.
+ *
+ * @example AWS S3
+ * ```ts
+ * import { createS3ProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({ providers: [createS3ProviderFactory()] });
+ *
+ * const session = await client.connect({
+ *   host: "my-bucket",
+ *   provider: "s3",
+ *   username: process.env.AWS_ACCESS_KEY_ID,
+ *   password: { env: "AWS_SECRET_ACCESS_KEY" },
+ *   s3: { region: "us-east-1" },
+ * });
+ * ```
+ *
+ * @example MinIO / R2 / S3-compatible endpoint
+ * ```ts
+ * const client = createTransferClient({
+ *   providers: [createS3ProviderFactory({
+ *     endpoint: "https://minio.internal:9000",
+ *     pathStyle: true,
+ *   })],
+ * });
+ * ```
  */
 export function createS3ProviderFactory(options: S3ProviderOptions = {}): ProviderFactory {
   const id: ProviderId = options.id ?? "s3";

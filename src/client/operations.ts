@@ -48,8 +48,37 @@ export interface UploadFileOptions extends FriendlyTransferOptions {
 /**
  * Uploads a single local file to a remote endpoint.
  *
+ * The remote provider is resolved from `destination.profile.provider`, so any
+ * provider factory you registered with {@link createTransferClient} can be used
+ * as the destination.
+ *
  * @param options - Friendly upload options.
  * @returns Receipt produced by the underlying transfer engine.
+ *
+ * @example Upload to SFTP with public-key auth
+ * ```ts
+ * import {
+ *   createSftpProviderFactory,
+ *   createTransferClient,
+ *   uploadFile,
+ * } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+ *
+ * await uploadFile({
+ *   client,
+ *   destination: {
+ *     path: "/uploads/report.csv",
+ *     profile: {
+ *       host: "sftp.example.com",
+ *       provider: "sftp",
+ *       username: "deploy",
+ *       ssh: { privateKey: { path: "./keys/id_ed25519" } },
+ *     },
+ *   },
+ *   localPath: "./out/report.csv",
+ * });
+ * ```
  */
 export function uploadFile(options: UploadFileOptions): Promise<TransferReceipt> {
   const { client, destination, localPath, routeId, routeName, ...rest } = options;
@@ -76,8 +105,35 @@ export interface DownloadFileOptions extends FriendlyTransferOptions {
 /**
  * Downloads a single remote file to a local path.
  *
+ * The remote provider is resolved from `source.profile.provider`. The local
+ * destination path is created (including parent directories) on demand.
+ *
  * @param options - Friendly download options.
  * @returns Receipt produced by the underlying transfer engine.
+ *
+ * @example Download from S3
+ * ```ts
+ * import {
+ *   createS3ProviderFactory,
+ *   createTransferClient,
+ *   downloadFile,
+ * } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({ providers: [createS3ProviderFactory()] });
+ *
+ * await downloadFile({
+ *   client,
+ *   localPath: "./tmp/snapshot.tar.gz",
+ *   source: {
+ *     path: "snapshots/2026-04-28/snapshot.tar.gz",
+ *     profile: {
+ *       host: "snapshots", // S3 bucket
+ *       provider: "s3",
+ *       s3: { region: "us-east-1" },
+ *     },
+ *   },
+ * });
+ * ```
  */
 export function downloadFile(options: DownloadFileOptions): Promise<TransferReceipt> {
   const { client, localPath, routeId, routeName, source, ...rest } = options;
@@ -104,8 +160,38 @@ export interface CopyBetweenOptions extends FriendlyTransferOptions {
 /**
  * Copies a file between two remote endpoints in a single call.
  *
+ * Both source and destination providers must be registered with the
+ * {@link TransferClient}. Streams are piped end-to-end without staging the file
+ * on the local disk.
+ *
  * @param options - Friendly copy options.
  * @returns Receipt produced by the underlying transfer engine.
+ *
+ * @example Copy from SFTP to S3
+ * ```ts
+ * import {
+ *   copyBetween,
+ *   createS3ProviderFactory,
+ *   createSftpProviderFactory,
+ *   createTransferClient,
+ * } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({
+ *   providers: [createSftpProviderFactory(), createS3ProviderFactory()],
+ * });
+ *
+ * await copyBetween({
+ *   client,
+ *   source: {
+ *     path: "/exports/daily.csv",
+ *     profile: { host: "sftp.example.com", provider: "sftp", username: "etl" },
+ *   },
+ *   destination: {
+ *     path: "warehouse/daily.csv",
+ *     profile: { host: "warehouse", provider: "s3", s3: { region: "us-east-1" } },
+ *   },
+ * });
+ * ```
  */
 export function copyBetween(options: CopyBetweenOptions): Promise<TransferReceipt> {
   const { client, destination, routeId, routeName, source, ...rest } = options;

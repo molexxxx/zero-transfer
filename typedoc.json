@@ -3,5 +3,59 @@
   "out": "docs/api",
   "excludePrivate": true,
   "excludeInternal": true,
-  "readme": "README.md"
+  "readme": "README.md",
+  "name": "ZeroTransfer SDK",
+  "includeVersion": true,
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Friendly API",
+    "Client",
+    "Providers",
+    "Profiles",
+    "Transfer Engine",
+    "Sync & Deploy",
+    "MFT",
+    "Errors",
+    "Logging",
+    "Utilities",
+    "*"
+  ],
+  "groupOrder": ["Functions", "Classes", "Interfaces", "Type Aliases", "Variables", "*"],
+  "navigationLinks": {
+    "GitHub": "https://github.com/tonywied17/zero-transfer",
+    "npm": "https://www.npmjs.com/package/@zero-transfer/sdk",
+    "Examples": "https://github.com/tonywied17/zero-transfer/tree/main/examples"
+  },
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": true
+  },
+  "sort": ["kind", "alphabetical"],
+  "kindSortOrder": [
+    "Function",
+    "Class",
+    "Interface",
+    "TypeAlias",
+    "Variable",
+    "Enum",
+    "Module",
+    "Namespace"
+  ],
+  "searchInComments": true,
+  "searchInDocuments": true,
+  "cleanOutputDir": true,
+  "hideGenerator": false,
+  "useTsLinkResolution": true,
+  "externalSymbolLinkMappings": {
+    "@zero-transfer/sdk": {
+      "DEFAULT_SSH_PORT": "#",
+      "abortS3MultipartUpload": "#"
+    }
+  },
+  "validation": {
+    "notExported": false,
+    "invalidLink": true,
+    "rewrittenLink": true,
+    "notDocumented": false
+  }
 }
