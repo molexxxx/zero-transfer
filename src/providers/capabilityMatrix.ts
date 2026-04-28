@@ -13,6 +13,7 @@ import type { CapabilitySet } from "../core/CapabilitySet";
 import type { ProviderId } from "../core/ProviderId";
 import { createFtpProviderFactory, createFtpsProviderFactory } from "./classic/ftp";
 import { createSftpProviderFactory } from "./classic/sftp";
+import { createDropboxProviderFactory } from "./cloud";
 import { createLocalProviderFactory } from "./local";
 import { createMemoryProviderFactory } from "./memory";
 import {
@@ -95,6 +96,11 @@ export function getBuiltinCapabilityMatrix(): BuiltinCapabilityMatrixEntry[] {
       }).capabilities,
       id: "s3:multipart",
       label: "S3-compatible (multipart uploads)",
+    },
+    {
+      capabilities: createDropboxProviderFactory({ fetch: noopFetch }).capabilities,
+      id: "dropbox",
+      label: "Dropbox",
     },
   ];
 }

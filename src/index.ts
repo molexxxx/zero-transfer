@@ -59,6 +59,10 @@ export {
 } from "./providers/capabilityMatrix";
 export { createLocalProviderFactory, type LocalProviderOptions } from "./providers/local";
 export {
+  createDropboxProviderFactory,
+  type DropboxProviderOptions,
+} from "./providers/cloud";
+export {
   createMemoryProviderFactory,
   type MemoryProviderEntry,
   type MemoryProviderOptions,

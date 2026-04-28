@@ -17,6 +17,7 @@ describe("getBuiltinCapabilityMatrix", () => {
       "webdav",
       "s3",
       "s3:multipart",
+      "dropbox",
     ]);
   });
 
@@ -41,8 +42,9 @@ describe("formatCapabilityMatrixMarkdown", () => {
     const lines = markdown.split("\n");
     expect(lines[0]).toContain("Provider");
     expect(lines[1]).toMatch(/^\| --- \|/);
-    // header + divider + 9 entries
-    expect(lines).toHaveLength(2 + 9);
+    // header + divider + 10 entries
+    expect(lines).toHaveLength(2 + 10);
     expect(markdown).toContain("S3-compatible (multipart uploads)");
+    expect(markdown).toContain("Dropbox");
   });
 });
