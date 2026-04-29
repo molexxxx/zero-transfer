@@ -40,8 +40,9 @@ describe("memory provider file-system mutations", () => {
   it("ignores missing on remove when ignoreMissing is set", async () => {
     const session = await connectMemory();
     try {
-      await expect(session.fs.remove?.("/data/missing.txt", { ignoreMissing: true })).resolves
-        .toBeUndefined();
+      await expect(
+        session.fs.remove?.("/data/missing.txt", { ignoreMissing: true }),
+      ).resolves.toBeUndefined();
       await expect(session.fs.remove?.("/data/missing.txt")).rejects.toBeInstanceOf(
         PathNotFoundError,
       );
@@ -158,8 +159,9 @@ describe("local provider file-system mutations", () => {
   it("rmdir ignoreMissing returns silently", async () => {
     const session = await connectLocal();
     try {
-      await expect(session.fs.rmdir?.("/missing", { ignoreMissing: true })).resolves
-        .toBeUndefined();
+      await expect(
+        session.fs.rmdir?.("/missing", { ignoreMissing: true }),
+      ).resolves.toBeUndefined();
     } finally {
       await session.disconnect();
     }
