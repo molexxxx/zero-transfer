@@ -6,7 +6,6 @@
  * route actually runs. This pattern is suitable for production releases,
  * compliance-gated MFT flows, and "two-person rule" deployments.
  */
-import { createTransferClient } from "@zero-transfer/core";
 import {
   ApprovalRegistry,
   ApprovalRejectedError,
@@ -14,6 +13,7 @@ import {
   RouteRegistry,
   ScheduleRegistry,
   createApprovalGate,
+  createTransferClient,
   runRoute,
   type MftRoute,
   type MftSchedule,

@@ -5,11 +5,11 @@
  * via `MftScheduler`, observes results through the auditing hooks, and
  * shuts down gracefully on SIGINT.
  */
-import { createTransferClient } from "@zero-transfer/core";
 import {
   MftScheduler,
   RouteRegistry,
   ScheduleRegistry,
+  createTransferClient,
   type MftRoute,
   type MftSchedule,
 } from "@zero-transfer/mft";
