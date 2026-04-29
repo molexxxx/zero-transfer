@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.1**](../README.md)
+[**ZeroTransfer SDK v0.1.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: RemoteFileSystem
 
-Defined in: [src/providers/RemoteFileSystem.ts:9](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/providers/RemoteFileSystem.ts#L9)
+Defined in: [src/providers/RemoteFileSystem.ts:18](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/RemoteFileSystem.ts#L18)
 
 Minimal file-system surface shared by provider sessions.
 
@@ -18,7 +18,7 @@ Minimal file-system surface shared by provider sessions.
 list(path, options?): Promise<RemoteEntry[]>;
 ```
 
-Defined in: [src/providers/RemoteFileSystem.ts:11](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/providers/RemoteFileSystem.ts#L11)
+Defined in: [src/providers/RemoteFileSystem.ts:20](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/RemoteFileSystem.ts#L20)
 
 Lists entries for a provider path.
 
@@ -35,13 +35,109 @@ Lists entries for a provider path.
 
 ***
 
+### mkdir()?
+
+```ts
+optional mkdir(path, options?): Promise<void>;
+```
+
+Defined in: [src/providers/RemoteFileSystem.ts:28](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/RemoteFileSystem.ts#L28)
+
+Creates a directory when supported by the provider.
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `path` | `string` |
+| `options?` | [`MkdirOptions`](MkdirOptions.md) |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
+### remove()?
+
+```ts
+optional remove(path, options?): Promise<void>;
+```
+
+Defined in: [src/providers/RemoteFileSystem.ts:24](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/RemoteFileSystem.ts#L24)
+
+Removes a file entry when supported by the provider.
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `path` | `string` |
+| `options?` | [`RemoveOptions`](RemoveOptions.md) |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
+### rename()?
+
+```ts
+optional rename(
+   from, 
+   to, 
+options?): Promise<void>;
+```
+
+Defined in: [src/providers/RemoteFileSystem.ts:26](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/RemoteFileSystem.ts#L26)
+
+Renames or moves an entry when supported by the provider.
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `from` | `string` |
+| `to` | `string` |
+| `options?` | [`RenameOptions`](RenameOptions.md) |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
+### rmdir()?
+
+```ts
+optional rmdir(path, options?): Promise<void>;
+```
+
+Defined in: [src/providers/RemoteFileSystem.ts:30](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/RemoteFileSystem.ts#L30)
+
+Removes a directory when supported by the provider.
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `path` | `string` |
+| `options?` | [`RmdirOptions`](RmdirOptions.md) |
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
 ### stat()
 
 ```ts
 stat(path, options?): Promise<RemoteStat>;
 ```
 
-Defined in: [src/providers/RemoteFileSystem.ts:13](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/providers/RemoteFileSystem.ts#L13)
+Defined in: [src/providers/RemoteFileSystem.ts:22](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/RemoteFileSystem.ts#L22)
 
 Reads metadata for a provider path.
 

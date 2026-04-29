@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.1**](../README.md)
+[**ZeroTransfer SDK v0.1.2**](../README.md)
 
 ***
 
@@ -18,6 +18,6 @@ type ChecksumCapability =
 };
 ```
 
-Defined in: [src/core/CapabilitySet.ts:19](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/core/CapabilitySet.ts#L19)
+Defined in: [src/core/CapabilitySet.ts:19](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/core/CapabilitySet.ts#L19)
 
 Checksum or integrity mechanisms a provider can advertise.

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.1**](../README.md)
+[**ZeroTransfer SDK v0.1.2**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createMemoryProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/memory/MemoryProvider.ts:76](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/providers/memory/MemoryProvider.ts#L76)
+Defined in: [src/providers/memory/MemoryProvider.ts:83](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/memory/MemoryProvider.ts#L83)
 
 Creates a provider factory backed by deterministic in-memory fixture entries.
 

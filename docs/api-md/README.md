@@ -1,8 +1,8 @@
-**ZeroTransfer SDK v0.1.1**
+**ZeroTransfer SDK v0.1.2**
 
 ***
 
-# ZeroTransfer SDK v0.1.1
+# ZeroTransfer SDK v0.1.2
 
 ZeroTransfer public API surface.
 
@@ -214,6 +214,7 @@ path safety utilities used by future protocol adapters.
 | [MftRouteFilter](interfaces/MftRouteFilter.md) | Optional filter metadata reserved for tree-aware route execution. |
 | [MftSchedule](interfaces/MftSchedule.md) | Declarative schedule binding a route id to a trigger. |
 | [MftSchedulerOptions](interfaces/MftSchedulerOptions.md) | Construction options for [MftScheduler](classes/MftScheduler.md). |
+| [MkdirOptions](interfaces/MkdirOptions.md) | Options for creating a remote directory. |
 | [OAuthAccessToken](interfaces/OAuthAccessToken.md) | Token material returned by [OAuthRefreshCallback](type-aliases/OAuthRefreshCallback.md). |
 | [OAuthTokenSecretSourceOptions](interfaces/OAuthTokenSecretSourceOptions.md) | Options accepted by [createOAuthTokenSecretSource](functions/createOAuthTokenSecretSource.md). |
 | [OneDriveProviderOptions](interfaces/OneDriveProviderOptions.md) | Options accepted by [createOneDriveProviderFactory](functions/createOneDriveProviderFactory.md). |
@@ -243,12 +244,15 @@ path safety utilities used by future protocol adapters.
 | [RemoteTreeDiffEntry](interfaces/RemoteTreeDiffEntry.md) | Single diff record produced by [diffRemoteTrees](functions/diffRemoteTrees.md). |
 | [RemoteTreeDiffSummary](interfaces/RemoteTreeDiffSummary.md) | Compact summary of a diff result. |
 | [RemoteTreeEntry](interfaces/RemoteTreeEntry.md) | Walk record yielded by [walkRemoteTree](functions/walkRemoteTree.md). |
+| [RemoveOptions](interfaces/RemoveOptions.md) | Options for removing a remote file entry. |
+| [RenameOptions](interfaces/RenameOptions.md) | Options for renaming or moving a remote entry. |
 | [ResolvedConnectionProfile](interfaces/ResolvedConnectionProfile.md) | Connection profile with username, password, TLS, and SSH material sources resolved. |
 | [ResolvedOpenSshHost](interfaces/ResolvedOpenSshHost.md) | Resolved set of directives for a given host alias. Values from later-declared blocks are merged after earlier ones so wildcard fallbacks (e.g. `Host *`) only fill gaps. |
 | [ResolvedSshProfile](interfaces/ResolvedSshProfile.md) | SSH profile with private-key and known-host material resolved. |
 | [ResolvedTlsProfile](interfaces/ResolvedTlsProfile.md) | TLS profile with certificate-bearing secret sources resolved. |
 | [ResolveSecretOptions](interfaces/ResolveSecretOptions.md) | Injectable dependencies used by tests or host applications during secret resolution. |
 | [RetentionEvaluation](interfaces/RetentionEvaluation.md) | Result returned by [evaluateRetention](functions/evaluateRetention.md). |
+| [RmdirOptions](interfaces/RmdirOptions.md) | Options for removing a remote directory. |
 | [RunConnectionDiagnosticsOptions](interfaces/RunConnectionDiagnosticsOptions.md) | Options accepted by [runConnectionDiagnostics](functions/runConnectionDiagnostics.md). |
 | [RunRouteOptions](interfaces/RunRouteOptions.md) | Options accepted by [runRoute](functions/runRoute.md). |
 | [S3MultipartCheckpoint](interfaces/S3MultipartCheckpoint.md) | Persisted multipart-upload checkpoint. |

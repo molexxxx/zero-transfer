@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.1**](../README.md)
+[**ZeroTransfer SDK v0.1.2**](../README.md)
 
 ***
 
@@ -12,7 +12,7 @@ type OAuthRefreshCallback = () =>
 | Promise<OAuthAccessToken>;
 ```
 
-Defined in: [src/profiles/OAuthTokenSource.ts:34](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/profiles/OAuthTokenSource.ts#L34)
+Defined in: [src/profiles/OAuthTokenSource.ts:34](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/profiles/OAuthTokenSource.ts#L34)
 
 Refresh callback invoked when no valid cached token is available.
 
