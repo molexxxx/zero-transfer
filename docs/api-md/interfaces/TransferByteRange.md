@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.0**](../README.md)
+[**ZeroTransfer SDK v0.1.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: TransferByteRange
 
-Defined in: [src/providers/ProviderTransferOperations.ts:20](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/ProviderTransferOperations.ts#L20)
+Defined in: [src/providers/ProviderTransferOperations.ts:20](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/providers/ProviderTransferOperations.ts#L20)
 
 Byte range requested from a readable provider endpoint.
 
@@ -14,5 +14,5 @@ Byte range requested from a readable provider endpoint.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="length"></a> `length?` | `number` | Maximum number of bytes to read when known. | [src/providers/ProviderTransferOperations.ts:24](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/ProviderTransferOperations.ts#L24) |
-| <a id="offset"></a> `offset` | `number` | Zero-based byte offset where reading should begin. | [src/providers/ProviderTransferOperations.ts:22](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/ProviderTransferOperations.ts#L22) |
+| <a id="length"></a> `length?` | `number` | Maximum number of bytes to read when known. | [src/providers/ProviderTransferOperations.ts:24](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/providers/ProviderTransferOperations.ts#L24) |
+| <a id="offset"></a> `offset` | `number` | Zero-based byte offset where reading should begin. | [src/providers/ProviderTransferOperations.ts:22](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/providers/ProviderTransferOperations.ts#L22) |

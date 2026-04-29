@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.0**](../README.md)
+[**ZeroTransfer SDK v0.1.1**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createTransferResult(input): TransferResult;
 ```
 
-Defined in: [src/services/TransferService.ts:55](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/services/TransferService.ts#L55)
+Defined in: [src/services/TransferService.ts:55](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/services/TransferService.ts#L55)
 
 Creates a final transfer result with duration and average throughput.
 

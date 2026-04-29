@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.0**](../README.md)
+[**ZeroTransfer SDK v0.1.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ValueSecretSource
 
-Defined in: [src/profiles/SecretSource.ts:18](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/profiles/SecretSource.ts#L18)
+Defined in: [src/profiles/SecretSource.ts:18](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/profiles/SecretSource.ts#L18)
 
 Inline secret descriptor. Prefer env, path, or callback sources for real applications.
 
@@ -14,4 +14,4 @@ Inline secret descriptor. Prefer env, path, or callback sources for real applica
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="value"></a> `value` | [`SecretValue`](../type-aliases/SecretValue.md) | Inline secret value. | [src/profiles/SecretSource.ts:20](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/profiles/SecretSource.ts#L20) |
+| <a id="value"></a> `value` | [`SecretValue`](../type-aliases/SecretValue.md) | Inline secret value. | [src/profiles/SecretSource.ts:20](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/profiles/SecretSource.ts#L20) |

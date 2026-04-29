@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.0**](../README.md)
+[**ZeroTransfer SDK v0.1.1**](../README.md)
 
 ***
 
@@ -10,6 +10,6 @@
 type TransferDataSource = AsyncIterable<TransferDataChunk>;
 ```
 
-Defined in: [src/providers/ProviderTransferOperations.ts:17](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/providers/ProviderTransferOperations.ts#L17)
+Defined in: [src/providers/ProviderTransferOperations.ts:17](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/providers/ProviderTransferOperations.ts#L17)
 
 Provider-neutral transfer content source. Node readable streams satisfy this shape.

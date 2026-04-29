@@ -1,8 +1,8 @@
-**ZeroTransfer SDK v0.1.0**
+**ZeroTransfer SDK v0.1.1**
 
 ***
 
-# ZeroTransfer SDK v0.1.0
+# ZeroTransfer SDK v0.1.1
 
 ZeroTransfer public API surface.
 

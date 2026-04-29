@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.0**](../README.md)
+[**ZeroTransfer SDK v0.1.1**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function parseRemoteManifest(text): RemoteManifest;
 ```
 
-Defined in: [src/sync/manifest.ts:150](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/sync/manifest.ts#L150)
+Defined in: [src/sync/manifest.ts:150](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/sync/manifest.ts#L150)
 
 Parses a JSON-encoded manifest, validating the schema version and entry shape.
 

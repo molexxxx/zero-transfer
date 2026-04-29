@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/webdav",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "WebDAV provider with PROPFIND listings and ranged downloads.",
   "keywords": [
     "zero-transfer",
@@ -44,6 +44,6 @@
   },
   "sideEffects": false,
   "peerDependencies": {
-    "@zero-transfer/sdk": "0.1.0"
+    "@zero-transfer/sdk": "0.1.1"
   }
 }

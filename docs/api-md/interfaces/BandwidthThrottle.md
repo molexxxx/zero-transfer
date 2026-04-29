@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.0**](../README.md)
+[**ZeroTransfer SDK v0.1.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: BandwidthThrottle
 
-Defined in: [src/transfers/BandwidthThrottle.ts:21](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/BandwidthThrottle.ts#L21)
+Defined in: [src/transfers/BandwidthThrottle.ts:21](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/transfers/BandwidthThrottle.ts#L21)
 
 Token-bucket throttle used to pace transfer chunks.
 
@@ -18,7 +18,7 @@ Token-bucket throttle used to pace transfer chunks.
 consume(bytes, signal?): Promise<void>;
 ```
 
-Defined in: [src/transfers/BandwidthThrottle.ts:33](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/BandwidthThrottle.ts#L33)
+Defined in: [src/transfers/BandwidthThrottle.ts:33](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/transfers/BandwidthThrottle.ts#L33)
 
 Consumes `bytes` from the bucket, awaiting refill when not enough tokens are available.
 
@@ -41,5 +41,5 @@ Consumes `bytes` from the bucket, awaiting refill when not enough tokens are ava
 
 | Property | Modifier | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ | ------ |
-| <a id="burstbytes"></a> `burstBytes` | `readonly` | `number` | Burst capacity in bytes available before throttling kicks in. | [src/transfers/BandwidthThrottle.ts:25](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/BandwidthThrottle.ts#L25) |
-| <a id="bytespersecond"></a> `bytesPerSecond` | `readonly` | `number` | Maximum sustained transfer rate in bytes per second. | [src/transfers/BandwidthThrottle.ts:23](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/transfers/BandwidthThrottle.ts#L23) |
+| <a id="burstbytes"></a> `burstBytes` | `readonly` | `number` | Burst capacity in bytes available before throttling kicks in. | [src/transfers/BandwidthThrottle.ts:25](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/transfers/BandwidthThrottle.ts#L25) |
+| <a id="bytespersecond"></a> `bytesPerSecond` | `readonly` | `number` | Maximum sustained transfer rate in bytes per second. | [src/transfers/BandwidthThrottle.ts:23](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/transfers/BandwidthThrottle.ts#L23) |

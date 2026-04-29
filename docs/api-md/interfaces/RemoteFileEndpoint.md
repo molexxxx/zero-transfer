@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.0**](../README.md)
+[**ZeroTransfer SDK v0.1.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: RemoteFileEndpoint
 
-Defined in: [src/client/operations.ts:20](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/client/operations.ts#L20)
+Defined in: [src/client/operations.ts:20](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/client/operations.ts#L20)
 
 Endpoint shape accepted by the friendly helpers.
 
@@ -14,5 +14,5 @@ Endpoint shape accepted by the friendly helpers.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="path"></a> `path` | `string` | Provider, remote, or local path the helper operates on. | [src/client/operations.ts:24](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/client/operations.ts#L24) |
-| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Provider profile used to open the session. | [src/client/operations.ts:22](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/client/operations.ts#L22) |
+| <a id="path"></a> `path` | `string` | Provider, remote, or local path the helper operates on. | [src/client/operations.ts:24](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/client/operations.ts#L24) |
+| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Provider profile used to open the session. | [src/client/operations.ts:22](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/client/operations.ts#L22) |

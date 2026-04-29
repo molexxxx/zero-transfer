@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.0**](../README.md)
+[**ZeroTransfer SDK v0.1.1**](../README.md)
 
 ***
 
@@ -15,7 +15,7 @@ function diffRemoteTrees(
 options?): Promise<RemoteTreeDiff>;
 ```
 
-Defined in: [src/sync/diffRemoteTrees.ts:96](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/sync/diffRemoteTrees.ts#L96)
+Defined in: [src/sync/diffRemoteTrees.ts:96](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/sync/diffRemoteTrees.ts#L96)
 
 Compares two remote subtrees and produces an entry-level diff.
 

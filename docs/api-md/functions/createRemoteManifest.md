@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.0**](../README.md)
+[**ZeroTransfer SDK v0.1.1**](../README.md)
 
 ***
 
@@ -13,7 +13,7 @@ function createRemoteManifest(
 options?): Promise<RemoteManifest>;
 ```
 
-Defined in: [src/sync/manifest.ts:100](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/sync/manifest.ts#L100)
+Defined in: [src/sync/manifest.ts:100](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/sync/manifest.ts#L100)
 
 Walks a remote subtree and produces a serializable manifest snapshot.
 

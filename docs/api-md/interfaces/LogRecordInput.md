@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.0**](../README.md)
+[**ZeroTransfer SDK v0.1.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: LogRecordInput
 
-Defined in: [src/logging/Logger.ts:45](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/logging/Logger.ts#L45)
+Defined in: [src/logging/Logger.ts:45](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/logging/Logger.ts#L45)
 
 Log record input accepted by [emitLog](../functions/emitLog.md); the helper adds the level.
 
@@ -28,4 +28,4 @@ Log record input accepted by [emitLog](../functions/emitLog.md); the helper adds
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="message"></a> `message` | `string` | Human-readable summary message. | [src/logging/Logger.ts:47](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/logging/Logger.ts#L47) |
+| <a id="message"></a> `message` | `string` | Human-readable summary message. | [src/logging/Logger.ts:47](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/logging/Logger.ts#L47) |

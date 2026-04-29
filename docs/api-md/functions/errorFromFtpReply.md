@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.0**](../README.md)
+[**ZeroTransfer SDK v0.1.1**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function errorFromFtpReply(input): ZeroTransferError;
 ```
 
-Defined in: [src/errors/errorFactory.ts:46](https://github.com/tonywied17/zero-transfer/blob/4384f4bbe382c0bc97d7fe822fc67543a79294ce/src/errors/errorFactory.ts#L46)
+Defined in: [src/errors/errorFactory.ts:46](https://github.com/tonywied17/zero-transfer/blob/cf8a23e699b2c758d71686fe9e76b339941cefe7/src/errors/errorFactory.ts#L46)
 
 Maps an FTP reply into the closest typed ZeroTransfer error.
 
