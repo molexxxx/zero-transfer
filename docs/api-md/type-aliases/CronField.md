@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.5**](../README.md)
+[**ZeroTransfer SDK v0.1.6**](../README.md)
 
 ***
 
@@ -10,6 +10,6 @@
 type CronField = readonly number[];
 ```
 
-Defined in: [src/mft/cron.ts:14](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/mft/cron.ts#L14)
+Defined in: [src/mft/cron.ts:14](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/cron.ts#L14)
 
 Compiled cron field as a sorted set of allowed integer values.

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.5**](../README.md)
+[**ZeroTransfer SDK v0.1.6**](../README.md)
 
 ***
 
@@ -13,7 +13,7 @@ function sortRemoteEntries(
    order?): RemoteEntry[];
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:123](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/sync/createRemoteBrowser.ts#L123)
+Defined in: [src/sync/createRemoteBrowser.ts:123](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/sync/createRemoteBrowser.ts#L123)
 
 Returns a copy of the supplied entries sorted by the requested key. Directories
 are grouped before files within ascending sorts, matching common file-manager UX.

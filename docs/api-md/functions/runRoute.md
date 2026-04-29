@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.5**](../README.md)
+[**ZeroTransfer SDK v0.1.6**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function runRoute(options): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/mft/runRoute.ts:64](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/mft/runRoute.ts#L64)
+Defined in: [src/mft/runRoute.ts:64](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/runRoute.ts#L64)
 
 Executes an MFT route as a single transfer through the supplied client.
 
