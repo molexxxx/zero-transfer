@@ -45,9 +45,13 @@ import type { TransferVerificationResult } from "../../../transfers/TransferJob"
 import type {
   ConnectionProfile,
   ListOptions,
+  MkdirOptions,
   RemoteEntry,
   RemoteEntryType,
   RemoteStat,
+  RemoveOptions,
+  RenameOptions,
+  RmdirOptions,
   SshKeyboardInteractiveChallenge,
   StatOptions,
 } from "../../../types/public";
@@ -283,6 +287,108 @@ class SftpFileSystem implements RemoteFileSystem {
       };
     } catch (error) {
       throw mapSftpError(error, { command: "LSTAT", path: remotePath });
+    }
+  }
+
+  async remove(path: string, options: RemoveOptions = {}): Promise<void> {
+    throwIfAborted(options.signal, path, "remove");
+    const remotePath = normalizeSftpPath(path);
+    try {
+      await sftpUnlink(this.sftp, remotePath);
+    } catch (error) {
+      const mapped = mapSftpError(error, { command: "REMOVE", path: remotePath });
+      if (options.ignoreMissing && mapped instanceof PathNotFoundError) return;
+      throw mapped;
+    }
+  }
+
+  async rename(from: string, to: string, options: RenameOptions = {}): Promise<void> {
+    throwIfAborted(options.signal, from, "rename");
+    const fromPath = normalizeSftpPath(from);
+    const toPath = normalizeSftpPath(to);
+    try {
+      await sftpRename(this.sftp, fromPath, toPath);
+    } catch (error) {
+      throw mapSftpError(error, { command: "RENAME", path: fromPath });
+    }
+  }
+
+  async mkdir(path: string, options: MkdirOptions = {}): Promise<void> {
+    throwIfAborted(options.signal, path, "mkdir");
+    const remotePath = normalizeSftpPath(path);
+    if (!options.recursive) {
+      try {
+        await sftpMkdir(this.sftp, remotePath);
+      } catch (error) {
+        throw mapSftpError(error, { command: "MKDIR", path: remotePath });
+      }
+      return;
+    }
+    const segments = remotePath.split("/").filter((s) => s.length > 0);
+    let current = "";
+    for (const segment of segments) {
+      current = `${current}/${segment}`;
+      try {
+        await sftpMkdir(this.sftp, current);
+      } catch (error) {
+        // Existing directory is fine for recursive creation; rethrow other failures.
+        try {
+          const stats = await readSftpStats(this.sftp, current);
+          if (stats.isDirectory()) continue;
+        } catch {
+          // fall through
+        }
+        throw mapSftpError(error, { command: "MKDIR", path: current });
+      }
+    }
+  }
+
+  async rmdir(path: string, options: RmdirOptions = {}): Promise<void> {
+    throwIfAborted(options.signal, path, "rmdir");
+    const remotePath = normalizeSftpPath(path);
+    if (options.recursive) {
+      await this.removeDirectoryRecursive(remotePath);
+      return;
+    }
+    try {
+      await sftpRmdir(this.sftp, remotePath);
+    } catch (error) {
+      const mapped = mapSftpError(error, { command: "RMDIR", path: remotePath });
+      if (options.ignoreMissing && mapped instanceof PathNotFoundError) return;
+      throw mapped;
+    }
+  }
+
+  private async removeDirectoryRecursive(remotePath: string): Promise<void> {
+    let entries: FileEntryWithStats[];
+    try {
+      entries = await readSftpDirectory(this.sftp, remotePath);
+    } catch (error) {
+      const mapped = mapSftpError(error, { command: "READDIR", path: remotePath });
+      if (mapped instanceof PathNotFoundError) return;
+      throw mapped;
+    }
+    for (const entry of entries) {
+      if (entry.filename === "." || entry.filename === "..") continue;
+      const childPath = `${remotePath.replace(/\/+$/, "")}/${entry.filename}`.replace(/\/+/g, "/");
+      const isDir = entry.attrs.isDirectory();
+      try {
+        if (isDir) {
+          await this.removeDirectoryRecursive(childPath);
+        } else {
+          await sftpUnlink(this.sftp, childPath);
+        }
+      } catch (error) {
+        throw mapSftpError(error, {
+          command: isDir ? "RMDIR" : "REMOVE",
+          path: childPath,
+        });
+      }
+    }
+    try {
+      await sftpRmdir(this.sftp, remotePath);
+    } catch (error) {
+      throw mapSftpError(error, { command: "RMDIR", path: remotePath });
     }
   }
 }
@@ -863,6 +969,54 @@ function readSftpStats(sftp: SFTPWrapper, path: string): Promise<Stats> {
   });
 }
 
+function sftpUnlink(sftp: SFTPWrapper, path: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    sftp.unlink(path, (error) => {
+      if (error !== undefined && error !== null) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+function sftpRename(sftp: SFTPWrapper, from: string, to: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    sftp.rename(from, to, (error) => {
+      if (error !== undefined && error !== null) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+function sftpMkdir(sftp: SFTPWrapper, path: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    sftp.mkdir(path, (error) => {
+      if (error !== undefined && error !== null) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+function sftpRmdir(sftp: SFTPWrapper, path: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    sftp.rmdir(path, (error) => {
+      if (error !== undefined && error !== null) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
 async function* createSftpReadSource(
   sftp: SFTPWrapper,
   path: string,
@@ -1174,7 +1328,7 @@ function createSftpPathNotFoundError(path: string, message: string): PathNotFoun
 function throwIfAborted(
   signal: AbortSignal | undefined,
   path: string,
-  operation: "list" | "stat",
+  operation: "list" | "stat" | "remove" | "rename" | "mkdir" | "rmdir",
 ): void {
   if (signal?.aborted !== true) {
     return;

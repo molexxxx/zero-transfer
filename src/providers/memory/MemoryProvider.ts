@@ -18,7 +18,15 @@ import type {
   ProviderTransferWriteResult,
 } from "../ProviderTransferOperations";
 import type { RemoteFileSystem } from "../RemoteFileSystem";
-import type { RemoteEntry, RemotePermissions, RemoteStat } from "../../types/public";
+import type {
+  MkdirOptions,
+  RemoteEntry,
+  RemotePermissions,
+  RemoteStat,
+  RemoveOptions,
+  RenameOptions,
+  RmdirOptions,
+} from "../../types/public";
 import { basenameRemotePath, normalizeRemotePath } from "../../utils/path";
 
 const MEMORY_PROVIDER_ID = "memory";
@@ -143,6 +151,100 @@ class MemoryFileSystem implements RemoteFileSystem {
     return Promise.resolve().then(() =>
       cloneRemoteStat(this.requireEntry(normalizeMemoryPath(path))),
     );
+  }
+
+  remove(path: string, options: RemoveOptions = {}): Promise<void> {
+    return Promise.resolve().then(() => {
+      const normalized = normalizeMemoryPath(path);
+      const entry = this.state.entries.get(normalized);
+      if (entry === undefined) {
+        if (options.ignoreMissing) return;
+        throw createPathNotFoundError(normalized, `Memory path not found: ${normalized}`);
+      }
+      if (entry.type === "directory") {
+        throw createPathNotFoundError(
+          normalized,
+          `Memory path is a directory; use rmdir: ${normalized}`,
+        );
+      }
+      this.state.entries.delete(normalized);
+      this.state.content.delete(normalized);
+    });
+  }
+
+  rename(from: string, to: string, _options: RenameOptions = {}): Promise<void> {
+    return Promise.resolve().then(() => {
+      const fromPath = normalizeMemoryPath(from);
+      const toPath = normalizeMemoryPath(to);
+      const entry = this.state.entries.get(fromPath);
+      if (entry === undefined) {
+        throw createPathNotFoundError(fromPath, `Memory path not found: ${fromPath}`);
+      }
+      ensureParentDirectories(this.state.entries, toPath);
+      const moved: RemoteStat = { ...entry, path: toPath, name: basenameRemotePath(toPath) };
+      this.state.entries.delete(fromPath);
+      this.state.entries.set(toPath, moved);
+      const content = this.state.content.get(fromPath);
+      if (content !== undefined) {
+        this.state.content.delete(fromPath);
+        this.state.content.set(toPath, content);
+      }
+    });
+  }
+
+  mkdir(path: string, options: MkdirOptions = {}): Promise<void> {
+    return Promise.resolve().then(() => {
+      const normalized = normalizeMemoryPath(path);
+      const existing = this.state.entries.get(normalized);
+      if (existing !== undefined) {
+        if (existing.type === "directory" && options.recursive) return;
+        throw createInvalidFixtureError(normalized, `Memory path already exists: ${normalized}`);
+      }
+      if (options.recursive) {
+        ensureParentDirectories(this.state.entries, normalized);
+      } else {
+        const parent = getParentPath(normalized);
+        if (parent !== undefined && !this.state.entries.has(parent)) {
+          throw createPathNotFoundError(parent, `Memory parent not found: ${parent}`);
+        }
+      }
+      this.state.entries.set(normalized, createDirectoryEntry(normalized));
+    });
+  }
+
+  rmdir(path: string, options: RmdirOptions = {}): Promise<void> {
+    return Promise.resolve().then(() => {
+      const normalized = normalizeMemoryPath(path);
+      const entry = this.state.entries.get(normalized);
+      if (entry === undefined) {
+        if (options.ignoreMissing) return;
+        throw createPathNotFoundError(normalized, `Memory path not found: ${normalized}`);
+      }
+      if (entry.type !== "directory") {
+        throw createPathNotFoundError(normalized, `Memory path is not a directory: ${normalized}`);
+      }
+      const children = [...this.state.entries.values()].filter(
+        (child) => child.path !== normalized && getParentPath(child.path) === normalized,
+      );
+      if (children.length > 0 && !options.recursive) {
+        throw createInvalidFixtureError(normalized, `Memory directory not empty: ${normalized}`);
+      }
+      const stack = [...children];
+      while (stack.length > 0) {
+        const next = stack.pop();
+        if (!next) continue;
+        if (next.type === "directory") {
+          for (const grand of this.state.entries.values()) {
+            if (grand.path !== next.path && getParentPath(grand.path) === next.path) {
+              stack.push(grand);
+            }
+          }
+        }
+        this.state.entries.delete(next.path);
+        this.state.content.delete(next.path);
+      }
+      this.state.entries.delete(normalized);
+    });
   }
 
   private requireEntry(path: string): RemoteStat {

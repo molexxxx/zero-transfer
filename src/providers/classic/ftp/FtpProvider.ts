@@ -38,7 +38,15 @@ import type {
   ProviderTransferWriteResult,
 } from "../../ProviderTransferOperations";
 import type { RemoteFileSystem } from "../../RemoteFileSystem";
-import type { ConnectionProfile, RemoteEntry, RemoteStat } from "../../../types/public";
+import type {
+  ConnectionProfile,
+  MkdirOptions,
+  RemoteEntry,
+  RemoteStat,
+  RemoveOptions,
+  RenameOptions,
+  RmdirOptions,
+} from "../../../types/public";
 import {
   assertSafeFtpArgument,
   basenameRemotePath,
@@ -467,6 +475,83 @@ class FtpFileSystem implements RemoteFileSystem {
       name: basenameRemotePath(remotePath),
       path: remotePath,
     };
+  }
+
+  async remove(path: string, options: RemoveOptions = {}): Promise<void> {
+    const remotePath = normalizeFtpPath(path);
+    const response = await this.control.sendCommand(`DELE ${remotePath}`);
+    if (response.completion) return;
+    if (response.code === 550 && options.ignoreMissing) return;
+    assertPathCommandSucceeded(response, "DELE", remotePath, this.control.providerId);
+  }
+
+  async rename(from: string, to: string, _options: RenameOptions = {}): Promise<void> {
+    const fromPath = normalizeFtpPath(from);
+    const toPath = normalizeFtpPath(to);
+    const rnfr = await this.control.sendCommand(`RNFR ${fromPath}`);
+    if (!rnfr.intermediate && !rnfr.completion) {
+      assertPathCommandSucceeded(rnfr, "RNFR", fromPath, this.control.providerId);
+    }
+    await expectCompletion(this.control, `RNTO ${toPath}`, toPath);
+  }
+
+  async mkdir(path: string, options: MkdirOptions = {}): Promise<void> {
+    const remotePath = normalizeFtpPath(path);
+    if (!options.recursive) {
+      await expectCompletion(this.control, `MKD ${remotePath}`, remotePath);
+      return;
+    }
+    const segments = remotePath.split("/").filter((s) => s.length > 0);
+    let current = "";
+    for (const segment of segments) {
+      current = `${current}/${segment}`;
+      const response = await this.control.sendCommand(`MKD ${current}`);
+      if (response.completion) continue;
+      // 550 here is typically "directory already exists" — tolerated for recursive create.
+      if (response.code === 550) continue;
+      assertPathCommandSucceeded(response, "MKD", current, this.control.providerId);
+    }
+  }
+
+  async rmdir(path: string, options: RmdirOptions = {}): Promise<void> {
+    const remotePath = normalizeFtpPath(path);
+    if (options.recursive) {
+      await this.removeDirectoryRecursive(remotePath);
+      return;
+    }
+    const response = await this.control.sendCommand(`RMD ${remotePath}`);
+    if (response.completion) return;
+    if (response.code === 550 && options.ignoreMissing) return;
+    assertPathCommandSucceeded(response, "RMD", remotePath, this.control.providerId);
+  }
+
+  private async removeDirectoryRecursive(remotePath: string): Promise<void> {
+    let entries: RemoteEntry[];
+    try {
+      entries = await readDirectoryEntries(this.control, remotePath);
+    } catch (error) {
+      // Treat a missing directory as already removed.
+      if (error instanceof PathNotFoundError) return;
+      throw error;
+    }
+    for (const entry of entries) {
+      if (entry.name === "." || entry.name === "..") continue;
+      const childPath = entry.path.startsWith("/")
+        ? entry.path
+        : normalizeFtpPath(`${remotePath.replace(/\/+$/, "")}/${entry.name}`);
+      if (entry.type === "directory") {
+        await this.removeDirectoryRecursive(childPath);
+      } else {
+        const del = await this.control.sendCommand(`DELE ${childPath}`);
+        if (!del.completion && del.code !== 550) {
+          assertPathCommandSucceeded(del, "DELE", childPath, this.control.providerId);
+        }
+      }
+    }
+    const response = await this.control.sendCommand(`RMD ${remotePath}`);
+    if (response.completion) return;
+    if (response.code === 550) return;
+    assertPathCommandSucceeded(response, "RMD", remotePath, this.control.providerId);
   }
 }
 

@@ -309,6 +309,48 @@ export interface StatOptions {
 }
 
 /**
+ * Options for removing a remote file entry.
+ */
+export interface RemoveOptions {
+  /** Abort signal used to cancel the operation. */
+  signal?: AbortSignal;
+  /** When true, do not throw if the path does not exist. */
+  ignoreMissing?: boolean;
+}
+
+/**
+ * Options for renaming or moving a remote entry.
+ */
+export interface RenameOptions {
+  /** Abort signal used to cancel the operation. */
+  signal?: AbortSignal;
+  /** Allow overwriting an existing destination when the provider supports it. */
+  overwrite?: boolean;
+}
+
+/**
+ * Options for creating a remote directory.
+ */
+export interface MkdirOptions {
+  /** Abort signal used to cancel the operation. */
+  signal?: AbortSignal;
+  /** Create missing parent directories along the way. */
+  recursive?: boolean;
+}
+
+/**
+ * Options for removing a remote directory.
+ */
+export interface RmdirOptions {
+  /** Abort signal used to cancel the operation. */
+  signal?: AbortSignal;
+  /** Recursively remove non-empty directory contents. */
+  recursive?: boolean;
+  /** When true, do not throw if the path does not exist. */
+  ignoreMissing?: boolean;
+}
+
+/**
  * Progress snapshot emitted while a transfer is running.
  */
 export interface TransferProgressEvent {

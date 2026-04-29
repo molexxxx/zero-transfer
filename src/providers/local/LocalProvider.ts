@@ -4,7 +4,7 @@
  * @module providers/local/LocalProvider
  */
 import { createReadStream } from "node:fs";
-import { lstat, mkdir, open, readdir, readlink, writeFile } from "node:fs/promises";
+import { lstat, mkdir, open, readdir, readlink, rename, rm, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Buffer } from "node:buffer";
 import type { Stats } from "node:fs";
@@ -18,9 +18,13 @@ import {
 import type { TransferVerificationResult } from "../../transfers/TransferJob";
 import type {
   ConnectionProfile,
+  MkdirOptions,
   RemoteEntry,
   RemoteEntryType,
   RemoteStat,
+  RemoveOptions,
+  RenameOptions,
+  RmdirOptions,
 } from "../../types/public";
 import { basenameRemotePath, joinRemotePath, normalizeRemotePath } from "../../utils/path";
 import type { TransferProvider } from "../Provider";
@@ -203,6 +207,64 @@ class LocalFileSystem implements RemoteFileSystem {
   async stat(path: string): Promise<RemoteStat> {
     return readLocalEntry(this.rootPath, normalizeLocalProviderPath(path));
   }
+
+  async remove(remote: string, options: RemoveOptions = {}): Promise<void> {
+    const remotePath = normalizeLocalProviderPath(remote);
+    const localPath = resolveLocalPath(this.rootPath, remotePath);
+    try {
+      await unlink(localPath);
+    } catch (error) {
+      if (options.ignoreMissing && isNodeErrno(error, "ENOENT")) return;
+      if (isNodeErrno(error, "ENOENT")) {
+        throw createPathNotFoundError(remotePath, `Local path not found: ${remotePath}`);
+      }
+      throw error;
+    }
+  }
+
+  async rename(from: string, to: string, _options: RenameOptions = {}): Promise<void> {
+    const fromRemote = normalizeLocalProviderPath(from);
+    const toRemote = normalizeLocalProviderPath(to);
+    const fromLocal = resolveLocalPath(this.rootPath, fromRemote);
+    const toLocal = resolveLocalPath(this.rootPath, toRemote);
+    try {
+      await rename(fromLocal, toLocal);
+    } catch (error) {
+      if (isNodeErrno(error, "ENOENT")) {
+        throw createPathNotFoundError(fromRemote, `Local path not found: ${fromRemote}`);
+      }
+      throw error;
+    }
+  }
+
+  async mkdir(remote: string, options: MkdirOptions = {}): Promise<void> {
+    const remotePath = normalizeLocalProviderPath(remote);
+    const localPath = resolveLocalPath(this.rootPath, remotePath);
+    await mkdir(localPath, { recursive: options.recursive === true });
+  }
+
+  async rmdir(remote: string, options: RmdirOptions = {}): Promise<void> {
+    const remotePath = normalizeLocalProviderPath(remote);
+    const localPath = resolveLocalPath(this.rootPath, remotePath);
+    try {
+      await rm(localPath, { recursive: options.recursive === true, force: false });
+    } catch (error) {
+      if (isNodeErrno(error, "ENOENT")) {
+        if (options.ignoreMissing) return;
+        throw createPathNotFoundError(remotePath, `Local path not found: ${remotePath}`);
+      }
+      throw error;
+    }
+  }
+}
+
+function isNodeErrno(error: unknown, code: string): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === code
+  );
 }
 
 interface ResolvedReadRange {
