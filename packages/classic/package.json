@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/classic",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "FTP, FTPS, and SFTP providers in one install.",
   "keywords": [
     "zero-transfer",

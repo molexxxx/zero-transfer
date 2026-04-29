@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/sftp",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "SFTP with SSH key auth, known_hosts, and jump-host support.",
   "keywords": [
     "zero-transfer",

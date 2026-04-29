@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/azure-blob",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Azure Blob Storage with SAS or AAD bearer auth.",
   "keywords": [
     "zero-transfer",

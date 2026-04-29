@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.4**](../README.md)
+[**ZeroTransfer SDK v0.1.5**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createSftpProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/classic/sftp/SftpProvider.ts:141](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/providers/classic/sftp/SftpProvider.ts#L141)
+Defined in: [src/providers/classic/sftp/SftpProvider.ts:141](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/providers/classic/sftp/SftpProvider.ts#L141)
 
 Creates an SFTP provider factory backed by the mature `ssh2` implementation.
 

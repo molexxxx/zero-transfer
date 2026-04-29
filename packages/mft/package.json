@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/mft",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Routes, schedules, audit logs, webhooks, approval gates.",
   "keywords": [
     "zero-transfer",

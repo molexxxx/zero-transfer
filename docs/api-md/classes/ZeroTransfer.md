@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.4**](../README.md)
+[**ZeroTransfer SDK v0.1.5**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: ZeroTransfer
 
-Defined in: [src/client/ZeroTransfer.ts:62](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L62)
+Defined in: [src/client/ZeroTransfer.ts:62](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L62)
 
 SDK entry point for FTP, FTPS, and SFTP workflows.
 
@@ -29,7 +29,7 @@ deliberately protocol-neutral; concrete behavior lives behind
 new ZeroTransfer(options?): ZeroTransfer;
 ```
 
-Defined in: [src/client/ZeroTransfer.ts:78](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L78)
+Defined in: [src/client/ZeroTransfer.ts:78](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L78)
 
 Creates a client facade without opening a network connection.
 
@@ -156,7 +156,7 @@ EventEmitter.addListener
 static connect(profile, options?): Promise<ZeroTransfer>;
 ```
 
-Defined in: [src/client/ZeroTransfer.ts:103](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L103)
+Defined in: [src/client/ZeroTransfer.ts:103](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L103)
 
 Creates a client and connects it in one step.
 
@@ -185,7 +185,7 @@ A connected ZeroTransfer instance.
 connect(profile): Promise<void>;
 ```
 
-Defined in: [src/client/ZeroTransfer.ts:131](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L131)
+Defined in: [src/client/ZeroTransfer.ts:131](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L131)
 
 Opens a remote connection through the configured protocol adapter.
 
@@ -213,7 +213,7 @@ A promise that resolves after the adapter reports a successful connection.
 static create(options?): ZeroTransfer;
 ```
 
-Defined in: [src/client/ZeroTransfer.ts:91](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L91)
+Defined in: [src/client/ZeroTransfer.ts:91](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L91)
 
 Creates a new client facade using the provided options.
 
@@ -237,7 +237,7 @@ A disconnected ZeroTransfer instance.
 disconnect(): Promise<void>;
 ```
 
-Defined in: [src/client/ZeroTransfer.ts:158](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L158)
+Defined in: [src/client/ZeroTransfer.ts:158](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L158)
 
 Closes the active remote connection if one exists.
 
@@ -372,7 +372,7 @@ EventEmitter.eventNames
 getCapabilities(): ZeroTransferCapabilities;
 ```
 
-Defined in: [src/client/ZeroTransfer.ts:181](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L181)
+Defined in: [src/client/ZeroTransfer.ts:181](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L181)
 
 Describes protocol and adapter readiness for feature discovery.
 
@@ -418,7 +418,7 @@ EventEmitter.getMaxListeners
 isConnected(): boolean;
 ```
 
-Defined in: [src/client/ZeroTransfer.ts:172](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L172)
+Defined in: [src/client/ZeroTransfer.ts:172](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L172)
 
 Checks whether the facade currently considers the adapter connected.
 
@@ -436,7 +436,7 @@ Checks whether the facade currently considers the adapter connected.
 list(path, options?): Promise<RemoteEntry[]>;
 ```
 
-Defined in: [src/client/ZeroTransfer.ts:196](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L196)
+Defined in: [src/client/ZeroTransfer.ts:196](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L196)
 
 Lists remote entries for a path using the configured adapter.
 
@@ -1087,7 +1087,7 @@ EventEmitter.setMaxListeners
 stat(path, options?): Promise<RemoteStat>;
 ```
 
-Defined in: [src/client/ZeroTransfer.ts:208](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L208)
+Defined in: [src/client/ZeroTransfer.ts:208](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L208)
 
 Reads metadata for a remote path using the configured adapter.
 
@@ -1112,5 +1112,5 @@ Normalized metadata for an existing remote entry.
 
 | Property | Modifier | Type | Default value | Description | Defined in |
 | ------ | ------ | ------ | ------ | ------ | ------ |
-| <a id="createtransferclient"></a> `createTransferClient` | `readonly` | (`options`) => [`TransferClient`](TransferClient.md) | `createTransferClient` | Creates a provider-neutral transfer client with the built-in provider registry. | [src/client/ZeroTransfer.ts:64](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L64) |
-| <a id="protocol"></a> `protocol` | `readonly` | `"ftp"` \| `"ftps"` \| `"sftp"` | `undefined` | Protocol selected for this client instance. | [src/client/ZeroTransfer.ts:67](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/client/ZeroTransfer.ts#L67) |
+| <a id="createtransferclient"></a> `createTransferClient` | `readonly` | (`options`) => [`TransferClient`](TransferClient.md) | `createTransferClient` | Creates a provider-neutral transfer client with the built-in provider registry. | [src/client/ZeroTransfer.ts:64](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L64) |
+| <a id="protocol"></a> `protocol` | `readonly` | `"ftp"` \| `"ftps"` \| `"sftp"` | `undefined` | Protocol selected for this client instance. | [src/client/ZeroTransfer.ts:67](https://github.com/tonywied17/zero-transfer/blob/4e582b06411b7a18b031b72a380f03df90446b82/src/client/ZeroTransfer.ts#L67) |
