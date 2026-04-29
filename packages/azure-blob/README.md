@@ -2,13 +2,15 @@
 
 > Azure Blob Storage with SAS or AAD bearer auth.
 
-Azure Blob Storage provider — SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, and single-shot block-blob uploads. Wire OAuth refresh via `createOAuthTokenSecretSource()`.
-
 ## Install
 
 ```bash
 npm install @zero-transfer/azure-blob
 ```
+
+## Overview
+
+Azure Blob Storage provider — SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, and single-shot block-blob uploads. Wire OAuth refresh via `createOAuthTokenSecretSource()`.
 
 ## Usage
 
@@ -18,14 +20,27 @@ import { createAzureBlobProviderFactory } from "@zero-transfer/azure-blob";
 
 ## Public surface
 
-This package narrows the SDK to **2** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/azure-blob.md#public-surface) for the full list with API-reference links.
+This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **2** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
+
+| Symbol | Kind | Notes |
+| --- | --- | --- |
+| [`createAzureBlobProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createAzureBlobProviderFactory.md) | Function | See API reference. |
+| [`AzureBlobProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/AzureBlobProviderOptions.md) | Interface | See API reference. |
+
+## Examples
+
+| Example | What it shows |
+| --- | --- |
+| [`examples/multi-cloud-orchestration.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase. |
 
 ## Documentation
 
 - [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/azure-blob.md)
+- [Top-level README](https://github.com/tonywied17/zero-transfer/blob/main/README.md)
 - [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)
+- [Capability matrix](https://github.com/tonywied17/zero-transfer/blob/main/README.md#capability-matrix)
 - [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)
 
 ## License
 
-MIT © Tony Wiedman
+MIT © [Tony Wiedman](https://github.com/tonywied17)

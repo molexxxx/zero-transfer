@@ -55,9 +55,51 @@ function buildSymbolIndex() {
 
 const symbolIndex = buildSymbolIndex();
 
+const GITHUB_BLOB_URL = "https://github.com/tonywied17/zero-transfer/blob/main";
+const GITHUB_TREE_URL = "https://github.com/tonywied17/zero-transfer/tree/main";
+
 /** @param {string} from @param {string} to */
 function relPosix(from, to) {
   return relative(from, to).split(sep).join("/");
+}
+
+/**
+ * Build the public-surface table with absolute GitHub links so it renders
+ * correctly on npmjs.com (which doesn't resolve relative repo paths).
+ * @param {string[]} exportNames
+ */
+function exportsTableAbsolute(exportNames) {
+  if (exportNames.length === 0) return "_None._";
+  const rows = exportNames.map((name) => {
+    const hit = symbolIndex.get(name);
+    if (!hit) return `| \`${name}\` | _unresolved_ | — |`;
+    const href = `${GITHUB_BLOB_URL}/docs/api-md/${hit.file}`;
+    return `| [\`${name}\`](${href}) | ${hit.kind} | See API reference. |`;
+  });
+  return `| Symbol | Kind | Notes |\n| --- | --- | --- |\n${rows.join("\n")}`;
+}
+
+/**
+ * Build the examples table with absolute GitHub links.
+ * @param {string[]} examples
+ */
+function describeExamplesAbsolute(examples) {
+  if (examples.length === 0) {
+    return `_No dedicated example yet — see the [examples directory](${GITHUB_TREE_URL}/examples) for cross-scope showcases._`;
+  }
+  const rows = examples.map((file) => {
+    const path = join(examplesDir, file);
+    let summary = "";
+    try {
+      const text = readFileSync(path, "utf8");
+      const match = /\*\s+@file\s+([^\n]+)/.exec(text);
+      if (match?.[1]) summary = match[1].trim();
+    } catch {
+      summary = "_(missing)_";
+    }
+    return `| [\`examples/${file}\`](${GITHUB_BLOB_URL}/examples/${file}) | ${summary} |`;
+  });
+  return `| Example | What it shows |\n| --- | --- |\n${rows.join("\n")}`;
 }
 
 /** @param {string[]} examples */
@@ -151,19 +193,24 @@ for (const scope of scopes) {
 
   writeFileSync(scopePageFile, frontmatterless(scope.title, body));
 
-  // Per-package README is a slimmed mirror of the scope page.
+  // Per-package README — full mirror of the scope page using absolute GitHub
+  // links so it renders correctly on npmjs.com.
+  const packageExportsBlock = exportsTableAbsolute(scope.exports);
+  const packageExamplesBlock = describeExamplesAbsolute(scope.examples);
   const packageReadme = [
     `# @zero-transfer/${scope.name}`,
     "",
     `> ${scope.summary}`,
-    "",
-    `${scope.description}`,
     "",
     "## Install",
     "",
     "```bash",
     `npm install @zero-transfer/${scope.name}`,
     "```",
+    "",
+    "## Overview",
+    "",
+    scope.description,
     "",
     "## Usage",
     "",
@@ -173,17 +220,25 @@ for (const scope of scopes) {
     "",
     "## Public surface",
     "",
-    `This package narrows the SDK to **${scope.exports.length}** exports. See the [scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/${scope.name}.md#public-surface) for the full list with API-reference links.`,
+    `This package narrows [\`@zero-transfer/sdk\`](https://www.npmjs.com/package/@zero-transfer/sdk) to **${scope.exports.length}** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:`,
+    "",
+    packageExportsBlock,
+    "",
+    "## Examples",
+    "",
+    packageExamplesBlock,
     "",
     "## Documentation",
     "",
-    `- [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/${scope.name}.md)`,
-    `- [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)`,
-    `- [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)`,
+    `- [Scope page](${GITHUB_BLOB_URL}/docs/scopes/${scope.name}.md)`,
+    `- [Top-level README](${GITHUB_BLOB_URL}/README.md)`,
+    `- [Full API reference](${GITHUB_BLOB_URL}/docs/api-md/README.md)`,
+    `- [Capability matrix](${GITHUB_BLOB_URL}/README.md#capability-matrix)`,
+    `- [Examples](${GITHUB_TREE_URL}/examples)`,
     "",
     "## License",
     "",
-    "MIT © Tony Wiedman",
+    "MIT © [Tony Wiedman](https://github.com/tonywied17)",
     "",
   ].join("\n");
   const pkgDir = join(repoRoot, "packages", scope.name);

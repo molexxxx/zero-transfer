@@ -25,16 +25,15 @@ ZeroTransfer is a unified, TypeScript-first file transfer SDK for Node.js. One t
 ```ts
 import {
   createS3ProviderFactory,
-  createSftpProviderFactory,
   createTransferClient,
   uploadFile,
 } from "@zero-transfer/sdk";
 
 const client = createTransferClient({
-  providers: [createSftpProviderFactory(), createS3ProviderFactory({ region: "us-east-1" })],
+  providers: [createS3ProviderFactory({ region: "us-east-1" })],
 });
 
-// Same call, any pair of providers.
+// One call, any provider you registered above.
 await uploadFile({
   client,
   localPath: "./dist/app.tar.gz",
@@ -140,14 +139,16 @@ await uploadFile({
 ### 3. Plan a sync without touching bytes
 
 ```ts
-import {
-  createMemoryProviderFactory,
-  diffRemoteTrees,
-  summarizeTransferPlan,
-} from "@zero-transfer/sdk";
+import { createSyncPlan, diffRemoteTrees, summarizeTransferPlan } from "@zero-transfer/sdk";
 
 const diff = await diffRemoteTrees(srcSession.fs, "/dist", dstSession.fs, "/releases/current");
-const plan = createSyncPlan({ diff, deletePolicy: "mirror" });
+const plan = createSyncPlan({
+  id: "release-sync",
+  diff,
+  source: { provider: "sftp", rootPath: "/dist" },
+  destination: { provider: "s3", rootPath: "/releases/current" },
+  deletePolicy: "mirror",
+});
 console.table(summarizeTransferPlan(plan));
 ```
 
