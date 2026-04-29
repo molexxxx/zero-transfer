@@ -165,7 +165,10 @@ describe("packages/* — self-contained scoped packages", () => {
           if (scope.name === "classic") continue;
           for (const name of otherProviders) {
             if (!ownProviders.has(name)) {
-              expect(mod[name], `should not expose ${name} from scope ${otherScope}`).toBeUndefined();
+              expect(
+                mod[name],
+                `should not expose ${name} from scope ${otherScope}`,
+              ).toBeUndefined();
             }
           }
         }

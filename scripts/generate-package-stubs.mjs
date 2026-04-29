@@ -64,9 +64,7 @@ for (const scope of scopes) {
   writeFileSync(join(dir, "package.json"), `${JSON.stringify(pkg, null, 2)}\n`);
 }
 
-console.log(
-  `Generated ${scopes.length} scoped package.json files at version ${sdkVersion}.`,
-);
+console.log(`Generated ${scopes.length} scoped package.json files at version ${sdkVersion}.`);
 
 /**
  * Derives a small list of supplementary npm keywords from the scope name.
