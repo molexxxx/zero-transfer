@@ -2,8 +2,6 @@
   <img src="https://tonywied17.github.io/zero-transfer/assets/zero-transfer-logo.svg" alt="ZeroTransfer file transfer SDK for Node.js" width="720">
 </p>
 
-<h1 align="center">ZeroTransfer</h1>
-
 <p align="center">
   <strong>One TypeScript SDK for moving files across every storage system you actually use.</strong><br/>
   FTP · FTPS · SFTP · HTTP(S) · WebDAV · S3-compatible · Azure Blob · GCS · Google Drive · Dropbox · OneDrive · Local
