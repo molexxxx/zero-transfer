@@ -1,0 +1,292 @@
+/**
+ * @zero-transfer/core entry point.
+ *
+ * Provider-neutral foundation: client facade, transfer engine, queue, sync
+ * primitives, profiles, errors, logging, and built-in local/memory providers.
+ * No protocol-specific implementations are included here.
+ *
+ * @module @zero-transfer/core
+ */
+export {
+  ZeroTransfer,
+  type ZeroTransferCapabilities,
+  type ZeroTransferOptions,
+} from "../client/ZeroTransfer";
+export {
+  copyBetween,
+  downloadFile,
+  uploadFile,
+  type CopyBetweenOptions,
+  type DownloadFileOptions,
+  type FriendlyTransferOptions,
+  type RemoteFileEndpoint,
+  type UploadFileOptions,
+} from "../client/operations";
+export {
+  runConnectionDiagnostics,
+  summarizeClientDiagnostics,
+  type ClientDiagnostics,
+  type ConnectionDiagnosticTimings,
+  type ConnectionDiagnosticsResult,
+  type RunConnectionDiagnosticsOptions,
+} from "../diagnostics";
+export {
+  CLASSIC_PROVIDER_IDS,
+  isClassicProviderId,
+  resolveProviderId,
+  type BuiltInProviderId,
+  type ClassicProviderId,
+  type ProviderId,
+  type ProviderSelection,
+} from "../core/ProviderId";
+export type {
+  AuthenticationCapability,
+  CapabilitySet,
+  ChecksumCapability,
+  MetadataCapability,
+} from "../core/CapabilitySet";
+export { ProviderRegistry } from "../core/ProviderRegistry";
+export { TransferClient, type TransferClientOptions } from "../core/TransferClient";
+export type { TransferSession } from "../core/TransferSession";
+export { createTransferClient } from "../core/createTransferClient";
+export type { TransferProvider } from "../providers/Provider";
+export type {
+  AuthenticationCapability as ProviderAuthenticationCapability,
+  ChecksumCapability as ProviderChecksumCapability,
+  MetadataCapability as ProviderMetadataCapability,
+  ProviderCapabilities,
+} from "../providers/ProviderCapabilities";
+export type { ProviderFactory } from "../providers/ProviderFactory";
+export type {
+  ProviderTransferOperations,
+  ProviderTransferReadRequest,
+  ProviderTransferReadResult,
+  ProviderTransferRequest,
+  ProviderTransferWriteRequest,
+  ProviderTransferWriteResult,
+  TransferByteRange,
+  TransferDataChunk,
+  TransferDataSource,
+} from "../providers/ProviderTransferOperations";
+export type { RemoteFileSystem } from "../providers/RemoteFileSystem";
+export {
+  formatCapabilityMatrixMarkdown,
+  getBuiltinCapabilityMatrix,
+  type BuiltinCapabilityMatrixEntry,
+  type BuiltinProviderMatrixId,
+} from "../providers/capabilityMatrix";
+export { createLocalProviderFactory, type LocalProviderOptions } from "../providers/local";
+export {
+  createMemoryProviderFactory,
+  type MemoryProviderEntry,
+  type MemoryProviderOptions,
+} from "../providers/memory";
+export {
+  createOAuthTokenSecretSource,
+  redactConnectionProfile,
+  redactSecretSource,
+  resolveConnectionProfileSecrets,
+  resolveSecret,
+  validateConnectionProfile,
+  type Base64EnvSecretSource,
+  type EnvSecretSource,
+  type FileSecretSource,
+  type OAuthAccessToken,
+  type OAuthRefreshCallback,
+  type OAuthTokenSecretSourceOptions,
+  type ResolveSecretOptions,
+  type ResolvedConnectionProfile,
+  type ResolvedSshProfile,
+  type ResolvedTlsProfile,
+  type SecretProvider,
+  type SecretSource,
+  type SecretValue,
+  type ValueSecretSource,
+} from "../profiles";
+export {
+  importFileZillaSites,
+  importOpenSshConfig,
+  importWinScpSessions,
+  matchKnownHosts,
+  matchKnownHostsEntry,
+  parseKnownHosts,
+  parseOpenSshConfig,
+  resolveOpenSshHost,
+  type FileZillaSite,
+  type ImportFileZillaSitesResult,
+  type ImportOpenSshConfigOptions,
+  type ImportOpenSshConfigResult,
+  type ImportWinScpSessionsResult,
+  type KnownHostsEntry,
+  type KnownHostsMarker,
+  type OpenSshConfigEntry,
+  type ResolvedOpenSshHost,
+  type WinScpSession,
+} from "../profiles";
+export { errorFromFtpReply, type FtpReplyErrorInput } from "../errors/errorFactory";
+export {
+  AbortError,
+  AuthenticationError,
+  AuthorizationError,
+  ConfigurationError,
+  ConnectionError,
+  ParseError,
+  PathAlreadyExistsError,
+  PathNotFoundError,
+  PermissionDeniedError,
+  ProtocolError,
+  TimeoutError,
+  TransferError,
+  UnsupportedFeatureError,
+  VerificationError,
+  ZeroTransferError,
+  type SpecializedErrorDetails,
+  type ZeroTransferErrorDetails,
+} from "../errors/ZeroTransferError";
+export {
+  emitLog,
+  noopLogger,
+  type LogLevel,
+  type LogRecord,
+  type LoggerMethod,
+  type LogRecordInput,
+  type ZeroTransferLogger,
+} from "../logging/Logger";
+export {
+  REDACTED,
+  isSensitiveKey,
+  redactCommand,
+  redactObject,
+  redactValue,
+} from "../logging/redaction";
+export type { RemoteFileAdapter } from "../protocols/RemoteFileAdapter";
+export {
+  TransferEngine,
+  TransferQueue,
+  createBandwidthThrottle,
+  createProviderTransferExecutor,
+  createTransferJobsFromPlan,
+  createTransferPlan,
+  summarizeTransferPlan,
+  throttleByteIterable,
+  type BandwidthSleep,
+  type BandwidthThrottle,
+  type BandwidthThrottleOptions,
+  type TransferAttempt,
+  type TransferAttemptError,
+  type TransferBandwidthLimit,
+  type TransferEndpoint,
+  type TransferEngineExecuteOptions,
+  type TransferEngineOptions,
+  type TransferExecutionContext,
+  type TransferExecutionResult,
+  type TransferExecutor,
+  type TransferJob,
+  type TransferOperation,
+  type TransferPlan,
+  type TransferPlanAction,
+  type TransferPlanInput,
+  type TransferPlanStep,
+  type TransferPlanSummary,
+  type ProviderTransferEndpointRole,
+  type ProviderTransferExecutorOptions,
+  type ProviderTransferSessionResolver,
+  type ProviderTransferSessionResolverInput,
+  type TransferQueueExecutorResolver,
+  type TransferQueueItem,
+  type TransferQueueItemStatus,
+  type TransferQueueOptions,
+  type TransferQueueRunOptions,
+  type TransferQueueSummary,
+  type TransferReceipt,
+  type TransferRetryDecisionInput,
+  type TransferRetryPolicy,
+  type TransferTimeoutPolicy,
+  type TransferVerificationResult,
+} from "../transfers";
+export {
+  REMOTE_MANIFEST_FORMAT_VERSION,
+  buildRemoteBreadcrumbs,
+  compareRemoteManifests,
+  createAtomicDeployPlan,
+  createRemoteBrowser,
+  createRemoteManifest,
+  createSyncPlan,
+  diffRemoteTrees,
+  filterRemoteEntries,
+  parentRemotePath,
+  parseRemoteManifest,
+  serializeRemoteManifest,
+  sortRemoteEntries,
+  walkRemoteTree,
+  type AtomicDeployActivateOperation,
+  type AtomicDeployActivateStep,
+  type AtomicDeployPlan,
+  type AtomicDeployPruneStep,
+  type AtomicDeployStrategy,
+  type CompareRemoteManifestsOptions,
+  type CreateAtomicDeployPlanOptions,
+  type CreateRemoteBrowserOptions,
+  type CreateRemoteManifestOptions,
+  type CreateSyncPlanOptions,
+  type DiffRemoteTreesOptions,
+  type RemoteBreadcrumb,
+  type RemoteBrowser,
+  type RemoteBrowserFilter,
+  type RemoteBrowserSnapshot,
+  type RemoteEntrySortKey,
+  type RemoteEntrySortOrder,
+  type RemoteManifest,
+  type RemoteManifestEntry,
+  type RemoteTreeDiff,
+  type RemoteTreeDiffEntry,
+  type RemoteTreeDiffReason,
+  type RemoteTreeDiffStatus,
+  type RemoteTreeDiffSummary,
+  type RemoteTreeEntry,
+  type RemoteTreeFilter,
+  type SyncConflictPolicy,
+  type SyncDeletePolicy,
+  type SyncDirection,
+  type SyncEndpointInput,
+  type WalkRemoteTreeOptions,
+} from "../sync";
+export {
+  createProgressEvent,
+  createTransferResult,
+  type ProgressEventInput,
+  type TransferResultInput,
+} from "../services/TransferService";
+export type {
+  ConnectionProfile,
+  ListOptions,
+  MkdirOptions,
+  RemoteEntry,
+  RemoteEntryType,
+  RemotePermissions,
+  RemoteProtocol,
+  RemoteStat,
+  RemoveOptions,
+  RenameOptions,
+  RmdirOptions,
+  SshAgentSource,
+  SshAlgorithms,
+  SshKeyboardInteractiveChallenge,
+  SshKeyboardInteractiveHandler,
+  SshKeyboardInteractivePrompt,
+  SshKnownHostsSource,
+  SshSocketFactory,
+  SshSocketFactoryContext,
+  SshProfile,
+  StatOptions,
+  TlsProfile,
+  TlsSecretSource,
+  TransferProgressEvent,
+  TransferResult,
+} from "../types/public";
+export {
+  assertSafeFtpArgument,
+  basenameRemotePath,
+  joinRemotePath,
+  normalizeRemotePath,
+} from "../utils/path";

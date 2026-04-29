@@ -19,6 +19,9 @@
  *   5. `npm run docs:all` to regenerate HTML, Markdown, and per-scope docs.
  *   6. Stage everything, commit `chore(release): v<version>`, push to origin/main.
  *
+ * Each scoped package is a self-contained bundle (no peerDep on @zero-transfer/sdk).
+ * Only sftp and classic declare an npm dependency (ssh2).
+ *
  * Pushing the bumped package.json triggers the `release-on-bump.yml` workflow,
  * which tags `v<version>` and creates a GitHub Release. That release event then
  * triggers the `release.yml` workflow, which publishes @zero-transfer/sdk and
@@ -72,7 +75,7 @@ run(`npm version ${versionArgs} --no-git-tag-version`);
 const newVersion = JSON.parse(readFileSync("package.json", "utf8")).version;
 console.log(`\n→ new version: ${newVersion}`);
 
-// 4. Regenerate scoped packages at the new version.
+// 4. Regenerate scoped package.json files at the new version (tsup already built dist/).
 run("npm run packages:generate");
 
 // 5. Refresh docs (HTML, Markdown, scopes).
@@ -84,7 +87,7 @@ run(`git commit -m "chore(release): v${newVersion}"`);
 if (!noPush) {
   run("git push origin main");
   console.log(
-    `\n✓ Pushed v${newVersion}. GitHub Actions will tag, release, and publish all 13 @zero-transfer packages.`,
+    `\n✓ Pushed v${newVersion}. GitHub Actions will tag, release, and publish all 13 @zero-transfer packages (12 self-contained scoped + 1 batteries-included SDK).`,
   );
 } else {
   console.log(`\n✓ Committed v${newVersion} (no push). Run 'git push' to trigger the release.`);

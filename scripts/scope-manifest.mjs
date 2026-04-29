@@ -13,12 +13,13 @@
 
 /**
  * @typedef {object} ScopeDefinition
- * @property {string} name        Package name suffix (e.g. "core", "ftp").
- * @property {string} title       Human-friendly title.
- * @property {string} summary     One-line summary for tables/cards.
- * @property {string} description Multi-line description for the package page.
- * @property {string[]} exports   Names of exports (functions, types, classes) that belong to the eventual surface.
- * @property {string[]} examples  Example files relevant to this scope.
+ * @property {string} name                  Package name suffix (e.g. "core", "ftp").
+ * @property {string} title                 Human-friendly title.
+ * @property {string} summary               One-line summary for tables/cards.
+ * @property {string} description           Multi-line description for the package page.
+ * @property {Record<string,string>} deps   Runtime npm dependencies for this scope (e.g. { "ssh2": "^1.17.0" }).
+ * @property {string[]} exports             Names of exports (functions, types, classes) that belong to the eventual surface.
+ * @property {string[]} examples            Example files relevant to this scope.
  */
 
 /** @type {ScopeDefinition[]} */
@@ -127,6 +128,7 @@ export const scopes = [
       "noopLogger",
       "emitLog",
     ],
+    deps: {},
     name: "core",
     summary: "Provider-neutral contracts, transfer engine, queue, profiles, and errors.",
     title: "Core — provider-neutral SDK",
@@ -145,6 +147,7 @@ export const scopes = [
       "SftpProviderOptions",
       "SftpJumpHostOptions",
     ],
+    deps: { "ssh2": "^1.17.0" },
     name: "classic",
     summary: "FTP, FTPS, and SFTP providers in one install.",
     title: "Classic — FTP / FTPS / SFTP",
@@ -169,6 +172,7 @@ export const scopes = [
       "parseUnixList",
       "parseUnixListLine",
     ],
+    deps: {},
     name: "ftp",
     summary: "Classic FTP provider with EPSV/PASV streaming and REST resume.",
     title: "FTP",
@@ -178,6 +182,7 @@ export const scopes = [
       "FTPS over explicit `AUTH TLS` or implicit TLS, with PEM/PFX/P12 certificate sources, encrypted passive data channels, certificate fingerprint pinning, SNI/servername controls, and TLS min/max version configuration.",
     examples: ["ftps-client-certificate.ts"],
     exports: ["createFtpsProviderFactory", "FtpsProviderOptions", "FtpsMode", "FtpsDataProtection"],
+    deps: {},
     name: "ftps",
     summary: "Explicit and implicit FTPS with full TLS profile support.",
     title: "FTPS",
@@ -198,6 +203,7 @@ export const scopes = [
       "KnownHostsEntry",
       "KnownHostsMarker",
     ],
+    deps: { "ssh2": "^1.17.0" },
     name: "sftp",
     summary: "SFTP with SSH key auth, known_hosts, and jump-host support.",
     title: "SFTP",
@@ -207,6 +213,7 @@ export const scopes = [
       "Read-only HTTP(S) provider with HEAD-based metadata, ranged GET resume, Basic auth, Bearer-token auth via secret sources, and ETag exposed as both `uniqueId` and read-result `checksum`. Useful for signed-URL downloads and CDN ingest.",
     examples: ["signed-url-download.ts"],
     exports: ["createHttpProviderFactory", "HttpProviderOptions", "HttpFetch"],
+    deps: {},
     name: "http",
     summary: "HTTP(S) and signed-URL provider with ranged downloads.",
     title: "HTTP(S)",
@@ -216,6 +223,7 @@ export const scopes = [
       "WebDAV provider — PROPFIND-based `list`/`stat`, ranged GET, PUT uploads, Basic auth, and ETag preservation. Speaks remote filesystem semantics over HTTP.",
     examples: ["webdav-sync.ts"],
     exports: ["createWebDavProviderFactory", "WebDavProviderOptions"],
+    deps: {},
     name: "webdav",
     summary: "WebDAV provider with PROPFIND listings and ranged downloads.",
     title: "WebDAV",
@@ -234,6 +242,7 @@ export const scopes = [
       "S3MultipartCheckpoint",
       "S3MultipartPart",
     ],
+    deps: {},
     name: "s3",
     summary: "S3-compatible storage with SigV4, multipart upload, and resume.",
     title: "S3-compatible object storage",
@@ -243,6 +252,7 @@ export const scopes = [
       "Google Drive provider over OAuth bearer tokens — paginated folder listings from a configurable root folder id, ranged downloads via `alt=media`, single-shot multipart uploads, and `md5Checksum` exposed as both `uniqueId` and `checksum`.",
     examples: ["multi-cloud-orchestration.ts"],
     exports: ["createGoogleDriveProviderFactory", "GoogleDriveProviderOptions"],
+    deps: {},
     name: "google-drive",
     summary: "Google Drive provider with OAuth, folder paths, and md5 checksums.",
     title: "Google Drive",
@@ -252,6 +262,7 @@ export const scopes = [
       "Dropbox provider — RPC + content-host APIs, list-folder cursor pagination, ranged downloads, single-shot uploads in `overwrite` mode, and `content_hash` exposed as both `uniqueId` and `checksum`.",
     examples: [],
     exports: ["createDropboxProviderFactory", "DropboxProviderOptions"],
+    deps: {},
     name: "dropbox",
     summary: "Dropbox provider with content-hash verification.",
     title: "Dropbox",
@@ -261,6 +272,7 @@ export const scopes = [
       "Azure Blob Storage provider — SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, and single-shot block-blob uploads. Wire OAuth refresh via `createOAuthTokenSecretSource()`.",
     examples: ["multi-cloud-orchestration.ts"],
     exports: ["createAzureBlobProviderFactory", "AzureBlobProviderOptions"],
+    deps: {},
     name: "azure-blob",
     summary: "Azure Blob Storage with SAS or AAD bearer auth.",
     title: "Azure Blob",
@@ -301,6 +313,7 @@ export const scopes = [
       "createApprovalGate",
       "ApprovalRejectedError",
     ],
+    deps: {},
     name: "mft",
     summary: "Routes, schedules, audit logs, webhooks, approval gates.",
     title: "MFT — Managed File Transfer workflows",

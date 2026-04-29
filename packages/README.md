@@ -3,11 +3,14 @@
 This directory holds the npm workspace folders for every package in the
 [`@zero-transfer/*`](https://www.npmjs.com/org/zero-transfer) family.
 
-Each package is **narrowly scoped**: its `dist/index.{mjs,cjs,d.ts}` re-exports
-**only** the named symbols listed for that scope in
-[`scripts/scope-manifest.mjs`](../scripts/scope-manifest.mjs). The full SDK is
-declared as a runtime dependency, so the surface is real (not a re-export of
-everything) and tree-shakable consumers only pay for what they import.
+Each package is **self-contained**: its `dist/index.{mjs,cjs,d.ts}` bundles the
+complete `@zero-transfer/core` surface plus only the protocol code and dependencies
+for that scope. Consumers install **one package** and get everything they need —
+no separate `@zero-transfer/sdk` install required.
+
+Only `@zero-transfer/sftp` and `@zero-transfer/classic` declare a runtime npm
+dependency (`ssh2`). All other scopes have zero npm dependencies (they use
+`node:net`, `node:tls`, `node:crypto`, and the native `fetch` API).
 
 | Package                       | Public surface                                                 |
 | ----------------------------- | -------------------------------------------------------------- |
@@ -31,17 +34,18 @@ exports with links into the API reference.
 ## Regenerate
 
 ```bash
-npm run packages:generate   # rewrites packages/*/dist + package.json
+npm run build               # compile all scoped bundles via tsup
+npm run packages:generate   # rewrites packages/*/package.json at current version
 npm run docs:scopes         # refreshes per-scope MD pages and READMEs
 ```
 
-This rewrites every stub's `package.json`, `dist/`, and `README.md` from
-`scripts/generate-package-stubs.mjs`. Hand-edit the generator, not the stubs.
+This rewrites every stub's `package.json` from `scripts/generate-package-stubs.mjs`
+and rebuilds `dist/` via `src/entries/<scope>.ts` entry points. Hand-edit the
+generator or tsup config, not the stubs.
 
 ## Publish
 
-The SDK must be published first so the stubs' `dependencies["@zero-transfer/sdk"]`
-resolves. Then:
+The SDK must be published first so the root workspace resolves. Then:
 
 ```bash
 npm run packages:publish -- --dry-run   # validate

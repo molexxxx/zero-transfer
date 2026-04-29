@@ -3,16 +3,14 @@
  *
  * Verifies that every `packages/*` workspace:
  *   1. Has `dist/index.cjs`, `dist/index.mjs`, and `dist/index.d.ts` artifacts.
- *   2. Has a CJS bundle that loads cleanly under Node and exposes exactly the
- *      value-typed names declared in `scripts/scope-manifest.mjs`.
- *   3. Does NOT leak unrelated SDK exports (i.e. the surface is narrowed).
- *   4. Has an ESM bundle that textually re-exports the same value names.
- *   5. Has a `dist/index.d.ts` that textually re-exports every type name from
- *      the manifest, AND every type name in the manifest is declared in the
- *      root SDK's `dist/index.d.ts`.
- *   6. Has a `package.json` with the metadata shape required for npm
- *      publication (name, version, peerDependencies pinned to the SDK version,
- *      files / exports / main / module / types, engines.node, license).
+ *   2. Has a CJS bundle that loads cleanly and exposes AT LEAST the scope-specific
+ *      value names declared in `scripts/scope-manifest.mjs` (the bundle also
+ *      includes the full core surface, so exact-match is not asserted).
+ *   3. Does NOT expose provider-specific symbols from sibling scopes
+ *      (e.g. `@zero-transfer/ftp` must not expose `createSftpProviderFactory`).
+ *   4. Has a `package.json` with the metadata shape required for npm publication,
+ *      including correct `dependencies` (ssh2 for sftp/classic, nothing for others)
+ *      and no `peerDependencies` on `@zero-transfer/sdk`.
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -28,6 +26,7 @@ interface ScopeDefinition {
   title: string;
   summary: string;
   description: string;
+  deps: Record<string, string>;
   exports: string[];
   examples: string[];
 }
@@ -53,6 +52,18 @@ const packageDirs = readdirSync(join(repoRoot, "packages"), { withFileTypes: tru
 function sdkDeclaresType(name: string): boolean {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`\\b${escaped}\\b`).test(sdkDts);
+}
+
+/** Provider-factory symbols that are strictly scoped to ONE non-core scope. */
+const providerOnlyValuesByScope = new Map<string, Set<string>>();
+for (const scope of scopeList) {
+  if (scope.name === "core") continue;
+  const providerValues = scope.exports.filter(
+    (name) => sdkValueNames.has(name) && name.startsWith("create") && name.includes("Provider"),
+  );
+  if (providerValues.length > 0) {
+    providerOnlyValuesByScope.set(scope.name, new Set(providerValues));
+  }
 }
 
 describe("scripts/scope-manifest.mjs — manifest integrity", () => {
@@ -100,9 +111,19 @@ describe("scripts/scope-manifest.mjs — manifest integrity", () => {
     }
     expect(missing).toEqual([]);
   });
+
+  it("only sftp and classic declare ssh2 as a dependency", () => {
+    for (const scope of scopeList) {
+      if (scope.name === "sftp" || scope.name === "classic") {
+        expect(scope.deps["ssh2"], `${scope.name}.deps.ssh2`).toBeTruthy();
+      } else {
+        expect(scope.deps["ssh2"], `${scope.name}.deps.ssh2`).toBeUndefined();
+      }
+    }
+  });
 });
 
-describe("packages/* — narrowed scoped packages", () => {
+describe("packages/* — self-contained scoped packages", () => {
   it("workspace has one folder per manifest scope", () => {
     const scopeNames = scopeList.map((s) => s.name).sort();
     expect(packageDirs).toEqual(scopeNames);
@@ -111,58 +132,42 @@ describe("packages/* — narrowed scoped packages", () => {
   for (const scope of scopeList) {
     const scopeDir = join(repoRoot, "packages", scope.name);
     const distDir = join(scopeDir, "dist");
-    const valueNames = scope.exports.filter((name) => sdkValueNames.has(name));
-    const typeNames = scope.exports.filter((name) => !sdkValueNames.has(name));
+    const scopeValueNames = scope.exports.filter((name) => sdkValueNames.has(name));
 
     describe(`@zero-transfer/${scope.name}`, () => {
-      it("has the three generated dist artifacts", () => {
+      it("has the three dist artifacts", () => {
         expect(existsSync(join(distDir, "index.cjs")), "dist/index.cjs").toBe(true);
         expect(existsSync(join(distDir, "index.mjs")), "dist/index.mjs").toBe(true);
         expect(existsSync(join(distDir, "index.d.ts")), "dist/index.d.ts").toBe(true);
       });
 
-      it("CJS bundle exposes exactly the declared value exports", () => {
+      it("CJS bundle exposes all declared scope-specific value exports", () => {
         const mod = require_(`@zero-transfer/${scope.name}`) as Record<string, unknown>;
-        const actual = Object.keys(mod)
-          .filter((k) => k !== "__esModule")
-          .sort();
-        expect(actual).toEqual([...valueNames].sort());
+        for (const name of scopeValueNames) {
+          expect(mod[name], `missing ${name}`).toBeDefined();
+        }
       });
 
-      it("CJS bundle does not include sibling-scope-only symbols", () => {
+      it("CJS bundle exposes core symbols (self-contained)", () => {
         const mod = require_(`@zero-transfer/${scope.name}`) as Record<string, unknown>;
-        const declared = new Set(scope.exports);
-        const otherScopeOnlyValueExport = scopeList
-          .filter((other) => other.name !== scope.name)
-          .flatMap((other) => other.exports)
-          .filter((name) => sdkValueNames.has(name) && !declared.has(name));
-        for (const name of otherScopeOnlyValueExport.slice(0, 5)) {
-          expect(mod[name]).toBeUndefined();
-        }
+        // All scoped packages bundle core infrastructure.
+        expect(mod["createTransferClient"], "createTransferClient").toBeDefined();
+        expect(mod["ZeroTransferError"], "ZeroTransferError").toBeDefined();
       });
 
-      it("ESM bundle re-exports the declared value names from @zero-transfer/sdk", () => {
-        const mjs = readFileSync(join(distDir, "index.mjs"), "utf8");
-        if (valueNames.length === 0) {
-          expect(mjs).toContain("export {}");
-          return;
-        }
-        expect(mjs).toContain('from "@zero-transfer/sdk"');
-        for (const name of valueNames) {
-          expect(mjs, `mjs missing ${name}`).toMatch(new RegExp(`\\b${name}\\b`));
-        }
-      });
+      it("CJS bundle does not expose other scopes' provider factory symbols", () => {
+        const mod = require_(`@zero-transfer/${scope.name}`) as Record<string, unknown>;
+        const ownProviders = providerOnlyValuesByScope.get(scope.name) ?? new Set<string>();
 
-      it("d.ts re-exports the declared value and type names from @zero-transfer/sdk", () => {
-        const dts = readFileSync(join(distDir, "index.d.ts"), "utf8");
-        if (valueNames.length > 0) {
-          expect(dts).toMatch(/^export \{[^}]+\} from "@zero-transfer\/sdk";$/m);
-        }
-        if (typeNames.length > 0) {
-          expect(dts).toMatch(/^export type \{[^}]+\} from "@zero-transfer\/sdk";$/m);
-        }
-        for (const name of [...valueNames, ...typeNames]) {
-          expect(dts, `d.ts missing ${name}`).toMatch(new RegExp(`\\b${name}\\b`));
+        for (const [otherScope, otherProviders] of providerOnlyValuesByScope) {
+          if (otherScope === scope.name) continue;
+          // classic includes ftp+sftp so skip cross-checking classic vs its members
+          if (scope.name === "classic") continue;
+          for (const name of otherProviders) {
+            if (!ownProviders.has(name)) {
+              expect(mod[name], `should not expose ${name} from scope ${otherScope}`).toBeUndefined();
+            }
+          }
         }
       });
 
@@ -194,8 +199,17 @@ describe("packages/* — narrowed scoped packages", () => {
         const engines = pkg.engines as Record<string, string>;
         expect(engines.node).toMatch(/>=\s*20/);
 
-        const peer = pkg.peerDependencies as Record<string, string>;
-        expect(peer["@zero-transfer/sdk"]).toBe(sdkVersion);
+        // Self-contained bundles: no peerDependency on @zero-transfer/sdk.
+        const peer = pkg.peerDependencies as Record<string, string> | undefined;
+        expect(peer?.["@zero-transfer/sdk"]).toBeUndefined();
+
+        // ssh2 must be a real dependency for sftp/classic, absent elsewhere.
+        const deps = pkg.dependencies as Record<string, string> | undefined;
+        if (scope.name === "sftp" || scope.name === "classic") {
+          expect(deps?.["ssh2"], `${scope.name} must declare ssh2 dependency`).toBeTruthy();
+        } else {
+          expect(deps?.["ssh2"], `${scope.name} must not declare ssh2`).toBeUndefined();
+        }
 
         const repo = pkg.repository as Record<string, string>;
         expect(repo.directory).toBe(`packages/${scope.name}`);

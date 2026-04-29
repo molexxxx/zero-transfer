@@ -1,10 +1,11 @@
 // @ts-check
 /**
- * Publishes every workspace stub under packages/* to npm with provenance.
+ * Publishes every workspace package under packages/* to npm with provenance.
  *
- * Order matters: the SDK must already be published at the same version
- * because each stub depends on it. Run `npm publish` from the repo root
- * first (or ensure CI has already released the SDK), then run this script.
+ * Each scoped package is self-contained and has no peerDependency on
+ * @zero-transfer/sdk, so publish order within the scoped packages does not
+ * matter. The root SDK should be published first (or concurrently in CI)
+ * so the workspace resolves cleanly.
  *
  * Usage:
  *   node scripts/publish-package-stubs.mjs            # publishes all stubs

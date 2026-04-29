@@ -1,6 +1,11016 @@
-// AUTO-GENERATED. Edit scripts/scope-manifest.mjs and re-run packages:generate.
 "use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const sdk = require("@zero-transfer/sdk");
-Object.defineProperty(exports, "createS3ProviderFactory", { enumerable: true, get: () => sdk["createS3ProviderFactory"] });
-Object.defineProperty(exports, "createMemoryS3MultipartResumeStore", { enumerable: true, get: () => sdk["createMemoryS3MultipartResumeStore"] });
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// src/entries/s3.ts
+var s3_exports = {};
+__export(s3_exports, {
+  AbortError: () => AbortError,
+  AuthenticationError: () => AuthenticationError,
+  AuthorizationError: () => AuthorizationError,
+  CLASSIC_PROVIDER_IDS: () => CLASSIC_PROVIDER_IDS,
+  ConfigurationError: () => ConfigurationError,
+  ConnectionError: () => ConnectionError,
+  ParseError: () => ParseError,
+  PathAlreadyExistsError: () => PathAlreadyExistsError,
+  PathNotFoundError: () => PathNotFoundError,
+  PermissionDeniedError: () => PermissionDeniedError,
+  ProtocolError: () => ProtocolError,
+  ProviderRegistry: () => ProviderRegistry,
+  REDACTED: () => REDACTED,
+  REMOTE_MANIFEST_FORMAT_VERSION: () => REMOTE_MANIFEST_FORMAT_VERSION,
+  TimeoutError: () => TimeoutError,
+  TransferClient: () => TransferClient,
+  TransferEngine: () => TransferEngine,
+  TransferError: () => TransferError,
+  TransferQueue: () => TransferQueue,
+  UnsupportedFeatureError: () => UnsupportedFeatureError,
+  VerificationError: () => VerificationError,
+  ZeroTransfer: () => ZeroTransfer,
+  ZeroTransferError: () => ZeroTransferError,
+  assertSafeFtpArgument: () => assertSafeFtpArgument,
+  basenameRemotePath: () => basenameRemotePath,
+  buildRemoteBreadcrumbs: () => buildRemoteBreadcrumbs,
+  compareRemoteManifests: () => compareRemoteManifests,
+  copyBetween: () => copyBetween,
+  createAtomicDeployPlan: () => createAtomicDeployPlan,
+  createBandwidthThrottle: () => createBandwidthThrottle,
+  createLocalProviderFactory: () => createLocalProviderFactory,
+  createMemoryProviderFactory: () => createMemoryProviderFactory,
+  createMemoryS3MultipartResumeStore: () => createMemoryS3MultipartResumeStore,
+  createOAuthTokenSecretSource: () => createOAuthTokenSecretSource,
+  createProgressEvent: () => createProgressEvent,
+  createProviderTransferExecutor: () => createProviderTransferExecutor,
+  createRemoteBrowser: () => createRemoteBrowser,
+  createRemoteManifest: () => createRemoteManifest,
+  createS3ProviderFactory: () => createS3ProviderFactory,
+  createSyncPlan: () => createSyncPlan,
+  createTransferClient: () => createTransferClient,
+  createTransferJobsFromPlan: () => createTransferJobsFromPlan,
+  createTransferPlan: () => createTransferPlan,
+  createTransferResult: () => createTransferResult,
+  diffRemoteTrees: () => diffRemoteTrees,
+  downloadFile: () => downloadFile,
+  emitLog: () => emitLog,
+  errorFromFtpReply: () => errorFromFtpReply,
+  filterRemoteEntries: () => filterRemoteEntries,
+  formatCapabilityMatrixMarkdown: () => formatCapabilityMatrixMarkdown,
+  getBuiltinCapabilityMatrix: () => getBuiltinCapabilityMatrix,
+  importFileZillaSites: () => importFileZillaSites,
+  importOpenSshConfig: () => importOpenSshConfig,
+  importWinScpSessions: () => importWinScpSessions,
+  isClassicProviderId: () => isClassicProviderId,
+  isSensitiveKey: () => isSensitiveKey,
+  joinRemotePath: () => joinRemotePath,
+  matchKnownHosts: () => matchKnownHosts,
+  matchKnownHostsEntry: () => matchKnownHostsEntry,
+  noopLogger: () => noopLogger,
+  normalizeRemotePath: () => normalizeRemotePath,
+  parentRemotePath: () => parentRemotePath,
+  parseKnownHosts: () => parseKnownHosts2,
+  parseOpenSshConfig: () => parseOpenSshConfig,
+  parseRemoteManifest: () => parseRemoteManifest,
+  redactCommand: () => redactCommand,
+  redactConnectionProfile: () => redactConnectionProfile,
+  redactObject: () => redactObject,
+  redactSecretSource: () => redactSecretSource,
+  redactValue: () => redactValue,
+  resolveConnectionProfileSecrets: () => resolveConnectionProfileSecrets,
+  resolveOpenSshHost: () => resolveOpenSshHost,
+  resolveProviderId: () => resolveProviderId,
+  resolveSecret: () => resolveSecret,
+  runConnectionDiagnostics: () => runConnectionDiagnostics,
+  serializeRemoteManifest: () => serializeRemoteManifest,
+  sortRemoteEntries: () => sortRemoteEntries,
+  summarizeClientDiagnostics: () => summarizeClientDiagnostics,
+  summarizeTransferPlan: () => summarizeTransferPlan,
+  throttleByteIterable: () => throttleByteIterable,
+  uploadFile: () => uploadFile,
+  validateConnectionProfile: () => validateConnectionProfile,
+  walkRemoteTree: () => walkRemoteTree
+});
+module.exports = __toCommonJS(s3_exports);
+
+// src/client/ZeroTransfer.ts
+var import_node_events = require("events");
+
+// src/errors/ZeroTransferError.ts
+var ZeroTransferError = class extends Error {
+  /** Stable machine-readable error code. */
+  code;
+  /** Protocol active when the error occurred. */
+  protocol;
+  /** Remote host associated with the failing operation. */
+  host;
+  /** Protocol command associated with the failure, if any. */
+  command;
+  /** FTP response code associated with the failure. */
+  ftpCode;
+  /** SFTP status code associated with the failure. */
+  sftpCode;
+  /** Remote path associated with the failure. */
+  path;
+  /** Whether retry policy may safely retry this failure. */
+  retryable;
+  /** Additional structured details for diagnostics. */
+  details;
+  /**
+   * Creates a structured SDK error.
+   *
+   * @param details - Code, message, retryability, and optional protocol context.
+   */
+  constructor(details) {
+    super(details.message, details.cause === void 0 ? void 0 : { cause: details.cause });
+    this.name = new.target.name;
+    this.code = details.code;
+    this.retryable = details.retryable;
+    if (details.protocol !== void 0) this.protocol = details.protocol;
+    if (details.host !== void 0) this.host = details.host;
+    if (details.command !== void 0) this.command = details.command;
+    if (details.ftpCode !== void 0) this.ftpCode = details.ftpCode;
+    if (details.sftpCode !== void 0) this.sftpCode = details.sftpCode;
+    if (details.path !== void 0) this.path = details.path;
+    if (details.details !== void 0) this.details = details.details;
+  }
+  /**
+   * Serializes the error into a plain object suitable for logs or API responses.
+   *
+   * @returns A JSON-safe object containing public structured error fields.
+   */
+  toJSON() {
+    return {
+      name: this.name,
+      code: this.code,
+      message: this.message,
+      protocol: this.protocol,
+      host: this.host,
+      command: this.command,
+      ftpCode: this.ftpCode,
+      sftpCode: this.sftpCode,
+      path: this.path,
+      retryable: this.retryable,
+      details: this.details
+    };
+  }
+};
+function withDefaultCode(details, code) {
+  return {
+    ...details,
+    code: details.code ?? code
+  };
+}
+var ConnectionError = class extends ZeroTransferError {
+  /**
+   * Creates a connection failure.
+   *
+   * @param details - Error context with optional host, protocol, and retryability details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_CONNECTION_ERROR"));
+  }
+};
+var AuthenticationError = class extends ZeroTransferError {
+  /**
+   * Creates an authentication failure.
+   *
+   * @param details - Error context with optional host, protocol, and command details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_AUTHENTICATION_ERROR"));
+  }
+};
+var AuthorizationError = class extends ZeroTransferError {
+  /**
+   * Creates an authorization failure.
+   *
+   * @param details - Error context with optional path and protocol details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_AUTHORIZATION_ERROR"));
+  }
+};
+var PathNotFoundError = class extends ZeroTransferError {
+  /**
+   * Creates a missing-path failure.
+   *
+   * @param details - Error context with optional path and protocol details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_PATH_NOT_FOUND"));
+  }
+};
+var PathAlreadyExistsError = class extends ZeroTransferError {
+  /**
+   * Creates an already-exists failure.
+   *
+   * @param details - Error context with optional path and command details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_PATH_ALREADY_EXISTS"));
+  }
+};
+var PermissionDeniedError = class extends ZeroTransferError {
+  /**
+   * Creates a permission failure.
+   *
+   * @param details - Error context with optional path, command, and protocol details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_PERMISSION_DENIED"));
+  }
+};
+var TimeoutError = class extends ZeroTransferError {
+  /**
+   * Creates a timeout failure.
+   *
+   * @param details - Error context with optional duration and retryability details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_TIMEOUT"));
+  }
+};
+var AbortError = class extends ZeroTransferError {
+  /**
+   * Creates an aborted-operation failure.
+   *
+   * @param details - Error context with optional operation and path details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_ABORTED"));
+  }
+};
+var ProtocolError = class extends ZeroTransferError {
+  /**
+   * Creates a protocol failure.
+   *
+   * @param details - Error context with optional response code and command details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_PROTOCOL_ERROR"));
+  }
+};
+var ParseError = class extends ZeroTransferError {
+  /**
+   * Creates a parser failure.
+   *
+   * @param details - Error context with malformed input details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_PARSE_ERROR"));
+  }
+};
+var TransferError = class extends ZeroTransferError {
+  /**
+   * Creates a transfer failure.
+   *
+   * @param details - Error context with optional path, bytes, and retryability details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_TRANSFER_ERROR"));
+  }
+};
+var VerificationError = class extends ZeroTransferError {
+  /**
+   * Creates a verification failure.
+   *
+   * @param details - Error context with checksum, size, or timestamp mismatch details.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_VERIFICATION_ERROR"));
+  }
+};
+var UnsupportedFeatureError = class extends ZeroTransferError {
+  /**
+   * Creates an unsupported-feature failure.
+   *
+   * @param details - Error context describing the missing feature or adapter.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_UNSUPPORTED_FEATURE"));
+  }
+};
+var ConfigurationError = class extends ZeroTransferError {
+  /**
+   * Creates a configuration failure.
+   *
+   * @param details - Error context describing the invalid option or argument.
+   */
+  constructor(details) {
+    super(withDefaultCode(details, "ZERO_TRANSFER_CONFIGURATION_ERROR"));
+  }
+};
+
+// src/logging/Logger.ts
+var noopLogger = {
+  trace() {
+  },
+  debug() {
+  },
+  info() {
+  },
+  warn() {
+  },
+  error() {
+  }
+};
+function emitLog(logger, level, record) {
+  const method = logger[level];
+  if (method === void 0) {
+    return;
+  }
+  const logRecord = {
+    ...record,
+    level
+  };
+  method(logRecord, logRecord.message);
+}
+
+// src/profiles/ProfileValidator.ts
+var import_node_buffer = require("buffer");
+
+// src/core/ProviderId.ts
+var CLASSIC_PROVIDER_IDS = ["ftp", "ftps", "sftp"];
+function isClassicProviderId(providerId) {
+  return typeof providerId === "string" && CLASSIC_PROVIDER_IDS.includes(providerId);
+}
+function resolveProviderId(selection) {
+  return selection.provider ?? selection.protocol;
+}
+
+// src/profiles/ProfileValidator.ts
+var TLS_VERSIONS = /* @__PURE__ */ new Set(["TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3"]);
+var SHA256_FINGERPRINT_HEX_LENGTH = 64;
+var SHA256_DIGEST_BYTE_LENGTH = 32;
+function validateConnectionProfile(profile) {
+  if (resolveProviderId(profile) === void 0) {
+    throw new ConfigurationError({
+      message: "Connection profiles must include a provider or protocol",
+      retryable: false
+    });
+  }
+  if (profile.host.trim().length === 0) {
+    throw new ConfigurationError({
+      message: "Connection profiles must include a non-empty host",
+      retryable: false
+    });
+  }
+  if (profile.port !== void 0 && !isValidPort(profile.port)) {
+    throw new ConfigurationError({
+      details: { port: profile.port },
+      message: "Connection profile port must be an integer between 1 and 65535",
+      retryable: false
+    });
+  }
+  if (profile.timeoutMs !== void 0 && !isPositiveFiniteNumber(profile.timeoutMs)) {
+    throw new ConfigurationError({
+      details: { timeoutMs: profile.timeoutMs },
+      message: "Connection profile timeoutMs must be a positive finite number",
+      retryable: false
+    });
+  }
+  if (profile.tls !== void 0) {
+    validateTlsProfile(profile.tls);
+  }
+  if (profile.ssh !== void 0) {
+    validateSshProfile(profile.ssh);
+  }
+  return profile;
+}
+function validateSshProfile(profile) {
+  validatePinnedHostKeySha256(profile.pinnedHostKeySha256);
+  if (profile.algorithms !== void 0) {
+    validateSshAlgorithms(profile.algorithms);
+  }
+  if (profile.agent !== void 0) {
+    validateSshAgentSource(profile.agent);
+  }
+  if (profile.keyboardInteractive !== void 0 && typeof profile.keyboardInteractive !== "function") {
+    throw new ConfigurationError({
+      details: { keyboardInteractive: typeof profile.keyboardInteractive },
+      message: "Connection profile ssh.keyboardInteractive must be a function when provided",
+      retryable: false
+    });
+  }
+  if (profile.socketFactory !== void 0 && typeof profile.socketFactory !== "function") {
+    throw new ConfigurationError({
+      details: { socketFactory: typeof profile.socketFactory },
+      message: "Connection profile ssh.socketFactory must be a function when provided",
+      retryable: false
+    });
+  }
+}
+function validateSshAlgorithms(value) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw createSshAlgorithmsError(value);
+  }
+  const algorithms = value;
+  for (const [name, list] of Object.entries(algorithms)) {
+    if (list === void 0) {
+      continue;
+    }
+    if (Array.isArray(list)) {
+      if (!isNonEmptyStringArray(list)) {
+        throw createSshAlgorithmsError({ [name]: list });
+      }
+      continue;
+    }
+    if (typeof list !== "object" || list === null || Array.isArray(list)) {
+      throw createSshAlgorithmsError({ [name]: list });
+    }
+    const operationLists = list;
+    for (const [operation, operationList] of Object.entries(operationLists)) {
+      if (!["append", "prepend", "remove"].includes(operation)) {
+        throw createSshAlgorithmsError({ [name]: list });
+      }
+      if (typeof operationList !== "string" && (!Array.isArray(operationList) || !isNonEmptyStringArray(operationList))) {
+        throw createSshAlgorithmsError({ [name]: list });
+      }
+    }
+  }
+}
+function isNonEmptyStringArray(value) {
+  return value.length > 0 && value.every((item) => typeof item === "string" && item.length > 0);
+}
+function validateSshAgentSource(value) {
+  if (typeof value === "string") {
+    if (value.trim().length > 0) {
+      return;
+    }
+  } else if (typeof value === "object" && value !== null && typeof value.getIdentities === "function" && typeof value.sign === "function") {
+    return;
+  }
+  throw new ConfigurationError({
+    details: { agent: typeof value },
+    message: "Connection profile ssh.agent must be a non-empty socket path or agent object",
+    retryable: false
+  });
+}
+function validateTlsProfile(profile) {
+  if (profile.servername !== void 0 && profile.servername.trim().length === 0) {
+    throw new ConfigurationError({
+      message: "Connection profile tls.servername must be non-empty when provided",
+      retryable: false
+    });
+  }
+  if (profile.rejectUnauthorized !== void 0 && typeof profile.rejectUnauthorized !== "boolean") {
+    throw new ConfigurationError({
+      details: { rejectUnauthorized: profile.rejectUnauthorized },
+      message: "Connection profile tls.rejectUnauthorized must be a boolean",
+      retryable: false
+    });
+  }
+  validateTlsVersion(profile.minVersion, "minVersion");
+  validateTlsVersion(profile.maxVersion, "maxVersion");
+  validatePinnedFingerprint256(profile.pinnedFingerprint256);
+}
+function validatePinnedFingerprint256(value) {
+  if (value === void 0) {
+    return;
+  }
+  const fingerprints = Array.isArray(value) ? value : [value];
+  if (fingerprints.length === 0) {
+    throw createPinnedFingerprintError(value);
+  }
+  for (const fingerprint of fingerprints) {
+    if (typeof fingerprint !== "string" || !isSha256Fingerprint(fingerprint)) {
+      throw createPinnedFingerprintError(value);
+    }
+  }
+}
+function validatePinnedHostKeySha256(value) {
+  if (value === void 0) {
+    return;
+  }
+  const fingerprints = Array.isArray(value) ? value : [value];
+  if (fingerprints.length === 0) {
+    throw createPinnedHostKeyError(value);
+  }
+  for (const fingerprint of fingerprints) {
+    if (typeof fingerprint !== "string" || !isSshHostKeySha256Fingerprint(fingerprint)) {
+      throw createPinnedHostKeyError(value);
+    }
+  }
+}
+function isSha256Fingerprint(value) {
+  const normalized = value.trim().replace(/:/g, "");
+  return normalized.length === SHA256_FINGERPRINT_HEX_LENGTH && /^[a-f0-9]+$/i.test(normalized);
+}
+function isSshHostKeySha256Fingerprint(value) {
+  const trimmed = value.trim();
+  if (isSha256Fingerprint(trimmed)) {
+    return true;
+  }
+  const bare = trimmed.startsWith("SHA256:") ? trimmed.slice("SHA256:".length) : trimmed;
+  const padded = padBase64(bare);
+  if (!/^[a-z0-9+/]+={0,2}$/i.test(padded)) {
+    return false;
+  }
+  try {
+    return import_node_buffer.Buffer.from(padded, "base64").byteLength === SHA256_DIGEST_BYTE_LENGTH;
+  } catch {
+    return false;
+  }
+}
+function padBase64(value) {
+  const remainder = value.length % 4;
+  return remainder === 0 ? value : `${value}${"=".repeat(4 - remainder)}`;
+}
+function createPinnedFingerprintError(value) {
+  return new ConfigurationError({
+    details: { pinnedFingerprint256: value },
+    message: "Connection profile tls.pinnedFingerprint256 must be a SHA-256 hex fingerprint or non-empty array of fingerprints",
+    retryable: false
+  });
+}
+function createPinnedHostKeyError(value) {
+  return new ConfigurationError({
+    details: { pinnedHostKeySha256: value },
+    message: "Connection profile ssh.pinnedHostKeySha256 must be an OpenSSH SHA256, base64, or hex fingerprint or non-empty array of fingerprints",
+    retryable: false
+  });
+}
+function createSshAlgorithmsError(value) {
+  return new ConfigurationError({
+    details: { algorithms: value },
+    message: "Connection profile ssh.algorithms must use ssh2-compatible non-empty algorithm lists",
+    retryable: false
+  });
+}
+function validateTlsVersion(value, field) {
+  if (value === void 0) {
+    return;
+  }
+  if (!TLS_VERSIONS.has(value)) {
+    throw new ConfigurationError({
+      details: { [field]: value },
+      message: `Connection profile tls.${field} must be a supported TLS version`,
+      retryable: false
+    });
+  }
+}
+function isValidPort(value) {
+  return Number.isInteger(value) && value >= 1 && value <= 65535;
+}
+function isPositiveFiniteNumber(value) {
+  return Number.isFinite(value) && value > 0;
+}
+
+// src/core/ProviderRegistry.ts
+var ProviderRegistry = class {
+  factories = /* @__PURE__ */ new Map();
+  /**
+   * Creates a registry and optionally seeds it with provider factories.
+   *
+   * @param providers - Provider factories to register immediately.
+   */
+  constructor(providers = []) {
+    for (const provider of providers) {
+      this.register(provider);
+    }
+  }
+  /**
+   * Registers a provider factory.
+   *
+   * @param provider - Provider factory to add.
+   * @returns This registry for fluent setup.
+   * @throws {@link ConfigurationError} When a provider id is registered twice.
+   */
+  register(provider) {
+    if (this.factories.has(provider.id)) {
+      throw new ConfigurationError({
+        details: { provider: provider.id },
+        message: `Provider "${provider.id}" is already registered`,
+        retryable: false
+      });
+    }
+    this.factories.set(provider.id, provider);
+    return this;
+  }
+  /**
+   * Removes a provider factory from the registry.
+   *
+   * @param providerId - Provider id to remove.
+   * @returns `true` when a provider was removed.
+   */
+  unregister(providerId) {
+    return this.factories.delete(providerId);
+  }
+  /**
+   * Checks whether a provider id is registered.
+   *
+   * @param providerId - Provider id to inspect.
+   * @returns `true` when a provider factory exists.
+   */
+  has(providerId) {
+    return this.factories.has(providerId);
+  }
+  /**
+   * Gets a provider factory when registered.
+   *
+   * @param providerId - Provider id to retrieve.
+   * @returns The provider factory, or `undefined` when missing.
+   */
+  get(providerId) {
+    return this.factories.get(providerId);
+  }
+  /**
+   * Gets a registered provider factory or throws a typed SDK error.
+   *
+   * @param providerId - Provider id to retrieve.
+   * @returns The registered provider factory.
+   * @throws {@link UnsupportedFeatureError} When no provider has been registered.
+   */
+  require(providerId) {
+    const provider = this.get(providerId);
+    if (provider === void 0) {
+      throw new UnsupportedFeatureError({
+        details: { provider: providerId },
+        message: `Provider "${providerId}" is not registered`,
+        retryable: false
+      });
+    }
+    return provider;
+  }
+  /**
+   * Gets a provider capability snapshot when registered.
+   *
+   * @param providerId - Provider id to inspect.
+   * @returns Capability snapshot, or `undefined` when missing.
+   */
+  getCapabilities(providerId) {
+    return this.get(providerId)?.capabilities;
+  }
+  /**
+   * Gets a provider capability snapshot or throws a typed SDK error.
+   *
+   * @param providerId - Provider id to inspect.
+   * @returns Capability snapshot for the registered provider.
+   * @throws {@link UnsupportedFeatureError} When no provider has been registered.
+   */
+  requireCapabilities(providerId) {
+    return this.require(providerId).capabilities;
+  }
+  /**
+   * Lists registered provider factories in insertion order.
+   *
+   * @returns Registered provider factories.
+   */
+  list() {
+    return [...this.factories.values()];
+  }
+  /**
+   * Lists registered provider capabilities in insertion order.
+   *
+   * @returns Capability snapshots for every registered provider.
+   */
+  listCapabilities() {
+    return this.list().map((provider) => provider.capabilities);
+  }
+};
+
+// src/core/TransferClient.ts
+var TransferClient = class {
+  /** Provider registry used by this client. */
+  registry;
+  logger;
+  /**
+   * Creates a transfer client without opening any provider connections.
+   *
+   * @param options - Optional registry, provider factories, and logger.
+   */
+  constructor(options = {}) {
+    this.registry = options.registry ?? new ProviderRegistry();
+    this.logger = options.logger ?? noopLogger;
+    for (const provider of options.providers ?? []) {
+      this.registry.register(provider);
+    }
+  }
+  /**
+   * Registers a provider factory with this client's registry.
+   *
+   * @param provider - Provider factory to register.
+   * @returns This client for fluent setup.
+   */
+  registerProvider(provider) {
+    this.registry.register(provider);
+    return this;
+  }
+  /**
+   * Checks whether this client can create sessions for a provider id.
+   *
+   * @param providerId - Provider id to inspect.
+   * @returns `true` when a provider factory is registered.
+   */
+  hasProvider(providerId) {
+    return this.registry.has(providerId);
+  }
+  getCapabilities(providerId) {
+    if (providerId === void 0) {
+      return this.registry.listCapabilities();
+    }
+    return this.registry.requireCapabilities(providerId);
+  }
+  /**
+   * Opens a provider session using `profile.provider`, with `profile.protocol` as compatibility fallback.
+   *
+   * @param profile - Connection profile containing a provider or legacy protocol field.
+   * @returns A connected provider session.
+   * @throws {@link ConfigurationError} When neither provider nor protocol is present.
+   */
+  async connect(profile) {
+    const validProfile = validateConnectionProfile(profile);
+    const providerId = resolveProviderId(validProfile);
+    if (providerId === void 0) {
+      throw new ConfigurationError({
+        message: "Connection profiles must include a provider or protocol",
+        retryable: false
+      });
+    }
+    const providerFactory = this.registry.require(providerId);
+    const provider = providerFactory.create();
+    const normalizedProfile = {
+      ...validProfile,
+      provider: providerId
+    };
+    if (normalizedProfile.protocol === void 0 && isClassicProviderId(providerId)) {
+      normalizedProfile.protocol = providerId;
+    }
+    emitLog(this.logger, "info", createConnectLogRecord(normalizedProfile, providerId));
+    return provider.connect(normalizedProfile);
+  }
+};
+function createConnectLogRecord(profile, providerId) {
+  const record = {
+    component: "core",
+    host: profile.host,
+    message: "Connecting through provider",
+    provider: providerId
+  };
+  if (isClassicProviderId(providerId)) {
+    record.protocol = providerId;
+  }
+  return record;
+}
+
+// src/core/createTransferClient.ts
+function createTransferClient(options = {}) {
+  return new TransferClient(options);
+}
+
+// src/client/ZeroTransfer.ts
+var ZeroTransfer = class _ZeroTransfer extends import_node_events.EventEmitter {
+  /** Creates a provider-neutral transfer client with the built-in provider registry. */
+  static createTransferClient = createTransferClient;
+  /** Protocol selected for this client instance. */
+  protocol;
+  logger;
+  adapter;
+  connected = false;
+  /**
+   * Creates a client facade without opening a network connection.
+   *
+   * @param options - Optional facade configuration, logger, and protocol adapter.
+   */
+  constructor(options = {}) {
+    super();
+    this.protocol = options.protocol ?? "ftp";
+    this.logger = options.logger ?? noopLogger;
+    this.adapter = options.adapter;
+  }
+  /**
+   * Creates a new client facade using the provided options.
+   *
+   * @param options - Optional facade configuration, logger, and adapter.
+   * @returns A disconnected {@link ZeroTransfer} instance.
+   */
+  static create(options = {}) {
+    return new _ZeroTransfer(options);
+  }
+  /**
+   * Creates a client and connects it in one step.
+   *
+   * @param profile - Remote host, authentication, and protocol connection settings.
+   * @param options - Optional facade settings that can be overridden by the profile.
+   * @returns A connected {@link ZeroTransfer} instance.
+   * @throws {@link UnsupportedFeatureError} When no adapter is available for the protocol.
+   */
+  static async connect(profile, options = {}) {
+    const clientOptions = { ...options };
+    if (profile.logger !== void 0) {
+      clientOptions.logger = profile.logger;
+    }
+    if (profile.protocol !== void 0) {
+      clientOptions.protocol = profile.protocol;
+    } else if (isClassicProviderId(profile.provider)) {
+      clientOptions.protocol = profile.provider;
+    }
+    const client = new _ZeroTransfer(clientOptions);
+    await client.connect(profile);
+    return client;
+  }
+  /**
+   * Opens a remote connection through the configured protocol adapter.
+   *
+   * @param profile - Remote host, authentication, timeout, logger, and protocol settings.
+   * @returns A promise that resolves after the adapter reports a successful connection.
+   * @throws {@link UnsupportedFeatureError} When the client does not have an adapter.
+   */
+  async connect(profile) {
+    const adapter = this.requireAdapter();
+    const protocol = profile.protocol ?? (isClassicProviderId(profile.provider) ? profile.provider : this.protocol);
+    emitLog(this.logger, "info", {
+      component: "client",
+      host: profile.host,
+      message: "Connecting",
+      protocol
+    });
+    await adapter.connect({
+      ...profile,
+      protocol
+    });
+    this.connected = true;
+    this.emit("connect", {
+      host: profile.host,
+      protocol
+    });
+  }
+  /**
+   * Closes the active remote connection if one exists.
+   *
+   * @returns A promise that resolves after the adapter disconnects or immediately when idle.
+   */
+  async disconnect() {
+    if (this.adapter !== void 0 && this.connected) {
+      await this.adapter.disconnect();
+    }
+    this.connected = false;
+    this.emit("disconnect");
+  }
+  /**
+   * Checks whether the facade currently considers the adapter connected.
+   *
+   * @returns `true` after a successful connection and before disconnection.
+   */
+  isConnected() {
+    return this.connected;
+  }
+  /**
+   * Describes protocol and adapter readiness for feature discovery.
+   *
+   * @returns A capability snapshot for diagnostics and UI state.
+   */
+  getCapabilities() {
+    return {
+      adapterReady: this.adapter !== void 0,
+      protocol: this.protocol
+    };
+  }
+  /**
+   * Lists remote entries for a path using the configured adapter.
+   *
+   * @param path - Remote directory path to inspect.
+   * @param options - Optional listing controls such as recursion and abort signal.
+   * @returns Normalized remote entries for the requested directory.
+   * @throws {@link UnsupportedFeatureError} When the client does not have an adapter.
+   */
+  async list(path2, options) {
+    return this.requireAdapter().list(path2, options);
+  }
+  /**
+   * Reads metadata for a remote path using the configured adapter.
+   *
+   * @param path - Remote file, directory, or symbolic-link path to inspect.
+   * @param options - Optional stat controls such as abort signal.
+   * @returns Normalized metadata for an existing remote entry.
+   * @throws {@link UnsupportedFeatureError} When the client does not have an adapter.
+   */
+  async stat(path2, options) {
+    return this.requireAdapter().stat(path2, options);
+  }
+  /**
+   * Returns the configured adapter or raises the alpha unsupported-feature error.
+   *
+   * @returns A concrete remote file adapter ready to execute operations.
+   * @throws {@link UnsupportedFeatureError} When no adapter has been provided.
+   */
+  requireAdapter() {
+    if (this.adapter === void 0) {
+      throw new UnsupportedFeatureError({
+        message: `The ${this.protocol.toUpperCase()} adapter is not implemented in this alpha foundation yet`,
+        protocol: this.protocol,
+        retryable: false
+      });
+    }
+    return this.adapter;
+  }
+};
+
+// src/client/operations.ts
+var import_node_path = require("path");
+
+// src/transfers/BandwidthThrottle.ts
+function createBandwidthThrottle(limit, options = {}) {
+  if (limit === void 0) return void 0;
+  const bytesPerSecond = normalizeRate(limit.bytesPerSecond);
+  const burstBytes = normalizeBurst(limit.burstBytes, bytesPerSecond);
+  const now = options.now ?? Date.now;
+  const sleep = options.sleep ?? defaultSleep;
+  let tokens = burstBytes;
+  let lastRefillAt = now();
+  function refill() {
+    const current = now();
+    const elapsedMs = Math.max(0, current - lastRefillAt);
+    if (elapsedMs > 0) {
+      tokens = Math.min(burstBytes, tokens + elapsedMs / 1e3 * bytesPerSecond);
+      lastRefillAt = current;
+    }
+  }
+  async function consume(bytes, signal) {
+    if (!Number.isFinite(bytes) || bytes < 0) {
+      throw new ConfigurationError({
+        details: { bytes },
+        message: "Bandwidth throttle byte count must be a non-negative number",
+        retryable: false
+      });
+    }
+    if (bytes === 0) return;
+    let remaining = bytes;
+    while (remaining > 0) {
+      throwIfAborted(signal);
+      refill();
+      if (tokens >= remaining) {
+        tokens -= remaining;
+        return;
+      }
+      if (tokens >= burstBytes) {
+        const drained = tokens;
+        tokens = 0;
+        remaining -= drained;
+        const waitMs2 = Math.ceil(Math.min(remaining, burstBytes) / bytesPerSecond * 1e3);
+        await sleep(waitMs2, signal);
+        continue;
+      }
+      const deficit = Math.min(remaining, burstBytes) - tokens;
+      const waitMs = Math.max(1, Math.ceil(deficit / bytesPerSecond * 1e3));
+      await sleep(waitMs, signal);
+    }
+  }
+  return { burstBytes, bytesPerSecond, consume };
+}
+function throttleByteIterable(source, throttle, signal) {
+  if (throttle === void 0) return source;
+  return {
+    [Symbol.asyncIterator]: async function* () {
+      for await (const chunk of source) {
+        throwIfAborted(signal);
+        if (chunk.byteLength > 0) {
+          await throttle.consume(chunk.byteLength, signal);
+        }
+        yield chunk;
+      }
+    }
+  };
+}
+function normalizeRate(value) {
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new ConfigurationError({
+      details: { bytesPerSecond: value },
+      message: "Bandwidth limit bytesPerSecond must be a positive number",
+      retryable: false
+    });
+  }
+  return value;
+}
+function normalizeBurst(value, bytesPerSecond) {
+  if (value === void 0) return bytesPerSecond;
+  if (!Number.isFinite(value) || value <= 0) {
+    throw new ConfigurationError({
+      details: { burstBytes: value },
+      message: "Bandwidth limit burstBytes must be a positive number when provided",
+      retryable: false
+    });
+  }
+  return value;
+}
+function throwIfAborted(signal) {
+  if (signal?.aborted === true) {
+    throw new AbortError({
+      message: "Bandwidth throttle wait aborted",
+      retryable: false
+    });
+  }
+}
+function defaultSleep(delayMs, signal) {
+  if (delayMs <= 0) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve();
+    }, delayMs);
+    const onAbort = () => {
+      cleanup();
+      reject(
+        new AbortError({
+          message: "Bandwidth throttle wait aborted",
+          retryable: false
+        })
+      );
+    };
+    function cleanup() {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+    }
+    if (signal !== void 0) {
+      if (signal.aborted) {
+        onAbort();
+        return;
+      }
+      signal.addEventListener("abort", onAbort, { once: true });
+    }
+  });
+}
+
+// src/transfers/createProviderTransferExecutor.ts
+function createProviderTransferExecutor(options) {
+  return async (context) => {
+    const { job } = context;
+    if (!isReadWriteOperation(job.operation)) {
+      throw new UnsupportedFeatureError({
+        details: { jobId: job.id, operation: job.operation },
+        message: `Provider read/write executor does not support transfer operation: ${job.operation}`,
+        retryable: false
+      });
+    }
+    const source = requireEndpoint(job, "source");
+    const destination = requireEndpoint(job, "destination");
+    const sourceSession = options.resolveSession({ endpoint: source, job, role: "source" });
+    const destinationSession = options.resolveSession({
+      endpoint: destination,
+      job,
+      role: "destination"
+    });
+    const sourceTransfers = requireTransferOperations(sourceSession, source, "source", job);
+    const destinationTransfers = requireTransferOperations(
+      destinationSession,
+      destination,
+      "destination",
+      job
+    );
+    context.throwIfAborted();
+    const readResult = await sourceTransfers.read(createReadRequest(context, source));
+    context.throwIfAborted();
+    const throttledReadResult = applyBandwidthThrottle(readResult, context, options.throttle);
+    const writeResult = await destinationTransfers.write(
+      createWriteRequest(context, destination, throttledReadResult)
+    );
+    return mergeProviderTransferResult(readResult, writeResult, job);
+  };
+}
+function applyBandwidthThrottle(readResult, context, options) {
+  const throttle = createBandwidthThrottle(context.bandwidthLimit, options);
+  if (throttle === void 0) return readResult;
+  return {
+    ...readResult,
+    content: throttleByteIterable(readResult.content, throttle, context.signal)
+  };
+}
+function isReadWriteOperation(operation) {
+  return operation === "copy" || operation === "download" || operation === "upload";
+}
+function requireEndpoint(job, role) {
+  const endpoint = role === "source" ? job.source : job.destination;
+  if (endpoint === void 0) {
+    throw new ConfigurationError({
+      details: { jobId: job.id, operation: job.operation, role },
+      message: `Transfer job requires a ${role} endpoint: ${job.id}`,
+      retryable: false
+    });
+  }
+  return endpoint;
+}
+function requireTransferOperations(session, endpoint, role, job) {
+  if (session === void 0) {
+    throw new UnsupportedFeatureError({
+      details: { endpoint: cloneEndpoint(endpoint), jobId: job.id, operation: job.operation, role },
+      message: `No provider session resolved for ${role} endpoint: ${endpoint.path}`,
+      retryable: false
+    });
+  }
+  if (session.transfers === void 0) {
+    throw new UnsupportedFeatureError({
+      details: {
+        endpoint: cloneEndpoint(endpoint),
+        jobId: job.id,
+        operation: job.operation,
+        provider: session.provider,
+        role
+      },
+      message: `Provider session does not expose transfer operations: ${session.provider}`,
+      retryable: false
+    });
+  }
+  return session.transfers;
+}
+function createReadRequest(context, endpoint) {
+  const request = {
+    attempt: context.attempt,
+    endpoint: cloneEndpoint(endpoint),
+    job: context.job,
+    reportProgress: (bytesTransferred, totalBytes) => context.reportProgress(bytesTransferred, totalBytes),
+    throwIfAborted: () => context.throwIfAborted()
+  };
+  if (context.signal !== void 0) request.signal = context.signal;
+  if (context.bandwidthLimit !== void 0) {
+    request.bandwidthLimit = { ...context.bandwidthLimit };
+  }
+  return request;
+}
+function createWriteRequest(context, endpoint, readResult) {
+  const request = {
+    attempt: context.attempt,
+    content: readResult.content,
+    endpoint: cloneEndpoint(endpoint),
+    job: context.job,
+    reportProgress: (bytesTransferred, totalBytes2) => context.reportProgress(bytesTransferred, totalBytes2),
+    throwIfAborted: () => context.throwIfAborted()
+  };
+  const totalBytes = readResult.totalBytes ?? context.job.totalBytes;
+  if (context.signal !== void 0) request.signal = context.signal;
+  if (context.bandwidthLimit !== void 0) {
+    request.bandwidthLimit = { ...context.bandwidthLimit };
+  }
+  if (totalBytes !== void 0) request.totalBytes = totalBytes;
+  if (context.job.resumed === true) request.offset = readResult.bytesRead ?? 0;
+  if (readResult.verification !== void 0) {
+    request.verification = cloneVerification(readResult.verification);
+  }
+  return request;
+}
+function mergeProviderTransferResult(readResult, writeResult, job) {
+  const result = {
+    bytesTransferred: writeResult.bytesTransferred
+  };
+  const totalBytes = writeResult.totalBytes ?? readResult.totalBytes ?? job.totalBytes;
+  const warnings = [...readResult.warnings ?? [], ...writeResult.warnings ?? []];
+  if (totalBytes !== void 0) result.totalBytes = totalBytes;
+  if (writeResult.resumed !== void 0) result.resumed = writeResult.resumed;
+  if (writeResult.verified !== void 0) result.verified = writeResult.verified;
+  if (writeResult.checksum !== void 0) result.checksum = writeResult.checksum;
+  else if (readResult.checksum !== void 0) result.checksum = readResult.checksum;
+  if (writeResult.verification !== void 0) {
+    result.verification = cloneVerification(writeResult.verification);
+  } else if (readResult.verification !== void 0) {
+    result.verification = cloneVerification(readResult.verification);
+  }
+  if (warnings.length > 0) result.warnings = warnings;
+  return result;
+}
+function cloneEndpoint(endpoint) {
+  const clone = { path: endpoint.path };
+  if (endpoint.provider !== void 0) clone.provider = endpoint.provider;
+  return clone;
+}
+function cloneVerification(verification) {
+  const clone = { verified: verification.verified };
+  if (verification.method !== void 0) clone.method = verification.method;
+  if (verification.checksum !== void 0) clone.checksum = verification.checksum;
+  if (verification.expectedChecksum !== void 0) {
+    clone.expectedChecksum = verification.expectedChecksum;
+  }
+  if (verification.actualChecksum !== void 0) clone.actualChecksum = verification.actualChecksum;
+  if (verification.details !== void 0) clone.details = { ...verification.details };
+  return clone;
+}
+
+// src/services/TransferService.ts
+function createTransferResult(input) {
+  const durationMs = Math.max(0, input.completedAt.getTime() - input.startedAt.getTime());
+  const result = {
+    destinationPath: input.destinationPath,
+    bytesTransferred: input.bytesTransferred,
+    startedAt: input.startedAt,
+    completedAt: input.completedAt,
+    durationMs,
+    averageBytesPerSecond: calculateBytesPerSecond(input.bytesTransferred, durationMs),
+    resumed: input.resumed ?? false,
+    verified: input.verified ?? false
+  };
+  if (input.sourcePath !== void 0) result.sourcePath = input.sourcePath;
+  if (input.checksum !== void 0) result.checksum = input.checksum;
+  return result;
+}
+function createProgressEvent(input) {
+  const now = input.now ?? /* @__PURE__ */ new Date();
+  const elapsedMs = Math.max(0, now.getTime() - input.startedAt.getTime());
+  const event = {
+    transferId: input.transferId,
+    bytesTransferred: input.bytesTransferred,
+    startedAt: input.startedAt,
+    elapsedMs,
+    bytesPerSecond: calculateBytesPerSecond(input.bytesTransferred, elapsedMs)
+  };
+  if (input.totalBytes !== void 0) {
+    event.totalBytes = input.totalBytes;
+    event.percent = input.totalBytes > 0 ? input.bytesTransferred / input.totalBytes * 100 : 0;
+  }
+  return event;
+}
+function calculateBytesPerSecond(bytes, durationMs) {
+  if (durationMs <= 0) {
+    return bytes;
+  }
+  return bytes / (durationMs / 1e3);
+}
+
+// src/transfers/TransferEngine.ts
+var TransferEngine = class {
+  now;
+  /**
+   * Creates a transfer engine.
+   *
+   * @param options - Optional clock override for deterministic tests.
+   */
+  constructor(options = {}) {
+    this.now = options.now ?? (() => /* @__PURE__ */ new Date());
+  }
+  /**
+   * Executes a transfer job through a caller-supplied operation.
+   *
+   * @param job - Job metadata used for correlation and receipts.
+   * @param executor - Concrete transfer operation implementation.
+   * @param options - Optional abort, retry, and progress hooks.
+   * @returns Receipt for the completed transfer.
+   * @throws {@link AbortError} When execution is cancelled.
+   * @throws {@link TransferError} When all attempts fail.
+   */
+  async execute(job, executor, options = {}) {
+    const maxAttempts = normalizeMaxAttempts(options.retry?.maxAttempts);
+    const attempts = [];
+    const startedAt = this.now();
+    const abortScope = createAbortScope(options.signal, options.timeout, job);
+    let latestBytesTransferred = 0;
+    try {
+      for (let attemptNumber = 1; attemptNumber <= maxAttempts; attemptNumber += 1) {
+        this.throwIfAborted(abortScope.signal, job);
+        const attemptStartedAt = this.now();
+        const context = this.createExecutionContext(
+          job,
+          attemptNumber,
+          attemptStartedAt,
+          options,
+          abortScope.signal,
+          (bytesTransferred) => {
+            latestBytesTransferred = bytesTransferred;
+          }
+        );
+        try {
+          const result = await runExecutor(executor, context, abortScope.signal, job);
+          context.throwIfAborted();
+          latestBytesTransferred = result.bytesTransferred;
+          const completedAt = this.now();
+          attempts.push(
+            createAttempt(attemptNumber, attemptStartedAt, completedAt, result.bytesTransferred)
+          );
+          return createReceipt(job, result, attempts, startedAt, completedAt);
+        } catch (error) {
+          const completedAt = this.now();
+          const attempt = createAttempt(
+            attemptNumber,
+            attemptStartedAt,
+            completedAt,
+            latestBytesTransferred,
+            summarizeError(error)
+          );
+          attempts.push(attempt);
+          if (error instanceof AbortError || error instanceof TimeoutError) {
+            throw error;
+          }
+          const retryInput = { attempt: attemptNumber, error, job };
+          const shouldRetry = attemptNumber < maxAttempts && (options.retry?.shouldRetry?.(retryInput) ?? isRetryable(error));
+          if (shouldRetry) {
+            options.retry?.onRetry?.(retryInput);
+            continue;
+          }
+          throw createTransferFailure(job, error, attempts);
+        }
+      }
+      throw createTransferFailure(job, void 0, attempts);
+    } finally {
+      abortScope.dispose();
+    }
+  }
+  createExecutionContext(job, attempt, startedAt, options, signal, updateBytesTransferred) {
+    const context = {
+      attempt,
+      job,
+      reportProgress: (bytesTransferred, totalBytes) => {
+        this.throwIfAborted(signal, job);
+        updateBytesTransferred(bytesTransferred);
+        const progressInput = {
+          bytesTransferred,
+          now: this.now(),
+          startedAt,
+          transferId: job.id
+        };
+        const resolvedTotalBytes = totalBytes ?? job.totalBytes;
+        const event = createProgressEvent(
+          resolvedTotalBytes === void 0 ? progressInput : { ...progressInput, totalBytes: resolvedTotalBytes }
+        );
+        options.onProgress?.(event);
+        return event;
+      },
+      throwIfAborted: () => this.throwIfAborted(signal, job)
+    };
+    if (signal !== void 0) {
+      context.signal = signal;
+    }
+    if (options.bandwidthLimit !== void 0) {
+      context.bandwidthLimit = { ...options.bandwidthLimit };
+    }
+    return context;
+  }
+  throwIfAborted(signal, job) {
+    if (signal?.aborted === true) {
+      if (signal.reason instanceof ZeroTransferError) {
+        throw signal.reason;
+      }
+      throw new AbortError({
+        details: { jobId: job.id, operation: job.operation },
+        message: `Transfer job aborted: ${job.id}`,
+        retryable: false
+      });
+    }
+  }
+};
+function createAbortScope(parentSignal, timeout, job) {
+  const timeoutMs = normalizeTimeoutMs(timeout?.timeoutMs);
+  if (parentSignal === void 0 && timeoutMs === void 0) {
+    return { dispose: () => void 0 };
+  }
+  const controller = new AbortController();
+  const abortFromParent = () => controller.abort(parentSignal?.reason);
+  const timeoutHandle = timeoutMs === void 0 ? void 0 : setTimeout(() => {
+    controller.abort(
+      new TimeoutError({
+        details: { jobId: job.id, operation: job.operation, timeoutMs },
+        message: `Transfer job timed out after ${timeoutMs}ms: ${job.id}`,
+        retryable: timeout?.retryable ?? true
+      })
+    );
+  }, timeoutMs);
+  if (parentSignal?.aborted === true) {
+    abortFromParent();
+  } else {
+    parentSignal?.addEventListener("abort", abortFromParent, { once: true });
+  }
+  return {
+    dispose: () => {
+      if (timeoutHandle !== void 0) {
+        clearTimeout(timeoutHandle);
+      }
+      parentSignal?.removeEventListener("abort", abortFromParent);
+    },
+    signal: controller.signal
+  };
+}
+function normalizeTimeoutMs(value) {
+  if (value === void 0 || !Number.isFinite(value) || value <= 0) {
+    return void 0;
+  }
+  return Math.floor(value);
+}
+async function runExecutor(executor, context, signal, job) {
+  if (signal === void 0) {
+    return executor(context);
+  }
+  return Promise.race([executor(context), rejectWhenAborted(signal, job)]);
+}
+function rejectWhenAborted(signal, job) {
+  return new Promise((_, reject) => {
+    const rejectAbort = () => {
+      if (signal.reason instanceof ZeroTransferError) {
+        reject(signal.reason);
+        return;
+      }
+      reject(
+        new AbortError({
+          details: { jobId: job.id, operation: job.operation },
+          message: `Transfer job aborted: ${job.id}`,
+          retryable: false
+        })
+      );
+    };
+    if (signal.aborted) {
+      rejectAbort();
+      return;
+    }
+    signal.addEventListener("abort", rejectAbort, { once: true });
+  });
+}
+function normalizeMaxAttempts(value) {
+  if (value === void 0) {
+    return 1;
+  }
+  return Math.max(1, Math.floor(value));
+}
+function createAttempt(attempt, startedAt, completedAt, bytesTransferred, error) {
+  const result = {
+    attempt,
+    bytesTransferred,
+    completedAt,
+    durationMs: Math.max(0, completedAt.getTime() - startedAt.getTime()),
+    startedAt
+  };
+  if (error !== void 0) {
+    result.error = error;
+  }
+  return result;
+}
+function createReceipt(job, result, attempts, startedAt, completedAt) {
+  const durationMs = Math.max(0, completedAt.getTime() - startedAt.getTime());
+  const verification = normalizeVerificationResult(result);
+  const receipt = {
+    attempts,
+    averageBytesPerSecond: calculateBytesPerSecond2(result.bytesTransferred, durationMs),
+    bytesTransferred: result.bytesTransferred,
+    completedAt,
+    durationMs,
+    jobId: job.id,
+    operation: job.operation,
+    resumed: result.resumed ?? job.resumed ?? false,
+    startedAt,
+    transferId: job.id,
+    verified: verification?.verified ?? result.verified ?? false,
+    warnings: [...result.warnings ?? []]
+  };
+  if (job.source !== void 0) receipt.source = { ...job.source };
+  if (job.destination !== void 0) receipt.destination = { ...job.destination };
+  if (result.totalBytes !== void 0) receipt.totalBytes = result.totalBytes;
+  else if (job.totalBytes !== void 0) receipt.totalBytes = job.totalBytes;
+  if (result.checksum !== void 0) receipt.checksum = result.checksum;
+  else if (verification?.checksum !== void 0) receipt.checksum = verification.checksum;
+  if (verification !== void 0) receipt.verification = verification;
+  if (job.metadata !== void 0) receipt.metadata = { ...job.metadata };
+  return receipt;
+}
+function normalizeVerificationResult(result) {
+  const verification = result.verification;
+  if (verification !== void 0) {
+    const normalized2 = { verified: verification.verified };
+    if (verification.method !== void 0) normalized2.method = verification.method;
+    if (verification.checksum !== void 0) normalized2.checksum = verification.checksum;
+    if (verification.expectedChecksum !== void 0) {
+      normalized2.expectedChecksum = verification.expectedChecksum;
+    }
+    if (verification.actualChecksum !== void 0)
+      normalized2.actualChecksum = verification.actualChecksum;
+    if (verification.details !== void 0) normalized2.details = { ...verification.details };
+    return normalized2;
+  }
+  if (result.verified === void 0 && result.checksum === void 0) {
+    return void 0;
+  }
+  const normalized = { verified: result.verified ?? false };
+  if (result.checksum !== void 0) {
+    normalized.checksum = result.checksum;
+  }
+  return normalized;
+}
+function createTransferFailure(job, error, attempts) {
+  return new TransferError({
+    cause: error,
+    details: {
+      attempts,
+      jobId: job.id,
+      operation: job.operation
+    },
+    message: `Transfer job failed: ${job.id}`,
+    retryable: isRetryable(error)
+  });
+}
+function summarizeError(error) {
+  if (error instanceof ZeroTransferError) {
+    return {
+      code: error.code,
+      message: error.message,
+      name: error.name,
+      retryable: error.retryable
+    };
+  }
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      name: error.name
+    };
+  }
+  return {
+    message: String(error),
+    name: "Error"
+  };
+}
+function isRetryable(error) {
+  return error instanceof ZeroTransferError && error.retryable;
+}
+function calculateBytesPerSecond2(bytes, durationMs) {
+  if (durationMs <= 0) {
+    return bytes;
+  }
+  return bytes / (durationMs / 1e3);
+}
+
+// src/mft/runRoute.ts
+async function runRoute(options) {
+  const { client, route } = options;
+  if (route.enabled === false) {
+    throw new ConfigurationError({
+      details: { routeId: route.id },
+      message: `MFT route "${route.id}" is disabled`,
+      retryable: false
+    });
+  }
+  const sourceSession = await client.connect(route.source.profile);
+  let destinationSession;
+  try {
+    destinationSession = await client.connect(route.destination.profile);
+    const engine = options.engine ?? new TransferEngine();
+    const job = createRouteJob(route, sourceSession, destinationSession, options);
+    const sessions = /* @__PURE__ */ new Map([
+      ["source", sourceSession],
+      ["destination", destinationSession]
+    ]);
+    const executor = createProviderTransferExecutor({
+      resolveSession: ({ role }) => sessions.get(role)
+    });
+    return await engine.execute(job, executor, buildExecuteOptions(options));
+  } finally {
+    if (destinationSession !== void 0) {
+      await destinationSession.disconnect();
+    }
+    await sourceSession.disconnect();
+  }
+}
+function createRouteJob(route, sourceSession, destinationSession, options) {
+  const operation = route.operation ?? "copy";
+  const source = {
+    path: route.source.path,
+    provider: sourceSession.provider
+  };
+  const destination = {
+    path: route.destination.path,
+    provider: destinationSession.provider
+  };
+  const baseMetadata = { routeId: route.id };
+  if (route.name !== void 0) baseMetadata["routeName"] = route.name;
+  if (route.metadata !== void 0) Object.assign(baseMetadata, route.metadata);
+  if (options.metadata !== void 0) Object.assign(baseMetadata, options.metadata);
+  const job = {
+    destination,
+    id: options.jobId ?? defaultJobId(route, options.now),
+    operation,
+    source
+  };
+  if (Object.keys(baseMetadata).length > 0) {
+    job.metadata = baseMetadata;
+  }
+  return job;
+}
+function defaultJobId(route, now) {
+  const timestamp = (now?.() ?? /* @__PURE__ */ new Date()).getTime();
+  return `route:${route.id}:${timestamp.toString(36)}`;
+}
+function buildExecuteOptions(options) {
+  const execute = {};
+  if (options.signal !== void 0) execute.signal = options.signal;
+  if (options.retry !== void 0) execute.retry = options.retry;
+  if (options.onProgress !== void 0) execute.onProgress = options.onProgress;
+  if (options.timeout !== void 0) execute.timeout = options.timeout;
+  if (options.bandwidthLimit !== void 0) execute.bandwidthLimit = options.bandwidthLimit;
+  return execute;
+}
+
+// src/client/operations.ts
+var LOCAL_PROFILE = { host: "local", provider: "local" };
+function uploadFile(options) {
+  const { client, destination, localPath, routeId, routeName, ...rest } = options;
+  const route = buildRoute({
+    destination: { path: destination.path, profile: destination.profile },
+    id: routeId ?? `upload:${defaultRouteSuffix(localPath, destination.path)}`,
+    name: routeName,
+    operation: "upload",
+    source: { path: absolutePath(localPath), profile: LOCAL_PROFILE }
+  });
+  return runRoute({ client, route, ...rest });
+}
+function downloadFile(options) {
+  const { client, localPath, routeId, routeName, source, ...rest } = options;
+  const route = buildRoute({
+    destination: { path: absolutePath(localPath), profile: LOCAL_PROFILE },
+    id: routeId ?? `download:${defaultRouteSuffix(source.path, localPath)}`,
+    name: routeName,
+    operation: "download",
+    source: { path: source.path, profile: source.profile }
+  });
+  return runRoute({ client, route, ...rest });
+}
+function copyBetween(options) {
+  const { client, destination, routeId, routeName, source, ...rest } = options;
+  const route = buildRoute({
+    destination: { path: destination.path, profile: destination.profile },
+    id: routeId ?? `copy:${defaultRouteSuffix(source.path, destination.path)}`,
+    name: routeName,
+    operation: "copy",
+    source: { path: source.path, profile: source.profile }
+  });
+  return runRoute({ client, route, ...rest });
+}
+function buildRoute(input) {
+  const route = {
+    destination: input.destination,
+    id: input.id,
+    operation: input.operation,
+    source: input.source
+  };
+  if (input.name !== void 0) route.name = input.name;
+  return route;
+}
+function absolutePath(localPath) {
+  return (0, import_node_path.isAbsolute)(localPath) ? localPath : (0, import_node_path.resolve)(localPath);
+}
+function defaultRouteSuffix(source, destination) {
+  return `${source}->${destination}`;
+}
+
+// src/logging/redaction.ts
+var REDACTED = "[REDACTED]";
+var SENSITIVE_KEY_PATTERN = /(?:password|passphrase|privatekey|token|secret|username|user)$/i;
+var SECRET_COMMAND_PATTERN = /^(PASS|USER|ACCT)\s+(.+)$/i;
+function isSensitiveKey(key) {
+  return SENSITIVE_KEY_PATTERN.test(key.replace(/[_-]/g, ""));
+}
+function redactCommand(command) {
+  return command.replace(SECRET_COMMAND_PATTERN, (_fullMatch, commandName) => {
+    return `${commandName.toUpperCase()} ${REDACTED}`;
+  });
+}
+function redactValue(value) {
+  if (typeof value === "string") {
+    return redactCommand(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => redactValue(item));
+  }
+  if (value !== null && typeof value === "object") {
+    return redactObject(value);
+  }
+  return value;
+}
+function redactObject(input) {
+  return Object.fromEntries(
+    Object.entries(input).map(([key, value]) => {
+      if (isSensitiveKey(key)) {
+        return [key, REDACTED];
+      }
+      return [key, redactValue(value)];
+    })
+  );
+}
+
+// src/profiles/SecretSource.ts
+var import_node_buffer2 = require("buffer");
+var import_promises = require("fs/promises");
+async function resolveSecret(source, options = {}) {
+  if (isSecretValue(source)) {
+    return cloneSecretValue(source);
+  }
+  if (typeof source === "function") {
+    return cloneSecretValue(await source());
+  }
+  if (isValueSecretSource(source)) {
+    return cloneSecretValue(source.value);
+  }
+  if (isEnvSecretSource(source)) {
+    const value = (options.env ?? process.env)[source.env];
+    if (value === void 0) {
+      throw createSecretConfigurationError(
+        "Secret environment variable is not set",
+        "env",
+        source.env
+      );
+    }
+    return value;
+  }
+  if (isBase64EnvSecretSource(source)) {
+    const value = (options.env ?? process.env)[source.base64Env];
+    if (value === void 0) {
+      throw createSecretConfigurationError(
+        "Secret environment variable is not set",
+        "base64Env",
+        source.base64Env
+      );
+    }
+    return import_node_buffer2.Buffer.from(value, "base64");
+  }
+  if (isFileSecretSource(source)) {
+    const fileReader = options.readFile ?? import_promises.readFile;
+    const value = await fileReader(source.path);
+    if (source.encoding === "buffer") {
+      return import_node_buffer2.Buffer.from(value);
+    }
+    return value.toString(source.encoding ?? "utf8");
+  }
+  throw createSecretConfigurationError("Unsupported secret source", "source", "unknown");
+}
+function redactSecretSource(source) {
+  if (isSecretValue(source) || typeof source === "function") {
+    return REDACTED;
+  }
+  if (isValueSecretSource(source)) return { value: REDACTED };
+  if (isEnvSecretSource(source)) return { env: REDACTED };
+  if (isBase64EnvSecretSource(source)) return { base64Env: REDACTED };
+  if (isFileSecretSource(source)) return { encoding: source.encoding, path: REDACTED };
+  return REDACTED;
+}
+function isSecretValue(value) {
+  return typeof value === "string" || import_node_buffer2.Buffer.isBuffer(value);
+}
+function isValueSecretSource(value) {
+  return isRecord(value) && "value" in value && isSecretValue(value.value);
+}
+function isEnvSecretSource(value) {
+  return isRecord(value) && typeof value.env === "string";
+}
+function isBase64EnvSecretSource(value) {
+  return isRecord(value) && typeof value.base64Env === "string";
+}
+function isFileSecretSource(value) {
+  return isRecord(value) && typeof value.path === "string";
+}
+function isRecord(value) {
+  return typeof value === "object" && value !== null;
+}
+function cloneSecretValue(value) {
+  return import_node_buffer2.Buffer.isBuffer(value) ? import_node_buffer2.Buffer.from(value) : value;
+}
+function createSecretConfigurationError(message, sourceType, sourceName) {
+  return new ConfigurationError({
+    details: { sourceName, sourceType },
+    message,
+    retryable: false
+  });
+}
+
+// src/profiles/ProfileRedactor.ts
+function redactConnectionProfile(profile) {
+  const { logger, password, signal, ssh, tls, username, ...rest } = profile;
+  const redacted = redactObject(rest);
+  if (username !== void 0) redacted.username = redactSecretSource(username);
+  if (password !== void 0) redacted.password = redactSecretSource(password);
+  if (ssh !== void 0) redacted.ssh = redactSshProfile(ssh);
+  if (tls !== void 0) redacted.tls = redactTlsProfile(tls);
+  if (signal !== void 0) redacted.signal = "[AbortSignal]";
+  if (logger !== void 0) redacted.logger = REDACTED;
+  return redacted;
+}
+function redactSshProfile(profile) {
+  const { agent, keyboardInteractive, knownHosts, passphrase, privateKey, socketFactory, ...rest } = profile;
+  const redacted = redactObject(rest);
+  if (agent !== void 0) redacted.agent = REDACTED;
+  if (privateKey !== void 0) redacted.privateKey = redactSecretSource(privateKey);
+  if (passphrase !== void 0) redacted.passphrase = redactSecretSource(passphrase);
+  if (knownHosts !== void 0) redacted.knownHosts = redactSshKnownHostsSource(knownHosts);
+  if (keyboardInteractive !== void 0) redacted.keyboardInteractive = REDACTED;
+  if (socketFactory !== void 0) redacted.socketFactory = REDACTED;
+  return redacted;
+}
+function redactSshKnownHostsSource(source) {
+  if (Array.isArray(source)) {
+    return source.map((item) => redactSecretSource(item));
+  }
+  return redactSecretSource(source);
+}
+function redactTlsProfile(profile) {
+  const { ca, cert, checkServerIdentity, key, passphrase, pfx, ...rest } = profile;
+  const redacted = redactObject(rest);
+  if (ca !== void 0) redacted.ca = redactTlsSecretSource(ca);
+  if (cert !== void 0) redacted.cert = redactSecretSource(cert);
+  if (key !== void 0) redacted.key = redactSecretSource(key);
+  if (passphrase !== void 0) redacted.passphrase = redactSecretSource(passphrase);
+  if (pfx !== void 0) redacted.pfx = redactSecretSource(pfx);
+  if (checkServerIdentity !== void 0) redacted.checkServerIdentity = REDACTED;
+  return redacted;
+}
+function redactTlsSecretSource(source) {
+  if (Array.isArray(source)) {
+    return source.map((item) => redactSecretSource(item));
+  }
+  return redactSecretSource(source);
+}
+
+// src/diagnostics/index.ts
+function summarizeClientDiagnostics(client) {
+  const capabilities = client.getCapabilities();
+  return {
+    providers: capabilities.map((entry) => ({ capabilities: entry, id: entry.provider }))
+  };
+}
+async function runConnectionDiagnostics(options) {
+  const now = options.now ?? (() => performance.now());
+  const probeList = options.probeList !== false;
+  const listPath = options.listPath ?? "/";
+  const sampleSize = Math.max(0, options.sampleSize ?? 5);
+  const redactedProfile = redactConnectionProfile(options.profile);
+  const result = {
+    host: options.profile.host,
+    ok: false,
+    redactedProfile,
+    timings: {}
+  };
+  const connectStart = now();
+  try {
+    const session = await options.client.connect(options.profile);
+    result.timings.connectMs = now() - connectStart;
+    result.provider = session.provider;
+    result.capabilities = session.capabilities;
+    try {
+      if (probeList) {
+        const listStart = now();
+        const entries = await session.fs.list(listPath);
+        result.timings.listMs = now() - listStart;
+        result.sample = entries.slice(0, sampleSize);
+      }
+      result.ok = true;
+    } finally {
+      const disconnectStart = now();
+      await session.disconnect();
+      result.timings.disconnectMs = now() - disconnectStart;
+    }
+  } catch (error) {
+    result.error = summarizeDiagnosticError(error);
+  }
+  return result;
+}
+function summarizeDiagnosticError(error) {
+  if (error instanceof Error) {
+    const summary = { message: error.message };
+    if (error.name !== "Error") summary.name = error.name;
+    const code = error.code;
+    if (typeof code === "string") summary.code = code;
+    return summary;
+  }
+  return { message: String(error) };
+}
+
+// src/providers/classic/ftp/FtpProvider.ts
+var import_node_buffer3 = require("buffer");
+var import_node_net = require("net");
+var import_node_tls = require("tls");
+
+// src/profiles/resolveConnectionProfileSecrets.ts
+async function resolveConnectionProfileSecrets(profile, options = {}) {
+  const { password, ssh, tls, username, ...rest } = profile;
+  const resolved = { ...rest };
+  if (username !== void 0) {
+    resolved.username = await resolveSecret(username, options);
+  }
+  if (password !== void 0) {
+    resolved.password = await resolveSecret(password, options);
+  }
+  if (tls !== void 0) {
+    resolved.tls = await resolveTlsProfile(tls, options);
+  }
+  if (ssh !== void 0) {
+    resolved.ssh = await resolveSshProfile(ssh, options);
+  }
+  return resolved;
+}
+async function resolveSshProfile(profile, options) {
+  const { knownHosts, passphrase, privateKey, ...rest } = profile;
+  const resolved = { ...rest };
+  if (privateKey !== void 0) resolved.privateKey = await resolveSecret(privateKey, options);
+  if (passphrase !== void 0) resolved.passphrase = await resolveSecret(passphrase, options);
+  if (knownHosts !== void 0)
+    resolved.knownHosts = await resolveKnownHostsSource(knownHosts, options);
+  return resolved;
+}
+async function resolveKnownHostsSource(source, options) {
+  if (Array.isArray(source)) {
+    return Promise.all(source.map((item) => resolveSecret(item, options)));
+  }
+  return resolveSecret(source, options);
+}
+async function resolveTlsProfile(profile, options) {
+  const { ca, cert, key, passphrase, pfx, ...rest } = profile;
+  const resolved = { ...rest };
+  if (ca !== void 0) resolved.ca = await resolveTlsSecretSource(ca, options);
+  if (cert !== void 0) resolved.cert = await resolveSecret(cert, options);
+  if (key !== void 0) resolved.key = await resolveSecret(key, options);
+  if (passphrase !== void 0) resolved.passphrase = await resolveSecret(passphrase, options);
+  if (pfx !== void 0) resolved.pfx = await resolveSecret(pfx, options);
+  return resolved;
+}
+async function resolveTlsSecretSource(source, options) {
+  if (Array.isArray(source)) {
+    return Promise.all(source.map((item) => resolveSecret(item, options)));
+  }
+  return resolveSecret(source, options);
+}
+
+// src/utils/path.ts
+var UNSAFE_FTP_ARGUMENT_PATTERN = /[\r\n]/;
+function assertSafeFtpArgument(value, label = "path") {
+  if (UNSAFE_FTP_ARGUMENT_PATTERN.test(value)) {
+    throw new ConfigurationError({
+      message: `Unsafe FTP ${label}: CR and LF characters are not allowed`,
+      retryable: false,
+      details: {
+        label
+      }
+    });
+  }
+  return value;
+}
+function normalizeRemotePath(input) {
+  assertSafeFtpArgument(input);
+  if (input.length === 0) {
+    return ".";
+  }
+  const isAbsolute2 = input.startsWith("/");
+  const segments = [];
+  for (const segment of input.split(/[\\/]+/)) {
+    if (segment.length === 0 || segment === ".") {
+      continue;
+    }
+    if (segment === "..") {
+      if (segments.length > 0 && segments[segments.length - 1] !== "..") {
+        segments.pop();
+      } else if (!isAbsolute2) {
+        segments.push(segment);
+      }
+      continue;
+    }
+    segments.push(segment);
+  }
+  const normalized = segments.join("/");
+  if (isAbsolute2) {
+    return normalized.length > 0 ? `/${normalized}` : "/";
+  }
+  return normalized.length > 0 ? normalized : ".";
+}
+function joinRemotePath(...segments) {
+  if (segments.length === 0) {
+    return ".";
+  }
+  return normalizeRemotePath(segments.join("/"));
+}
+function basenameRemotePath(input) {
+  const normalized = normalizeRemotePath(input);
+  const parts = normalized.split("/").filter(Boolean);
+  return parts[parts.length - 1] ?? normalized;
+}
+
+// src/providers/classic/ftp/FtpListParser.ts
+var UNIX_LIST_MONTHS = new Map(
+  ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].map(
+    (month, index) => [month, index]
+  )
+);
+function parseMlsdList(input, directory = ".") {
+  return input.split(/\r?\n/).map((line) => line.trimEnd()).filter((line) => line.length > 0).map((line) => parseMlsdLine(line, directory)).filter((entry) => entry.name !== "." && entry.name !== "..");
+}
+function parseUnixList(input, directory = ".", now = /* @__PURE__ */ new Date()) {
+  return input.split(/\r?\n/).map((line) => line.trimEnd()).filter((line) => line.length > 0 && !line.toLowerCase().startsWith("total ")).map((line) => parseUnixListLine(line, directory, now)).filter((entry) => entry.name !== "." && entry.name !== "..");
+}
+function parseUnixListLine(line, directory = ".", now = /* @__PURE__ */ new Date()) {
+  const match = /^(\S{10})\s+\d+\s+(\S+)\s+(\S+)\s+(\d+)\s+([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4}|\d{1,2}:\d{2})\s+(.+)$/.exec(
+    line
+  );
+  if (match === null) {
+    throw new ParseError({
+      details: { line },
+      message: `Malformed Unix LIST line: ${line}`,
+      retryable: false
+    });
+  }
+  const [, mode = "", owner, group, sizeText, monthText, dayText, yearOrTime, rawName] = match;
+  const { name, symlinkTarget } = parseUnixListName(rawName, mode);
+  const entry = {
+    name,
+    path: joinRemotePath(directory, name),
+    permissions: { raw: mode },
+    raw: { line },
+    type: mapUnixListType(mode)
+  };
+  const modifiedAt = parseUnixListTimestamp(monthText, dayText, yearOrTime, now);
+  if (owner !== void 0) entry.owner = owner;
+  if (group !== void 0) entry.group = group;
+  if (sizeText !== void 0) entry.size = Number(sizeText);
+  if (modifiedAt !== void 0) entry.modifiedAt = modifiedAt;
+  if (symlinkTarget !== void 0) entry.symlinkTarget = symlinkTarget;
+  return entry;
+}
+function parseMlsdLine(line, directory = ".") {
+  const separatorIndex = line.indexOf(" ");
+  if (separatorIndex <= 0 || separatorIndex === line.length - 1) {
+    throw new ParseError({
+      message: `Malformed MLSD line: ${line}`,
+      retryable: false,
+      details: {
+        line
+      }
+    });
+  }
+  const factText = line.slice(0, separatorIndex);
+  const name = line.slice(separatorIndex + 1);
+  const facts = parseFacts(factText);
+  const type = mapMlsdType(facts.get("type"));
+  const modifiedAt = parseMlstTimestamp(facts.get("modify"));
+  const sizeText = facts.get("size");
+  const permissions = facts.get("perm");
+  const uniqueId = facts.get("unique");
+  const entry = {
+    name,
+    path: joinRemotePath(directory, name),
+    raw: {
+      facts: Object.fromEntries(facts),
+      line
+    },
+    type
+  };
+  if (sizeText !== void 0) entry.size = Number(sizeText);
+  if (modifiedAt !== void 0) entry.modifiedAt = modifiedAt;
+  if (permissions !== void 0) entry.permissions = { raw: permissions };
+  if (uniqueId !== void 0) entry.uniqueId = uniqueId;
+  return entry;
+}
+function parseMlstTimestamp(input) {
+  if (input === void 0) {
+    return void 0;
+  }
+  const timestampMatch = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:\.(\d{1,3}))?$/.exec(input);
+  if (timestampMatch === null) {
+    return void 0;
+  }
+  const [, year, month, day, hour, minute, second, millisecond = "0"] = timestampMatch;
+  const normalizedMillisecond = millisecond.padEnd(3, "0");
+  return new Date(
+    Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second),
+      Number(normalizedMillisecond)
+    )
+  );
+}
+function parseFacts(input) {
+  const facts = /* @__PURE__ */ new Map();
+  for (const fact of input.split(";")) {
+    if (fact.length === 0) {
+      continue;
+    }
+    const separatorIndex = fact.indexOf("=");
+    if (separatorIndex <= 0) {
+      continue;
+    }
+    facts.set(fact.slice(0, separatorIndex).toLowerCase(), fact.slice(separatorIndex + 1));
+  }
+  return facts;
+}
+function mapMlsdType(input) {
+  switch (input?.toLowerCase()) {
+    case "file":
+      return "file";
+    case "cdir":
+    case "dir":
+    case "pdir":
+      return "directory";
+    case "os.unix=slink":
+      return "symlink";
+    default:
+      return "unknown";
+  }
+}
+function mapUnixListType(mode) {
+  switch (mode[0]) {
+    case "-":
+      return "file";
+    case "d":
+      return "directory";
+    case "l":
+      return "symlink";
+    default:
+      return "unknown";
+  }
+}
+function parseUnixListTimestamp(monthText, dayText, yearOrTime, now) {
+  if (monthText === void 0 || dayText === void 0 || yearOrTime === void 0) {
+    return void 0;
+  }
+  const month = UNIX_LIST_MONTHS.get(monthText.toLowerCase());
+  const day = Number(dayText);
+  if (month === void 0 || !Number.isInteger(day) || day < 1 || day > 31) {
+    return void 0;
+  }
+  if (/^\d{4}$/.test(yearOrTime)) {
+    return new Date(Date.UTC(Number(yearOrTime), month, day));
+  }
+  const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(yearOrTime);
+  if (timeMatch === null) {
+    return void 0;
+  }
+  const [, hourText, minuteText] = timeMatch;
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  if (hour > 23 || minute > 59) {
+    return void 0;
+  }
+  return new Date(Date.UTC(now.getUTCFullYear(), month, day, hour, minute));
+}
+function parseUnixListName(rawName, mode) {
+  const name = rawName ?? "";
+  if (!mode.startsWith("l")) {
+    return { name };
+  }
+  const separator = " -> ";
+  const separatorIndex = name.indexOf(separator);
+  if (separatorIndex < 0) {
+    return { name };
+  }
+  return {
+    name: name.slice(0, separatorIndex),
+    symlinkTarget: name.slice(separatorIndex + separator.length)
+  };
+}
+
+// src/providers/classic/ftp/FtpResponseParser.ts
+var FTP_LINE_PATTERN = /^(\d{3})([ -])(.*)$/;
+var FtpResponseParser = class {
+  buffer = "";
+  pendingResponse;
+  /**
+   * Adds incoming socket data and returns any complete responses.
+   *
+   * @param chunk - Buffer or string chunk from the FTP control connection.
+   * @returns Zero or more complete parsed responses.
+   * @throws {@link ParseError} When a malformed standalone response line is received.
+   */
+  push(chunk) {
+    this.buffer += chunk.toString();
+    const rawLines = this.buffer.split(/\r?\n/);
+    this.buffer = rawLines.pop() ?? "";
+    const responses = [];
+    for (const rawLine of rawLines) {
+      const response = this.consumeLine(rawLine);
+      if (response !== void 0) {
+        responses.push(response);
+      }
+    }
+    return responses;
+  }
+  /**
+   * Clears buffered text and any incomplete multi-line response state.
+   *
+   * @returns Nothing.
+   */
+  reset() {
+    this.buffer = "";
+    this.pendingResponse = void 0;
+  }
+  /**
+   * Checks whether the parser is holding buffered or incomplete response data.
+   *
+   * @returns `true` when there is unconsumed text or an open multi-line response.
+   */
+  hasPendingResponse() {
+    return this.pendingResponse !== void 0 || this.buffer.length > 0;
+  }
+  /**
+   * Consumes one line of FTP response text.
+   *
+   * @param rawLine - Line without a trailing CRLF delimiter.
+   * @returns A complete response when the line finishes one, otherwise `undefined`.
+   * @throws {@link ParseError} When a malformed standalone line is encountered.
+   */
+  consumeLine(rawLine) {
+    const lineMatch = FTP_LINE_PATTERN.exec(rawLine);
+    if (lineMatch === null) {
+      if (this.pendingResponse !== void 0) {
+        this.pendingResponse.lines.push(rawLine);
+        this.pendingResponse.rawLines.push(rawLine);
+        return void 0;
+      }
+      if (rawLine.length === 0) {
+        return void 0;
+      }
+      throw new ParseError({
+        message: `Malformed FTP response line: ${rawLine}`,
+        retryable: false,
+        details: {
+          rawLine
+        }
+      });
+    }
+    const code = Number(lineMatch[1]);
+    const separator = lineMatch[2];
+    const message = lineMatch[3];
+    if (this.pendingResponse !== void 0) {
+      this.pendingResponse.lines.push(messageFromRawLine(rawLine, this.pendingResponse.code));
+      this.pendingResponse.rawLines.push(rawLine);
+      if (code === this.pendingResponse.code && separator === " ") {
+        const completed = this.pendingResponse;
+        this.pendingResponse = void 0;
+        return buildResponse(completed.code, completed.lines, completed.rawLines);
+      }
+      return void 0;
+    }
+    if (separator === "-") {
+      this.pendingResponse = {
+        code,
+        lines: [message],
+        rawLines: [rawLine]
+      };
+      return void 0;
+    }
+    return buildResponse(code, [message], [rawLine]);
+  }
+};
+function buildResponse(code, lines, rawLines) {
+  const status = classifyStatus(code);
+  return {
+    code,
+    message: lines.join("\n"),
+    lines,
+    raw: rawLines.join("\n"),
+    status,
+    preliminary: status === "preliminary",
+    completion: status === "completion",
+    intermediate: status === "intermediate",
+    transientFailure: status === "transientFailure",
+    permanentFailure: status === "permanentFailure"
+  };
+}
+function classifyStatus(code) {
+  if (code >= 100 && code < 200) return "preliminary";
+  if (code >= 200 && code < 300) return "completion";
+  if (code >= 300 && code < 400) return "intermediate";
+  if (code >= 400 && code < 500) return "transientFailure";
+  return "permanentFailure";
+}
+function messageFromRawLine(rawLine, code) {
+  const codeText = String(code);
+  if (rawLine.startsWith(`${codeText} `) || rawLine.startsWith(`${codeText}-`)) {
+    return rawLine.slice(4);
+  }
+  return rawLine;
+}
+
+// src/providers/classic/ftp/FtpProvider.ts
+var FTP_PROVIDER_ID = "ftp";
+var FTPS_PROVIDER_ID = "ftps";
+var DEFAULT_FTP_PORT = 21;
+var DEFAULT_FTPS_IMPLICIT_PORT = 990;
+var DEFAULT_PASSIVE_HOST_STRATEGY = "control";
+var FTP_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTP_PROVIDER_ID, [
+  "Classic FTP provider foundation with MLST/MLSD metadata, EPSV/PASV passive mode, timeout-guarded operations, and RETR/STOR streaming support"
+]);
+var FTPS_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTPS_PROVIDER_ID, [
+  "FTPS provider foundation with explicit AUTH TLS or implicit TLS, PBSZ/PROT setup, TLS profile support, MLST/MLSD metadata, EPSV/PASV passive mode, and RETR/STOR streaming support"
+]);
+function createClassicFtpCapabilities(provider, notes) {
+  return {
+    provider,
+    authentication: provider === FTPS_PROVIDER_ID ? ["anonymous", "password", "client-certificate"] : ["anonymous", "password"],
+    list: true,
+    stat: true,
+    readStream: true,
+    writeStream: true,
+    serverSideCopy: false,
+    serverSideMove: false,
+    resumeDownload: true,
+    resumeUpload: true,
+    checksum: [],
+    atomicRename: false,
+    chmod: false,
+    chown: false,
+    symlink: true,
+    metadata: ["modifiedAt", "permissions", "uniqueId"],
+    maxConcurrency: 1,
+    notes
+  };
+}
+function createFtpProviderFactory(options = {}) {
+  return {
+    id: FTP_PROVIDER_ID,
+    capabilities: FTP_PROVIDER_CAPABILITIES,
+    create: () => new FtpProvider({
+      capabilities: FTP_PROVIDER_CAPABILITIES,
+      defaultPort: options.defaultPort ?? DEFAULT_FTP_PORT,
+      passiveHostStrategy: options.passiveHostStrategy ?? DEFAULT_PASSIVE_HOST_STRATEGY,
+      providerId: FTP_PROVIDER_ID
+    })
+  };
+}
+function createFtpsProviderFactory(options = {}) {
+  const mode = options.mode ?? "explicit";
+  const defaultPort = options.defaultPort ?? (mode === "implicit" ? DEFAULT_FTPS_IMPLICIT_PORT : DEFAULT_FTP_PORT);
+  return {
+    id: FTPS_PROVIDER_ID,
+    capabilities: FTPS_PROVIDER_CAPABILITIES,
+    create: () => new FtpProvider({
+      capabilities: FTPS_PROVIDER_CAPABILITIES,
+      defaultPort,
+      passiveHostStrategy: options.passiveHostStrategy ?? DEFAULT_PASSIVE_HOST_STRATEGY,
+      providerId: FTPS_PROVIDER_ID,
+      security: {
+        dataProtection: options.dataProtection ?? "private",
+        mode
+      }
+    })
+  };
+}
+var FtpProvider = class {
+  /**
+   * Creates a provider instance for a single connection attempt.
+   *
+   * @param config - Provider id, defaults, capabilities, and optional FTPS settings.
+   */
+  constructor(config) {
+    this.config = config;
+    this.id = config.providerId;
+    this.capabilities = config.capabilities;
+  }
+  config;
+  /** Stable provider id registered in the transfer client. */
+  id;
+  /** Provider capability snapshot exposed without opening a connection. */
+  capabilities;
+  /**
+   * Opens an FTP-family transfer session from a provider-neutral connection profile.
+   *
+   * @param profile - Connection profile containing host, credentials, timeout, and optional TLS settings.
+   * @returns Connected transfer session with filesystem and transfer operations.
+   */
+  async connect(profile) {
+    const resolvedProfile = await resolveConnectionProfileSecrets(profile);
+    const port = resolvedProfile.port ?? this.config.defaultPort;
+    const connectOptions = {
+      host: resolvedProfile.host,
+      passiveHostStrategy: this.config.passiveHostStrategy,
+      port,
+      providerId: this.config.providerId
+    };
+    if (this.config.security !== void 0) {
+      const pinnedFingerprint256 = createTlsPinnedFingerprints(resolvedProfile);
+      connectOptions.security = {
+        ...this.config.security,
+        ...pinnedFingerprint256 === void 0 ? {} : { pinnedFingerprint256 },
+        tlsOptions: createTlsConnectionOptions(resolvedProfile)
+      };
+    }
+    if (resolvedProfile.signal !== void 0) {
+      connectOptions.signal = resolvedProfile.signal;
+    }
+    if (resolvedProfile.timeoutMs !== void 0) {
+      connectOptions.timeoutMs = resolvedProfile.timeoutMs;
+    }
+    const control = await FtpControlConnection.connect(connectOptions);
+    try {
+      await authenticateFtpSession(
+        control,
+        resolvedProfile.username === void 0 ? "anonymous" : secretToString(resolvedProfile.username),
+        resolvedProfile.password === void 0 ? "anonymous@" : secretToString(resolvedProfile.password),
+        resolvedProfile.host
+      );
+      return new FtpTransferSession(control, this.capabilities);
+    } catch (error) {
+      control.close();
+      throw error;
+    }
+  }
+};
+var FtpTransferSession = class {
+  /**
+   * Creates session facades over an authenticated control connection.
+   *
+   * @param control - Authenticated FTP-family control connection.
+   * @param capabilities - Capability snapshot to expose through the session.
+   */
+  constructor(control, capabilities) {
+    this.control = control;
+    this.provider = control.providerId;
+    this.capabilities = capabilities;
+    this.fs = new FtpFileSystem(control);
+    this.transfers = new FtpTransferOperations(control);
+  }
+  control;
+  /** Provider id selected for this session. */
+  provider;
+  /** Capability snapshot for this connected session. */
+  capabilities;
+  /** Remote file-system operations backed by FTP metadata/data commands. */
+  fs;
+  /** Stream-oriented provider transfer operations. */
+  transfers;
+  /** Disconnects the control connection, swallowing QUIT cleanup noise. */
+  async disconnect() {
+    try {
+      await this.control.sendCommand("QUIT");
+    } catch {
+    } finally {
+      this.control.close();
+    }
+  }
+};
+var FtpTransferOperations = class {
+  constructor(control) {
+    this.control = control;
+  }
+  control;
+  async read(request) {
+    request.throwIfAborted();
+    const remotePath = normalizeFtpPath(request.endpoint.path);
+    const range = resolveReadRange(request.range);
+    await expectCompletion(this.control, "TYPE I", remotePath);
+    const dataConnection = await openPassiveDataCommand(
+      this.control,
+      `RETR ${remotePath}`,
+      remotePath,
+      {
+        offset: range.offset
+      }
+    );
+    request.throwIfAborted();
+    const result = {
+      content: createPassiveReadSource(
+        this.control,
+        dataConnection,
+        `RETR ${remotePath}`,
+        remotePath,
+        range,
+        request
+      )
+    };
+    if (range.length !== void 0) {
+      result.totalBytes = range.length;
+    }
+    if (range.offset > 0) {
+      result.bytesRead = range.offset;
+    }
+    return result;
+  }
+  async write(request) {
+    request.throwIfAborted();
+    const remotePath = normalizeFtpPath(request.endpoint.path);
+    const offset = normalizeOptionalByteCount(request.offset, "offset", remotePath);
+    await expectCompletion(this.control, "TYPE I", remotePath);
+    const bytesTransferred = await writePassiveDataCommand(
+      this.control,
+      `STOR ${remotePath}`,
+      remotePath,
+      request,
+      offset === void 0 ? {} : { offset }
+    );
+    const result = {
+      bytesTransferred,
+      resumed: offset !== void 0 && offset > 0,
+      totalBytes: request.totalBytes ?? (offset ?? 0) + bytesTransferred,
+      verified: request.verification?.verified ?? false
+    };
+    if (request.verification !== void 0) {
+      result.verification = cloneVerification2(request.verification);
+    }
+    return result;
+  }
+};
+var FtpFileSystem = class {
+  constructor(control) {
+    this.control = control;
+  }
+  control;
+  async list(path2) {
+    const remotePath = normalizeFtpPath(path2);
+    await expectCompletion(this.control, "TYPE I", remotePath);
+    const entries = await readDirectoryEntries(this.control, remotePath);
+    return entries.sort(compareEntries);
+  }
+  async stat(path2) {
+    const remotePath = normalizeFtpPath(path2);
+    const response = await this.control.sendCommand(`MLST ${remotePath}`);
+    assertPathCommandSucceeded(response, "MLST", remotePath, this.control.providerId);
+    const factLine = response.lines.map((line) => line.trim()).find(isFtpFactLine);
+    if (factLine === void 0) {
+      throw createProtocolError(
+        "MLST",
+        `${this.control.providerId.toUpperCase()} MLST response did not include a fact line`,
+        response,
+        this.control.providerId
+      );
+    }
+    const entry = parseMlsdLine(factLine, getParentPath(remotePath) ?? "/");
+    return {
+      ...entry,
+      exists: true,
+      name: basenameRemotePath(remotePath),
+      path: remotePath
+    };
+  }
+  async remove(path2, options = {}) {
+    const remotePath = normalizeFtpPath(path2);
+    const response = await this.control.sendCommand(`DELE ${remotePath}`);
+    if (response.completion) return;
+    if (response.code === 550 && options.ignoreMissing) return;
+    assertPathCommandSucceeded(response, "DELE", remotePath, this.control.providerId);
+  }
+  async rename(from, to) {
+    const fromPath = normalizeFtpPath(from);
+    const toPath = normalizeFtpPath(to);
+    const rnfr = await this.control.sendCommand(`RNFR ${fromPath}`);
+    if (!rnfr.intermediate && !rnfr.completion) {
+      assertPathCommandSucceeded(rnfr, "RNFR", fromPath, this.control.providerId);
+    }
+    await expectCompletion(this.control, `RNTO ${toPath}`, toPath);
+  }
+  async mkdir(path2, options = {}) {
+    const remotePath = normalizeFtpPath(path2);
+    if (!options.recursive) {
+      await expectCompletion(this.control, `MKD ${remotePath}`, remotePath);
+      return;
+    }
+    const segments = remotePath.split("/").filter((s) => s.length > 0);
+    let current = "";
+    for (const segment of segments) {
+      current = `${current}/${segment}`;
+      const response = await this.control.sendCommand(`MKD ${current}`);
+      if (response.completion) continue;
+      if (response.code === 550) continue;
+      assertPathCommandSucceeded(response, "MKD", current, this.control.providerId);
+    }
+  }
+  async rmdir(path2, options = {}) {
+    const remotePath = normalizeFtpPath(path2);
+    if (options.recursive) {
+      await this.removeDirectoryRecursive(remotePath);
+      return;
+    }
+    const response = await this.control.sendCommand(`RMD ${remotePath}`);
+    if (response.completion) return;
+    if (response.code === 550 && options.ignoreMissing) return;
+    assertPathCommandSucceeded(response, "RMD", remotePath, this.control.providerId);
+  }
+  async removeDirectoryRecursive(remotePath) {
+    let entries;
+    try {
+      entries = await readDirectoryEntries(this.control, remotePath);
+    } catch (error) {
+      if (error instanceof PathNotFoundError) return;
+      throw error;
+    }
+    for (const entry of entries) {
+      if (entry.name === "." || entry.name === "..") continue;
+      const childPath = entry.path.startsWith("/") ? entry.path : normalizeFtpPath(`${remotePath.replace(/\/+$/, "")}/${entry.name}`);
+      if (entry.type === "directory") {
+        await this.removeDirectoryRecursive(childPath);
+      } else {
+        const del = await this.control.sendCommand(`DELE ${childPath}`);
+        if (!del.completion && del.code !== 550) {
+          assertPathCommandSucceeded(del, "DELE", childPath, this.control.providerId);
+        }
+      }
+    }
+    const response = await this.control.sendCommand(`RMD ${remotePath}`);
+    if (response.completion) return;
+    if (response.code === 550) return;
+    assertPathCommandSucceeded(response, "RMD", remotePath, this.control.providerId);
+  }
+};
+var FtpControlConnection = class _FtpControlConnection {
+  /**
+   * Creates a control connection around an already-open socket.
+   *
+   * @param socket - Plain TCP or TLS socket connected to the server.
+   * @param host - Host used for diagnostics and passive endpoint defaults.
+   * @param passiveHostStrategy - Host selection strategy for PASV data endpoints.
+   * @param providerId - Provider id used for errors and sessions.
+   * @param timeoutMs - Optional timeout applied to control reads.
+   * @param security - Optional FTPS settings, omitted for plain FTP.
+   */
+  constructor(socket, host, passiveHostStrategy, providerId, timeoutMs, security) {
+    this.host = host;
+    this.passiveHostStrategy = passiveHostStrategy;
+    this.providerId = providerId;
+    this.timeoutMs = timeoutMs;
+    this.security = security;
+    this.socket = socket;
+    this.attachSocket(socket);
+  }
+  host;
+  passiveHostStrategy;
+  providerId;
+  timeoutMs;
+  security;
+  parser = new FtpResponseParser();
+  responses = [];
+  waiters = [];
+  closedError;
+  socket;
+  handleSocketData = (chunk) => this.handleData(chunk);
+  handleSocketError = (error) => {
+    this.failPending(createConnectionError(this.host, error, this.providerId));
+  };
+  handleSocketClose = () => {
+    this.failPending(
+      new ConnectionError({
+        host: this.host,
+        message: `${this.providerId.toUpperCase()} control connection closed`,
+        protocol: this.providerId,
+        retryable: true
+      })
+    );
+  };
+  /** Host used for EPSV passive data connections. */
+  get passiveHost() {
+    return this.host;
+  }
+  /** Host selection strategy used for PASV data endpoints. */
+  get passiveEndpointHostStrategy() {
+    return this.passiveHostStrategy;
+  }
+  /** Timeout inherited by command waits and passive data operations. */
+  get operationTimeoutMs() {
+    return this.timeoutMs;
+  }
+  /** FTPS security settings for encrypted passive data sockets. */
+  get dataTlsSecurity() {
+    return this.security?.dataProtection === "private" ? this.security : void 0;
+  }
+  /**
+   * Opens a new control connection, reads the greeting, and negotiates FTPS when configured.
+   *
+   * @param options - Socket and provider connection options.
+   * @returns Connected control connection ready for authentication.
+   */
+  static async connect(options) {
+    const socket = createControlSocket(options);
+    const control = new _FtpControlConnection(
+      socket,
+      options.host,
+      options.passiveHostStrategy,
+      options.providerId,
+      options.timeoutMs,
+      options.security
+    );
+    try {
+      await waitForSocketConnect(
+        socket,
+        options,
+        options.security?.mode === "implicit" ? "secureConnect" : "connect"
+      );
+      if (options.security?.mode === "implicit") {
+        assertPinnedTlsCertificate(socket, options.security, options.host, options.providerId);
+      }
+      const greeting = await control.readFinalResponse({ operation: "greeting" });
+      if (!greeting.completion) {
+        throw createProtocolError(
+          "greeting",
+          `${options.providerId.toUpperCase()} server greeting was not successful`,
+          greeting,
+          options.providerId
+        );
+      }
+      if (options.security?.mode === "explicit") {
+        await negotiateExplicitFtps(control, options.security);
+      } else if (options.security?.mode === "implicit") {
+        await configureFtpsProtection(control, options.security);
+      }
+      return control;
+    } catch (error) {
+      control.close();
+      throw error;
+    }
+  }
+  /**
+   * Writes one raw FTP command line to the control socket.
+   *
+   * @param command - Command text without CRLF.
+   */
+  writeCommand(command) {
+    this.socket.write(`${command}\r
+`);
+  }
+  /**
+   * Sends a command and waits for the final non-preliminary response.
+   *
+   * @param command - Command text without CRLF.
+   * @returns Final FTP response for the command.
+   */
+  async sendCommand(command) {
+    this.writeCommand(command);
+    return this.readFinalResponse({ command, operation: "command response" });
+  }
+  /**
+   * Reads responses until a final response is reached.
+   *
+   * @param context - Timeout diagnostic context for the wait.
+   * @returns Final FTP response, skipping any preliminary 1xx replies.
+   */
+  async readFinalResponse(context = { operation: "response" }) {
+    let response = await this.readResponse(context);
+    while (response.preliminary) {
+      response = await this.readResponse(context);
+    }
+    return response;
+  }
+  /**
+   * Reads the next parsed control-channel response.
+   *
+   * @param context - Timeout diagnostic context for the wait.
+   * @returns Next parsed response from the control channel.
+   */
+  readResponse(context = { operation: "response" }) {
+    const response = this.responses.shift();
+    if (response !== void 0) {
+      return Promise.resolve(response);
+    }
+    if (this.closedError !== void 0) {
+      return Promise.reject(this.closedError);
+    }
+    return new Promise((resolve, reject) => {
+      let timeout;
+      const clearWaiterTimeout = () => {
+        if (timeout !== void 0) {
+          clearTimeout(timeout);
+        }
+      };
+      const waiter = {
+        reject(error) {
+          clearWaiterTimeout();
+          reject(error);
+        },
+        resolve(response2) {
+          clearWaiterTimeout();
+          resolve(response2);
+        }
+      };
+      this.waiters.push(waiter);
+      const timeoutMs = this.timeoutMs;
+      if (timeoutMs !== void 0) {
+        timeout = setTimeout(() => {
+          const error = createFtpTimeoutError({
+            ...context,
+            host: this.host,
+            providerId: this.providerId,
+            timeoutMs
+          });
+          this.failPending(error);
+          this.close();
+        }, timeoutMs);
+      }
+    });
+  }
+  /** Closes the current control socket. */
+  close() {
+    if (!this.socket.destroyed) {
+      this.socket.end();
+      this.socket.destroy();
+    }
+  }
+  /**
+   * Upgrades an explicit-FTPS control connection from plain TCP to TLS.
+   *
+   * @param security - Resolved FTPS security settings and TLS options.
+   */
+  async upgradeToTls(security) {
+    const plainSocket = this.socket;
+    this.detachSocket(plainSocket);
+    const tlsSocket = (0, import_node_tls.connect)({ ...security.tlsOptions, socket: plainSocket });
+    this.socket = tlsSocket;
+    this.attachSocket(tlsSocket);
+    const connectOptions = {
+      host: this.host,
+      passiveHostStrategy: this.passiveHostStrategy,
+      port: 0,
+      providerId: this.providerId
+    };
+    if (this.timeoutMs !== void 0) {
+      connectOptions.timeoutMs = this.timeoutMs;
+    }
+    await waitForSocketConnect(tlsSocket, connectOptions, "secureConnect", "TLS negotiation");
+    assertPinnedTlsCertificate(tlsSocket, security, this.host, this.providerId);
+  }
+  /**
+   * Attaches shared parser and failure handlers to the active control socket.
+   *
+   * @param socket - Socket that should feed control-channel responses.
+   */
+  attachSocket(socket) {
+    socket.on("data", this.handleSocketData);
+    socket.on("error", this.handleSocketError);
+    socket.on("close", this.handleSocketClose);
+  }
+  /**
+   * Detaches shared parser and failure handlers before replacing a control socket.
+   *
+   * @param socket - Socket being removed from the control connection.
+   */
+  detachSocket(socket) {
+    socket.off("data", this.handleSocketData);
+    socket.off("error", this.handleSocketError);
+    socket.off("close", this.handleSocketClose);
+  }
+  /**
+   * Parses inbound control-channel bytes into queued responses.
+   *
+   * @param chunk - Socket data chunk from the control channel.
+   */
+  handleData(chunk) {
+    try {
+      for (const response of this.parser.push(chunk)) {
+        this.enqueueResponse(response);
+      }
+    } catch (error) {
+      this.failPending(
+        error instanceof Error ? error : createConnectionError(this.host, error, this.providerId)
+      );
+    }
+  }
+  /**
+   * Delivers a parsed response to a waiter or queues it for the next read.
+   *
+   * @param response - Parsed FTP response.
+   */
+  enqueueResponse(response) {
+    const waiter = this.waiters.shift();
+    if (waiter === void 0) {
+      this.responses.push(response);
+      return;
+    }
+    waiter.resolve(response);
+  }
+  /**
+   * Fails outstanding waits and records the first terminal connection error.
+   *
+   * @param error - Error that closed or invalidated the control connection.
+   */
+  failPending(error) {
+    if (this.closedError !== void 0) {
+      return;
+    }
+    this.closedError = error;
+    for (const waiter of this.waiters.splice(0)) {
+      waiter.reject(error);
+    }
+  }
+};
+async function expectCompletion(control, command, path2) {
+  const response = await control.sendCommand(command);
+  assertPathCommandSucceeded(response, command, path2, control.providerId);
+}
+async function readPassiveDataCommand(control, command, path2, options = {}) {
+  const dataConnection = await openPassiveDataCommand(control, command, path2, options);
+  try {
+    const payload = await collectPassiveData(
+      dataConnection,
+      control.operationTimeoutMs,
+      path2,
+      control.providerId
+    );
+    const finalResponse = await control.readFinalResponse({
+      command,
+      operation: "data command completion",
+      path: path2
+    });
+    assertPathCommandSucceeded(finalResponse, command, path2, control.providerId);
+    return payload;
+  } catch (error) {
+    dataConnection.close();
+    throw error;
+  }
+}
+async function readDirectoryEntries(control, path2) {
+  try {
+    const payload2 = await readPassiveDataCommand(control, `MLSD ${path2}`, path2);
+    return parseMlsdList(payload2.toString("utf8"), path2);
+  } catch (error) {
+    if (!isUnsupportedFtpCommandError(error, "MLSD")) {
+      throw error;
+    }
+  }
+  const payload = await readPassiveDataCommand(control, `LIST ${path2}`, path2);
+  return parseUnixList(payload.toString("utf8"), path2);
+}
+async function openPassiveDataCommand(control, command, path2, options = {}) {
+  const offset = normalizeOptionalByteCount(options.offset, "offset", path2);
+  if (offset !== void 0 && offset > 0) {
+    await sendRestartOffset(control, offset, path2);
+  }
+  const passiveEndpoint = await openPassiveEndpoint(control, path2);
+  const dataConnection = openPassiveDataConnection(
+    passiveEndpoint,
+    control.operationTimeoutMs,
+    path2,
+    control
+  );
+  try {
+    await dataConnection.ready;
+    control.writeCommand(command);
+    const initialResponse = await control.readResponse({
+      command,
+      operation: "data command response",
+      path: path2
+    });
+    if (!initialResponse.preliminary) {
+      dataConnection.close();
+      assertPathCommandSucceeded(initialResponse, command, path2, control.providerId);
+      throw createProtocolError(
+        command,
+        `${control.providerId.toUpperCase()} data command did not open a data transfer`,
+        initialResponse,
+        control.providerId
+      );
+    }
+    return dataConnection;
+  } catch (error) {
+    dataConnection.close();
+    throw error;
+  }
+}
+async function openPassiveEndpoint(control, path2) {
+  const extendedPassiveResponse = await control.sendCommand("EPSV");
+  if (extendedPassiveResponse.completion) {
+    return parseExtendedPassiveEndpoint(
+      extendedPassiveResponse,
+      control.passiveHost,
+      control.providerId
+    );
+  }
+  if (!isExtendedPassiveUnsupported(extendedPassiveResponse)) {
+    assertPathCommandSucceeded(extendedPassiveResponse, "EPSV", path2, control.providerId);
+  }
+  const passiveResponse = await control.sendCommand("PASV");
+  assertPathCommandSucceeded(passiveResponse, "PASV", path2, control.providerId);
+  return parsePassiveEndpoint(
+    passiveResponse,
+    control.passiveHost,
+    control.passiveEndpointHostStrategy,
+    control.providerId
+  );
+}
+async function writePassiveDataCommand(control, command, path2, request, options = {}) {
+  const dataConnection = await openPassiveDataCommand(control, command, path2, options);
+  let bytesTransferred = 0;
+  const timeoutContext = {
+    host: dataConnection.endpoint.host,
+    operation: "passive data transfer",
+    path: path2,
+    providerId: control.providerId
+  };
+  try {
+    for await (const chunk of request.content) {
+      request.throwIfAborted();
+      const output = new Uint8Array(chunk);
+      await writeSocketChunk(
+        dataConnection.socket,
+        output,
+        control.operationTimeoutMs,
+        timeoutContext
+      );
+      bytesTransferred += output.byteLength;
+      request.reportProgress(bytesTransferred, request.totalBytes);
+    }
+    await endSocket(dataConnection.socket, control.operationTimeoutMs, timeoutContext);
+    const finalResponse = await control.readFinalResponse({
+      command,
+      operation: "data command completion",
+      path: path2
+    });
+    assertPathCommandSucceeded(finalResponse, command, path2, control.providerId);
+    return bytesTransferred;
+  } catch (error) {
+    dataConnection.close();
+    throw error;
+  }
+}
+async function sendRestartOffset(control, offset, path2) {
+  const response = await control.sendCommand(`REST ${offset}`);
+  if (response.completion || response.intermediate) {
+    return;
+  }
+  assertPathCommandSucceeded(response, "REST", path2, control.providerId);
+}
+function openPassiveDataConnection(endpoint, timeoutMs, path2, control) {
+  const dataSecurity = control.dataTlsSecurity;
+  const socket = dataSecurity === void 0 ? (0, import_node_net.createConnection)({ host: endpoint.host, port: endpoint.port }) : (0, import_node_tls.connect)({ ...dataSecurity.tlsOptions, host: endpoint.host, port: endpoint.port });
+  socket.on("error", () => void 0);
+  const ready = new Promise((resolve, reject) => {
+    let settled = false;
+    let timeout;
+    const readyEvent = dataSecurity === void 0 ? "connect" : "secureConnect";
+    const cleanup = () => {
+      socket.off(readyEvent, handleConnect);
+      socket.off("error", handleError);
+      if (timeout !== void 0) {
+        clearTimeout(timeout);
+      }
+    };
+    const rejectOnce = (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      socket.destroy();
+      reject(error);
+    };
+    const handleConnect = () => {
+      if (settled) {
+        return;
+      }
+      try {
+        if (dataSecurity !== void 0) {
+          assertPinnedTlsCertificate(socket, dataSecurity, endpoint.host, control.providerId);
+        }
+        settled = true;
+        cleanup();
+        resolve();
+      } catch (error) {
+        rejectOnce(
+          error instanceof Error ? error : createConnectionError(endpoint.host, error, control.providerId)
+        );
+      }
+    };
+    const handleError = (error) => {
+      rejectOnce(
+        error instanceof TimeoutError ? error : createConnectionError(endpoint.host, error, control.providerId)
+      );
+    };
+    socket.once(readyEvent, handleConnect);
+    socket.once("error", handleError);
+    if (timeoutMs !== void 0) {
+      timeout = setTimeout(
+        () => rejectOnce(
+          createFtpTimeoutError({
+            host: endpoint.host,
+            operation: "passive data connection",
+            path: path2,
+            providerId: control.providerId,
+            timeoutMs
+          })
+        ),
+        timeoutMs
+      );
+    }
+  });
+  return {
+    endpoint,
+    ready,
+    socket,
+    close() {
+      socket.destroy();
+    }
+  };
+}
+async function collectPassiveData(dataConnection, timeoutMs, path2, providerId) {
+  const chunks = [];
+  const clearIdleTimeout = setSocketTimeout(dataConnection.socket, timeoutMs, {
+    host: dataConnection.endpoint.host,
+    operation: "passive data transfer",
+    path: path2,
+    providerId
+  });
+  try {
+    for await (const chunk of dataConnection.socket) {
+      chunks.push(import_node_buffer3.Buffer.from(chunk));
+    }
+  } finally {
+    clearIdleTimeout();
+  }
+  return import_node_buffer3.Buffer.concat(chunks);
+}
+async function* createPassiveReadSource(control, dataConnection, command, path2, range, request) {
+  let bytesEmitted = 0;
+  let completed = false;
+  let clearIdleTimeout = () => void 0;
+  const closeOnAbort = () => dataConnection.close();
+  request.signal?.addEventListener("abort", closeOnAbort, { once: true });
+  try {
+    clearIdleTimeout = setSocketTimeout(dataConnection.socket, control.operationTimeoutMs, {
+      host: dataConnection.endpoint.host,
+      operation: "passive data transfer",
+      path: path2,
+      providerId: control.providerId
+    });
+    for await (const chunk of dataConnection.socket) {
+      request.throwIfAborted();
+      const buffer = import_node_buffer3.Buffer.from(chunk);
+      if (range.length === void 0) {
+        bytesEmitted += buffer.byteLength;
+        yield new Uint8Array(buffer);
+        continue;
+      }
+      const remaining = range.length - bytesEmitted;
+      if (remaining <= 0) {
+        continue;
+      }
+      const output = buffer.subarray(0, Math.min(remaining, buffer.byteLength));
+      bytesEmitted += output.byteLength;
+      if (output.byteLength > 0) {
+        yield new Uint8Array(output);
+      }
+    }
+    const finalResponse = await control.readFinalResponse({
+      command,
+      operation: "data command completion",
+      path: path2
+    });
+    assertPathCommandSucceeded(finalResponse, command, path2, control.providerId);
+    completed = true;
+  } finally {
+    clearIdleTimeout();
+    request.signal?.removeEventListener("abort", closeOnAbort);
+    if (!completed) {
+      dataConnection.close();
+    }
+  }
+}
+function writeSocketChunk(socket, chunk, timeoutMs, context) {
+  if (chunk.byteLength === 0) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const clearIdleTimeout = setSocketTimeout(socket, timeoutMs, context);
+    const handleError = (error) => {
+      clearIdleTimeout();
+      socket.off("error", handleError);
+      reject(error);
+    };
+    socket.once("error", handleError);
+    socket.write(chunk, (error) => {
+      clearIdleTimeout();
+      socket.off("error", handleError);
+      if (error != null) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+function endSocket(socket, timeoutMs, context) {
+  return new Promise((resolve, reject) => {
+    const clearIdleTimeout = setSocketTimeout(socket, timeoutMs, context);
+    const handleError = (error) => {
+      clearIdleTimeout();
+      socket.off("error", handleError);
+      reject(error);
+    };
+    socket.once("error", handleError);
+    socket.end(() => {
+      clearIdleTimeout();
+      socket.off("error", handleError);
+      resolve();
+    });
+  });
+}
+function resolveReadRange(range) {
+  if (range === void 0) {
+    return { offset: 0 };
+  }
+  const resolved = {
+    offset: normalizeByteCount(range.offset, "offset", "/")
+  };
+  if (range.length !== void 0) {
+    resolved.length = normalizeByteCount(range.length, "length", "/");
+  }
+  return resolved;
+}
+function normalizeOptionalByteCount(value, field, path2) {
+  return value === void 0 ? void 0 : normalizeByteCount(value, field, path2);
+}
+function normalizeByteCount(value, field, path2) {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new ConfigurationError({
+      details: { field, provider: FTP_PROVIDER_ID },
+      message: `FTP provider ${field} must be a non-negative number`,
+      path: path2,
+      protocol: FTP_PROVIDER_ID,
+      retryable: false
+    });
+  }
+  return Math.floor(value);
+}
+function cloneVerification2(verification) {
+  const clone = { verified: verification.verified };
+  if (verification.method !== void 0) clone.method = verification.method;
+  if (verification.checksum !== void 0) clone.checksum = verification.checksum;
+  if (verification.expectedChecksum !== void 0) {
+    clone.expectedChecksum = verification.expectedChecksum;
+  }
+  if (verification.actualChecksum !== void 0) clone.actualChecksum = verification.actualChecksum;
+  if (verification.details !== void 0) clone.details = { ...verification.details };
+  return clone;
+}
+function parsePassiveEndpoint(response, controlHost, hostStrategy, providerId) {
+  const endpointMatch = /(\d+),(\d+),(\d+),(\d+),(\d+),(\d+)/.exec(response.message);
+  if (endpointMatch === null) {
+    throw createProtocolError(
+      "PASV",
+      `${providerId.toUpperCase()} PASV response did not include a host and port`,
+      response,
+      providerId
+    );
+  }
+  const [, first2, second, third, fourth, highByte, lowByte] = endpointMatch;
+  const parts = [first2, second, third, fourth, highByte, lowByte].map((part) => Number(part));
+  if (parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    throw createProtocolError(
+      "PASV",
+      `${providerId.toUpperCase()} PASV response included an invalid host or port`,
+      response,
+      providerId
+    );
+  }
+  const advertisedHost = `${parts[0]}.${parts[1]}.${parts[2]}.${parts[3]}`;
+  return {
+    host: hostStrategy === "advertised" ? advertisedHost : controlHost,
+    port: parts[4] * 256 + parts[5]
+  };
+}
+function parseExtendedPassiveEndpoint(response, host, providerId) {
+  const endpointMatch = /\((.+)\)/.exec(response.message);
+  if (endpointMatch === null) {
+    throw createProtocolError(
+      "EPSV",
+      `${providerId.toUpperCase()} EPSV response did not include a port`,
+      response,
+      providerId
+    );
+  }
+  const endpointText = endpointMatch[1] ?? "";
+  const delimiter = endpointText[0];
+  if (delimiter === void 0) {
+    throw createProtocolError(
+      "EPSV",
+      `${providerId.toUpperCase()} EPSV response did not include a delimiter`,
+      response,
+      providerId
+    );
+  }
+  const parts = endpointText.split(delimiter);
+  const port = Number(parts[3]);
+  if (!Number.isInteger(port) || port <= 0 || port > 65535) {
+    throw createProtocolError(
+      "EPSV",
+      `${providerId.toUpperCase()} EPSV response included an invalid port`,
+      response,
+      providerId
+    );
+  }
+  return { host, port };
+}
+function isExtendedPassiveUnsupported(response) {
+  return response.code === 500 || response.code === 501 || response.code === 502 || response.code === 504 || response.code === 522;
+}
+function isUnsupportedFtpCommandError(error, commandName) {
+  return error instanceof ProtocolError && error.command?.startsWith(commandName) === true && isUnsupportedFtpCommandCode(error.ftpCode);
+}
+function isUnsupportedFtpCommandCode(code) {
+  return code === 500 || code === 501 || code === 502 || code === 504;
+}
+function createControlSocket(options) {
+  if (options.security?.mode === "implicit") {
+    return (0, import_node_tls.connect)({
+      ...options.security.tlsOptions,
+      host: options.host,
+      port: options.port
+    });
+  }
+  return (0, import_node_net.createConnection)({ host: options.host, port: options.port });
+}
+async function negotiateExplicitFtps(control, security) {
+  const authResponse = await control.sendCommand("AUTH TLS");
+  if (!authResponse.completion) {
+    throw createProtocolError(
+      "AUTH TLS",
+      "FTPS AUTH TLS negotiation failed",
+      authResponse,
+      control.providerId
+    );
+  }
+  await control.upgradeToTls(security);
+  await configureFtpsProtection(control, security);
+}
+async function configureFtpsProtection(control, security) {
+  await expectCompletion(control, "PBSZ 0", "/");
+  await expectCompletion(control, security.dataProtection === "private" ? "PROT P" : "PROT C", "/");
+}
+function createTlsConnectionOptions(profile) {
+  const tlsProfile = profile.tls;
+  const options = {
+    rejectUnauthorized: tlsProfile?.rejectUnauthorized ?? true
+  };
+  const servername = tlsProfile?.servername ?? ((0, import_node_net.isIP)(profile.host) === 0 ? profile.host : void 0);
+  if (servername !== void 0) {
+    options.servername = servername;
+  }
+  if (tlsProfile === void 0) {
+    return options;
+  }
+  if (tlsProfile.ca !== void 0) options.ca = normalizeTlsSecretValue(tlsProfile.ca);
+  if (tlsProfile.cert !== void 0) options.cert = normalizeTlsSecretValue(tlsProfile.cert);
+  if (tlsProfile.key !== void 0) options.key = normalizeTlsSecretValue(tlsProfile.key);
+  if (tlsProfile.pfx !== void 0) options.pfx = normalizeTlsSecretValue(tlsProfile.pfx);
+  if (tlsProfile.passphrase !== void 0)
+    options.passphrase = secretToString(tlsProfile.passphrase);
+  if (tlsProfile.minVersion !== void 0) options.minVersion = tlsProfile.minVersion;
+  if (tlsProfile.maxVersion !== void 0) options.maxVersion = tlsProfile.maxVersion;
+  if (tlsProfile.checkServerIdentity !== void 0) {
+    options.checkServerIdentity = tlsProfile.checkServerIdentity;
+  }
+  return options;
+}
+function createTlsPinnedFingerprints(profile) {
+  const pinnedFingerprint256 = profile.tls?.pinnedFingerprint256;
+  if (pinnedFingerprint256 === void 0) {
+    return void 0;
+  }
+  const fingerprints = Array.isArray(pinnedFingerprint256) ? pinnedFingerprint256 : [pinnedFingerprint256];
+  if (fingerprints.length === 0) {
+    throw new ConfigurationError({
+      details: { pinnedFingerprint256 },
+      message: "FTPS tls.pinnedFingerprint256 must include at least one SHA-256 fingerprint",
+      protocol: FTPS_PROVIDER_ID,
+      retryable: false
+    });
+  }
+  return fingerprints.map(normalizePinnedFingerprint256);
+}
+function normalizePinnedFingerprint256(fingerprint) {
+  const normalized = fingerprint.trim().replace(/:/g, "").toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(normalized)) {
+    throw new ConfigurationError({
+      details: { pinnedFingerprint256: fingerprint },
+      message: "FTPS tls.pinnedFingerprint256 must be a SHA-256 hex fingerprint",
+      protocol: FTPS_PROVIDER_ID,
+      retryable: false
+    });
+  }
+  return normalized;
+}
+function assertPinnedTlsCertificate(socket, security, host, providerId) {
+  const pinnedFingerprint256 = security.pinnedFingerprint256;
+  if (pinnedFingerprint256 === void 0) {
+    return;
+  }
+  if (!isTlsSocket(socket)) {
+    throw createConnectionError(
+      host,
+      new Error("FTPS certificate pinning requires a TLS socket"),
+      providerId
+    );
+  }
+  const certificate = socket.getPeerCertificate();
+  const actualFingerprint = normalizeCertificateFingerprint256(certificate);
+  if (pinnedFingerprint256.includes(actualFingerprint)) {
+    return;
+  }
+  throw createConnectionError(
+    host,
+    new Error("FTPS server certificate SHA-256 fingerprint did not match tls.pinnedFingerprint256"),
+    providerId
+  );
+}
+function isTlsSocket(socket) {
+  return typeof socket.getPeerCertificate === "function";
+}
+function normalizeCertificateFingerprint256(certificate) {
+  return certificate.fingerprint256.replace(/:/g, "").toLowerCase();
+}
+function normalizeTlsSecretValue(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => import_node_buffer3.Buffer.isBuffer(item) ? import_node_buffer3.Buffer.from(item) : item);
+  }
+  return import_node_buffer3.Buffer.isBuffer(value) ? import_node_buffer3.Buffer.from(value) : value;
+}
+async function authenticateFtpSession(control, username, password, host) {
+  const safeUsername = assertSafeFtpArgument(username, "username");
+  const safePassword = assertSafeFtpArgument(password, "password");
+  const userResponse = await control.sendCommand(`USER ${safeUsername}`);
+  if (userResponse.completion) {
+    return;
+  }
+  if (!userResponse.intermediate) {
+    throw createAuthenticationError(host, "USER", userResponse, control.providerId);
+  }
+  const passwordResponse = await control.sendCommand(`PASS ${safePassword}`);
+  if (!passwordResponse.completion) {
+    throw createAuthenticationError(host, "PASS", passwordResponse, control.providerId);
+  }
+}
+function assertPathCommandSucceeded(response, command, path2, providerId) {
+  if (response.completion) {
+    return;
+  }
+  if (response.code === 550) {
+    throw new PathNotFoundError({
+      command,
+      ftpCode: response.code,
+      message: `${providerId.toUpperCase()} path not found: ${path2}`,
+      path: path2,
+      protocol: providerId,
+      retryable: false
+    });
+  }
+  throw createProtocolError(
+    command,
+    `${providerId.toUpperCase()} command failed: ${command}`,
+    response,
+    providerId
+  );
+}
+function waitForSocketConnect(socket, options, readyEvent = "connect", operation = "connection") {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let timeout;
+    const cleanup = () => {
+      socket.off("connect", handleConnect);
+      socket.off(readyEvent, handleConnect);
+      socket.off("error", handleError);
+      options.signal?.removeEventListener("abort", handleAbort);
+      if (timeout !== void 0) {
+        clearTimeout(timeout);
+      }
+    };
+    const rejectOnce = (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      socket.destroy();
+      reject(error);
+    };
+    const handleConnect = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      resolve();
+    };
+    const handleError = (error) => rejectOnce(createConnectionError(options.host, error, options.providerId));
+    const handleAbort = () => rejectOnce(
+      new AbortError({
+        details: { operation },
+        host: options.host,
+        message: `${options.providerId.toUpperCase()} ${operation} aborted`,
+        protocol: options.providerId,
+        retryable: false
+      })
+    );
+    socket.once(readyEvent, handleConnect);
+    socket.once("error", handleError);
+    if (options.signal?.aborted === true) {
+      handleAbort();
+      return;
+    }
+    options.signal?.addEventListener("abort", handleAbort, { once: true });
+    const timeoutMs = options.timeoutMs;
+    if (timeoutMs !== void 0) {
+      timeout = setTimeout(
+        () => rejectOnce(
+          createFtpTimeoutError({
+            host: options.host,
+            operation,
+            providerId: options.providerId,
+            timeoutMs
+          })
+        ),
+        timeoutMs
+      );
+    }
+  });
+}
+function createFtpTimeoutError(input) {
+  const details = {
+    operation: input.operation,
+    timeoutMs: input.timeoutMs
+  };
+  return new TimeoutError({
+    details,
+    host: input.host,
+    message: `${input.providerId.toUpperCase()} ${input.operation} timed out after ${input.timeoutMs}ms`,
+    protocol: input.providerId,
+    retryable: true,
+    ...input.command === void 0 ? {} : { command: input.command },
+    ...input.path === void 0 ? {} : { path: input.path }
+  });
+}
+function setSocketTimeout(socket, timeoutMs, context) {
+  if (timeoutMs === void 0) {
+    return () => void 0;
+  }
+  const handleTimeout = () => {
+    socket.destroy(createFtpTimeoutError({ ...context, timeoutMs }));
+  };
+  socket.setTimeout(timeoutMs);
+  socket.once("timeout", handleTimeout);
+  return () => {
+    socket.off("timeout", handleTimeout);
+    socket.setTimeout(0);
+  };
+}
+function createAuthenticationError(host, command, response, providerId) {
+  return new AuthenticationError({
+    command,
+    ftpCode: response.code,
+    host,
+    message: `${providerId.toUpperCase()} authentication failed during ${command}`,
+    protocol: providerId,
+    retryable: false
+  });
+}
+function createConnectionError(host, cause, providerId) {
+  return new ConnectionError({
+    cause,
+    host,
+    message: `${providerId.toUpperCase()} connection failed`,
+    protocol: providerId,
+    retryable: true
+  });
+}
+function createProtocolError(command, message, response, providerId) {
+  return new ProtocolError({
+    command,
+    ftpCode: response.code,
+    message,
+    protocol: providerId,
+    retryable: response.transientFailure
+  });
+}
+function normalizeFtpPath(path2) {
+  const normalized = normalizeRemotePath(path2);
+  if (normalized === "." || normalized === "/") {
+    return "/";
+  }
+  return normalized.startsWith("/") ? normalized : `/${normalized}`;
+}
+function getParentPath(path2) {
+  if (path2 === "/") {
+    return void 0;
+  }
+  const parentEnd = path2.lastIndexOf("/");
+  return parentEnd <= 0 ? "/" : path2.slice(0, parentEnd);
+}
+function isFtpFactLine(line) {
+  return line.includes(";") && line.includes(" ");
+}
+function compareEntries(left, right) {
+  return left.path.localeCompare(right.path);
+}
+function secretToString(value) {
+  return import_node_buffer3.Buffer.isBuffer(value) ? value.toString("utf8") : value;
+}
+
+// src/providers/classic/sftp/SftpProvider.ts
+var import_node_buffer4 = require("buffer");
+var import_node_crypto = require("crypto");
+var import_ssh2 = __toESM(require("ssh2"));
+var { Client: SshClientCtor, utils } = import_ssh2.default;
+var SFTP_PROVIDER_ID = "sftp";
+var SFTP_DEFAULT_PORT = 22;
+var SFTP_PROVIDER_CAPABILITIES = {
+  provider: SFTP_PROVIDER_ID,
+  authentication: ["password", "private-key", "agent", "keyboard-interactive"],
+  list: true,
+  stat: true,
+  readStream: true,
+  writeStream: true,
+  serverSideCopy: false,
+  serverSideMove: false,
+  resumeDownload: true,
+  resumeUpload: true,
+  checksum: [],
+  atomicRename: false,
+  chmod: false,
+  chown: false,
+  symlink: true,
+  metadata: ["accessedAt", "group", "modifiedAt", "owner", "permissions"],
+  maxConcurrency: 8,
+  notes: [
+    "Initial ssh2-backed SFTP provider with password/private-key/agent authentication, metadata reads, and transfer streams"
+  ]
+};
+function createSftpProviderFactory(options = {}) {
+  validateSftpProviderOptions(options);
+  return {
+    id: SFTP_PROVIDER_ID,
+    capabilities: SFTP_PROVIDER_CAPABILITIES,
+    create: () => new SftpProvider(options)
+  };
+}
+var SftpProvider = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  id = SFTP_PROVIDER_ID;
+  capabilities = SFTP_PROVIDER_CAPABILITIES;
+  async connect(profile) {
+    const resolvedProfile = await resolveConnectionProfileSecrets(profile);
+    const username = requireTextCredential(resolvedProfile.username, "username");
+    const authentication = resolveSftpAuthentication(resolvedProfile);
+    const client = await connectSshClient(resolvedProfile, this.options, username, authentication);
+    try {
+      const sftp = await openSftpSession(client, resolvedProfile);
+      return new SftpTransferSession(client, sftp);
+    } catch (error) {
+      client.end();
+      throw mapSftpError(error, {
+        command: "SFTP",
+        host: resolvedProfile.host
+      });
+    }
+  }
+};
+var SftpTransferSession = class {
+  constructor(client, sftp) {
+    this.client = client;
+    this.sftp = sftp;
+    this.client.on("error", noop);
+    this.fs = new SftpFileSystem(sftp);
+    this.transfers = new SftpTransferOperations(sftp);
+  }
+  client;
+  sftp;
+  provider = SFTP_PROVIDER_ID;
+  capabilities = SFTP_PROVIDER_CAPABILITIES;
+  fs;
+  transfers;
+  disconnect() {
+    return Promise.resolve().then(() => {
+      this.client.end();
+    });
+  }
+  raw() {
+    return {
+      client: this.client,
+      sftp: this.sftp
+    };
+  }
+};
+var SftpTransferOperations = class {
+  constructor(sftp) {
+    this.sftp = sftp;
+  }
+  sftp;
+  async read(request) {
+    request.throwIfAborted();
+    const remotePath = normalizeSftpPath(request.endpoint.path);
+    try {
+      const stats = await readSftpStats(this.sftp, remotePath);
+      if (!stats.isFile()) {
+        throw createSftpPathNotFoundError(remotePath, `SFTP path is not a file: ${remotePath}`);
+      }
+      const range = resolveSftpReadRange(stats.size, request.range);
+      const result = {
+        content: createSftpReadSource(this.sftp, remotePath, range, request),
+        totalBytes: range.length
+      };
+      if (range.offset > 0) {
+        result.bytesRead = range.offset;
+      }
+      return result;
+    } catch (error) {
+      throw mapSftpError(error, { command: "READ", path: remotePath });
+    }
+  }
+  async write(request) {
+    request.throwIfAborted();
+    const remotePath = normalizeSftpPath(request.endpoint.path);
+    const offset = normalizeOptionalByteCount2(request.offset, "offset", remotePath);
+    try {
+      const bytesTransferred = await writeSftpContent(this.sftp, remotePath, request, offset);
+      const result = {
+        bytesTransferred,
+        resumed: offset !== void 0 && offset > 0,
+        totalBytes: request.totalBytes ?? (offset ?? 0) + bytesTransferred,
+        verified: request.verification?.verified ?? false
+      };
+      if (request.verification !== void 0) {
+        result.verification = cloneVerification3(request.verification);
+      }
+      return result;
+    } catch (error) {
+      throw mapSftpError(error, { command: "WRITE", path: remotePath });
+    }
+  }
+};
+var SftpFileSystem = class {
+  constructor(sftp) {
+    this.sftp = sftp;
+  }
+  sftp;
+  async list(path2, options = {}) {
+    throwIfAborted2(options.signal, path2, "list");
+    const remotePath = normalizeSftpPath(path2);
+    try {
+      const entries = await readSftpDirectory(this.sftp, remotePath);
+      return entries.filter((entry) => entry.filename !== "." && entry.filename !== "..").map((entry) => mapSftpDirectoryEntry(remotePath, entry)).sort(compareEntries2);
+    } catch (error) {
+      throw mapSftpError(error, { command: "READDIR", path: remotePath });
+    }
+  }
+  async stat(path2, options = {}) {
+    throwIfAborted2(options.signal, path2, "stat");
+    const remotePath = normalizeSftpPath(path2);
+    try {
+      const stats = await readSftpStats(this.sftp, remotePath);
+      return {
+        ...mapSftpStats(remotePath, basenameRemotePath(remotePath), stats),
+        exists: true
+      };
+    } catch (error) {
+      throw mapSftpError(error, { command: "LSTAT", path: remotePath });
+    }
+  }
+  async remove(path2, options = {}) {
+    throwIfAborted2(options.signal, path2, "remove");
+    const remotePath = normalizeSftpPath(path2);
+    try {
+      await sftpUnlink(this.sftp, remotePath);
+    } catch (error) {
+      const mapped = mapSftpError(error, { command: "REMOVE", path: remotePath });
+      if (options.ignoreMissing && mapped instanceof PathNotFoundError) return;
+      throw mapped;
+    }
+  }
+  async rename(from, to, options = {}) {
+    throwIfAborted2(options.signal, from, "rename");
+    const fromPath = normalizeSftpPath(from);
+    const toPath = normalizeSftpPath(to);
+    try {
+      await sftpRename(this.sftp, fromPath, toPath);
+    } catch (error) {
+      throw mapSftpError(error, { command: "RENAME", path: fromPath });
+    }
+  }
+  async mkdir(path2, options = {}) {
+    throwIfAborted2(options.signal, path2, "mkdir");
+    const remotePath = normalizeSftpPath(path2);
+    if (!options.recursive) {
+      try {
+        await sftpMkdir(this.sftp, remotePath);
+      } catch (error) {
+        throw mapSftpError(error, { command: "MKDIR", path: remotePath });
+      }
+      return;
+    }
+    const segments = remotePath.split("/").filter((s) => s.length > 0);
+    let current = "";
+    for (const segment of segments) {
+      current = `${current}/${segment}`;
+      try {
+        await sftpMkdir(this.sftp, current);
+      } catch (error) {
+        try {
+          const stats = await readSftpStats(this.sftp, current);
+          if (stats.isDirectory()) continue;
+        } catch {
+        }
+        throw mapSftpError(error, { command: "MKDIR", path: current });
+      }
+    }
+  }
+  async rmdir(path2, options = {}) {
+    throwIfAborted2(options.signal, path2, "rmdir");
+    const remotePath = normalizeSftpPath(path2);
+    if (options.recursive) {
+      await this.removeDirectoryRecursive(remotePath);
+      return;
+    }
+    try {
+      await sftpRmdir(this.sftp, remotePath);
+    } catch (error) {
+      const mapped = mapSftpError(error, { command: "RMDIR", path: remotePath });
+      if (options.ignoreMissing && mapped instanceof PathNotFoundError) return;
+      throw mapped;
+    }
+  }
+  async removeDirectoryRecursive(remotePath) {
+    let entries;
+    try {
+      entries = await readSftpDirectory(this.sftp, remotePath);
+    } catch (error) {
+      const mapped = mapSftpError(error, { command: "READDIR", path: remotePath });
+      if (mapped instanceof PathNotFoundError) return;
+      throw mapped;
+    }
+    for (const entry of entries) {
+      if (entry.filename === "." || entry.filename === "..") continue;
+      const childPath = `${remotePath.replace(/\/+$/, "")}/${entry.filename}`.replace(/\/+/g, "/");
+      const isDir = entry.attrs.isDirectory();
+      try {
+        if (isDir) {
+          await this.removeDirectoryRecursive(childPath);
+        } else {
+          await sftpUnlink(this.sftp, childPath);
+        }
+      } catch (error) {
+        throw mapSftpError(error, {
+          command: isDir ? "RMDIR" : "REMOVE",
+          path: childPath
+        });
+      }
+    }
+    try {
+      await sftpRmdir(this.sftp, remotePath);
+    } catch (error) {
+      throw mapSftpError(error, { command: "RMDIR", path: remotePath });
+    }
+  }
+};
+async function connectSshClient(profile, options, username, authentication) {
+  const client = new SshClientCtor();
+  let config;
+  try {
+    config = await createConnectConfig(profile, options, username, authentication);
+  } catch (error) {
+    client.end();
+    throw mapSftpConnectionError(error, profile.host);
+  }
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const fail = (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      client.end();
+      reject(mapSftpConnectionError(error, profile.host));
+    };
+    const handleAbort = () => {
+      fail(
+        new AbortError({
+          details: { operation: "connect" },
+          host: profile.host,
+          message: "SFTP connection was aborted",
+          protocol: "sftp",
+          retryable: false
+        })
+      );
+    };
+    const handleReady = () => {
+      settled = true;
+      cleanup();
+      resolve(client);
+    };
+    const handleTimeout = () => {
+      fail(
+        new TimeoutError({
+          details: { operation: "connect" },
+          host: profile.host,
+          message: "SFTP connection timed out",
+          protocol: "sftp",
+          retryable: true
+        })
+      );
+    };
+    const cleanup = () => {
+      client.off("ready", handleReady);
+      client.off("error", fail);
+      client.off("timeout", handleTimeout);
+      profile.signal?.removeEventListener("abort", handleAbort);
+    };
+    client.once("ready", handleReady);
+    client.once("error", fail);
+    client.once("timeout", handleTimeout);
+    if (profile.signal?.aborted === true) {
+      handleAbort();
+      return;
+    }
+    profile.signal?.addEventListener("abort", handleAbort, { once: true });
+    try {
+      client.connect(config);
+    } catch (error) {
+      fail(error);
+    }
+  });
+}
+async function createConnectConfig(profile, options, username, authentication) {
+  const config = {
+    authHandler: authentication.authHandler,
+    host: profile.host,
+    port: profile.port ?? SFTP_DEFAULT_PORT,
+    username
+  };
+  const timeoutMs = profile.timeoutMs ?? options.readyTimeoutMs;
+  if (timeoutMs !== void 0) {
+    config.readyTimeout = timeoutMs;
+    config.timeout = timeoutMs;
+  }
+  if (profile.ssh?.algorithms !== void 0) {
+    config.algorithms = profile.ssh.algorithms;
+  }
+  const socket = await createSftpSocket(profile, username);
+  if (socket !== void 0) {
+    config.sock = socket;
+  }
+  configureSftpHostKeyVerifier(config, profile, options);
+  return config;
+}
+async function createSftpSocket(profile, username) {
+  const socketFactory = profile.ssh?.socketFactory;
+  if (socketFactory === void 0) {
+    return void 0;
+  }
+  if (profile.signal?.aborted === true) {
+    throw new AbortError({
+      details: { operation: "connect" },
+      host: profile.host,
+      message: "SFTP connection was aborted",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const context = {
+    host: profile.host,
+    port: profile.port ?? SFTP_DEFAULT_PORT,
+    username
+  };
+  const socket = await socketFactory(
+    profile.signal === void 0 ? context : { ...context, signal: profile.signal }
+  );
+  if (typeof socket !== "object" || socket === null || typeof socket.pipe !== "function") {
+    throw new ConfigurationError({
+      details: { socket: typeof socket },
+      message: "Connection profile ssh.socketFactory must return a socket-like readable stream",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return socket;
+}
+function configureSftpHostKeyVerifier(config, profile, options) {
+  const policy = createSftpHostKeyPolicy(profile);
+  if (policy === void 0) {
+    if (options.hostHash !== void 0) config.hostHash = options.hostHash;
+    if (options.hostVerifier !== void 0) config.hostVerifier = options.hostVerifier;
+    return;
+  }
+  if (options.hostHash !== void 0 || options.hostVerifier !== void 0) {
+    throw new ConfigurationError({
+      details: { provider: SFTP_PROVIDER_ID },
+      message: "SFTP profile host-key policies cannot be combined with provider-level hostHash or hostVerifier options",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  config.hostVerifier = (key) => verifySftpHostKey(policy, key);
+}
+function createSftpHostKeyPolicy(profile) {
+  const knownHosts = parseKnownHosts(profile.ssh?.knownHosts);
+  const pins = normalizeHostKeyPins(profile.ssh?.pinnedHostKeySha256);
+  if (knownHosts === void 0 && pins === void 0) {
+    return void 0;
+  }
+  const policy = {
+    host: profile.host,
+    port: profile.port ?? SFTP_DEFAULT_PORT
+  };
+  if (knownHosts !== void 0) policy.knownHosts = knownHosts;
+  if (pins !== void 0) policy.pinnedHostKeySha256 = pins;
+  return policy;
+}
+function verifySftpHostKey(policy, key) {
+  if (policy.pinnedHostKeySha256 !== void 0 && !policy.pinnedHostKeySha256.has(hashHostKey(key))) {
+    return false;
+  }
+  if (policy.knownHosts !== void 0 && !matchesKnownHosts(policy, key)) {
+    return false;
+  }
+  return true;
+}
+function parseKnownHosts(source) {
+  if (source === void 0) {
+    return void 0;
+  }
+  const values = Array.isArray(source) ? source : [source];
+  const entries = [];
+  for (const value of values) {
+    const text = import_node_buffer4.Buffer.isBuffer(value) ? value.toString("utf8") : value;
+    const lines = text.split(/\r?\n/);
+    lines.forEach((line, index) => {
+      const entry = parseKnownHostsLine(line, index + 1);
+      if (entry !== void 0) {
+        entries.push(entry);
+      }
+    });
+  }
+  return entries;
+}
+function parseKnownHostsLine(line, lineNumber) {
+  const trimmed = line.trim();
+  if (trimmed.length === 0 || trimmed.startsWith("#")) {
+    return void 0;
+  }
+  const fields = trimmed.split(/\s+/);
+  const offset = fields[0]?.startsWith("@") === true ? 1 : 0;
+  const hosts = fields[offset];
+  const keyType = fields[offset + 1];
+  const keyData = fields[offset + 2];
+  if (hosts === void 0 || keyType === void 0 || keyData === void 0) {
+    throw createKnownHostsConfigurationError(lineNumber, "is malformed");
+  }
+  const key = parseKnownHostPublicKey(`${keyType} ${keyData}`, lineNumber);
+  return {
+    key,
+    patterns: hosts.split(",").filter((pattern) => pattern.length > 0)
+  };
+}
+function parseKnownHostPublicKey(value, lineNumber) {
+  const parsed = utils.parseKey(value);
+  if (parsed instanceof Error) {
+    throw createKnownHostsConfigurationError(lineNumber, parsed.message);
+  }
+  const parsedValues = Array.isArray(parsed) ? parsed : [parsed];
+  const parsedKey = parsedValues[0];
+  if (!isParsedKey(parsedKey)) {
+    throw createKnownHostsConfigurationError(lineNumber, "does not contain a public key");
+  }
+  return parsedKey;
+}
+function isParsedKey(value) {
+  return typeof value === "object" && value !== null && typeof value.getPublicSSH === "function";
+}
+function matchesKnownHosts(policy, key) {
+  return policy.knownHosts?.some((entry) => knownHostEntryMatches(entry, policy, key)) === true;
+}
+function knownHostEntryMatches(entry, policy, key) {
+  const candidates = createKnownHostCandidates(policy.host, policy.port);
+  let hostMatched = false;
+  for (const pattern of entry.patterns) {
+    const negated = pattern.startsWith("!");
+    const hostPattern = negated ? pattern.slice(1) : pattern;
+    const patternMatched = candidates.some(
+      (candidate) => knownHostPatternMatches(hostPattern, candidate)
+    );
+    if (negated && patternMatched) {
+      return false;
+    }
+    if (patternMatched) {
+      hostMatched = true;
+    }
+  }
+  return hostMatched && entry.key.getPublicSSH().equals(key);
+}
+function createKnownHostCandidates(host, port) {
+  const candidates = [host, `[${host}]:${port}`];
+  return port === SFTP_DEFAULT_PORT ? candidates : [`[${host}]:${port}`, host];
+}
+function knownHostPatternMatches(pattern, candidate) {
+  if (pattern.startsWith("|1|")) {
+    return hashedKnownHostPatternMatches(pattern, candidate);
+  }
+  return wildcardKnownHostPatternToRegExp(pattern).test(candidate);
+}
+function wildcardKnownHostPatternToRegExp(pattern) {
+  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".");
+  return new RegExp(`^${escaped}$`, "i");
+}
+function hashedKnownHostPatternMatches(pattern, candidate) {
+  const [, version, saltText, hashText] = pattern.split("|");
+  if (version !== "1" || saltText === void 0 || hashText === void 0) {
+    return false;
+  }
+  const salt = import_node_buffer4.Buffer.from(saltText, "base64");
+  const expected = import_node_buffer4.Buffer.from(hashText, "base64");
+  const actual = (0, import_node_crypto.createHmac)("sha1", salt).update(candidate).digest();
+  return expected.byteLength === actual.byteLength && (0, import_node_crypto.timingSafeEqual)(expected, actual);
+}
+function normalizeHostKeyPins(value) {
+  if (value === void 0) {
+    return void 0;
+  }
+  const pins = typeof value === "string" ? [value] : value;
+  return new Set(pins.map((pin) => normalizeHostKeyPin(pin)));
+}
+function normalizeHostKeyPin(value) {
+  const trimmed = value.trim();
+  const hex = trimmed.replace(/:/g, "");
+  if (hex.length === 64 && /^[a-f0-9]+$/i.test(hex)) {
+    return import_node_buffer4.Buffer.from(hex, "hex").toString("base64").replace(/=+$/g, "");
+  }
+  const bare = trimmed.startsWith("SHA256:") ? trimmed.slice("SHA256:".length) : trimmed;
+  return import_node_buffer4.Buffer.from(padBase642(bare), "base64").toString("base64").replace(/=+$/g, "");
+}
+function hashHostKey(key) {
+  return (0, import_node_crypto.createHash)("sha256").update(key).digest("base64").replace(/=+$/g, "");
+}
+function padBase642(value) {
+  const remainder = value.length % 4;
+  return remainder === 0 ? value : `${value}${"=".repeat(4 - remainder)}`;
+}
+function createKnownHostsConfigurationError(lineNumber, reason) {
+  return new ConfigurationError({
+    details: { lineNumber, provider: SFTP_PROVIDER_ID },
+    message: `SFTP known_hosts line ${lineNumber} ${reason}`,
+    protocol: "sftp",
+    retryable: false
+  });
+}
+function resolveSftpAuthentication(profile) {
+  const agent = profile.ssh?.agent;
+  const password = resolveOptionalTextCredential(profile.password, "password");
+  const privateKey = profile.ssh?.privateKey;
+  const passphrase = profile.ssh?.passphrase;
+  const keyboardInteractive = profile.ssh?.keyboardInteractive;
+  const username = requireTextCredential(profile.username, "username");
+  const authHandler = [];
+  if (privateKey !== void 0) {
+    const method = {
+      key: privateKey,
+      type: "publickey",
+      username
+    };
+    if (passphrase !== void 0) method.passphrase = passphrase;
+    authHandler.push(method);
+  }
+  if (password !== void 0) {
+    authHandler.push({
+      password,
+      type: "password",
+      username
+    });
+  }
+  if (agent !== void 0) {
+    authHandler.push({
+      agent,
+      type: "agent",
+      username
+    });
+  }
+  if (keyboardInteractive !== void 0) {
+    authHandler.push({
+      prompt: (name, instructions, language, prompts, finish) => {
+        handleKeyboardInteractiveChallenge(
+          {
+            instructions,
+            language,
+            name,
+            prompts
+          },
+          keyboardInteractive,
+          finish
+        );
+      },
+      type: "keyboard-interactive",
+      username
+    });
+  }
+  if (authHandler.length === 0) {
+    throw new ConfigurationError({
+      details: { provider: SFTP_PROVIDER_ID },
+      message: "SFTP profiles require a password, ssh.privateKey, ssh.agent, or ssh.keyboardInteractive",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return { authHandler };
+}
+function handleKeyboardInteractiveChallenge(challenge, handler, finish) {
+  Promise.resolve().then(() => handler(challenge)).then((answers) => finish(Array.from(answers))).catch(() => finish([]));
+}
+function openSftpSession(client, profile) {
+  return new Promise((resolve, reject) => {
+    client.sftp((error, sftp) => {
+      if (error !== void 0) {
+        reject(
+          mapSftpError(error, {
+            command: "SFTP",
+            host: profile.host
+          })
+        );
+        return;
+      }
+      resolve(sftp);
+    });
+  });
+}
+function readSftpDirectory(sftp, path2) {
+  return new Promise((resolve, reject) => {
+    sftp.readdir(path2, (error, entries) => {
+      if (error !== void 0) {
+        reject(error);
+        return;
+      }
+      resolve(entries);
+    });
+  });
+}
+function readSftpStats(sftp, path2) {
+  return new Promise((resolve, reject) => {
+    sftp.lstat(path2, (error, stats) => {
+      if (error !== void 0) {
+        reject(error);
+        return;
+      }
+      resolve(stats);
+    });
+  });
+}
+function sftpUnlink(sftp, path2) {
+  return new Promise((resolve, reject) => {
+    sftp.unlink(path2, (error) => {
+      if (error !== void 0 && error !== null) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+function sftpRename(sftp, from, to) {
+  return new Promise((resolve, reject) => {
+    sftp.rename(from, to, (error) => {
+      if (error !== void 0 && error !== null) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+function sftpMkdir(sftp, path2) {
+  return new Promise((resolve, reject) => {
+    sftp.mkdir(path2, (error) => {
+      if (error !== void 0 && error !== null) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+function sftpRmdir(sftp, path2) {
+  return new Promise((resolve, reject) => {
+    sftp.rmdir(path2, (error) => {
+      if (error !== void 0 && error !== null) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+async function* createSftpReadSource(sftp, path2, range, request) {
+  if (range.length <= 0) {
+    return;
+  }
+  const stream = sftp.createReadStream(path2, {
+    end: range.offset + range.length - 1,
+    start: range.offset
+  });
+  const closeOnAbort = () => stream.destroy();
+  request.signal?.addEventListener("abort", closeOnAbort, { once: true });
+  try {
+    for await (const chunk of stream) {
+      request.throwIfAborted();
+      yield new Uint8Array(import_node_buffer4.Buffer.from(chunk));
+    }
+  } catch (error) {
+    throw mapSftpError(error, { command: "READ", path: path2 });
+  } finally {
+    request.signal?.removeEventListener("abort", closeOnAbort);
+  }
+}
+async function writeSftpContent(sftp, path2, request, offset) {
+  const stream = createSftpWriteStream(sftp, path2, offset);
+  const closeOnAbort = () => stream.destroy();
+  let bytesTransferred = 0;
+  request.signal?.addEventListener("abort", closeOnAbort, { once: true });
+  try {
+    for await (const chunk of request.content) {
+      request.throwIfAborted();
+      await writeSftpChunk(stream, chunk);
+      bytesTransferred += chunk.byteLength;
+      request.reportProgress(bytesTransferred, request.totalBytes);
+    }
+    await endSftpWriteStream(stream);
+    return bytesTransferred;
+  } catch (error) {
+    stream.destroy();
+    throw error;
+  } finally {
+    request.signal?.removeEventListener("abort", closeOnAbort);
+  }
+}
+function createSftpWriteStream(sftp, path2, offset) {
+  if (offset === void 0) {
+    return sftp.createWriteStream(path2, { flags: "w" });
+  }
+  return sftp.createWriteStream(path2, { flags: "r+", start: offset });
+}
+function writeSftpChunk(stream, chunk) {
+  if (chunk.byteLength === 0) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      stream.off("error", handleError);
+    };
+    const handleError = (error) => {
+      cleanup();
+      reject(error);
+    };
+    stream.once("error", handleError);
+    stream.write(import_node_buffer4.Buffer.from(chunk), (error) => {
+      cleanup();
+      if (error != null) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+function endSftpWriteStream(stream) {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      stream.off("close", handleClose);
+      stream.off("error", handleError);
+    };
+    const handleClose = () => {
+      cleanup();
+      resolve();
+    };
+    const handleError = (error) => {
+      cleanup();
+      reject(error);
+    };
+    stream.once("close", handleClose);
+    stream.once("error", handleError);
+    stream.end();
+  });
+}
+function resolveSftpReadRange(size, range) {
+  if (range === void 0) {
+    return { length: size, offset: 0 };
+  }
+  const requestedOffset = normalizeByteCount2(range.offset, "offset", "/");
+  const requestedLength = range.length === void 0 ? size - Math.min(requestedOffset, size) : normalizeByteCount2(range.length, "length", "/");
+  const offset = Math.min(requestedOffset, size);
+  const length = Math.max(0, Math.min(requestedLength, size - offset));
+  return { length, offset };
+}
+function normalizeOptionalByteCount2(value, field, path2) {
+  return value === void 0 ? void 0 : normalizeByteCount2(value, field, path2);
+}
+function normalizeByteCount2(value, field, path2) {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new ConfigurationError({
+      details: { field, provider: SFTP_PROVIDER_ID },
+      message: `SFTP provider ${field} must be a non-negative number`,
+      path: path2,
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return Math.floor(value);
+}
+function cloneVerification3(verification) {
+  const clone = { verified: verification.verified };
+  if (verification.method !== void 0) clone.method = verification.method;
+  if (verification.checksum !== void 0) clone.checksum = verification.checksum;
+  if (verification.expectedChecksum !== void 0) {
+    clone.expectedChecksum = verification.expectedChecksum;
+  }
+  if (verification.actualChecksum !== void 0) clone.actualChecksum = verification.actualChecksum;
+  if (verification.details !== void 0) clone.details = { ...verification.details };
+  return clone;
+}
+function mapSftpDirectoryEntry(directory, entry) {
+  return mapSftpStats(joinRemotePath(directory, entry.filename), entry.filename, entry.attrs, {
+    longname: entry.longname
+  });
+}
+function mapSftpStats(path2, name, stats, raw = {}) {
+  const entry = {
+    group: String(stats.gid),
+    name,
+    owner: String(stats.uid),
+    path: path2,
+    permissions: { raw: formatSftpMode(stats.mode) },
+    raw: {
+      attrs: serializeSftpStats(stats),
+      ...raw
+    },
+    type: mapSftpEntryType(stats)
+  };
+  const accessedAt = sftpSecondsToDate(stats.atime);
+  const modifiedAt = sftpSecondsToDate(stats.mtime);
+  entry.size = stats.size;
+  entry.accessedAt = accessedAt;
+  entry.modifiedAt = modifiedAt;
+  return entry;
+}
+function mapSftpEntryType(stats) {
+  if (stats.isFile()) return "file";
+  if (stats.isDirectory()) return "directory";
+  if (stats.isSymbolicLink()) return "symlink";
+  return "unknown";
+}
+function serializeSftpStats(stats) {
+  return {
+    atime: stats.atime,
+    gid: stats.gid,
+    mode: stats.mode,
+    mtime: stats.mtime,
+    size: stats.size,
+    uid: stats.uid
+  };
+}
+function sftpSecondsToDate(value) {
+  return new Date(value * 1e3);
+}
+function formatSftpMode(mode) {
+  return mode.toString(8).padStart(6, "0");
+}
+function normalizeSftpPath(path2) {
+  return normalizeRemotePath(path2);
+}
+function compareEntries2(left, right) {
+  return left.path.localeCompare(right.path);
+}
+function requireTextCredential(value, field) {
+  const text = resolveOptionalTextCredential(value, field);
+  if (text === void 0) {
+    throw new ConfigurationError({
+      details: { field, provider: SFTP_PROVIDER_ID },
+      message: `SFTP profiles require a ${field}`,
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return text;
+}
+function resolveOptionalTextCredential(value, field) {
+  if (value === void 0) {
+    return void 0;
+  }
+  const text = import_node_buffer4.Buffer.isBuffer(value) ? value.toString("utf8") : value;
+  if (text.length === 0) {
+    throw new ConfigurationError({
+      details: { field, provider: SFTP_PROVIDER_ID },
+      message: `SFTP profile ${field} must be non-empty`,
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return text;
+}
+function validateSftpProviderOptions(options) {
+  if (options.readyTimeoutMs !== void 0 && (!Number.isFinite(options.readyTimeoutMs) || options.readyTimeoutMs <= 0)) {
+    throw new ConfigurationError({
+      details: { readyTimeoutMs: options.readyTimeoutMs },
+      message: "SFTP provider readyTimeoutMs must be a positive finite number",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+}
+function createSftpPathNotFoundError(path2, message) {
+  return new PathNotFoundError({
+    details: { provider: SFTP_PROVIDER_ID },
+    message,
+    path: path2,
+    protocol: "sftp",
+    retryable: false
+  });
+}
+function throwIfAborted2(signal, path2, operation) {
+  if (signal?.aborted !== true) {
+    return;
+  }
+  throw new AbortError({
+    details: { operation },
+    message: `SFTP ${operation} was aborted`,
+    path: path2,
+    protocol: "sftp",
+    retryable: false
+  });
+}
+function mapSftpConnectionError(error, host) {
+  if (error instanceof ZeroTransferError) {
+    return error;
+  }
+  if (isSftpAuthenticationError(error)) {
+    return new AuthenticationError({
+      cause: error,
+      host,
+      message: "SFTP authentication failed",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return new ConnectionError({
+    cause: error,
+    details: { originalMessage: getErrorMessage(error) },
+    host,
+    message: `SFTP connection failed: ${getErrorMessage(error)}`,
+    protocol: "sftp",
+    retryable: true
+  });
+}
+function mapSftpError(error, context) {
+  if (error instanceof ZeroTransferError) {
+    return error;
+  }
+  const sftpCode = getSftpStatusCode(error);
+  const baseDetails = createSftpErrorBase(error, context, sftpCode);
+  if (sftpCode === 2 || isMissingPathMessage(error)) {
+    return new PathNotFoundError({
+      ...baseDetails,
+      message: `SFTP path not found: ${context.path ?? "unknown"}`,
+      retryable: false
+    });
+  }
+  if (sftpCode === 3) {
+    return new PermissionDeniedError({
+      ...baseDetails,
+      message: `SFTP permission denied: ${context.path ?? context.command}`,
+      retryable: false,
+      sftpCode
+    });
+  }
+  return new ProtocolError({
+    ...baseDetails,
+    details: { originalMessage: getErrorMessage(error) },
+    message: `SFTP ${context.command} failed: ${getErrorMessage(error)}`,
+    retryable: sftpCode === 6 || sftpCode === 7
+  });
+}
+function createSftpErrorBase(error, context, sftpCode) {
+  const base = {
+    cause: error,
+    command: context.command,
+    protocol: "sftp"
+  };
+  if (context.host !== void 0) base.host = context.host;
+  if (context.path !== void 0) base.path = context.path;
+  if (sftpCode !== void 0) base.sftpCode = sftpCode;
+  return base;
+}
+function getSftpStatusCode(error) {
+  const code = isRecord2(error) ? error.code : void 0;
+  if (typeof code === "number") {
+    return code;
+  }
+  return void 0;
+}
+function isSftpAuthenticationError(error) {
+  if (!isRecord2(error)) {
+    return false;
+  }
+  const level = error.level;
+  const message = getErrorMessage(error).toLowerCase();
+  return level === "client-authentication" || message.includes("authentication");
+}
+function isMissingPathMessage(error) {
+  return /no such file|not found/i.test(getErrorMessage(error));
+}
+function getErrorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+function isRecord2(value) {
+  return typeof value === "object" && value !== null;
+}
+function noop() {
+}
+
+// src/providers/web/httpInternals.ts
+var import_node_buffer5 = require("buffer");
+function buildBaseUrl(profile, options) {
+  const protocol = options.secure ? "https:" : "http:";
+  const portSegment = profile.port !== void 0 ? `:${profile.port}` : "";
+  const path2 = options.basePath.length === 0 ? "/" : ensureLeadingSlash(options.basePath);
+  try {
+    return new URL(`${protocol}//${profile.host}${portSegment}${path2}`);
+  } catch (error) {
+    throw new ConfigurationError({
+      cause: error,
+      details: { host: profile.host, port: profile.port },
+      message: "Invalid host or basePath for HTTP-family provider",
+      retryable: false
+    });
+  }
+}
+function resolveUrl(baseUrl, remotePath) {
+  const trimmedBase = baseUrl.pathname.replace(/\/+$/, "");
+  const suffix = remotePath === "/" ? "" : remotePath;
+  const merged = new URL(baseUrl.toString());
+  merged.pathname = `${trimmedBase}${suffix}`;
+  return merged;
+}
+function ensureLeadingSlash(value) {
+  return value.startsWith("/") ? value : `/${value}`;
+}
+async function dispatchRequest(options, url, init) {
+  const headers = { ...options.headers, ...init.headers ?? {} };
+  const controller = new AbortController();
+  const upstreamSignal = init.signal ?? null;
+  if (upstreamSignal !== null) {
+    if (upstreamSignal.aborted) controller.abort(upstreamSignal.reason);
+    else upstreamSignal.addEventListener("abort", () => controller.abort(upstreamSignal.reason));
+  }
+  let timer;
+  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
+    timer = setTimeout(
+      () => controller.abort(new Error("HTTP request timed out")),
+      options.timeoutMs
+    );
+  }
+  try {
+    return await options.fetch(url.toString(), {
+      ...init,
+      headers,
+      signal: controller.signal
+    });
+  } catch (error) {
+    if (controller.signal.aborted && upstreamSignal?.aborted !== true) {
+      throw new TimeoutError({
+        cause: error,
+        details: { timeoutMs: options.timeoutMs, url: url.toString() },
+        message: `HTTP request to ${url.toString()} timed out after ${String(options.timeoutMs)}ms`,
+        retryable: true
+      });
+    }
+    throw new ConnectionError({
+      cause: error,
+      details: { url: url.toString() },
+      message: `HTTP request to ${url.toString()} failed`,
+      retryable: true
+    });
+  } finally {
+    if (timer !== void 0) clearTimeout(timer);
+  }
+}
+function parseContentRangeTotal(value) {
+  const match = /\/(\d+)\s*$/.exec(value);
+  if (match === null) return void 0;
+  const total = Number.parseInt(match[1] ?? "", 10);
+  return Number.isFinite(total) ? total : void 0;
+}
+function parseTotalBytes(response, rangeOffset) {
+  if (response.status === 206) {
+    const contentRange = response.headers.get("content-range");
+    if (contentRange !== null) {
+      const total = parseContentRangeTotal(contentRange);
+      if (total !== void 0) return total;
+    }
+  }
+  const contentLength = response.headers.get("content-length");
+  if (contentLength === null) return void 0;
+  const length = Number.parseInt(contentLength, 10);
+  if (!Number.isFinite(length) || length < 0) return void 0;
+  return rangeOffset !== void 0 && rangeOffset > 0 ? length + rangeOffset : length;
+}
+function formatRangeHeader(offset, length) {
+  if (length === void 0) return `bytes=${String(offset)}-`;
+  const end = offset + length - 1;
+  return `bytes=${String(offset)}-${String(end)}`;
+}
+function mapResponseError(response, path2) {
+  const details = { path: path2, status: response.status, statusText: response.statusText };
+  if (response.status === 401) {
+    return new AuthenticationError({
+      details,
+      message: `HTTP authentication failed for ${path2} (${String(response.status)})`,
+      retryable: false
+    });
+  }
+  if (response.status === 403) {
+    return new PermissionDeniedError({
+      details,
+      message: `HTTP access forbidden for ${path2} (${String(response.status)})`,
+      retryable: false
+    });
+  }
+  if (response.status === 404) {
+    return new PathNotFoundError({
+      details,
+      message: `HTTP path not found: ${path2}`,
+      retryable: false
+    });
+  }
+  return new ConnectionError({
+    details,
+    message: `HTTP request for ${path2} failed with status ${String(response.status)}`,
+    retryable: response.status >= 500
+  });
+}
+async function* webStreamToAsyncIterable(body) {
+  const reader = body.getReader();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value !== void 0) yield value;
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+function secretToString2(value) {
+  if (typeof value === "string") return value;
+  if (value instanceof Uint8Array || import_node_buffer5.Buffer.isBuffer(value)) {
+    return import_node_buffer5.Buffer.from(value).toString("utf8");
+  }
+  return String(value);
+}
+
+// src/providers/cloud/DropboxProvider.ts
+var DROPBOX_API_BASE = "https://api.dropboxapi.com";
+var DROPBOX_CONTENT_BASE = "https://content.dropboxapi.com";
+var DROPBOX_CHECKSUM_CAPABILITIES = ["dropbox-content-hash"];
+function createDropboxProviderFactory(options = {}) {
+  const id = options.id ?? "dropbox";
+  const fetchImpl = options.fetch ?? globalThis.fetch;
+  const apiBaseUrl = options.apiBaseUrl ?? DROPBOX_API_BASE;
+  const contentBaseUrl = options.contentBaseUrl ?? DROPBOX_CONTENT_BASE;
+  if (typeof fetchImpl !== "function") {
+    throw new ConfigurationError({
+      message: "Global fetch is unavailable; supply DropboxProviderOptions.fetch explicitly",
+      retryable: false
+    });
+  }
+  const capabilities = {
+    atomicRename: false,
+    authentication: ["token", "oauth"],
+    checksum: [...DROPBOX_CHECKSUM_CAPABILITIES],
+    chmod: false,
+    chown: false,
+    list: true,
+    maxConcurrency: 4,
+    metadata: ["modifiedAt", "uniqueId"],
+    notes: [
+      "Dropbox provider performs single-shot uploads via /2/files/upload; resumable upload sessions are not yet supported."
+    ],
+    provider: id,
+    readStream: true,
+    resumeDownload: true,
+    resumeUpload: false,
+    serverSideCopy: false,
+    serverSideMove: false,
+    stat: true,
+    symlink: false,
+    writeStream: true
+  };
+  return {
+    capabilities,
+    create: () => new DropboxProvider({
+      apiBaseUrl,
+      capabilities,
+      contentBaseUrl,
+      defaultHeaders: { ...options.defaultHeaders ?? {} },
+      fetch: fetchImpl,
+      id
+    }),
+    id
+  };
+}
+var DropboxProvider = class {
+  constructor(internals) {
+    this.internals = internals;
+    this.id = internals.id;
+    this.capabilities = internals.capabilities;
+  }
+  internals;
+  id;
+  capabilities;
+  async connect(profile) {
+    if (profile.password === void 0) {
+      throw new ConfigurationError({
+        message: "Dropbox provider requires a bearer token via profile.password",
+        retryable: false
+      });
+    }
+    const token = secretToString2(await resolveSecret(profile.password));
+    if (token === "") {
+      throw new ConfigurationError({
+        message: "Dropbox bearer token resolved to an empty string",
+        retryable: false
+      });
+    }
+    const sessionOptions = {
+      apiBaseUrl: this.internals.apiBaseUrl,
+      capabilities: this.internals.capabilities,
+      contentBaseUrl: this.internals.contentBaseUrl,
+      defaultHeaders: this.internals.defaultHeaders,
+      fetch: this.internals.fetch,
+      id: this.internals.id,
+      token
+    };
+    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
+    return new DropboxSession(sessionOptions);
+  }
+};
+var DropboxSession = class {
+  provider;
+  capabilities;
+  fs;
+  transfers;
+  constructor(options) {
+    this.provider = options.id;
+    this.capabilities = options.capabilities;
+    this.fs = new DropboxFileSystem(options);
+    this.transfers = new DropboxTransferOperations(options);
+  }
+  disconnect() {
+    return Promise.resolve();
+  }
+};
+var DropboxFileSystem = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async list(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const apiPath = toDropboxPath(normalized);
+    const entries = [];
+    let cursor;
+    do {
+      const body = cursor === void 0 ? { include_media_info: false, path: apiPath, recursive: false } : { cursor };
+      const endpoint = cursor === void 0 ? "/2/files/list_folder" : "/2/files/list_folder/continue";
+      const response = await dropboxRpc(this.options, endpoint, body);
+      const parsed = await response.json();
+      for (const raw of parsed.entries) {
+        const entry = toRemoteEntry(raw, normalized);
+        if (entry !== void 0) entries.push(entry);
+      }
+      cursor = parsed.has_more === true ? parsed.cursor : void 0;
+    } while (cursor !== void 0);
+    return entries;
+  }
+  async stat(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const apiPath = toDropboxPath(normalized);
+    const response = await dropboxRpc(this.options, "/2/files/get_metadata", {
+      include_deleted: false,
+      include_has_explicit_shared_members: false,
+      include_media_info: false,
+      path: apiPath
+    });
+    const raw = await response.json();
+    const parent = parentDir(normalized);
+    const entry = toRemoteEntry(raw, parent);
+    if (entry === void 0) {
+      throw new PathNotFoundError({
+        details: { path: normalized },
+        message: `Dropbox returned no metadata for ${normalized}`,
+        retryable: false
+      });
+    }
+    return { ...entry, exists: true };
+  }
+};
+var DropboxTransferOperations = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async read(request) {
+    request.throwIfAborted();
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const apiArg = JSON.stringify({ path: toDropboxPath(normalized) });
+    const headers = {
+      "Dropbox-API-Arg": apiArg
+    };
+    if (request.range !== void 0) {
+      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
+    }
+    const url = `${this.options.contentBaseUrl}/2/files/download`;
+    const response = await dropboxFetch(this.options, url, "POST", {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      extraHeaders: headers
+    });
+    if (!response.ok && response.status !== 206) {
+      throw mapDropboxResponseError(response, normalized, await safeReadText(response));
+    }
+    const body = response.body;
+    if (body === null) {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: `Dropbox download for ${normalized} produced no body`,
+        retryable: true
+      });
+    }
+    const result = {
+      content: webStreamToAsyncIterable(body)
+    };
+    const totalBytes = parseTotalBytes(response, request.range?.offset);
+    if (totalBytes !== void 0) result.totalBytes = totalBytes;
+    if (request.range?.offset !== void 0 && request.range.offset > 0) {
+      result.bytesRead = request.range.offset;
+    }
+    const hash = readApiResultHeader(response)?.content_hash;
+    if (typeof hash === "string" && hash.length > 0) result.checksum = hash;
+    return result;
+  }
+  async write(request) {
+    request.throwIfAborted();
+    if (request.offset !== void 0 && request.offset > 0) {
+      throw new UnsupportedFeatureError({
+        details: { offset: request.offset },
+        message: "Dropbox provider does not yet support resumable upload sessions",
+        retryable: false
+      });
+    }
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const buffered = await collectChunks(request.content);
+    const apiArg = JSON.stringify({
+      autorename: false,
+      mode: "overwrite",
+      mute: true,
+      path: toDropboxPath(normalized),
+      strict_conflict: false
+    });
+    const url = `${this.options.contentBaseUrl}/2/files/upload`;
+    const response = await dropboxFetch(this.options, url, "POST", {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      body: buffered,
+      extraHeaders: {
+        "content-type": "application/octet-stream",
+        "Dropbox-API-Arg": apiArg
+      }
+    });
+    if (!response.ok) {
+      throw mapDropboxResponseError(response, normalized, await safeReadText(response));
+    }
+    const meta = await response.json();
+    request.reportProgress(buffered.byteLength, buffered.byteLength);
+    const result = {
+      bytesTransferred: buffered.byteLength,
+      totalBytes: buffered.byteLength
+    };
+    if (typeof meta.content_hash === "string" && meta.content_hash.length > 0) {
+      result.checksum = meta.content_hash;
+    }
+    return result;
+  }
+};
+async function dropboxFetch(options, url, method, fetchOptions = {}) {
+  const headers = {
+    ...options.defaultHeaders,
+    ...fetchOptions.extraHeaders ?? {},
+    authorization: `Bearer ${options.token}`
+  };
+  const init = { headers, method };
+  if (fetchOptions.body !== void 0) {
+    init.body = fetchOptions.body;
+  }
+  const controller = new AbortController();
+  const upstream = fetchOptions.signal ?? null;
+  if (upstream !== null) {
+    if (upstream.aborted) controller.abort(upstream.reason);
+    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
+  }
+  let timer;
+  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
+    timer = setTimeout(
+      () => controller.abort(new Error("Dropbox request timed out")),
+      options.timeoutMs
+    );
+  }
+  try {
+    return await options.fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    throw new ConnectionError({
+      cause: error,
+      details: { url },
+      message: `Dropbox request to ${url} failed`,
+      retryable: true
+    });
+  } finally {
+    if (timer !== void 0) clearTimeout(timer);
+  }
+}
+async function dropboxRpc(options, endpoint, body) {
+  const url = `${options.apiBaseUrl}${endpoint}`;
+  const encoded = new TextEncoder().encode(JSON.stringify(body));
+  const response = await dropboxFetch(options, url, "POST", {
+    body: encoded,
+    extraHeaders: { "content-type": "application/json" }
+  });
+  if (!response.ok) {
+    const text = await safeReadText(response);
+    throw mapDropboxResponseError(response, endpoint, text);
+  }
+  return response;
+}
+function mapDropboxResponseError(response, contextPath, bodyText) {
+  const details = {
+    bodyText: bodyText.slice(0, 500),
+    path: contextPath,
+    status: response.status,
+    statusText: response.statusText
+  };
+  if (response.status === 401) {
+    return new AuthenticationError({
+      details,
+      message: `Dropbox authentication failed for ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 403) {
+    return new PermissionDeniedError({
+      details,
+      message: `Dropbox access forbidden for ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 409 && /not_found/.test(bodyText)) {
+    return new PathNotFoundError({
+      details,
+      message: `Dropbox path not found: ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 429) {
+    return new ConnectionError({
+      details,
+      message: `Dropbox rate limit hit for ${contextPath}`,
+      retryable: true
+    });
+  }
+  return new ConnectionError({
+    details,
+    message: `Dropbox request for ${contextPath} failed with status ${String(response.status)}`,
+    retryable: response.status >= 500
+  });
+}
+function toRemoteEntry(raw, parentPath) {
+  if (raw[".tag"] === "deleted") return void 0;
+  const displayName = raw.name;
+  const path2 = raw.path_display ?? joinDropboxPath(parentPath, displayName);
+  const entry = {
+    name: basenameRemotePath(path2),
+    path: path2,
+    raw,
+    type: raw[".tag"] === "folder" ? "directory" : "file"
+  };
+  if (raw[".tag"] === "file") {
+    const file = raw;
+    if (typeof file.size === "number") entry.size = file.size;
+    const modified = file.server_modified ?? file.client_modified;
+    if (typeof modified === "string") {
+      const parsed = new Date(modified);
+      if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
+    }
+    if (typeof file.content_hash === "string") entry.uniqueId = file.content_hash;
+    else if (typeof file.id === "string") entry.uniqueId = file.id;
+  } else if (typeof raw.id === "string") {
+    entry.uniqueId = raw.id;
+  }
+  return entry;
+}
+function toDropboxPath(normalized) {
+  if (normalized === "/" || normalized === "") return "";
+  return normalized;
+}
+function joinDropboxPath(parent, name) {
+  if (parent === "" || parent === "/") return `/${name}`;
+  return parent.endsWith("/") ? `${parent}${name}` : `${parent}/${name}`;
+}
+function parentDir(normalized) {
+  if (normalized === "/" || normalized === "") return "/";
+  const idx = normalized.lastIndexOf("/");
+  if (idx <= 0) return "/";
+  return normalized.slice(0, idx);
+}
+async function safeReadText(response) {
+  try {
+    return await response.text();
+  } catch {
+    return "";
+  }
+}
+function readApiResultHeader(response) {
+  const header = response.headers.get("dropbox-api-result");
+  if (header === null || header === "") return void 0;
+  try {
+    return JSON.parse(header);
+  } catch {
+    return void 0;
+  }
+}
+async function collectChunks(source) {
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of source) {
+    chunks.push(chunk);
+    total += chunk.byteLength;
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
+// src/providers/cloud/GoogleDriveProvider.ts
+var import_node_buffer6 = require("buffer");
+var GDRIVE_API_BASE = "https://www.googleapis.com/drive/v3";
+var GDRIVE_UPLOAD_BASE = "https://www.googleapis.com/upload/drive/v3";
+var GDRIVE_FOLDER_MIME = "application/vnd.google-apps.folder";
+var GDRIVE_CHECKSUM_CAPABILITIES = ["md5", "sha256", "crc32c"];
+var GDRIVE_FILE_FIELDS = "id,name,mimeType,size,modifiedTime,createdTime,md5Checksum,sha256Checksum,parents,trashed";
+var GDRIVE_LIST_FIELDS = `nextPageToken,files(${GDRIVE_FILE_FIELDS})`;
+function createGoogleDriveProviderFactory(options = {}) {
+  const id = options.id ?? "google-drive";
+  const fetchImpl = options.fetch ?? globalThis.fetch;
+  const apiBaseUrl = options.apiBaseUrl ?? GDRIVE_API_BASE;
+  const uploadBaseUrl = options.uploadBaseUrl ?? GDRIVE_UPLOAD_BASE;
+  const rootFolderId = options.rootFolderId ?? "root";
+  if (typeof fetchImpl !== "function") {
+    throw new ConfigurationError({
+      message: "Global fetch is unavailable; supply GoogleDriveProviderOptions.fetch explicitly",
+      retryable: false
+    });
+  }
+  const capabilities = {
+    atomicRename: false,
+    authentication: ["token", "oauth"],
+    checksum: [...GDRIVE_CHECKSUM_CAPABILITIES],
+    chmod: false,
+    chown: false,
+    list: true,
+    maxConcurrency: 4,
+    metadata: ["modifiedAt", "createdAt", "mimeType", "uniqueId"],
+    notes: [
+      "Google Drive provider performs single-shot multipart uploads via /upload/drive/v3/files; resumable upload sessions are not yet supported."
+    ],
+    provider: id,
+    readStream: true,
+    resumeDownload: true,
+    resumeUpload: false,
+    serverSideCopy: false,
+    serverSideMove: false,
+    stat: true,
+    symlink: false,
+    writeStream: true
+  };
+  return {
+    capabilities,
+    create: () => new GoogleDriveProvider({
+      apiBaseUrl,
+      capabilities,
+      defaultHeaders: { ...options.defaultHeaders ?? {} },
+      fetch: fetchImpl,
+      id,
+      rootFolderId,
+      uploadBaseUrl
+    }),
+    id
+  };
+}
+var GoogleDriveProvider = class {
+  constructor(internals) {
+    this.internals = internals;
+    this.id = internals.id;
+    this.capabilities = internals.capabilities;
+  }
+  internals;
+  id;
+  capabilities;
+  async connect(profile) {
+    if (profile.password === void 0) {
+      throw new ConfigurationError({
+        message: "Google Drive provider requires a bearer token via profile.password",
+        retryable: false
+      });
+    }
+    const token = secretToString2(await resolveSecret(profile.password));
+    if (token === "") {
+      throw new ConfigurationError({
+        message: "Google Drive bearer token resolved to an empty string",
+        retryable: false
+      });
+    }
+    const sessionOptions = {
+      apiBaseUrl: this.internals.apiBaseUrl,
+      capabilities: this.internals.capabilities,
+      defaultHeaders: this.internals.defaultHeaders,
+      fetch: this.internals.fetch,
+      id: this.internals.id,
+      rootFolderId: this.internals.rootFolderId,
+      token,
+      uploadBaseUrl: this.internals.uploadBaseUrl
+    };
+    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
+    return new GoogleDriveSession(sessionOptions);
+  }
+};
+var GoogleDriveSession = class {
+  provider;
+  capabilities;
+  fs;
+  transfers;
+  constructor(options) {
+    this.provider = options.id;
+    this.capabilities = options.capabilities;
+    const resolver = new GoogleDrivePathResolver(options);
+    this.fs = new GoogleDriveFileSystem(options, resolver);
+    this.transfers = new GoogleDriveTransferOperations(options, resolver);
+  }
+  disconnect() {
+    return Promise.resolve();
+  }
+};
+var GoogleDrivePathResolver = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  cache = /* @__PURE__ */ new Map();
+  /** Resolves an absolute remote path to the Drive file resource for that node. */
+  async resolvePath(path2) {
+    const normalized = normalizeRemotePath(path2);
+    if (normalized === "/" || normalized === "") {
+      return {
+        id: this.options.rootFolderId,
+        mimeType: GDRIVE_FOLDER_MIME,
+        name: ""
+      };
+    }
+    const cached = this.cache.get(normalized);
+    if (cached !== void 0) return cached;
+    const segments = normalized.split("/").filter((s) => s !== "");
+    let parent = {
+      id: this.options.rootFolderId,
+      mimeType: GDRIVE_FOLDER_MIME,
+      name: ""
+    };
+    let walked = "";
+    for (const segment of segments) {
+      const child = await this.findChild(parent.id, segment);
+      if (child === void 0) {
+        throw new PathNotFoundError({
+          details: { path: normalized },
+          message: `Google Drive path not found: ${normalized}`,
+          retryable: false
+        });
+      }
+      walked = `${walked}/${segment}`;
+      this.cache.set(walked, child);
+      parent = child;
+    }
+    return parent;
+  }
+  /** Resolves the parent folder id for a path; throws on missing parent. */
+  async resolveParentId(path2) {
+    const normalized = normalizeRemotePath(path2);
+    if (normalized === "/" || normalized === "") return this.options.rootFolderId;
+    const idx = normalized.lastIndexOf("/");
+    if (idx <= 0) return this.options.rootFolderId;
+    const parentPath = normalized.slice(0, idx);
+    const parent = await this.resolvePath(parentPath);
+    return parent.id;
+  }
+  async findChild(parentId, name) {
+    const q = `'${escapeDriveQ(parentId)}' in parents and name = '${escapeDriveQ(name)}' and trashed = false`;
+    const response = await driveApi(
+      this.options,
+      "GET",
+      `/files?${buildSearch({
+        fields: GDRIVE_LIST_FIELDS,
+        pageSize: "10",
+        q,
+        supportsAllDrives: "true",
+        includeItemsFromAllDrives: "true"
+      })}`
+    );
+    const parsed = await response.json();
+    return parsed.files.find((f) => f.name === name);
+  }
+};
+var GoogleDriveFileSystem = class {
+  constructor(options, resolver) {
+    this.options = options;
+    this.resolver = resolver;
+  }
+  options;
+  resolver;
+  async list(path2) {
+    const folder = await this.resolver.resolvePath(path2);
+    if (folder.mimeType !== GDRIVE_FOLDER_MIME && folder.id !== this.options.rootFolderId) {
+      throw new PathNotFoundError({
+        details: { path: path2 },
+        message: `Google Drive path is not a folder: ${path2}`,
+        retryable: false
+      });
+    }
+    const normalized = normalizeRemotePath(path2);
+    const entries = [];
+    let pageToken;
+    do {
+      const params = {
+        fields: GDRIVE_LIST_FIELDS,
+        includeItemsFromAllDrives: "true",
+        pageSize: "100",
+        q: `'${escapeDriveQ(folder.id)}' in parents and trashed = false`,
+        supportsAllDrives: "true"
+      };
+      if (pageToken !== void 0) params["pageToken"] = pageToken;
+      const response = await driveApi(this.options, "GET", `/files?${buildSearch(params)}`);
+      const parsed = await response.json();
+      for (const file of parsed.files) {
+        entries.push(toRemoteEntry2(file, normalized));
+      }
+      pageToken = parsed.nextPageToken;
+    } while (pageToken !== void 0);
+    return entries;
+  }
+  async stat(path2) {
+    const file = await this.resolver.resolvePath(path2);
+    const normalized = normalizeRemotePath(path2);
+    const parent = parentDir2(normalized);
+    const entry = toRemoteEntry2(file, parent);
+    return { ...entry, exists: true };
+  }
+};
+var GoogleDriveTransferOperations = class {
+  constructor(options, resolver) {
+    this.options = options;
+    this.resolver = resolver;
+  }
+  options;
+  resolver;
+  async read(request) {
+    request.throwIfAborted();
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const file = await this.resolver.resolvePath(normalized);
+    const headers = {};
+    if (request.range !== void 0) {
+      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
+    }
+    const params = buildSearch({ alt: "media", supportsAllDrives: "true" });
+    const response = await driveFetch(
+      this.options,
+      "GET",
+      `${this.options.apiBaseUrl}/files/${encodeURIComponent(file.id)}?${params}`,
+      {
+        ...request.signal !== void 0 ? { signal: request.signal } : {},
+        extraHeaders: headers
+      }
+    );
+    if (!response.ok && response.status !== 206) {
+      throw mapGoogleDriveResponseError(response, normalized, await safeReadText2(response));
+    }
+    const body = response.body;
+    if (body === null) {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: `Google Drive download for ${normalized} produced no body`,
+        retryable: true
+      });
+    }
+    const result = {
+      content: webStreamToAsyncIterable(body)
+    };
+    const totalBytes = parseTotalBytes(response, request.range?.offset);
+    if (totalBytes !== void 0) result.totalBytes = totalBytes;
+    if (request.range?.offset !== void 0 && request.range.offset > 0) {
+      result.bytesRead = request.range.offset;
+    }
+    if (typeof file.md5Checksum === "string" && file.md5Checksum.length > 0) {
+      result.checksum = file.md5Checksum;
+    }
+    return result;
+  }
+  async write(request) {
+    request.throwIfAborted();
+    if (request.offset !== void 0 && request.offset > 0) {
+      throw new UnsupportedFeatureError({
+        details: { offset: request.offset },
+        message: "Google Drive provider does not yet support resumable upload sessions",
+        retryable: false
+      });
+    }
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const buffered = await collectChunks2(request.content);
+    const parentId = await this.resolver.resolveParentId(normalized);
+    const name = basenameRemotePath(normalized);
+    const existing = await this.findExisting(parentId, name);
+    const metadata = { name };
+    if (existing === void 0) metadata["parents"] = [parentId];
+    const boundary = `----zt-boundary-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+    const bodyParts = [];
+    const enc = new TextEncoder();
+    bodyParts.push(
+      enc.encode(
+        `--${boundary}\r
+Content-Type: application/json; charset=UTF-8\r
+\r
+${JSON.stringify(metadata)}\r
+`
+      )
+    );
+    bodyParts.push(enc.encode(`--${boundary}\r
+Content-Type: application/octet-stream\r
+\r
+`));
+    bodyParts.push(buffered);
+    bodyParts.push(enc.encode(`\r
+--${boundary}--\r
+`));
+    const body = concatChunks(bodyParts);
+    const url = existing === void 0 ? `${this.options.uploadBaseUrl}/files?uploadType=multipart&supportsAllDrives=true&fields=${encodeURIComponent(GDRIVE_FILE_FIELDS)}` : `${this.options.uploadBaseUrl}/files/${encodeURIComponent(existing.id)}?uploadType=multipart&supportsAllDrives=true&fields=${encodeURIComponent(GDRIVE_FILE_FIELDS)}`;
+    const method = existing === void 0 ? "POST" : "PATCH";
+    const response = await driveFetch(this.options, method, url, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      body,
+      extraHeaders: { "content-type": `multipart/related; boundary=${boundary}` }
+    });
+    if (!response.ok) {
+      throw mapGoogleDriveResponseError(response, normalized, await safeReadText2(response));
+    }
+    const meta = await response.json();
+    request.reportProgress(buffered.byteLength, buffered.byteLength);
+    const result = {
+      bytesTransferred: buffered.byteLength,
+      totalBytes: buffered.byteLength
+    };
+    if (typeof meta.md5Checksum === "string" && meta.md5Checksum.length > 0) {
+      result.checksum = meta.md5Checksum;
+    }
+    return result;
+  }
+  async findExisting(parentId, name) {
+    const q = `'${escapeDriveQ(parentId)}' in parents and name = '${escapeDriveQ(name)}' and trashed = false`;
+    const response = await driveApi(
+      this.options,
+      "GET",
+      `/files?${buildSearch({
+        fields: GDRIVE_LIST_FIELDS,
+        includeItemsFromAllDrives: "true",
+        pageSize: "10",
+        q,
+        supportsAllDrives: "true"
+      })}`
+    );
+    const parsed = await response.json();
+    return parsed.files.find((f) => f.name === name);
+  }
+};
+async function driveFetch(options, method, url, fetchOptions = {}) {
+  const headers = {
+    ...options.defaultHeaders,
+    ...fetchOptions.extraHeaders ?? {},
+    authorization: `Bearer ${options.token}`
+  };
+  const init = { headers, method };
+  if (fetchOptions.body !== void 0) {
+    init.body = fetchOptions.body;
+  }
+  const controller = new AbortController();
+  const upstream = fetchOptions.signal ?? null;
+  if (upstream !== null) {
+    if (upstream.aborted) controller.abort(upstream.reason);
+    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
+  }
+  let timer;
+  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
+    timer = setTimeout(
+      () => controller.abort(new Error("Google Drive request timed out")),
+      options.timeoutMs
+    );
+  }
+  try {
+    return await options.fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    throw new ConnectionError({
+      cause: error,
+      details: { url },
+      message: `Google Drive request to ${url} failed`,
+      retryable: true
+    });
+  } finally {
+    if (timer !== void 0) clearTimeout(timer);
+  }
+}
+async function driveApi(options, method, apiPath) {
+  const url = `${options.apiBaseUrl}${apiPath}`;
+  const response = await driveFetch(options, method, url);
+  if (!response.ok) {
+    const text = await safeReadText2(response);
+    throw mapGoogleDriveResponseError(response, apiPath, text);
+  }
+  return response;
+}
+function mapGoogleDriveResponseError(response, contextPath, bodyText) {
+  const details = {
+    bodyText: bodyText.slice(0, 500),
+    path: contextPath,
+    status: response.status,
+    statusText: response.statusText
+  };
+  if (response.status === 401) {
+    return new AuthenticationError({
+      details,
+      message: `Google Drive authentication failed for ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 403) {
+    return new PermissionDeniedError({
+      details,
+      message: `Google Drive access forbidden for ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 404) {
+    return new PathNotFoundError({
+      details,
+      message: `Google Drive path not found: ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 429) {
+    return new ConnectionError({
+      details,
+      message: `Google Drive rate limit hit for ${contextPath}`,
+      retryable: true
+    });
+  }
+  return new ConnectionError({
+    details,
+    message: `Google Drive request for ${contextPath} failed with status ${String(response.status)}`,
+    retryable: response.status >= 500
+  });
+}
+function toRemoteEntry2(file, parent) {
+  const path2 = joinDrivePath(parent, file.name);
+  const entry = {
+    name: file.name,
+    path: path2,
+    raw: file,
+    type: file.mimeType === GDRIVE_FOLDER_MIME ? "directory" : "file",
+    uniqueId: file.id
+  };
+  if (typeof file.size === "string") {
+    const sized = Number(file.size);
+    if (Number.isFinite(sized)) entry.size = sized;
+  }
+  if (typeof file.modifiedTime === "string") {
+    const parsed = new Date(file.modifiedTime);
+    if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
+  }
+  if (typeof file.createdTime === "string") {
+    const parsed = new Date(file.createdTime);
+    if (!Number.isNaN(parsed.getTime())) entry.createdAt = parsed;
+  }
+  return entry;
+}
+function joinDrivePath(parent, name) {
+  if (parent === "" || parent === "/") return `/${name}`;
+  return parent.endsWith("/") ? `${parent}${name}` : `${parent}/${name}`;
+}
+function parentDir2(normalized) {
+  if (normalized === "/" || normalized === "") return "/";
+  const idx = normalized.lastIndexOf("/");
+  if (idx <= 0) return "/";
+  return normalized.slice(0, idx);
+}
+function escapeDriveQ(value) {
+  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+function buildSearch(params) {
+  const search = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) search.set(k, v);
+  return search.toString();
+}
+async function safeReadText2(response) {
+  try {
+    return await response.text();
+  } catch {
+    return "";
+  }
+}
+async function collectChunks2(source) {
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of source) {
+    chunks.push(chunk);
+    total += chunk.byteLength;
+  }
+  return concatChunks(chunks, total);
+}
+function concatChunks(chunks, totalSize) {
+  const total = totalSize ?? chunks.reduce((acc, c) => acc + c.byteLength, 0);
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
+// src/providers/cloud/OneDriveProvider.ts
+var ONEDRIVE_DRIVE_BASE = "https://graph.microsoft.com/v1.0/me/drive";
+var ONEDRIVE_CHECKSUM_CAPABILITIES = ["sha1", "sha256", "quickxorhash"];
+function createOneDriveProviderFactory(options = {}) {
+  const id = options.id ?? "one-drive";
+  const fetchImpl = options.fetch ?? globalThis.fetch;
+  const driveBaseUrl = (options.driveBaseUrl ?? ONEDRIVE_DRIVE_BASE).replace(/\/+$/u, "");
+  if (typeof fetchImpl !== "function") {
+    throw new ConfigurationError({
+      message: "Global fetch is unavailable; supply OneDriveProviderOptions.fetch explicitly",
+      retryable: false
+    });
+  }
+  const capabilities = {
+    atomicRename: false,
+    authentication: ["token", "oauth"],
+    checksum: [...ONEDRIVE_CHECKSUM_CAPABILITIES],
+    chmod: false,
+    chown: false,
+    list: true,
+    maxConcurrency: 4,
+    metadata: ["modifiedAt", "createdAt", "uniqueId"],
+    notes: [
+      "OneDrive provider performs single-shot uploads via PUT /content; resumable upload sessions are not yet supported."
+    ],
+    provider: id,
+    readStream: true,
+    resumeDownload: true,
+    resumeUpload: false,
+    serverSideCopy: false,
+    serverSideMove: false,
+    stat: true,
+    symlink: false,
+    writeStream: true
+  };
+  return {
+    capabilities,
+    create: () => new OneDriveProvider({
+      capabilities,
+      defaultHeaders: { ...options.defaultHeaders ?? {} },
+      driveBaseUrl,
+      fetch: fetchImpl,
+      id
+    }),
+    id
+  };
+}
+var OneDriveProvider = class {
+  constructor(internals) {
+    this.internals = internals;
+    this.id = internals.id;
+    this.capabilities = internals.capabilities;
+  }
+  internals;
+  id;
+  capabilities;
+  async connect(profile) {
+    if (profile.password === void 0) {
+      throw new ConfigurationError({
+        message: "OneDrive provider requires a bearer token via profile.password",
+        retryable: false
+      });
+    }
+    const token = secretToString2(await resolveSecret(profile.password));
+    if (token === "") {
+      throw new ConfigurationError({
+        message: "OneDrive bearer token resolved to an empty string",
+        retryable: false
+      });
+    }
+    const sessionOptions = {
+      capabilities: this.internals.capabilities,
+      defaultHeaders: this.internals.defaultHeaders,
+      driveBaseUrl: this.internals.driveBaseUrl,
+      fetch: this.internals.fetch,
+      id: this.internals.id,
+      token
+    };
+    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
+    return new OneDriveSession(sessionOptions);
+  }
+};
+var OneDriveSession = class {
+  provider;
+  capabilities;
+  fs;
+  transfers;
+  constructor(options) {
+    this.provider = options.id;
+    this.capabilities = options.capabilities;
+    this.fs = new OneDriveFileSystem(options);
+    this.transfers = new OneDriveTransferOperations(options);
+  }
+  disconnect() {
+    return Promise.resolve();
+  }
+};
+var OneDriveFileSystem = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async list(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const initial = `${this.options.driveBaseUrl}${itemChildrenSegment(normalized)}`;
+    const entries = [];
+    let nextUrl = initial;
+    while (nextUrl !== void 0) {
+      const response = await graphFetch(this.options, "GET", nextUrl);
+      if (!response.ok) {
+        throw mapOneDriveResponseError(response, normalized, await safeReadText3(response));
+      }
+      const parsed = await response.json();
+      for (const item of parsed.value) {
+        entries.push(toRemoteEntry3(item, normalized));
+      }
+      nextUrl = parsed["@odata.nextLink"];
+    }
+    return entries;
+  }
+  async stat(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const url = `${this.options.driveBaseUrl}${itemSegment(normalized)}`;
+    const response = await graphFetch(this.options, "GET", url);
+    if (!response.ok) {
+      throw mapOneDriveResponseError(response, normalized, await safeReadText3(response));
+    }
+    const item = await response.json();
+    const parent = parentDir3(normalized);
+    const entry = toRemoteEntry3(item, parent);
+    return { ...entry, exists: true };
+  }
+};
+var OneDriveTransferOperations = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async read(request) {
+    request.throwIfAborted();
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const url = `${this.options.driveBaseUrl}${itemSegment(normalized)}/content`;
+    const headers = {};
+    if (request.range !== void 0) {
+      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
+    }
+    const meta = await this.fetchItem(normalized);
+    const response = await graphFetch(this.options, "GET", url, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      extraHeaders: headers
+    });
+    if (!response.ok && response.status !== 206) {
+      throw mapOneDriveResponseError(response, normalized, await safeReadText3(response));
+    }
+    const body = response.body;
+    if (body === null) {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: `OneDrive download for ${normalized} produced no body`,
+        retryable: true
+      });
+    }
+    const result = {
+      content: webStreamToAsyncIterable(body)
+    };
+    const totalBytes = parseTotalBytes(response, request.range?.offset);
+    if (totalBytes !== void 0) result.totalBytes = totalBytes;
+    if (request.range?.offset !== void 0 && request.range.offset > 0) {
+      result.bytesRead = request.range.offset;
+    }
+    const checksum = preferHash(meta.file?.hashes);
+    if (checksum !== void 0) result.checksum = checksum;
+    return result;
+  }
+  async write(request) {
+    request.throwIfAborted();
+    if (request.offset !== void 0 && request.offset > 0) {
+      throw new UnsupportedFeatureError({
+        details: { offset: request.offset },
+        message: "OneDrive provider does not yet support resumable upload sessions",
+        retryable: false
+      });
+    }
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const buffered = await collectChunks3(request.content);
+    const url = `${this.options.driveBaseUrl}${itemSegment(normalized)}/content`;
+    const response = await graphFetch(this.options, "PUT", url, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      body: buffered,
+      extraHeaders: { "content-type": "application/octet-stream" }
+    });
+    if (!response.ok) {
+      throw mapOneDriveResponseError(response, normalized, await safeReadText3(response));
+    }
+    const item = await response.json();
+    request.reportProgress(buffered.byteLength, buffered.byteLength);
+    const result = {
+      bytesTransferred: buffered.byteLength,
+      totalBytes: buffered.byteLength
+    };
+    const checksum = preferHash(item.file?.hashes);
+    if (checksum !== void 0) result.checksum = checksum;
+    return result;
+  }
+  async fetchItem(normalized) {
+    const url = `${this.options.driveBaseUrl}${itemSegment(normalized)}`;
+    const response = await graphFetch(this.options, "GET", url);
+    if (!response.ok) {
+      throw mapOneDriveResponseError(response, normalized, await safeReadText3(response));
+    }
+    return await response.json();
+  }
+};
+async function graphFetch(options, method, url, fetchOptions = {}) {
+  const headers = {
+    accept: "application/json",
+    ...options.defaultHeaders,
+    ...fetchOptions.extraHeaders ?? {},
+    authorization: `Bearer ${options.token}`
+  };
+  const init = { headers, method };
+  if (fetchOptions.body !== void 0) {
+    init.body = fetchOptions.body;
+  }
+  const controller = new AbortController();
+  const upstream = fetchOptions.signal ?? null;
+  if (upstream !== null) {
+    if (upstream.aborted) controller.abort(upstream.reason);
+    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
+  }
+  let timer;
+  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
+    timer = setTimeout(
+      () => controller.abort(new Error("OneDrive request timed out")),
+      options.timeoutMs
+    );
+  }
+  try {
+    return await options.fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    throw new ConnectionError({
+      cause: error,
+      details: { url },
+      message: `OneDrive request to ${url} failed`,
+      retryable: true
+    });
+  } finally {
+    if (timer !== void 0) clearTimeout(timer);
+  }
+}
+function mapOneDriveResponseError(response, contextPath, bodyText) {
+  const details = {
+    bodyText: bodyText.slice(0, 500),
+    path: contextPath,
+    status: response.status,
+    statusText: response.statusText
+  };
+  if (response.status === 401) {
+    return new AuthenticationError({
+      details,
+      message: `OneDrive authentication failed for ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 403) {
+    return new PermissionDeniedError({
+      details,
+      message: `OneDrive access forbidden for ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 404) {
+    return new PathNotFoundError({
+      details,
+      message: `OneDrive path not found: ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 429) {
+    return new ConnectionError({
+      details,
+      message: `OneDrive rate limit hit for ${contextPath}`,
+      retryable: true
+    });
+  }
+  return new ConnectionError({
+    details,
+    message: `OneDrive request for ${contextPath} failed with status ${String(response.status)}`,
+    retryable: response.status >= 500
+  });
+}
+function toRemoteEntry3(item, parent) {
+  const path2 = joinPath(parent, item.name);
+  const entry = {
+    name: item.name,
+    path: path2,
+    raw: item,
+    type: item.folder !== void 0 ? "directory" : "file",
+    uniqueId: item.id
+  };
+  if (typeof item.size === "number") entry.size = item.size;
+  if (typeof item.lastModifiedDateTime === "string") {
+    const parsed = new Date(item.lastModifiedDateTime);
+    if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
+  }
+  if (typeof item.createdDateTime === "string") {
+    const parsed = new Date(item.createdDateTime);
+    if (!Number.isNaN(parsed.getTime())) entry.createdAt = parsed;
+  }
+  return entry;
+}
+function preferHash(hashes) {
+  if (hashes === void 0) return void 0;
+  if (typeof hashes.sha256Hash === "string" && hashes.sha256Hash.length > 0) {
+    return hashes.sha256Hash;
+  }
+  if (typeof hashes.sha1Hash === "string" && hashes.sha1Hash.length > 0) {
+    return hashes.sha1Hash;
+  }
+  if (typeof hashes.quickXorHash === "string" && hashes.quickXorHash.length > 0) {
+    return hashes.quickXorHash;
+  }
+  return void 0;
+}
+function itemSegment(normalized) {
+  if (normalized === "/" || normalized === "") return "/root";
+  const trimmed = normalized.replace(/^\/+/u, "");
+  return `/root:/${encodeDrivePath(trimmed)}:`;
+}
+function itemChildrenSegment(normalized) {
+  if (normalized === "/" || normalized === "") return "/root/children";
+  const trimmed = normalized.replace(/^\/+/u, "");
+  return `/root:/${encodeDrivePath(trimmed)}:/children`;
+}
+function encodeDrivePath(value) {
+  return value.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+}
+function joinPath(parent, name) {
+  if (parent === "" || parent === "/") return `/${name}`;
+  return parent.endsWith("/") ? `${parent}${name}` : `${parent}/${name}`;
+}
+function parentDir3(normalized) {
+  if (normalized === "/" || normalized === "") return "/";
+  const idx = normalized.lastIndexOf("/");
+  if (idx <= 0) return "/";
+  return normalized.slice(0, idx);
+}
+async function safeReadText3(response) {
+  try {
+    return await response.text();
+  } catch {
+    return "";
+  }
+}
+async function collectChunks3(source) {
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of source) {
+    chunks.push(chunk);
+    total += chunk.byteLength;
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
+// src/providers/cloud/AzureBlobProvider.ts
+var AZURE_BLOB_API_VERSION = "2023-11-03";
+var AZURE_CHECKSUM_CAPABILITIES = ["md5"];
+function createAzureBlobProviderFactory(options) {
+  if (typeof options.container !== "string" || options.container === "") {
+    throw new ConfigurationError({
+      message: "AzureBlobProviderOptions.container is required",
+      retryable: false
+    });
+  }
+  const id = options.id ?? "azure-blob";
+  const fetchImpl = options.fetch ?? globalThis.fetch;
+  if (typeof fetchImpl !== "function") {
+    throw new ConfigurationError({
+      message: "Global fetch is unavailable; supply AzureBlobProviderOptions.fetch explicitly",
+      retryable: false
+    });
+  }
+  const endpoint = resolveAzureEndpoint(options);
+  const apiVersion = options.apiVersion ?? AZURE_BLOB_API_VERSION;
+  const capabilities = {
+    atomicRename: false,
+    authentication: ["token", "oauth"],
+    checksum: [...AZURE_CHECKSUM_CAPABILITIES],
+    chmod: false,
+    chown: false,
+    list: true,
+    maxConcurrency: 4,
+    metadata: ["modifiedAt", "uniqueId"],
+    notes: [
+      "Azure Blob provider performs single-shot block-blob uploads via PUT; staged-block + Put Block List uploads are not yet supported."
+    ],
+    provider: id,
+    readStream: true,
+    resumeDownload: true,
+    resumeUpload: false,
+    serverSideCopy: false,
+    serverSideMove: false,
+    stat: true,
+    symlink: false,
+    writeStream: true
+  };
+  return {
+    capabilities,
+    create: () => new AzureBlobProvider({
+      apiVersion,
+      capabilities,
+      container: options.container,
+      defaultHeaders: { ...options.defaultHeaders ?? {} },
+      endpoint,
+      fetch: fetchImpl,
+      id,
+      ...options.sasToken !== void 0 ? { sasToken: options.sasToken } : {}
+    }),
+    id
+  };
+}
+function resolveAzureEndpoint(options) {
+  if (typeof options.endpoint === "string" && options.endpoint !== "") {
+    return options.endpoint.replace(/\/+$/u, "");
+  }
+  if (typeof options.account === "string" && options.account !== "") {
+    return `https://${options.account}.blob.core.windows.net`;
+  }
+  throw new ConfigurationError({
+    message: "AzureBlobProviderOptions requires either `account` or `endpoint`",
+    retryable: false
+  });
+}
+var AzureBlobProvider = class {
+  constructor(internals) {
+    this.internals = internals;
+    this.id = internals.id;
+    this.capabilities = internals.capabilities;
+  }
+  internals;
+  id;
+  capabilities;
+  async connect(profile) {
+    let bearerToken;
+    if (profile.password !== void 0) {
+      bearerToken = secretToString2(await resolveSecret(profile.password));
+      if (bearerToken === "") bearerToken = void 0;
+    }
+    if (bearerToken === void 0 && this.internals.sasToken === void 0) {
+      throw new ConfigurationError({
+        message: "Azure Blob provider requires either a SAS token (via options.sasToken) or a bearer token (via profile.password)",
+        retryable: false
+      });
+    }
+    const sessionOptions = {
+      apiVersion: this.internals.apiVersion,
+      capabilities: this.internals.capabilities,
+      container: this.internals.container,
+      defaultHeaders: this.internals.defaultHeaders,
+      endpoint: this.internals.endpoint,
+      fetch: this.internals.fetch,
+      id: this.internals.id
+    };
+    if (bearerToken !== void 0) sessionOptions.bearerToken = bearerToken;
+    if (this.internals.sasToken !== void 0) sessionOptions.sasToken = this.internals.sasToken;
+    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
+    return new AzureBlobSession(sessionOptions);
+  }
+};
+var AzureBlobSession = class {
+  provider;
+  capabilities;
+  fs;
+  transfers;
+  constructor(options) {
+    this.provider = options.id;
+    this.capabilities = options.capabilities;
+    this.fs = new AzureBlobFileSystem(options);
+    this.transfers = new AzureBlobTransferOperations(options);
+  }
+  disconnect() {
+    return Promise.resolve();
+  }
+};
+var AzureBlobFileSystem = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async list(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const prefix = toAzureBlobPrefix(normalized);
+    const entries = [];
+    let marker;
+    do {
+      const params = {
+        comp: "list",
+        delimiter: "/",
+        restype: "container"
+      };
+      if (prefix !== "") params["prefix"] = prefix;
+      if (marker !== void 0) params["marker"] = marker;
+      const url = buildContainerUrl(this.options, params);
+      const response = await azureFetch(this.options, "GET", url);
+      if (!response.ok) {
+        throw mapAzureResponseError(response, normalized, await safeReadText4(response));
+      }
+      const xml = await response.text();
+      const parsed = parseListBlobsResponse(xml);
+      for (const blob of parsed.blobs) {
+        if (blob.name.startsWith(prefix)) {
+          const entry = blobToEntry(blob, prefix, normalized);
+          if (entry !== void 0) entries.push(entry);
+        }
+      }
+      for (const dir of parsed.prefixes) {
+        const entry = prefixToEntry(dir, prefix, normalized);
+        if (entry !== void 0) entries.push(entry);
+      }
+      marker = parsed.nextMarker;
+    } while (marker !== void 0 && marker !== "");
+    return entries;
+  }
+  async stat(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const url = buildBlobUrl(this.options, normalized);
+    const response = await azureFetch(this.options, "HEAD", url);
+    if (!response.ok) {
+      throw mapAzureResponseError(response, normalized, await safeReadText4(response));
+    }
+    const sizeHeader = response.headers.get("content-length");
+    const size = sizeHeader !== null ? Number(sizeHeader) : void 0;
+    const lastModified = response.headers.get("last-modified");
+    const etag = response.headers.get("etag") ?? void 0;
+    const md5 = response.headers.get("content-md5") ?? void 0;
+    const stat = {
+      exists: true,
+      name: basenameRemotePath2(normalized),
+      path: normalized,
+      type: "file"
+    };
+    if (typeof size === "number" && Number.isFinite(size)) stat.size = size;
+    if (lastModified !== null) {
+      const parsed = new Date(lastModified);
+      if (!Number.isNaN(parsed.getTime())) stat.modifiedAt = parsed;
+    }
+    if (etag !== void 0) stat.uniqueId = etag;
+    else if (md5 !== void 0) stat.uniqueId = md5;
+    return stat;
+  }
+};
+var AzureBlobTransferOperations = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async read(request) {
+    request.throwIfAborted();
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const url = buildBlobUrl(this.options, normalized);
+    const headers = {};
+    if (request.range !== void 0) {
+      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
+    }
+    const response = await azureFetch(this.options, "GET", url, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      extraHeaders: headers
+    });
+    if (!response.ok && response.status !== 206) {
+      throw mapAzureResponseError(response, normalized, await safeReadText4(response));
+    }
+    const body = response.body;
+    if (body === null) {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: `Azure Blob download for ${normalized} produced no body`,
+        retryable: true
+      });
+    }
+    const result = {
+      content: webStreamToAsyncIterable(body)
+    };
+    const totalBytes = parseTotalBytes(response, request.range?.offset);
+    if (totalBytes !== void 0) result.totalBytes = totalBytes;
+    if (request.range?.offset !== void 0 && request.range.offset > 0) {
+      result.bytesRead = request.range.offset;
+    }
+    const md5 = response.headers.get("content-md5");
+    if (md5 !== null && md5 !== "") result.checksum = md5;
+    return result;
+  }
+  async write(request) {
+    request.throwIfAborted();
+    if (request.offset !== void 0 && request.offset > 0) {
+      throw new UnsupportedFeatureError({
+        details: { offset: request.offset },
+        message: "Azure Blob provider does not yet support staged-block resumable uploads",
+        retryable: false
+      });
+    }
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const buffered = await collectChunks4(request.content);
+    const url = buildBlobUrl(this.options, normalized);
+    const response = await azureFetch(this.options, "PUT", url, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      body: buffered,
+      extraHeaders: {
+        "content-type": "application/octet-stream",
+        "x-ms-blob-type": "BlockBlob"
+      }
+    });
+    if (!response.ok) {
+      throw mapAzureResponseError(response, normalized, await safeReadText4(response));
+    }
+    request.reportProgress(buffered.byteLength, buffered.byteLength);
+    const result = {
+      bytesTransferred: buffered.byteLength,
+      totalBytes: buffered.byteLength
+    };
+    const md5 = response.headers.get("content-md5");
+    if (md5 !== null && md5 !== "") result.checksum = md5;
+    return result;
+  }
+};
+async function azureFetch(options, method, url, fetchOptions = {}) {
+  const headers = {
+    ...options.defaultHeaders,
+    ...fetchOptions.extraHeaders ?? {},
+    "x-ms-version": options.apiVersion
+  };
+  if (options.bearerToken !== void 0) {
+    headers["authorization"] = `Bearer ${options.bearerToken}`;
+  }
+  const init = { headers, method };
+  if (fetchOptions.body !== void 0) {
+    init.body = fetchOptions.body;
+  }
+  const controller = new AbortController();
+  const upstream = fetchOptions.signal ?? null;
+  if (upstream !== null) {
+    if (upstream.aborted) controller.abort(upstream.reason);
+    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
+  }
+  let timer;
+  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
+    timer = setTimeout(
+      () => controller.abort(new Error("Azure Blob request timed out")),
+      options.timeoutMs
+    );
+  }
+  try {
+    return await options.fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    throw new ConnectionError({
+      cause: error,
+      details: { url },
+      message: `Azure Blob request to ${url} failed`,
+      retryable: true
+    });
+  } finally {
+    if (timer !== void 0) clearTimeout(timer);
+  }
+}
+function buildContainerUrl(options, params) {
+  const search = new URLSearchParams(params);
+  appendSas(search, options.sasToken);
+  return `${options.endpoint}/${encodeURIComponent(options.container)}?${search.toString()}`;
+}
+function buildBlobUrl(options, normalized) {
+  const blobPath = normalized.replace(/^\/+/u, "");
+  const encoded = blobPath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
+  const base = `${options.endpoint}/${encodeURIComponent(options.container)}/${encoded}`;
+  if (options.sasToken !== void 0 && options.sasToken !== "") {
+    return `${base}?${options.sasToken}`;
+  }
+  return base;
+}
+function appendSas(search, sasToken) {
+  if (sasToken === void 0 || sasToken === "") return;
+  const sas = new URLSearchParams(sasToken);
+  for (const [k, v] of sas.entries()) search.set(k, v);
+}
+function parseListBlobsResponse(xml) {
+  const blobs = [];
+  for (const match of xml.matchAll(/<Blob>([\s\S]*?)<\/Blob>/g)) {
+    const block = match[1] ?? "";
+    const name = extractTag(block, "Name");
+    if (name === void 0) continue;
+    const blob = { name };
+    const length = extractTag(block, "Content-Length");
+    if (length !== void 0) {
+      const parsed = Number(length);
+      if (Number.isFinite(parsed)) blob.contentLength = parsed;
+    }
+    const md5 = extractTag(block, "Content-MD5");
+    if (md5 !== void 0 && md5 !== "") blob.contentMd5 = md5;
+    const etag = extractTag(block, "Etag");
+    if (etag !== void 0 && etag !== "") blob.etag = etag;
+    const last = extractTag(block, "Last-Modified");
+    if (last !== void 0 && last !== "") blob.lastModified = last;
+    blobs.push(blob);
+  }
+  const prefixes = [];
+  for (const match of xml.matchAll(/<BlobPrefix>([\s\S]*?)<\/BlobPrefix>/g)) {
+    const block = match[1] ?? "";
+    const name = extractTag(block, "Name");
+    if (name !== void 0) prefixes.push(name);
+  }
+  const nextMarker = extractTag(xml, "NextMarker");
+  const result = { blobs, prefixes };
+  if (nextMarker !== void 0 && nextMarker !== "") result.nextMarker = nextMarker;
+  return result;
+}
+function extractTag(block, tag) {
+  const re = new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`);
+  const match = re.exec(block);
+  if (match === null) return void 0;
+  return decodeXmlText(match[1] ?? "");
+}
+function decodeXmlText(value) {
+  return value.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+}
+function blobToEntry(blob, prefix, parent) {
+  const tail = blob.name.slice(prefix.length);
+  if (tail === "" || tail.includes("/")) return void 0;
+  const entry = {
+    name: tail,
+    path: joinPath2(parent, tail),
+    raw: blob,
+    type: "file",
+    uniqueId: blob.etag ?? blob.contentMd5 ?? blob.name
+  };
+  if (typeof blob.contentLength === "number") entry.size = blob.contentLength;
+  if (typeof blob.lastModified === "string") {
+    const parsed = new Date(blob.lastModified);
+    if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
+  }
+  return entry;
+}
+function prefixToEntry(prefixedName, prefix, parent) {
+  const tail = prefixedName.slice(prefix.length).replace(/\/+$/u, "");
+  if (tail === "" || tail.includes("/")) return void 0;
+  return {
+    name: tail,
+    path: joinPath2(parent, tail),
+    type: "directory",
+    uniqueId: prefixedName
+  };
+}
+function toAzureBlobPrefix(normalized) {
+  if (normalized === "/" || normalized === "") return "";
+  const trimmed = normalized.replace(/^\/+/u, "");
+  return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
+}
+function joinPath2(parent, name) {
+  if (parent === "" || parent === "/") return `/${name}`;
+  return parent.endsWith("/") ? `${parent}${name}` : `${parent}/${name}`;
+}
+function basenameRemotePath2(normalized) {
+  if (normalized === "/" || normalized === "") return "";
+  const trimmed = normalized.replace(/\/+$/u, "");
+  const idx = trimmed.lastIndexOf("/");
+  return idx === -1 ? trimmed : trimmed.slice(idx + 1);
+}
+function mapAzureResponseError(response, contextPath, bodyText) {
+  const details = {
+    bodyText: bodyText.slice(0, 500),
+    path: contextPath,
+    status: response.status,
+    statusText: response.statusText
+  };
+  if (response.status === 401) {
+    return new AuthenticationError({
+      details,
+      message: `Azure Blob authentication failed for ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 403) {
+    return new PermissionDeniedError({
+      details,
+      message: `Azure Blob access forbidden for ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 404) {
+    return new PathNotFoundError({
+      details,
+      message: `Azure Blob path not found: ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 429) {
+    return new ConnectionError({
+      details,
+      message: `Azure Blob throttled for ${contextPath}`,
+      retryable: true
+    });
+  }
+  return new ConnectionError({
+    details,
+    message: `Azure Blob request for ${contextPath} failed with status ${String(response.status)}`,
+    retryable: response.status >= 500
+  });
+}
+async function safeReadText4(response) {
+  try {
+    return await response.text();
+  } catch {
+    return "";
+  }
+}
+async function collectChunks4(source) {
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of source) {
+    chunks.push(chunk);
+    total += chunk.byteLength;
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
+// src/providers/cloud/GcsProvider.ts
+var GCS_JSON_API_BASE = "https://storage.googleapis.com/storage/v1";
+var GCS_UPLOAD_API_BASE = "https://storage.googleapis.com/upload/storage/v1";
+var GCS_CHECKSUM_CAPABILITIES = ["md5", "crc32c"];
+function createGcsProviderFactory(options) {
+  if (typeof options.bucket !== "string" || options.bucket === "") {
+    throw new ConfigurationError({
+      message: "GcsProviderOptions.bucket is required",
+      retryable: false
+    });
+  }
+  const id = options.id ?? "gcs";
+  const fetchImpl = options.fetch ?? globalThis.fetch;
+  if (typeof fetchImpl !== "function") {
+    throw new ConfigurationError({
+      message: "Global fetch is unavailable; supply GcsProviderOptions.fetch explicitly",
+      retryable: false
+    });
+  }
+  const apiBaseUrl = (options.apiBaseUrl ?? GCS_JSON_API_BASE).replace(/\/+$/u, "");
+  const uploadBaseUrl = (options.uploadBaseUrl ?? GCS_UPLOAD_API_BASE).replace(/\/+$/u, "");
+  const capabilities = {
+    atomicRename: false,
+    authentication: ["token", "oauth"],
+    checksum: [...GCS_CHECKSUM_CAPABILITIES],
+    chmod: false,
+    chown: false,
+    list: true,
+    maxConcurrency: 4,
+    metadata: ["modifiedAt", "createdAt", "uniqueId"],
+    notes: [
+      "GCS provider performs single-shot media uploads via /upload?uploadType=media; resumable upload sessions are not yet supported."
+    ],
+    provider: id,
+    readStream: true,
+    resumeDownload: true,
+    resumeUpload: false,
+    serverSideCopy: false,
+    serverSideMove: false,
+    stat: true,
+    symlink: false,
+    writeStream: true
+  };
+  return {
+    capabilities,
+    create: () => new GcsProvider({
+      apiBaseUrl,
+      bucket: options.bucket,
+      capabilities,
+      defaultHeaders: { ...options.defaultHeaders ?? {} },
+      fetch: fetchImpl,
+      id,
+      uploadBaseUrl
+    }),
+    id
+  };
+}
+var GcsProvider = class {
+  constructor(internals) {
+    this.internals = internals;
+    this.id = internals.id;
+    this.capabilities = internals.capabilities;
+  }
+  internals;
+  id;
+  capabilities;
+  async connect(profile) {
+    if (profile.password === void 0) {
+      throw new ConfigurationError({
+        message: "GCS provider requires a bearer token via profile.password",
+        retryable: false
+      });
+    }
+    const token = secretToString2(await resolveSecret(profile.password));
+    if (token === "") {
+      throw new ConfigurationError({
+        message: "GCS bearer token resolved to an empty string",
+        retryable: false
+      });
+    }
+    const sessionOptions = {
+      apiBaseUrl: this.internals.apiBaseUrl,
+      bucket: this.internals.bucket,
+      capabilities: this.internals.capabilities,
+      defaultHeaders: this.internals.defaultHeaders,
+      fetch: this.internals.fetch,
+      id: this.internals.id,
+      token,
+      uploadBaseUrl: this.internals.uploadBaseUrl
+    };
+    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
+    return new GcsSession(sessionOptions);
+  }
+};
+var GcsSession = class {
+  provider;
+  capabilities;
+  fs;
+  transfers;
+  constructor(options) {
+    this.provider = options.id;
+    this.capabilities = options.capabilities;
+    this.fs = new GcsFileSystem(options);
+    this.transfers = new GcsTransferOperations(options);
+  }
+  disconnect() {
+    return Promise.resolve();
+  }
+};
+var GcsFileSystem = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async list(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const prefix = toGcsPrefix(normalized);
+    const entries = [];
+    let pageToken;
+    do {
+      const params = { delimiter: "/" };
+      if (prefix !== "") params["prefix"] = prefix;
+      if (pageToken !== void 0) params["pageToken"] = pageToken;
+      const url = `${this.options.apiBaseUrl}/b/${encodeURIComponent(this.options.bucket)}/o?${buildSearch2(params)}`;
+      const response = await gcsFetch(this.options, "GET", url);
+      if (!response.ok) {
+        throw mapGcsResponseError(response, normalized, await safeReadText5(response));
+      }
+      const parsed = await response.json();
+      for (const item of parsed.items ?? []) {
+        const entry = objectToEntry(item, prefix, normalized);
+        if (entry !== void 0) entries.push(entry);
+      }
+      for (const dirPrefix of parsed.prefixes ?? []) {
+        const entry = prefixToEntry2(dirPrefix, prefix, normalized);
+        if (entry !== void 0) entries.push(entry);
+      }
+      pageToken = parsed.nextPageToken;
+    } while (pageToken !== void 0);
+    return entries;
+  }
+  async stat(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const objectName = toGcsObjectName(normalized);
+    const url = `${this.options.apiBaseUrl}/b/${encodeURIComponent(this.options.bucket)}/o/${encodeURIComponent(objectName)}`;
+    const response = await gcsFetch(this.options, "GET", url);
+    if (!response.ok) {
+      throw mapGcsResponseError(response, normalized, await safeReadText5(response));
+    }
+    const item = await response.json();
+    const parent = parentDir4(normalized);
+    const entry = objectToEntry(item, toGcsPrefix(parent), parent);
+    if (entry === void 0) {
+      throw new PathNotFoundError({
+        details: { path: normalized },
+        message: `GCS path not found: ${normalized}`,
+        retryable: false
+      });
+    }
+    return { ...entry, exists: true };
+  }
+};
+var GcsTransferOperations = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async read(request) {
+    request.throwIfAborted();
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const objectName = toGcsObjectName(normalized);
+    const url = `${this.options.apiBaseUrl}/b/${encodeURIComponent(this.options.bucket)}/o/${encodeURIComponent(objectName)}?alt=media`;
+    const headers = {};
+    if (request.range !== void 0) {
+      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
+    }
+    const response = await gcsFetch(this.options, "GET", url, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      extraHeaders: headers
+    });
+    if (!response.ok && response.status !== 206) {
+      throw mapGcsResponseError(response, normalized, await safeReadText5(response));
+    }
+    const body = response.body;
+    if (body === null) {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: `GCS download for ${normalized} produced no body`,
+        retryable: true
+      });
+    }
+    const result = {
+      content: webStreamToAsyncIterable(body)
+    };
+    const totalBytes = parseTotalBytes(response, request.range?.offset);
+    if (totalBytes !== void 0) result.totalBytes = totalBytes;
+    if (request.range?.offset !== void 0 && request.range.offset > 0) {
+      result.bytesRead = request.range.offset;
+    }
+    const md5 = response.headers.get("x-goog-hash") ?? response.headers.get("content-md5");
+    if (md5 !== null && md5 !== "") result.checksum = md5;
+    return result;
+  }
+  async write(request) {
+    request.throwIfAborted();
+    if (request.offset !== void 0 && request.offset > 0) {
+      throw new UnsupportedFeatureError({
+        details: { offset: request.offset },
+        message: "GCS provider does not yet support resumable upload sessions",
+        retryable: false
+      });
+    }
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const objectName = toGcsObjectName(normalized);
+    const buffered = await collectChunks5(request.content);
+    const url = `${this.options.uploadBaseUrl}/b/${encodeURIComponent(this.options.bucket)}/o?uploadType=media&name=${encodeURIComponent(objectName)}`;
+    const response = await gcsFetch(this.options, "POST", url, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      body: buffered,
+      extraHeaders: { "content-type": "application/octet-stream" }
+    });
+    if (!response.ok) {
+      throw mapGcsResponseError(response, normalized, await safeReadText5(response));
+    }
+    const item = await response.json();
+    request.reportProgress(buffered.byteLength, buffered.byteLength);
+    const result = {
+      bytesTransferred: buffered.byteLength,
+      totalBytes: buffered.byteLength
+    };
+    if (typeof item.md5Hash === "string" && item.md5Hash !== "") result.checksum = item.md5Hash;
+    return result;
+  }
+};
+async function gcsFetch(options, method, url, fetchOptions = {}) {
+  const headers = {
+    accept: "application/json",
+    ...options.defaultHeaders,
+    ...fetchOptions.extraHeaders ?? {},
+    authorization: `Bearer ${options.token}`
+  };
+  const init = { headers, method };
+  if (fetchOptions.body !== void 0) {
+    init.body = fetchOptions.body;
+  }
+  const controller = new AbortController();
+  const upstream = fetchOptions.signal ?? null;
+  if (upstream !== null) {
+    if (upstream.aborted) controller.abort(upstream.reason);
+    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
+  }
+  let timer;
+  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
+    timer = setTimeout(
+      () => controller.abort(new Error("GCS request timed out")),
+      options.timeoutMs
+    );
+  }
+  try {
+    return await options.fetch(url, { ...init, signal: controller.signal });
+  } catch (error) {
+    throw new ConnectionError({
+      cause: error,
+      details: { url },
+      message: `GCS request to ${url} failed`,
+      retryable: true
+    });
+  } finally {
+    if (timer !== void 0) clearTimeout(timer);
+  }
+}
+function objectToEntry(item, prefix, parent) {
+  const tail = item.name.startsWith(prefix) ? item.name.slice(prefix.length) : item.name;
+  if (tail === "" || tail.includes("/")) return void 0;
+  const entry = {
+    name: tail,
+    path: joinPath3(parent, tail),
+    raw: item,
+    type: "file",
+    uniqueId: item.etag ?? item.md5Hash ?? item.name
+  };
+  if (typeof item.size === "string") {
+    const sized = Number(item.size);
+    if (Number.isFinite(sized)) entry.size = sized;
+  }
+  if (typeof item.updated === "string") {
+    const parsed = new Date(item.updated);
+    if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
+  }
+  if (typeof item.timeCreated === "string") {
+    const parsed = new Date(item.timeCreated);
+    if (!Number.isNaN(parsed.getTime())) entry.createdAt = parsed;
+  }
+  return entry;
+}
+function prefixToEntry2(prefixedName, prefix, parent) {
+  const tail = prefixedName.slice(prefix.length).replace(/\/+$/u, "");
+  if (tail === "" || tail.includes("/")) return void 0;
+  return {
+    name: tail,
+    path: joinPath3(parent, tail),
+    type: "directory",
+    uniqueId: prefixedName
+  };
+}
+function toGcsPrefix(normalized) {
+  if (normalized === "/" || normalized === "") return "";
+  const trimmed = normalized.replace(/^\/+/u, "");
+  return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
+}
+function toGcsObjectName(normalized) {
+  return normalized.replace(/^\/+/u, "");
+}
+function parentDir4(normalized) {
+  if (normalized === "/" || normalized === "") return "/";
+  const idx = normalized.lastIndexOf("/");
+  if (idx <= 0) return "/";
+  return normalized.slice(0, idx);
+}
+function joinPath3(parent, name) {
+  if (parent === "" || parent === "/") return `/${name}`;
+  return parent.endsWith("/") ? `${parent}${name}` : `${parent}/${name}`;
+}
+function buildSearch2(params) {
+  const search = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) search.set(k, v);
+  return search.toString();
+}
+function mapGcsResponseError(response, contextPath, bodyText) {
+  const details = {
+    bodyText: bodyText.slice(0, 500),
+    path: contextPath,
+    status: response.status,
+    statusText: response.statusText
+  };
+  if (response.status === 401) {
+    return new AuthenticationError({
+      details,
+      message: `GCS authentication failed for ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 403) {
+    return new PermissionDeniedError({
+      details,
+      message: `GCS access forbidden for ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 404) {
+    return new PathNotFoundError({
+      details,
+      message: `GCS path not found: ${contextPath}`,
+      retryable: false
+    });
+  }
+  if (response.status === 429) {
+    return new ConnectionError({
+      details,
+      message: `GCS rate limit hit for ${contextPath}`,
+      retryable: true
+    });
+  }
+  return new ConnectionError({
+    details,
+    message: `GCS request for ${contextPath} failed with status ${String(response.status)}`,
+    retryable: response.status >= 500
+  });
+}
+async function safeReadText5(response) {
+  try {
+    return await response.text();
+  } catch {
+    return "";
+  }
+}
+async function collectChunks5(source) {
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of source) {
+    chunks.push(chunk);
+    total += chunk.byteLength;
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
+// src/providers/local/LocalProvider.ts
+var import_node_fs = require("fs");
+var import_promises2 = require("fs/promises");
+var import_node_path2 = __toESM(require("path"));
+var LOCAL_PROVIDER_ID = "local";
+var LOCAL_PROVIDER_CAPABILITIES = {
+  provider: LOCAL_PROVIDER_ID,
+  authentication: ["anonymous"],
+  list: true,
+  stat: true,
+  readStream: true,
+  writeStream: true,
+  serverSideCopy: false,
+  serverSideMove: false,
+  resumeDownload: true,
+  resumeUpload: true,
+  checksum: [],
+  atomicRename: false,
+  chmod: false,
+  chown: false,
+  symlink: true,
+  metadata: ["accessedAt", "createdAt", "modifiedAt", "permissions", "symlinkTarget", "uniqueId"],
+  maxConcurrency: 16,
+  notes: ["Local filesystem provider for tests and local-only workflows"]
+};
+function createLocalProviderFactory(options = {}) {
+  return {
+    id: LOCAL_PROVIDER_ID,
+    capabilities: LOCAL_PROVIDER_CAPABILITIES,
+    create: () => new LocalProvider(options.rootPath)
+  };
+}
+var LocalProvider = class {
+  constructor(configuredRootPath) {
+    this.configuredRootPath = configuredRootPath;
+  }
+  configuredRootPath;
+  id = LOCAL_PROVIDER_ID;
+  capabilities = LOCAL_PROVIDER_CAPABILITIES;
+  connect(profile) {
+    return Promise.resolve().then(() => {
+      const rootPath = import_node_path2.default.resolve(this.configuredRootPath ?? profile.host);
+      return new LocalTransferSession(rootPath);
+    });
+  }
+};
+var LocalTransferSession = class {
+  provider = LOCAL_PROVIDER_ID;
+  capabilities = LOCAL_PROVIDER_CAPABILITIES;
+  fs;
+  transfers;
+  constructor(rootPath) {
+    this.fs = new LocalFileSystem(rootPath);
+    this.transfers = new LocalTransferOperations(rootPath);
+  }
+  disconnect() {
+    return Promise.resolve();
+  }
+};
+var LocalTransferOperations = class {
+  constructor(rootPath) {
+    this.rootPath = rootPath;
+  }
+  rootPath;
+  async read(request) {
+    request.throwIfAborted();
+    const remotePath = normalizeLocalProviderPath(request.endpoint.path);
+    const entry = await readLocalEntry(this.rootPath, remotePath);
+    if (entry.type !== "file") {
+      throw createPathNotFoundError(remotePath, `Local provider path is not a file: ${remotePath}`);
+    }
+    const range = resolveReadRange2(entry.size ?? 0, request.range);
+    const result = {
+      content: createLocalReadSource(resolveLocalPath(this.rootPath, remotePath), range),
+      totalBytes: range.length
+    };
+    if (range.offset > 0) {
+      result.bytesRead = range.offset;
+    }
+    return result;
+  }
+  async write(request) {
+    request.throwIfAborted();
+    const remotePath = normalizeLocalProviderPath(request.endpoint.path);
+    const localPath = resolveLocalPath(this.rootPath, remotePath);
+    const content = await collectTransferContent(request);
+    const offset = normalizeOptionalByteCount3(request.offset, "offset", remotePath);
+    await ensureLocalParentDirectory(localPath, remotePath);
+    await writeLocalContent(localPath, remotePath, content, offset);
+    const stat = await readLocalEntry(this.rootPath, remotePath);
+    const result = {
+      bytesTransferred: content.byteLength,
+      resumed: offset !== void 0 && offset > 0,
+      verified: request.verification?.verified ?? false
+    };
+    if (stat.size !== void 0) {
+      result.totalBytes = stat.size;
+    }
+    if (request.verification !== void 0) {
+      result.verification = cloneVerification4(request.verification);
+    }
+    return result;
+  }
+};
+var LocalFileSystem = class {
+  constructor(rootPath) {
+    this.rootPath = rootPath;
+  }
+  rootPath;
+  async list(path2) {
+    const remotePath = normalizeLocalProviderPath(path2);
+    const directory = await this.stat(remotePath);
+    if (directory.type !== "directory") {
+      throw createPathNotFoundError(
+        remotePath,
+        `Local provider path is not a directory: ${remotePath}`
+      );
+    }
+    const localPath = resolveLocalPath(this.rootPath, remotePath);
+    const names = await readLocalDirectory(localPath, remotePath);
+    const entries = await Promise.all(
+      names.map((name) => readLocalEntry(this.rootPath, joinRemotePath(remotePath, name)))
+    );
+    return entries.sort(compareEntries3);
+  }
+  async stat(path2) {
+    return readLocalEntry(this.rootPath, normalizeLocalProviderPath(path2));
+  }
+  async remove(remote, options = {}) {
+    const remotePath = normalizeLocalProviderPath(remote);
+    const localPath = resolveLocalPath(this.rootPath, remotePath);
+    try {
+      await (0, import_promises2.unlink)(localPath);
+    } catch (error) {
+      if (options.ignoreMissing && isNodeErrno(error, "ENOENT")) return;
+      if (isNodeErrno(error, "ENOENT")) {
+        throw createPathNotFoundError(remotePath, `Local path not found: ${remotePath}`);
+      }
+      throw error;
+    }
+  }
+  async rename(from, to) {
+    const fromRemote = normalizeLocalProviderPath(from);
+    const toRemote = normalizeLocalProviderPath(to);
+    const fromLocal = resolveLocalPath(this.rootPath, fromRemote);
+    const toLocal = resolveLocalPath(this.rootPath, toRemote);
+    try {
+      await (0, import_promises2.rename)(fromLocal, toLocal);
+    } catch (error) {
+      if (isNodeErrno(error, "ENOENT")) {
+        throw createPathNotFoundError(fromRemote, `Local path not found: ${fromRemote}`);
+      }
+      throw error;
+    }
+  }
+  async mkdir(remote, options = {}) {
+    const remotePath = normalizeLocalProviderPath(remote);
+    const localPath = resolveLocalPath(this.rootPath, remotePath);
+    await (0, import_promises2.mkdir)(localPath, { recursive: options.recursive === true });
+  }
+  async rmdir(remote, options = {}) {
+    const remotePath = normalizeLocalProviderPath(remote);
+    const localPath = resolveLocalPath(this.rootPath, remotePath);
+    try {
+      await (0, import_promises2.rm)(localPath, { recursive: options.recursive === true, force: false });
+    } catch (error) {
+      if (isNodeErrno(error, "ENOENT")) {
+        if (options.ignoreMissing) return;
+        throw createPathNotFoundError(remotePath, `Local path not found: ${remotePath}`);
+      }
+      throw error;
+    }
+  }
+};
+function isNodeErrno(error, code) {
+  return typeof error === "object" && error !== null && "code" in error && error.code === code;
+}
+function resolveReadRange2(size, range) {
+  if (range === void 0) {
+    return { length: size, offset: 0 };
+  }
+  const requestedOffset = normalizeByteCount3(range.offset, "offset", "/");
+  const requestedLength = range.length === void 0 ? size - Math.min(requestedOffset, size) : normalizeByteCount3(range.length, "length", "/");
+  const offset = Math.min(requestedOffset, size);
+  const length = Math.max(0, Math.min(requestedLength, size - offset));
+  return { length, offset };
+}
+async function* createLocalReadSource(localPath, range) {
+  if (range.length <= 0) {
+    return;
+  }
+  const stream = (0, import_node_fs.createReadStream)(localPath, {
+    end: range.offset + range.length - 1,
+    start: range.offset
+  });
+  for await (const chunk of stream) {
+    yield new Uint8Array(chunk);
+  }
+}
+async function collectTransferContent(request) {
+  const chunks = [];
+  let byteLength = 0;
+  for await (const chunk of request.content) {
+    request.throwIfAborted();
+    const clonedChunk = new Uint8Array(chunk);
+    chunks.push(clonedChunk);
+    byteLength += clonedChunk.byteLength;
+    request.reportProgress(byteLength, request.totalBytes);
+  }
+  return concatChunks2(chunks, byteLength);
+}
+function concatChunks2(chunks, byteLength) {
+  const content = new Uint8Array(byteLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    content.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return content;
+}
+async function ensureLocalParentDirectory(localPath, remotePath) {
+  try {
+    await (0, import_promises2.mkdir)(import_node_path2.default.dirname(localPath), { recursive: true });
+  } catch (error) {
+    throw mapLocalFileSystemError(error, remotePath);
+  }
+}
+async function writeLocalContent(localPath, remotePath, content, offset) {
+  try {
+    if (offset === void 0) {
+      await (0, import_promises2.writeFile)(localPath, content);
+      return;
+    }
+    const handle = await openLocalFileForOffsetWrite(localPath);
+    try {
+      await handle.write(content, 0, content.byteLength, offset);
+    } finally {
+      await handle.close();
+    }
+  } catch (error) {
+    throw mapLocalFileSystemError(error, remotePath);
+  }
+}
+async function openLocalFileForOffsetWrite(localPath) {
+  try {
+    return await (0, import_promises2.open)(localPath, "r+");
+  } catch (error) {
+    if (getErrorCode(error) === "ENOENT") {
+      return (0, import_promises2.open)(localPath, "w+");
+    }
+    throw error;
+  }
+}
+function normalizeOptionalByteCount3(value, field, remotePath) {
+  return value === void 0 ? void 0 : normalizeByteCount3(value, field, remotePath);
+}
+function normalizeByteCount3(value, field, remotePath) {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new ConfigurationError({
+      details: { field, provider: LOCAL_PROVIDER_ID },
+      message: `Local provider ${field} must be a non-negative number`,
+      path: remotePath,
+      retryable: false
+    });
+  }
+  return Math.floor(value);
+}
+function cloneVerification4(verification) {
+  const clone = { verified: verification.verified };
+  if (verification.method !== void 0) clone.method = verification.method;
+  if (verification.checksum !== void 0) clone.checksum = verification.checksum;
+  if (verification.expectedChecksum !== void 0) {
+    clone.expectedChecksum = verification.expectedChecksum;
+  }
+  if (verification.actualChecksum !== void 0) clone.actualChecksum = verification.actualChecksum;
+  if (verification.details !== void 0) clone.details = { ...verification.details };
+  return clone;
+}
+async function readLocalDirectory(localPath, remotePath) {
+  try {
+    return await (0, import_promises2.readdir)(localPath);
+  } catch (error) {
+    throw mapLocalFileSystemError(error, remotePath);
+  }
+}
+async function readLocalEntry(rootPath, remotePath) {
+  const localPath = resolveLocalPath(rootPath, remotePath);
+  let stats;
+  try {
+    stats = await (0, import_promises2.lstat)(localPath);
+  } catch (error) {
+    throw mapLocalFileSystemError(error, remotePath);
+  }
+  const entry = {
+    accessedAt: cloneDate(stats.atime),
+    createdAt: cloneDate(stats.birthtime),
+    modifiedAt: cloneDate(stats.mtime),
+    name: basenameRemotePath(remotePath),
+    path: remotePath,
+    permissions: { raw: formatMode(stats.mode) },
+    size: stats.size,
+    type: getLocalEntryType(stats),
+    uniqueId: `${stats.dev}:${stats.ino}`
+  };
+  if (entry.type === "symlink") {
+    const symlinkTarget = await readSymlinkTarget(localPath);
+    if (symlinkTarget !== void 0) {
+      entry.symlinkTarget = symlinkTarget;
+    }
+  }
+  return {
+    ...entry,
+    exists: true
+  };
+}
+async function readSymlinkTarget(localPath) {
+  try {
+    return await (0, import_promises2.readlink)(localPath);
+  } catch {
+    return void 0;
+  }
+}
+function normalizeLocalProviderPath(input) {
+  const normalized = normalizeRemotePath(input);
+  if (normalized === ".." || normalized.startsWith("../")) {
+    throw new ConfigurationError({
+      details: { provider: LOCAL_PROVIDER_ID },
+      message: `Local provider path escapes the configured root: ${normalized}`,
+      path: normalized,
+      retryable: false
+    });
+  }
+  if (normalized === "." || normalized === "/") {
+    return "/";
+  }
+  return normalized.startsWith("/") ? normalized : `/${normalized}`;
+}
+function resolveLocalPath(rootPath, remotePath) {
+  const normalizedRemotePath = normalizeLocalProviderPath(remotePath);
+  const resolvedRootPath = import_node_path2.default.resolve(rootPath);
+  const candidateAbsolute = import_node_path2.default.resolve(normalizedRemotePath.split("/").join(import_node_path2.default.sep));
+  if (candidateAbsolute === resolvedRootPath || candidateAbsolute.startsWith(resolvedRootPath + import_node_path2.default.sep)) {
+    return candidateAbsolute;
+  }
+  const relativePath = normalizedRemotePath === "/" ? "." : normalizedRemotePath.slice(1);
+  const resolvedPath = import_node_path2.default.resolve(rootPath, relativePath.split("/").join(import_node_path2.default.sep));
+  const relativeToRoot = import_node_path2.default.relative(rootPath, resolvedPath);
+  if (relativeToRoot === "" || !relativeToRoot.startsWith("..") && !import_node_path2.default.isAbsolute(relativeToRoot)) {
+    return resolvedPath;
+  }
+  throw new ConfigurationError({
+    details: { provider: LOCAL_PROVIDER_ID, rootPath },
+    message: `Local provider path escapes the configured root: ${normalizedRemotePath}`,
+    path: normalizedRemotePath,
+    retryable: false
+  });
+}
+function getLocalEntryType(stats) {
+  if (stats.isFile()) return "file";
+  if (stats.isDirectory()) return "directory";
+  if (stats.isSymbolicLink()) return "symlink";
+  return "unknown";
+}
+function formatMode(mode) {
+  return (mode & 511).toString(8).padStart(3, "0");
+}
+function cloneDate(value) {
+  return new Date(value.getTime());
+}
+function compareEntries3(left, right) {
+  return left.path.localeCompare(right.path);
+}
+function mapLocalFileSystemError(error, remotePath) {
+  const code = getErrorCode(error);
+  if (code === "ENOENT" || code === "ENOTDIR") {
+    return createPathNotFoundError(remotePath, `Local provider path not found: ${remotePath}`);
+  }
+  if (code === "EACCES" || code === "EPERM") {
+    return new PermissionDeniedError({
+      cause: error,
+      details: { provider: LOCAL_PROVIDER_ID },
+      message: `Local provider permission denied: ${remotePath}`,
+      path: remotePath,
+      retryable: false
+    });
+  }
+  return new ConfigurationError({
+    cause: error,
+    details: { code, provider: LOCAL_PROVIDER_ID },
+    message: `Local provider filesystem operation failed: ${remotePath}`,
+    path: remotePath,
+    retryable: false
+  });
+}
+function createPathNotFoundError(path2, message) {
+  return new PathNotFoundError({
+    details: { provider: LOCAL_PROVIDER_ID },
+    message,
+    path: path2,
+    retryable: false
+  });
+}
+function getErrorCode(error) {
+  return typeof error === "object" && error !== null && "code" in error ? String(error.code) : void 0;
+}
+
+// src/providers/memory/MemoryProvider.ts
+var import_node_buffer7 = require("buffer");
+var MEMORY_PROVIDER_ID = "memory";
+var MEMORY_PROVIDER_CAPABILITIES = {
+  provider: MEMORY_PROVIDER_ID,
+  authentication: ["anonymous"],
+  list: true,
+  stat: true,
+  readStream: true,
+  writeStream: true,
+  serverSideCopy: false,
+  serverSideMove: false,
+  resumeDownload: true,
+  resumeUpload: true,
+  checksum: [],
+  atomicRename: false,
+  chmod: false,
+  chown: false,
+  symlink: true,
+  metadata: [
+    "accessedAt",
+    "createdAt",
+    "group",
+    "modifiedAt",
+    "owner",
+    "permissions",
+    "symlinkTarget",
+    "uniqueId"
+  ],
+  maxConcurrency: 32,
+  notes: ["Deterministic in-memory provider for tests and provider contract validation"]
+};
+function createMemoryProviderFactory(options = {}) {
+  const state = createMemoryState(options.entries ?? []);
+  return {
+    id: MEMORY_PROVIDER_ID,
+    capabilities: MEMORY_PROVIDER_CAPABILITIES,
+    create: () => new MemoryProvider(state)
+  };
+}
+var MemoryProvider = class {
+  constructor(state) {
+    this.state = state;
+  }
+  state;
+  id = MEMORY_PROVIDER_ID;
+  capabilities = MEMORY_PROVIDER_CAPABILITIES;
+  connect() {
+    return Promise.resolve(new MemoryTransferSession(this.state));
+  }
+};
+var MemoryTransferSession = class {
+  provider = MEMORY_PROVIDER_ID;
+  capabilities = MEMORY_PROVIDER_CAPABILITIES;
+  fs;
+  transfers;
+  constructor(state) {
+    this.fs = new MemoryFileSystem(state);
+    this.transfers = new MemoryTransferOperations(state);
+  }
+  disconnect() {
+    return Promise.resolve();
+  }
+};
+var MemoryFileSystem = class {
+  constructor(state) {
+    this.state = state;
+  }
+  state;
+  list(path2) {
+    return Promise.resolve().then(() => {
+      const normalizedPath = normalizeMemoryPath(path2);
+      const directory = this.requireEntry(normalizedPath);
+      if (directory.type !== "directory") {
+        throw createPathNotFoundError2(
+          normalizedPath,
+          `Memory path is not a directory: ${normalizedPath}`
+        );
+      }
+      return [...this.state.entries.values()].filter(
+        (entry) => entry.path !== normalizedPath && getParentPath2(entry.path) === normalizedPath
+      ).map(cloneRemoteEntry).sort(compareEntries4);
+    });
+  }
+  stat(path2) {
+    return Promise.resolve().then(
+      () => cloneRemoteStat(this.requireEntry(normalizeMemoryPath(path2)))
+    );
+  }
+  remove(path2, options = {}) {
+    return Promise.resolve().then(() => {
+      const normalized = normalizeMemoryPath(path2);
+      const entry = this.state.entries.get(normalized);
+      if (entry === void 0) {
+        if (options.ignoreMissing) return;
+        throw createPathNotFoundError2(normalized, `Memory path not found: ${normalized}`);
+      }
+      if (entry.type === "directory") {
+        throw createPathNotFoundError2(
+          normalized,
+          `Memory path is a directory; use rmdir: ${normalized}`
+        );
+      }
+      this.state.entries.delete(normalized);
+      this.state.content.delete(normalized);
+    });
+  }
+  rename(from, to) {
+    return Promise.resolve().then(() => {
+      const fromPath = normalizeMemoryPath(from);
+      const toPath = normalizeMemoryPath(to);
+      const entry = this.state.entries.get(fromPath);
+      if (entry === void 0) {
+        throw createPathNotFoundError2(fromPath, `Memory path not found: ${fromPath}`);
+      }
+      ensureParentDirectories(this.state.entries, toPath);
+      const moved = { ...entry, path: toPath, name: basenameRemotePath(toPath) };
+      this.state.entries.delete(fromPath);
+      this.state.entries.set(toPath, moved);
+      const content = this.state.content.get(fromPath);
+      if (content !== void 0) {
+        this.state.content.delete(fromPath);
+        this.state.content.set(toPath, content);
+      }
+    });
+  }
+  mkdir(path2, options = {}) {
+    return Promise.resolve().then(() => {
+      const normalized = normalizeMemoryPath(path2);
+      const existing = this.state.entries.get(normalized);
+      if (existing !== void 0) {
+        if (existing.type === "directory" && options.recursive) return;
+        throw createInvalidFixtureError(normalized, `Memory path already exists: ${normalized}`);
+      }
+      if (options.recursive) {
+        ensureParentDirectories(this.state.entries, normalized);
+      } else {
+        const parent = getParentPath2(normalized);
+        if (parent !== void 0 && !this.state.entries.has(parent)) {
+          throw createPathNotFoundError2(parent, `Memory parent not found: ${parent}`);
+        }
+      }
+      this.state.entries.set(normalized, createDirectoryEntry(normalized));
+    });
+  }
+  rmdir(path2, options = {}) {
+    return Promise.resolve().then(() => {
+      const normalized = normalizeMemoryPath(path2);
+      const entry = this.state.entries.get(normalized);
+      if (entry === void 0) {
+        if (options.ignoreMissing) return;
+        throw createPathNotFoundError2(normalized, `Memory path not found: ${normalized}`);
+      }
+      if (entry.type !== "directory") {
+        throw createPathNotFoundError2(normalized, `Memory path is not a directory: ${normalized}`);
+      }
+      const children = [...this.state.entries.values()].filter(
+        (child) => child.path !== normalized && getParentPath2(child.path) === normalized
+      );
+      if (children.length > 0 && !options.recursive) {
+        throw createInvalidFixtureError(normalized, `Memory directory not empty: ${normalized}`);
+      }
+      const stack = [...children];
+      while (stack.length > 0) {
+        const next = stack.pop();
+        if (!next) continue;
+        if (next.type === "directory") {
+          for (const grand of this.state.entries.values()) {
+            if (grand.path !== next.path && getParentPath2(grand.path) === next.path) {
+              stack.push(grand);
+            }
+          }
+        }
+        this.state.entries.delete(next.path);
+        this.state.content.delete(next.path);
+      }
+      this.state.entries.delete(normalized);
+    });
+  }
+  requireEntry(path2) {
+    const entry = this.state.entries.get(path2);
+    if (entry === void 0) {
+      throw createPathNotFoundError2(path2, `Memory path not found: ${path2}`);
+    }
+    return entry;
+  }
+};
+var MemoryTransferOperations = class {
+  constructor(state) {
+    this.state = state;
+  }
+  state;
+  read(request) {
+    return Promise.resolve().then(() => {
+      request.throwIfAborted();
+      const path2 = normalizeMemoryPath(request.endpoint.path);
+      const entry = requireFileEntry(this.state, path2);
+      const content = this.state.content.get(path2) ?? new Uint8Array(entry.size ?? 0);
+      const range = resolveByteRange(content.byteLength, request.range);
+      const chunk = content.slice(range.offset, range.offset + range.length);
+      const result = {
+        content: createMemoryContentSource(chunk),
+        totalBytes: chunk.byteLength
+      };
+      if (range.offset > 0) {
+        result.bytesRead = range.offset;
+      }
+      return result;
+    });
+  }
+  async write(request) {
+    request.throwIfAborted();
+    const path2 = normalizeMemoryPath(request.endpoint.path);
+    const existing = this.state.entries.get(path2);
+    if (existing?.type === "directory") {
+      throw createInvalidFixtureError(path2, `Memory path is a directory: ${path2}`);
+    }
+    const writtenContent = await collectTransferContent2(request);
+    const offset = normalizeOptionalByteCount4(request.offset, "offset");
+    const previousContent = this.state.content.get(path2) ?? new Uint8Array(0);
+    const content = offset === void 0 ? writtenContent : mergeContentAtOffset(previousContent, writtenContent, offset);
+    ensureParentDirectories(this.state.entries, path2);
+    this.state.entries.set(path2, createWrittenFileEntry(path2, content.byteLength));
+    this.state.content.set(path2, content);
+    const result = {
+      bytesTransferred: writtenContent.byteLength,
+      resumed: offset !== void 0 && offset > 0,
+      totalBytes: content.byteLength,
+      verified: request.verification?.verified ?? false
+    };
+    if (request.verification !== void 0) {
+      result.verification = cloneVerification5(request.verification);
+    }
+    return result;
+  }
+};
+function createMemoryState(entries) {
+  const state = {
+    content: /* @__PURE__ */ new Map(),
+    entries: /* @__PURE__ */ new Map([["/", createDirectoryEntry("/")]])
+  };
+  for (const input of entries) {
+    const entry = createMemoryEntry(input);
+    const content = createMemoryContent(input, entry);
+    if (entry.path === "/" && entry.type !== "directory") {
+      throw createInvalidFixtureError(entry.path, "Memory provider root must be a directory");
+    }
+    ensureParentDirectories(state.entries, entry.path);
+    state.entries.set(entry.path, entry);
+    if (content !== void 0) {
+      state.content.set(entry.path, content);
+    }
+  }
+  return state;
+}
+function createMemoryEntry(input) {
+  const path2 = normalizeMemoryPath(input.path);
+  const entry = {
+    name: input.name ?? basenameRemotePath(path2),
+    path: path2,
+    type: input.type
+  };
+  copyOptionalEntryFields(entry, input);
+  const content = normalizeMemoryContent(input.content);
+  if (content !== void 0) {
+    entry.size = content.byteLength;
+  }
+  return {
+    ...entry,
+    exists: true
+  };
+}
+function createMemoryContent(input, entry) {
+  const content = normalizeMemoryContent(input.content);
+  if (content !== void 0) {
+    if (entry.type !== "file") {
+      throw createInvalidFixtureError(
+        entry.path,
+        `Memory fixture content requires a file: ${entry.path}`
+      );
+    }
+    return content;
+  }
+  if (entry.type === "file") {
+    return new Uint8Array(entry.size ?? 0);
+  }
+  return void 0;
+}
+function normalizeMemoryContent(content) {
+  if (content === void 0) {
+    return void 0;
+  }
+  return typeof content === "string" ? import_node_buffer7.Buffer.from(content) : new Uint8Array(content);
+}
+function createWrittenFileEntry(path2, size) {
+  return {
+    exists: true,
+    modifiedAt: /* @__PURE__ */ new Date(),
+    name: basenameRemotePath(path2),
+    path: path2,
+    size,
+    type: "file"
+  };
+}
+function createDirectoryEntry(path2) {
+  return {
+    exists: true,
+    name: basenameRemotePath(path2),
+    path: path2,
+    type: "directory"
+  };
+}
+function ensureParentDirectories(state, path2) {
+  for (const parentPath of getAncestorPaths(path2)) {
+    const parent = state.get(parentPath);
+    if (parent !== void 0 && parent.type !== "directory") {
+      throw createInvalidFixtureError(
+        parentPath,
+        `Memory fixture parent is not a directory: ${parentPath}`
+      );
+    }
+    if (parent === void 0) {
+      state.set(parentPath, createDirectoryEntry(parentPath));
+    }
+  }
+}
+function normalizeMemoryPath(path2) {
+  const normalized = normalizeRemotePath(path2);
+  if (normalized === "." || normalized === "/") {
+    return "/";
+  }
+  return normalized.startsWith("/") ? normalized : `/${normalized}`;
+}
+function getAncestorPaths(path2) {
+  const ancestors = [];
+  let parentPath = getParentPath2(path2);
+  while (parentPath !== void 0 && parentPath !== "/") {
+    ancestors.unshift(parentPath);
+    parentPath = getParentPath2(parentPath);
+  }
+  return ancestors;
+}
+function getParentPath2(path2) {
+  if (path2 === "/") {
+    return void 0;
+  }
+  const parentEnd = path2.lastIndexOf("/");
+  return parentEnd <= 0 ? "/" : path2.slice(0, parentEnd);
+}
+function requireFileEntry(state, path2) {
+  const entry = state.entries.get(path2);
+  if (entry === void 0) {
+    throw createPathNotFoundError2(path2, `Memory path not found: ${path2}`);
+  }
+  if (entry.type !== "file") {
+    throw createPathNotFoundError2(path2, `Memory path is not a file: ${path2}`);
+  }
+  return entry;
+}
+function resolveByteRange(size, range) {
+  if (range === void 0) {
+    return { length: size, offset: 0 };
+  }
+  const requestedOffset = normalizeByteCount4(range.offset, "offset");
+  const requestedLength = range.length === void 0 ? size - Math.min(requestedOffset, size) : normalizeByteCount4(range.length, "length");
+  const offset = Math.min(requestedOffset, size);
+  const length = Math.max(0, Math.min(requestedLength, size - offset));
+  return { length, offset };
+}
+async function collectTransferContent2(request) {
+  const chunks = [];
+  let byteLength = 0;
+  for await (const chunk of request.content) {
+    request.throwIfAborted();
+    const clonedChunk = new Uint8Array(chunk);
+    chunks.push(clonedChunk);
+    byteLength += clonedChunk.byteLength;
+    request.reportProgress(byteLength, request.totalBytes);
+  }
+  return concatChunks3(chunks, byteLength);
+}
+function concatChunks3(chunks, byteLength) {
+  const content = new Uint8Array(byteLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    content.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return content;
+}
+function mergeContentAtOffset(previousContent, writtenContent, offset) {
+  const content = new Uint8Array(
+    Math.max(previousContent.byteLength, offset + writtenContent.byteLength)
+  );
+  content.set(previousContent);
+  content.set(writtenContent, offset);
+  return content;
+}
+async function* createMemoryContentSource(content) {
+  await Promise.resolve();
+  yield new Uint8Array(content);
+}
+function normalizeOptionalByteCount4(value, field) {
+  return value === void 0 ? void 0 : normalizeByteCount4(value, field);
+}
+function normalizeByteCount4(value, field) {
+  if (!Number.isFinite(value) || value < 0) {
+    throw createInvalidFixtureError("/", `Memory provider ${field} must be a non-negative number`);
+  }
+  return Math.floor(value);
+}
+function cloneVerification5(verification) {
+  const clone = { verified: verification.verified };
+  if (verification.method !== void 0) clone.method = verification.method;
+  if (verification.checksum !== void 0) clone.checksum = verification.checksum;
+  if (verification.expectedChecksum !== void 0) {
+    clone.expectedChecksum = verification.expectedChecksum;
+  }
+  if (verification.actualChecksum !== void 0) clone.actualChecksum = verification.actualChecksum;
+  if (verification.details !== void 0) clone.details = { ...verification.details };
+  return clone;
+}
+function cloneRemoteEntry(entry) {
+  const clone = {
+    name: entry.name,
+    path: entry.path,
+    type: entry.type
+  };
+  copyOptionalEntryFields(clone, entry);
+  return clone;
+}
+function cloneRemoteStat(entry) {
+  return {
+    ...cloneRemoteEntry(entry),
+    exists: true
+  };
+}
+function copyOptionalEntryFields(target, source) {
+  if (source.size !== void 0) target.size = source.size;
+  if (source.modifiedAt !== void 0) target.modifiedAt = cloneDate2(source.modifiedAt);
+  if (source.createdAt !== void 0) target.createdAt = cloneDate2(source.createdAt);
+  if (source.accessedAt !== void 0) target.accessedAt = cloneDate2(source.accessedAt);
+  if (source.permissions !== void 0) target.permissions = clonePermissions(source.permissions);
+  if (source.owner !== void 0) target.owner = source.owner;
+  if (source.group !== void 0) target.group = source.group;
+  if (source.symlinkTarget !== void 0) target.symlinkTarget = source.symlinkTarget;
+  if (source.uniqueId !== void 0) target.uniqueId = source.uniqueId;
+  if (source.raw !== void 0) target.raw = source.raw;
+}
+function cloneDate2(value) {
+  return new Date(value.getTime());
+}
+function clonePermissions(permissions) {
+  return { ...permissions };
+}
+function compareEntries4(left, right) {
+  return left.path.localeCompare(right.path);
+}
+function createPathNotFoundError2(path2, message) {
+  return new PathNotFoundError({
+    details: { provider: MEMORY_PROVIDER_ID },
+    message,
+    path: path2,
+    retryable: false
+  });
+}
+function createInvalidFixtureError(path2, message) {
+  return new ConfigurationError({
+    details: { provider: MEMORY_PROVIDER_ID },
+    message,
+    path: path2,
+    retryable: false
+  });
+}
+
+// src/providers/web/HttpProvider.ts
+var import_node_buffer8 = require("buffer");
+var HTTP_CHECKSUM_CAPABILITIES = ["etag"];
+function createHttpProviderFactory(options = {}) {
+  const id = options.id ?? "http";
+  const secure = options.secure ?? id === "https";
+  const basePath = options.basePath ?? "";
+  const fetchImpl = options.fetch ?? globalThis.fetch;
+  if (typeof fetchImpl !== "function") {
+    throw new ConfigurationError({
+      message: "Global fetch is unavailable; supply HttpProviderOptions.fetch explicitly",
+      retryable: false
+    });
+  }
+  const capabilities = {
+    atomicRename: false,
+    authentication: ["anonymous", "password", "token"],
+    checksum: [...HTTP_CHECKSUM_CAPABILITIES],
+    chmod: false,
+    chown: false,
+    list: false,
+    maxConcurrency: 8,
+    metadata: ["modifiedAt", "mimeType", "uniqueId"],
+    notes: ["Read-only HTTP(S) provider. Uploads are not supported."],
+    provider: id,
+    readStream: true,
+    resumeDownload: true,
+    resumeUpload: false,
+    serverSideCopy: false,
+    serverSideMove: false,
+    stat: true,
+    symlink: false,
+    writeStream: false
+  };
+  return {
+    capabilities,
+    create: () => new HttpProvider({
+      basePath,
+      capabilities,
+      defaultHeaders: { ...options.defaultHeaders ?? {} },
+      fetch: fetchImpl,
+      id,
+      secure
+    }),
+    id
+  };
+}
+var HttpProvider = class {
+  constructor(internals) {
+    this.internals = internals;
+    this.id = internals.id;
+    this.capabilities = internals.capabilities;
+  }
+  internals;
+  id;
+  capabilities;
+  async connect(profile) {
+    const headers = { ...this.internals.defaultHeaders };
+    if (profile.username !== void 0) {
+      const username = await resolveSecret(profile.username);
+      const password = profile.password !== void 0 ? await resolveSecret(profile.password) : "";
+      const usernameText = secretToString2(username);
+      const passwordText = secretToString2(password);
+      headers["Authorization"] = `Basic ${import_node_buffer8.Buffer.from(`${usernameText}:${passwordText}`).toString("base64")}`;
+    }
+    const baseUrl = buildSessionBaseUrl(profile, this.internals);
+    const sessionOptions = {
+      baseUrl,
+      capabilities: this.internals.capabilities,
+      fetch: this.internals.fetch,
+      headers,
+      id: this.internals.id
+    };
+    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
+    const session = new HttpTransferSession(sessionOptions);
+    return session;
+  }
+};
+var HttpTransferSession = class {
+  constructor(options) {
+    this.options = options;
+    this.provider = options.id;
+    this.capabilities = options.capabilities;
+    this.fs = new HttpFileSystem(options);
+    this.transfers = new HttpTransferOperations(options);
+  }
+  options;
+  provider;
+  capabilities;
+  fs;
+  transfers;
+  disconnect() {
+    return Promise.resolve();
+  }
+};
+var HttpFileSystem = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  list() {
+    return Promise.reject(
+      new UnsupportedFeatureError({
+        message: "HTTP provider does not support directory listing",
+        retryable: false
+      })
+    );
+  }
+  async stat(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const url = resolveUrl(this.options.baseUrl, normalized);
+    const response = await dispatchRequest(this.options, url, {
+      method: "HEAD"
+    });
+    if (!response.ok) {
+      throw mapResponseError(response, normalized);
+    }
+    return responseToStat(response, normalized);
+  }
+};
+var HttpTransferOperations = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async read(request) {
+    request.throwIfAborted();
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const url = resolveUrl(this.options.baseUrl, normalized);
+    const headers = {};
+    if (request.range !== void 0) {
+      headers["Range"] = formatRangeHeader(request.range.offset, request.range.length);
+    }
+    const requestInit = {
+      headers,
+      method: "GET"
+    };
+    if (request.signal !== void 0) requestInit.signal = request.signal;
+    const response = await dispatchRequest(this.options, url, requestInit);
+    if (!response.ok && response.status !== 206) {
+      throw mapResponseError(response, normalized);
+    }
+    const body = response.body;
+    if (body === null) {
+      throw new ConnectionError({
+        message: `HTTP response had no body for ${url.toString()}`,
+        retryable: true
+      });
+    }
+    const result = {
+      content: webStreamToAsyncIterable(body)
+    };
+    const totalBytes = parseTotalBytes(response, request.range?.offset);
+    if (totalBytes !== void 0) result.totalBytes = totalBytes;
+    if (request.range?.offset !== void 0 && request.range.offset > 0) {
+      result.bytesRead = request.range.offset;
+    }
+    const etag = response.headers.get("etag");
+    if (etag !== null) result.checksum = etag;
+    return result;
+  }
+  write() {
+    return Promise.reject(
+      new UnsupportedFeatureError({
+        message: "HTTP provider is read-only; uploads are not supported",
+        retryable: false
+      })
+    );
+  }
+};
+function buildSessionBaseUrl(profile, internals) {
+  return buildBaseUrl(profile, { basePath: internals.basePath, secure: internals.secure });
+}
+function responseToStat(response, normalizedPath) {
+  const stat = {
+    exists: true,
+    name: basenameRemotePath(normalizedPath),
+    path: normalizedPath,
+    type: "file"
+  };
+  const contentLength = response.headers.get("content-length");
+  if (contentLength !== null) {
+    const size = Number.parseInt(contentLength, 10);
+    if (Number.isFinite(size) && size >= 0) stat.size = size;
+  }
+  const lastModified = response.headers.get("last-modified");
+  if (lastModified !== null) {
+    const parsed = new Date(lastModified);
+    if (!Number.isNaN(parsed.getTime())) stat.modifiedAt = parsed;
+  }
+  const etag = response.headers.get("etag");
+  if (etag !== null) stat.uniqueId = etag;
+  return stat;
+}
+
+// src/providers/web/WebDavProvider.ts
+var import_node_buffer9 = require("buffer");
+var WEBDAV_CHECKSUM_CAPABILITIES = ["etag"];
+function createWebDavProviderFactory(options = {}) {
+  const id = options.id ?? "webdav";
+  const secure = options.secure ?? false;
+  const basePath = options.basePath ?? "";
+  const fetchImpl = options.fetch ?? globalThis.fetch;
+  if (typeof fetchImpl !== "function") {
+    throw new ConfigurationError({
+      message: "Global fetch is unavailable; supply WebDavProviderOptions.fetch explicitly",
+      retryable: false
+    });
+  }
+  const capabilities = {
+    atomicRename: false,
+    authentication: ["anonymous", "password", "token"],
+    checksum: [...WEBDAV_CHECKSUM_CAPABILITIES],
+    chmod: false,
+    chown: false,
+    list: true,
+    maxConcurrency: 8,
+    metadata: ["modifiedAt", "mimeType", "uniqueId"],
+    notes: ["WebDAV provider buffers PUT bodies in memory; chunked uploads are not yet supported."],
+    provider: id,
+    readStream: true,
+    resumeDownload: true,
+    resumeUpload: false,
+    serverSideCopy: false,
+    serverSideMove: false,
+    stat: true,
+    symlink: false,
+    writeStream: true
+  };
+  return {
+    capabilities,
+    create: () => new WebDavProvider({
+      basePath,
+      capabilities,
+      defaultHeaders: { ...options.defaultHeaders ?? {} },
+      fetch: fetchImpl,
+      id,
+      secure
+    }),
+    id
+  };
+}
+var WebDavProvider = class {
+  constructor(internals) {
+    this.internals = internals;
+    this.id = internals.id;
+    this.capabilities = internals.capabilities;
+  }
+  internals;
+  id;
+  capabilities;
+  async connect(profile) {
+    const headers = { ...this.internals.defaultHeaders };
+    if (profile.username !== void 0) {
+      const username = await resolveSecret(profile.username);
+      const password = profile.password !== void 0 ? await resolveSecret(profile.password) : "";
+      const usernameText = secretToString2(username);
+      const passwordText = secretToString2(password);
+      headers["Authorization"] = `Basic ${import_node_buffer9.Buffer.from(`${usernameText}:${passwordText}`).toString(
+        "base64"
+      )}`;
+    }
+    const baseUrl = buildBaseUrl(profile, {
+      basePath: this.internals.basePath,
+      secure: this.internals.secure
+    });
+    const sessionOptions = {
+      baseUrl,
+      capabilities: this.internals.capabilities,
+      fetch: this.internals.fetch,
+      headers,
+      id: this.internals.id
+    };
+    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
+    return new WebDavSession(sessionOptions);
+  }
+};
+var WebDavSession = class {
+  provider;
+  capabilities;
+  fs;
+  transfers;
+  constructor(options) {
+    this.provider = options.id;
+    this.capabilities = options.capabilities;
+    this.fs = new WebDavFileSystem(options);
+    this.transfers = new WebDavTransferOperations(options);
+  }
+  disconnect() {
+    return Promise.resolve();
+  }
+};
+var WebDavFileSystem = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async list(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const url = resolveUrl(this.options.baseUrl, normalized);
+    const response = await dispatchRequest(this.options, url, {
+      headers: { Depth: "1", "Content-Type": "application/xml" },
+      method: "PROPFIND"
+    });
+    if (!response.ok && response.status !== 207) {
+      throw mapResponseError(response, normalized);
+    }
+    const body = await response.text();
+    const entries = parsePropfindResponses(body, this.options.baseUrl);
+    return entries.filter((entry) => entry.path !== normalized && entry.path !== `${normalized}/`).map((entry) => normalizeEntry(entry, normalized));
+  }
+  async stat(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const url = resolveUrl(this.options.baseUrl, normalized);
+    const response = await dispatchRequest(this.options, url, {
+      headers: { Depth: "0", "Content-Type": "application/xml" },
+      method: "PROPFIND"
+    });
+    if (!response.ok && response.status !== 207) {
+      throw mapResponseError(response, normalized);
+    }
+    const body = await response.text();
+    const entries = parsePropfindResponses(body, this.options.baseUrl);
+    const target = entries.find((entry2) => entry2.path === normalized || entry2.path === `${normalized}/`) ?? entries[0];
+    if (target === void 0) {
+      throw new ProtocolError({
+        details: { path: normalized },
+        message: "WebDAV PROPFIND returned no responses",
+        retryable: false
+      });
+    }
+    const entry = normalizeEntry(target, parentOf(normalized));
+    const stat = {
+      exists: true,
+      name: entry.name,
+      path: normalized,
+      type: entry.type
+    };
+    if (entry.size !== void 0) stat.size = entry.size;
+    if (entry.modifiedAt !== void 0) stat.modifiedAt = entry.modifiedAt;
+    if (entry.uniqueId !== void 0) stat.uniqueId = entry.uniqueId;
+    return stat;
+  }
+};
+var WebDavTransferOperations = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async read(request) {
+    request.throwIfAborted();
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const url = resolveUrl(this.options.baseUrl, normalized);
+    const headers = {};
+    if (request.range !== void 0) {
+      headers["Range"] = formatRangeHeader(request.range.offset, request.range.length);
+    }
+    const init = {
+      headers,
+      method: "GET"
+    };
+    if (request.signal !== void 0) init.signal = request.signal;
+    const response = await dispatchRequest(this.options, url, init);
+    if (!response.ok && response.status !== 206) {
+      throw mapResponseError(response, normalized);
+    }
+    const body = response.body;
+    if (body === null) {
+      throw new ConnectionError({
+        message: `WebDAV response had no body for ${url.toString()}`,
+        retryable: true
+      });
+    }
+    const result = {
+      content: webStreamToAsyncIterable(body)
+    };
+    const totalBytes = parseTotalBytes(response, request.range?.offset);
+    if (totalBytes !== void 0) result.totalBytes = totalBytes;
+    if (request.range?.offset !== void 0 && request.range.offset > 0) {
+      result.bytesRead = request.range.offset;
+    }
+    const etag = response.headers.get("etag");
+    if (etag !== null) result.checksum = etag;
+    return result;
+  }
+  async write(request) {
+    request.throwIfAborted();
+    if (request.offset !== void 0 && request.offset > 0) {
+      throw new UnsupportedFeatureError({
+        details: { offset: request.offset },
+        message: "WebDAV provider does not support resumable uploads",
+        retryable: false
+      });
+    }
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const url = resolveUrl(this.options.baseUrl, normalized);
+    const buffered = await collectChunks6(request.content);
+    const headers = {
+      "Content-Length": String(buffered.byteLength),
+      "Content-Type": "application/octet-stream"
+    };
+    const init = {
+      body: buffered,
+      headers,
+      method: "PUT"
+    };
+    if (request.signal !== void 0) init.signal = request.signal;
+    const response = await dispatchRequest(this.options, url, init);
+    if (!response.ok) {
+      throw mapResponseError(response, normalized);
+    }
+    request.reportProgress(buffered.byteLength, buffered.byteLength);
+    const result = {
+      bytesTransferred: buffered.byteLength,
+      totalBytes: buffered.byteLength
+    };
+    const etag = response.headers.get("etag");
+    if (etag !== null) result.checksum = etag;
+    return result;
+  }
+};
+async function collectChunks6(source) {
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of source) {
+    chunks.push(chunk);
+    total += chunk.byteLength;
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+function parsePropfindResponses(xml, baseUrl) {
+  const entries = [];
+  const responseRegex = /<(?:[a-zA-Z0-9-]+:)?response\b[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9-]+:)?response>/gi;
+  let match;
+  while ((match = responseRegex.exec(xml)) !== null) {
+    const inner = match[1] ?? "";
+    const href = extractTag2(inner, "href");
+    if (href === void 0) continue;
+    const path2 = decodeHref(href, baseUrl);
+    const propBlock = extractTag2(inner, "prop") ?? inner;
+    const isCollection = /<(?:[a-zA-Z0-9-]+:)?collection\b/i.test(propBlock);
+    const sizeText = extractTag2(propBlock, "getcontentlength");
+    const modifiedText = extractTag2(propBlock, "getlastmodified");
+    const etag = extractTag2(propBlock, "getetag");
+    const entry = {
+      path: path2,
+      type: isCollection ? "directory" : "file"
+    };
+    if (sizeText !== void 0) {
+      const size = Number.parseInt(sizeText.trim(), 10);
+      if (Number.isFinite(size) && size >= 0) entry.size = size;
+    }
+    if (modifiedText !== void 0) {
+      const parsed = new Date(modifiedText.trim());
+      if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
+    }
+    if (etag !== void 0) entry.uniqueId = etag.trim();
+    entries.push(entry);
+  }
+  return entries;
+}
+function extractTag2(xml, localName) {
+  const pattern = new RegExp(
+    `<(?:[a-zA-Z0-9-]+:)?${localName}\\b[^>]*?(?:/>|>([\\s\\S]*?)</(?:[a-zA-Z0-9-]+:)?${localName}>)`,
+    "i"
+  );
+  const match = pattern.exec(xml);
+  if (match === null) return void 0;
+  return match[1] ?? "";
+}
+function decodeHref(rawHref, baseUrl) {
+  const decoded = decodeURIComponent(rawHref.trim());
+  let pathname = decoded;
+  if (/^https?:\/\//i.test(decoded)) {
+    try {
+      pathname = new URL(decoded).pathname;
+    } catch {
+      pathname = decoded;
+    }
+  }
+  const basePathname = baseUrl.pathname.replace(/\/+$/, "");
+  if (basePathname.length > 0 && pathname.startsWith(basePathname)) {
+    pathname = pathname.slice(basePathname.length);
+  }
+  if (!pathname.startsWith("/")) pathname = `/${pathname}`;
+  if (pathname.length > 1 && pathname.endsWith("/")) pathname = pathname.slice(0, -1);
+  return pathname;
+}
+function normalizeEntry(entry, parentPath) {
+  const trimmed = entry.path.endsWith("/") ? entry.path.slice(0, -1) : entry.path;
+  const name = basenameRemotePath(trimmed === "" ? "/" : trimmed);
+  const result = {
+    name: name === "" ? trimmed : name,
+    path: trimmed === "" ? "/" : trimmed,
+    type: entry.type
+  };
+  if (entry.size !== void 0) result.size = entry.size;
+  if (entry.modifiedAt !== void 0) result.modifiedAt = entry.modifiedAt;
+  if (entry.uniqueId !== void 0) result.uniqueId = entry.uniqueId;
+  void parentPath;
+  return result;
+}
+function parentOf(path2) {
+  if (path2 === "/" || path2 === "") return "/";
+  const idx = path2.lastIndexOf("/");
+  if (idx <= 0) return "/";
+  return path2.slice(0, idx);
+}
+
+// src/providers/web/awsSigv4.ts
+var import_node_crypto2 = require("crypto");
+function signSigV4(input) {
+  const now = input.now ?? /* @__PURE__ */ new Date();
+  const amzDate = formatAmzDate(now);
+  const dateStamp = amzDate.slice(0, 8);
+  const payloadHash = input.body !== void 0 ? sha256Hex(input.body) : sha256Hex(new Uint8Array());
+  input.headers["host"] = input.url.host;
+  input.headers["x-amz-date"] = amzDate;
+  input.headers["x-amz-content-sha256"] = payloadHash;
+  if (input.sessionToken !== void 0) {
+    input.headers["x-amz-security-token"] = input.sessionToken;
+  }
+  const canonicalUri = canonicalizePath(input.url.pathname);
+  const canonicalQuery = canonicalizeQuery(input.url.searchParams);
+  const lowerHeaders = Object.entries(input.headers).map(([name, value]) => [
+    name.toLowerCase(),
+    value.trim().replace(/\s+/g, " ")
+  ]).sort((entryA, entryB) => entryA[0] < entryB[0] ? -1 : entryA[0] > entryB[0] ? 1 : 0);
+  const canonicalHeaders = lowerHeaders.map(([n, v]) => `${n}:${v}
+`).join("");
+  const signedHeaders = lowerHeaders.map(([n]) => n).join(";");
+  const canonicalRequest = [
+    input.method.toUpperCase(),
+    canonicalUri,
+    canonicalQuery,
+    canonicalHeaders,
+    signedHeaders,
+    payloadHash
+  ].join("\n");
+  const credentialScope = `${dateStamp}/${input.region}/${input.service}/aws4_request`;
+  const stringToSign = [
+    "AWS4-HMAC-SHA256",
+    amzDate,
+    credentialScope,
+    sha256Hex(Buffer.from(canonicalRequest, "utf8"))
+  ].join("\n");
+  const kDate = hmac(`AWS4${input.secretAccessKey}`, dateStamp);
+  const kRegion = hmac(kDate, input.region);
+  const kService = hmac(kRegion, input.service);
+  const kSigning = hmac(kService, "aws4_request");
+  const signature = hmacHex(kSigning, stringToSign);
+  const authorization = `AWS4-HMAC-SHA256 Credential=${input.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+  input.headers["authorization"] = authorization;
+  return { authorization, signedHeaders };
+}
+function formatAmzDate(now) {
+  const iso = now.toISOString();
+  return `${iso.slice(0, 4)}${iso.slice(5, 7)}${iso.slice(8, 10)}T${iso.slice(11, 13)}${iso.slice(14, 16)}${iso.slice(17, 19)}Z`;
+}
+function canonicalizePath(pathname) {
+  if (pathname.length === 0) return "/";
+  return pathname.split("/").map((segment) => encodeRfc3986(decodeURIComponent(segment))).join("/");
+}
+function canonicalizeQuery(params) {
+  const entries = [];
+  params.forEach((value, key) => {
+    entries.push([key, value]);
+  });
+  entries.sort(
+    ([ka, va], [kb, vb]) => ka === kb ? va < vb ? -1 : va > vb ? 1 : 0 : ka < kb ? -1 : 1
+  );
+  return entries.map(([key, value]) => `${encodeRfc3986(key)}=${encodeRfc3986(value)}`).join("&");
+}
+function encodeRfc3986(value) {
+  return encodeURIComponent(value).replace(
+    /[!'()*]/g,
+    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+}
+function sha256Hex(data) {
+  return (0, import_node_crypto2.createHash)("sha256").update(data).digest("hex");
+}
+function hmac(key, data) {
+  return (0, import_node_crypto2.createHmac)("sha256", key).update(data, "utf8").digest();
+}
+function hmacHex(key, data) {
+  return (0, import_node_crypto2.createHmac)("sha256", key).update(data, "utf8").digest("hex");
+}
+
+// src/providers/web/S3Provider.ts
+function createMemoryS3MultipartResumeStore() {
+  const map = /* @__PURE__ */ new Map();
+  const stringify = (key) => `${key.bucket}\0${key.jobId}\0${key.path}`;
+  return {
+    clear: (key) => {
+      map.delete(stringify(key));
+    },
+    load: (key) => map.get(stringify(key)),
+    save: (key, checkpoint) => {
+      map.set(stringify(key), checkpoint);
+    }
+  };
+}
+var DEFAULT_MULTIPART_PART_SIZE = 8 * 1024 * 1024;
+var DEFAULT_MULTIPART_THRESHOLD = 8 * 1024 * 1024;
+var S3_CHECKSUM_CAPABILITIES = ["etag"];
+function createS3ProviderFactory(options = {}) {
+  const id = options.id ?? "s3";
+  const region = options.region ?? "us-east-1";
+  const service = options.service ?? "s3";
+  const pathStyle = options.pathStyle ?? true;
+  const fetchImpl = options.fetch ?? globalThis.fetch;
+  const endpoint = options.endpoint ?? `https://s3.${region}.amazonaws.com`;
+  if (typeof fetchImpl !== "function") {
+    throw new ConfigurationError({
+      message: "Global fetch is unavailable; supply S3ProviderOptions.fetch explicitly",
+      retryable: false
+    });
+  }
+  let endpointUrl;
+  try {
+    endpointUrl = new URL(endpoint);
+  } catch (error) {
+    throw new ConfigurationError({
+      cause: error,
+      details: { endpoint },
+      message: "S3 provider received an invalid endpoint URL",
+      retryable: false
+    });
+  }
+  const multipartEnabled = options.multipart?.enabled ?? false;
+  const multipart = {
+    enabled: multipartEnabled,
+    partSizeBytes: options.multipart?.partSizeBytes ?? DEFAULT_MULTIPART_PART_SIZE,
+    thresholdBytes: options.multipart?.thresholdBytes ?? DEFAULT_MULTIPART_THRESHOLD,
+    ...options.multipart?.resumeStore !== void 0 ? { resumeStore: options.multipart.resumeStore } : {}
+  };
+  const capabilities = {
+    atomicRename: false,
+    authentication: ["password", "token"],
+    checksum: [...S3_CHECKSUM_CAPABILITIES],
+    chmod: false,
+    chown: false,
+    list: true,
+    maxConcurrency: 16,
+    metadata: ["modifiedAt", "mimeType", "uniqueId"],
+    notes: multipartEnabled ? [
+      `S3 multipart upload enabled (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`
+    ] : [
+      "S3 provider performs single-shot PUT uploads; pass multipart.enabled to stream large objects."
+    ],
+    provider: id,
+    readStream: true,
+    resumeDownload: true,
+    resumeUpload: multipartEnabled,
+    serverSideCopy: false,
+    serverSideMove: false,
+    stat: true,
+    symlink: false,
+    writeStream: true
+  };
+  return {
+    capabilities,
+    create: () => new S3Provider({
+      capabilities,
+      defaultHeaders: { ...options.defaultHeaders ?? {} },
+      endpointUrl,
+      fetch: fetchImpl,
+      id,
+      multipart,
+      pathStyle,
+      region,
+      service,
+      ...options.bucket !== void 0 ? { bucket: options.bucket } : {},
+      ...options.sessionToken !== void 0 ? { sessionToken: options.sessionToken } : {}
+    }),
+    id
+  };
+}
+var S3Provider = class {
+  constructor(internals) {
+    this.internals = internals;
+    this.id = internals.id;
+    this.capabilities = internals.capabilities;
+  }
+  internals;
+  id;
+  capabilities;
+  async connect(profile) {
+    if (profile.username === void 0 || profile.password === void 0) {
+      throw new ConfigurationError({
+        message: "S3 provider requires username (access key id) and password (secret access key)",
+        retryable: false
+      });
+    }
+    const accessKeyId = secretToString2(await resolveSecret(profile.username));
+    const secretAccessKey = secretToString2(await resolveSecret(profile.password));
+    const sessionToken = this.internals.sessionToken !== void 0 ? secretToString2(await resolveSecret(this.internals.sessionToken)) : void 0;
+    const bucket = profile.host !== void 0 && profile.host !== "" ? profile.host : this.internals.bucket;
+    if (bucket === void 0 || bucket === "") {
+      throw new ConfigurationError({
+        message: "S3 provider requires a bucket via S3ProviderOptions.bucket or ConnectionProfile.host",
+        retryable: false
+      });
+    }
+    const sessionOptions = {
+      accessKeyId,
+      bucket,
+      capabilities: this.internals.capabilities,
+      defaultHeaders: this.internals.defaultHeaders,
+      endpointUrl: this.internals.endpointUrl,
+      fetch: this.internals.fetch,
+      id: this.internals.id,
+      multipart: this.internals.multipart,
+      pathStyle: this.internals.pathStyle,
+      region: this.internals.region,
+      secretAccessKey,
+      service: this.internals.service
+    };
+    if (sessionToken !== void 0) sessionOptions.sessionToken = sessionToken;
+    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
+    return new S3Session(sessionOptions);
+  }
+};
+var S3Session = class {
+  provider;
+  capabilities;
+  fs;
+  transfers;
+  constructor(options) {
+    this.provider = options.id;
+    this.capabilities = options.capabilities;
+    this.fs = new S3FileSystem(options);
+    this.transfers = new S3TransferOperations(options);
+  }
+  disconnect() {
+    return Promise.resolve();
+  }
+};
+var S3FileSystem = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async list(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const prefix = normalized === "/" ? "" : `${normalized.slice(1)}/`;
+    const url = buildBucketUrl(this.options);
+    url.searchParams.set("list-type", "2");
+    url.searchParams.set("delimiter", "/");
+    if (prefix.length > 0) url.searchParams.set("prefix", prefix);
+    const response = await s3Fetch(this.options, "GET", url);
+    if (!response.ok) throw mapResponseError(response, normalized);
+    const body = await response.text();
+    return parseListObjectsV2(body, prefix);
+  }
+  async stat(path2) {
+    const normalized = normalizeRemotePath(path2);
+    const url = buildObjectUrl(this.options, normalized);
+    const response = await s3Fetch(this.options, "HEAD", url);
+    if (!response.ok) throw mapResponseError(response, normalized);
+    const stat = {
+      exists: true,
+      name: basenameRemotePath(normalized),
+      path: normalized,
+      type: "file"
+    };
+    const contentLength = response.headers.get("content-length");
+    if (contentLength !== null) {
+      const size = Number.parseInt(contentLength, 10);
+      if (Number.isFinite(size) && size >= 0) stat.size = size;
+    }
+    const lastModified = response.headers.get("last-modified");
+    if (lastModified !== null) {
+      const parsed = new Date(lastModified);
+      if (!Number.isNaN(parsed.getTime())) stat.modifiedAt = parsed;
+    }
+    const etag = response.headers.get("etag");
+    if (etag !== null) stat.uniqueId = etag;
+    return stat;
+  }
+};
+var S3TransferOperations = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  async read(request) {
+    request.throwIfAborted();
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const url = buildObjectUrl(this.options, normalized);
+    const headers = {};
+    if (request.range !== void 0) {
+      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
+    }
+    const response = await s3Fetch(this.options, "GET", url, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      extraHeaders: headers
+    });
+    if (!response.ok && response.status !== 206) {
+      throw mapResponseError(response, normalized);
+    }
+    const body = response.body;
+    if (body === null) {
+      throw new ConnectionError({
+        message: `S3 response had no body for ${url.toString()}`,
+        retryable: true
+      });
+    }
+    const result = {
+      content: webStreamToAsyncIterable(body)
+    };
+    const totalBytes = parseTotalBytes(response, request.range?.offset);
+    if (totalBytes !== void 0) result.totalBytes = totalBytes;
+    if (request.range?.offset !== void 0 && request.range.offset > 0) {
+      result.bytesRead = request.range.offset;
+    }
+    const etag = response.headers.get("etag");
+    if (etag !== null) result.checksum = etag;
+    return result;
+  }
+  async write(request) {
+    request.throwIfAborted();
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const multipart = this.options.multipart;
+    const offset = request.offset ?? 0;
+    if (offset > 0) {
+      if (!multipart.enabled || multipart.resumeStore === void 0) {
+        throw new UnsupportedFeatureError({
+          details: { offset },
+          message: "S3 provider requires multipart.enabled and multipart.resumeStore to resume an upload",
+          retryable: false
+        });
+      }
+      return this.writeMultipart(request, normalized, offset);
+    }
+    if (multipart.enabled) {
+      return this.writeMultipart(request, normalized, 0);
+    }
+    return this.writeSingleShot(request, normalized);
+  }
+  async writeSingleShot(request, normalized) {
+    const url = buildObjectUrl(this.options, normalized);
+    const buffered = await collectChunks7(request.content);
+    const response = await s3Fetch(this.options, "PUT", url, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      body: buffered,
+      extraHeaders: { "content-type": "application/octet-stream" }
+    });
+    if (!response.ok) throw mapResponseError(response, normalized);
+    request.reportProgress(buffered.byteLength, buffered.byteLength);
+    const result = {
+      bytesTransferred: buffered.byteLength,
+      totalBytes: buffered.byteLength
+    };
+    const etag = response.headers.get("etag");
+    if (etag !== null) result.checksum = etag;
+    return result;
+  }
+  async writeMultipart(request, normalized, requestedOffset) {
+    const multipart = this.options.multipart;
+    const partSize = multipart.partSizeBytes;
+    const objectUrl = buildObjectUrl(this.options, normalized);
+    const resumeStore = multipart.resumeStore;
+    const resumeKey = {
+      bucket: this.options.bucket,
+      jobId: request.job.id,
+      path: normalized
+    };
+    let existing;
+    if (resumeStore !== void 0) {
+      existing = await resumeStore.load(resumeKey) ?? void 0;
+    }
+    if (requestedOffset > 0) {
+      if (existing === void 0) {
+        throw new UnsupportedFeatureError({
+          details: { offset: requestedOffset },
+          message: "S3 provider has no resume checkpoint for this transfer",
+          retryable: false
+        });
+      }
+      const lastByteEnd = existing.parts[existing.parts.length - 1]?.byteEnd ?? 0;
+      if (lastByteEnd !== requestedOffset) {
+        throw new UnsupportedFeatureError({
+          details: { checkpointOffset: lastByteEnd, requestedOffset },
+          message: "S3 resume offset does not match the stored multipart checkpoint",
+          retryable: false
+        });
+      }
+    }
+    const iterator = request.content[Symbol.asyncIterator]();
+    const initialBuffer = [];
+    let initialSize = 0;
+    if (existing === void 0) {
+      while (initialSize <= multipart.thresholdBytes) {
+        const next = await iterator.next();
+        if (next.done === true) break;
+        const chunk = next.value;
+        if (chunk.byteLength === 0) continue;
+        initialBuffer.push(chunk);
+        initialSize += chunk.byteLength;
+      }
+      if (initialSize <= multipart.thresholdBytes) {
+        const buffered = concat(initialBuffer, initialSize);
+        return this.singleShotFromBuffer(request, normalized, buffered);
+      }
+    }
+    let uploadId;
+    if (existing !== void 0) {
+      uploadId = existing.uploadId;
+    } else {
+      const initiateUrl = new URL(objectUrl.toString());
+      initiateUrl.searchParams.set("uploads", "");
+      const initiateResponse = await s3Fetch(this.options, "POST", initiateUrl, {
+        ...request.signal !== void 0 ? { signal: request.signal } : {},
+        extraHeaders: { "content-type": "application/octet-stream" }
+      });
+      if (!initiateResponse.ok) throw mapResponseError(initiateResponse, normalized);
+      const initiateBody = await initiateResponse.text();
+      const initiated = innerText(initiateBody, "UploadId");
+      if (initiated === void 0 || initiated === "") {
+        throw new ConnectionError({
+          message: "S3 CreateMultipartUpload returned no UploadId",
+          retryable: true
+        });
+      }
+      uploadId = initiated;
+      if (resumeStore !== void 0) {
+        await resumeStore.save(resumeKey, { parts: [], uploadId });
+      }
+    }
+    const parts = existing !== void 0 ? [...existing.parts] : [];
+    const startedBytes = parts.length > 0 ? parts[parts.length - 1]?.byteEnd ?? 0 : 0;
+    let bytesTransferred = startedBytes;
+    let partNumber = parts.length + 1;
+    let buffer = [];
+    let bufferSize = 0;
+    if (existing === void 0) {
+      const trailing = concat(initialBuffer, initialSize);
+      buffer = [trailing];
+      bufferSize = trailing.byteLength;
+    }
+    const flushPart = async (final) => {
+      while (bufferSize >= partSize || final && bufferSize > 0) {
+        const take = final ? bufferSize : partSize;
+        const partBytes = sliceFromBuffers(buffer, take);
+        buffer = partBytes.remaining;
+        bufferSize -= partBytes.bytes.byteLength;
+        const partUrl = new URL(objectUrl.toString());
+        partUrl.searchParams.set("partNumber", String(partNumber));
+        partUrl.searchParams.set("uploadId", uploadId);
+        const partResponse = await s3Fetch(this.options, "PUT", partUrl, {
+          ...request.signal !== void 0 ? { signal: request.signal } : {},
+          body: partBytes.bytes
+        });
+        if (!partResponse.ok) {
+          throw mapResponseError(partResponse, normalized);
+        }
+        const partEtag = partResponse.headers.get("etag");
+        if (partEtag === null) {
+          throw new ConnectionError({
+            message: `S3 UploadPart returned no ETag for part ${String(partNumber)}`,
+            retryable: true
+          });
+        }
+        bytesTransferred += partBytes.bytes.byteLength;
+        parts.push({ byteEnd: bytesTransferred, etag: partEtag, partNumber });
+        if (resumeStore !== void 0) {
+          await resumeStore.save(resumeKey, { parts: [...parts], uploadId });
+        }
+        request.reportProgress(bytesTransferred, void 0);
+        partNumber += 1;
+      }
+    };
+    try {
+      await flushPart(false);
+      while (true) {
+        request.throwIfAborted();
+        const next = await iterator.next();
+        if (next.done === true) break;
+        if (next.value.byteLength === 0) continue;
+        buffer.push(next.value);
+        bufferSize += next.value.byteLength;
+        await flushPart(false);
+      }
+      await flushPart(true);
+    } catch (error) {
+      if (resumeStore === void 0) {
+        await abortMultipart(this.options, objectUrl, uploadId).catch(() => void 0);
+      }
+      throw error;
+    }
+    if (parts.length === 0) {
+      if (resumeStore !== void 0) await resumeStore.clear(resumeKey);
+      await abortMultipart(this.options, objectUrl, uploadId).catch(() => void 0);
+      throw new ConnectionError({
+        message: "S3 multipart upload completed with zero parts",
+        retryable: false
+      });
+    }
+    const completeUrl = new URL(objectUrl.toString());
+    completeUrl.searchParams.set("uploadId", uploadId);
+    const xmlBody = buildCompleteMultipartBody(parts);
+    const completeResponse = await s3Fetch(this.options, "POST", completeUrl, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      body: new TextEncoder().encode(xmlBody),
+      extraHeaders: { "content-type": "application/xml" }
+    });
+    if (!completeResponse.ok) {
+      if (resumeStore === void 0) {
+        await abortMultipart(this.options, objectUrl, uploadId).catch(() => void 0);
+      }
+      throw mapResponseError(completeResponse, normalized);
+    }
+    if (resumeStore !== void 0) await resumeStore.clear(resumeKey);
+    const completeBody = await completeResponse.text();
+    const finalEtag = innerText(completeBody, "ETag");
+    const result = {
+      bytesTransferred,
+      totalBytes: bytesTransferred
+    };
+    if (finalEtag !== void 0) result.checksum = finalEtag;
+    return result;
+  }
+  async singleShotFromBuffer(request, normalized, buffered) {
+    const url = buildObjectUrl(this.options, normalized);
+    const response = await s3Fetch(this.options, "PUT", url, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      body: buffered,
+      extraHeaders: { "content-type": "application/octet-stream" }
+    });
+    if (!response.ok) throw mapResponseError(response, normalized);
+    request.reportProgress(buffered.byteLength, buffered.byteLength);
+    const result = {
+      bytesTransferred: buffered.byteLength,
+      totalBytes: buffered.byteLength
+    };
+    const etag = response.headers.get("etag");
+    if (etag !== null) result.checksum = etag;
+    return result;
+  }
+};
+async function s3Fetch(options, method, url, fetchOptions = {}) {
+  const headers = {
+    ...options.defaultHeaders,
+    ...fetchOptions.extraHeaders ?? {}
+  };
+  if (fetchOptions.body !== void 0) {
+    headers["content-length"] = String(fetchOptions.body.byteLength);
+  }
+  signSigV4({
+    accessKeyId: options.accessKeyId,
+    headers,
+    method,
+    region: options.region,
+    secretAccessKey: options.secretAccessKey,
+    service: options.service,
+    url,
+    ...fetchOptions.body !== void 0 ? { body: fetchOptions.body } : {},
+    ...options.sessionToken !== void 0 ? { sessionToken: options.sessionToken } : {}
+  });
+  const init = { headers, method };
+  if (fetchOptions.body !== void 0) init.body = fetchOptions.body;
+  if (fetchOptions.signal !== void 0) init.signal = fetchOptions.signal;
+  const controller = new AbortController();
+  const upstreamSignal = init.signal ?? null;
+  if (upstreamSignal !== null) {
+    if (upstreamSignal.aborted) controller.abort(upstreamSignal.reason);
+    else upstreamSignal.addEventListener("abort", () => controller.abort(upstreamSignal.reason));
+  }
+  let timer;
+  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
+    timer = setTimeout(
+      () => controller.abort(new Error("S3 request timed out")),
+      options.timeoutMs
+    );
+  }
+  try {
+    return await options.fetch(url.toString(), { ...init, signal: controller.signal });
+  } catch (error) {
+    throw new ConnectionError({
+      cause: error,
+      details: { url: url.toString() },
+      message: `S3 request to ${url.toString()} failed`,
+      retryable: true
+    });
+  } finally {
+    if (timer !== void 0) clearTimeout(timer);
+  }
+}
+function buildBucketUrl(options) {
+  const url = new URL(options.endpointUrl.toString());
+  if (options.pathStyle) {
+    url.pathname = `/${options.bucket}/`;
+  } else {
+    url.host = `${options.bucket}.${options.endpointUrl.host}`;
+    url.pathname = "/";
+  }
+  return url;
+}
+function buildObjectUrl(options, normalizedPath) {
+  const key = normalizedPath === "/" ? "" : normalizedPath.slice(1);
+  const url = buildBucketUrl(options);
+  if (options.pathStyle) {
+    url.pathname = `/${options.bucket}/${key}`;
+  } else {
+    url.pathname = `/${key}`;
+  }
+  return url;
+}
+async function collectChunks7(source) {
+  const chunks = [];
+  let total = 0;
+  for await (const chunk of source) {
+    chunks.push(chunk);
+    total += chunk.byteLength;
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+function concat(chunks, totalSize) {
+  const out = new Uint8Array(totalSize);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+function sliceFromBuffers(buffers, size) {
+  const out = new Uint8Array(size);
+  let offset = 0;
+  let i = 0;
+  while (offset < size && i < buffers.length) {
+    const chunk = buffers[i];
+    if (chunk === void 0) {
+      i += 1;
+      continue;
+    }
+    const remaining = size - offset;
+    if (chunk.byteLength <= remaining) {
+      out.set(chunk, offset);
+      offset += chunk.byteLength;
+      i += 1;
+    } else {
+      out.set(chunk.subarray(0, remaining), offset);
+      const leftover = chunk.subarray(remaining);
+      const next = buffers.slice(i + 1);
+      next.unshift(leftover);
+      return { bytes: out, remaining: next };
+    }
+  }
+  return { bytes: out.subarray(0, offset), remaining: buffers.slice(i) };
+}
+async function abortMultipart(options, objectUrl, uploadId) {
+  const url = new URL(objectUrl.toString());
+  url.searchParams.set("uploadId", uploadId);
+  await s3Fetch(options, "DELETE", url);
+}
+function buildCompleteMultipartBody(parts) {
+  const partsXml = parts.map(
+    (part) => `<Part><PartNumber>${String(part.partNumber)}</PartNumber><ETag>${escapeXml(part.etag)}</ETag></Part>`
+  ).join("");
+  return `<?xml version="1.0" encoding="UTF-8"?><CompleteMultipartUpload>${partsXml}</CompleteMultipartUpload>`;
+}
+function escapeXml(value) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+}
+function parseListObjectsV2(xml, prefix) {
+  const entries = [];
+  const contentRegex = /<Contents\b[^>]*>([\s\S]*?)<\/Contents>/g;
+  let match;
+  while ((match = contentRegex.exec(xml)) !== null) {
+    const inner = match[1] ?? "";
+    const key = innerText(inner, "Key");
+    if (key === void 0 || key === prefix) continue;
+    const size = innerText(inner, "Size");
+    const lastModified = innerText(inner, "LastModified");
+    const etag = innerText(inner, "ETag");
+    const relative = key.startsWith(prefix) ? key.slice(prefix.length) : key;
+    if (relative === "") continue;
+    const path2 = `/${key}`;
+    const entry = {
+      name: basenameRemotePath(path2),
+      path: path2,
+      type: "file"
+    };
+    if (size !== void 0) {
+      const bytes = Number.parseInt(size, 10);
+      if (Number.isFinite(bytes) && bytes >= 0) entry.size = bytes;
+    }
+    if (lastModified !== void 0) {
+      const parsed = new Date(lastModified);
+      if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
+    }
+    if (etag !== void 0) entry.uniqueId = etag;
+    entries.push(entry);
+  }
+  const prefixRegex = /<CommonPrefixes\b[^>]*>([\s\S]*?)<\/CommonPrefixes>/g;
+  while ((match = prefixRegex.exec(xml)) !== null) {
+    const inner = match[1] ?? "";
+    const subPrefix = innerText(inner, "Prefix");
+    if (subPrefix === void 0) continue;
+    const trimmed = subPrefix.endsWith("/") ? subPrefix.slice(0, -1) : subPrefix;
+    const path2 = `/${trimmed}`;
+    entries.push({
+      name: basenameRemotePath(path2),
+      path: path2,
+      type: "directory"
+    });
+  }
+  return entries;
+}
+function innerText(xml, tag) {
+  const pattern = new RegExp(`<${tag}\\b[^>]*?(?:/>|>([\\s\\S]*?)</${tag}>)`, "i");
+  const match = pattern.exec(xml);
+  if (match === null) return void 0;
+  return (match[1] ?? "").trim();
+}
+
+// src/providers/capabilityMatrix.ts
+var noopFetch = () => Promise.reject(new Error("capabilityMatrix: fetch unused"));
+function getBuiltinCapabilityMatrix() {
+  return [
+    {
+      capabilities: createLocalProviderFactory().capabilities,
+      id: "local",
+      label: "Local file system"
+    },
+    {
+      capabilities: createMemoryProviderFactory().capabilities,
+      id: "memory",
+      label: "In-memory (test fixture)"
+    },
+    {
+      capabilities: createFtpProviderFactory().capabilities,
+      id: "ftp",
+      label: "FTP"
+    },
+    {
+      capabilities: createFtpsProviderFactory().capabilities,
+      id: "ftps",
+      label: "FTPS"
+    },
+    {
+      capabilities: createSftpProviderFactory().capabilities,
+      id: "sftp",
+      label: "SFTP"
+    },
+    {
+      capabilities: createHttpProviderFactory({ fetch: noopFetch }).capabilities,
+      id: "http",
+      label: "HTTP/HTTPS (read-only)"
+    },
+    {
+      capabilities: createWebDavProviderFactory({ fetch: noopFetch }).capabilities,
+      id: "webdav",
+      label: "WebDAV"
+    },
+    {
+      capabilities: createS3ProviderFactory({ fetch: noopFetch }).capabilities,
+      id: "s3",
+      label: "S3-compatible (single-shot uploads)"
+    },
+    {
+      capabilities: createS3ProviderFactory({
+        fetch: noopFetch,
+        multipart: { enabled: true }
+      }).capabilities,
+      id: "s3:multipart",
+      label: "S3-compatible (multipart uploads)"
+    },
+    {
+      capabilities: createDropboxProviderFactory({ fetch: noopFetch }).capabilities,
+      id: "dropbox",
+      label: "Dropbox"
+    },
+    {
+      capabilities: createGoogleDriveProviderFactory({ fetch: noopFetch }).capabilities,
+      id: "google-drive",
+      label: "Google Drive"
+    },
+    {
+      capabilities: createOneDriveProviderFactory({ fetch: noopFetch }).capabilities,
+      id: "one-drive",
+      label: "OneDrive / SharePoint"
+    },
+    {
+      capabilities: createAzureBlobProviderFactory({
+        container: "capability-matrix",
+        endpoint: "https://example.blob.core.windows.net",
+        fetch: noopFetch,
+        sasToken: "sv=ignored"
+      }).capabilities,
+      id: "azure-blob",
+      label: "Azure Blob Storage"
+    },
+    {
+      capabilities: createGcsProviderFactory({
+        bucket: "capability-matrix",
+        fetch: noopFetch
+      }).capabilities,
+      id: "gcs",
+      label: "Google Cloud Storage"
+    }
+  ];
+}
+function formatCapabilityMatrixMarkdown(matrix = getBuiltinCapabilityMatrix()) {
+  const header = "| Provider | list | stat | read | write | resume\u2193 | resume\u2191 | server-side copy/move | checksums | auth |";
+  const divider = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |";
+  const rows = matrix.map((entry) => {
+    const c = entry.capabilities;
+    const yesNo = (value) => value ? "\u2705" : "\u274C";
+    const sideways = `${yesNo(c.serverSideCopy)} / ${yesNo(c.serverSideMove)}`;
+    const checksums = c.checksum.length === 0 ? "\u2014" : c.checksum.join(", ");
+    const auth = c.authentication.length === 0 ? "\u2014" : c.authentication.join(", ");
+    return `| ${entry.label} | ${yesNo(c.list)} | ${yesNo(c.stat)} | ${yesNo(c.readStream)} | ${yesNo(c.writeStream)} | ${yesNo(c.resumeDownload)} | ${yesNo(c.resumeUpload)} | ${sideways} | ${checksums} | ${auth} |`;
+  });
+  return [header, divider, ...rows].join("\n");
+}
+
+// src/profiles/OAuthTokenSource.ts
+function createOAuthTokenSecretSource(refresh, options = {}) {
+  if (typeof refresh !== "function") {
+    throw new ConfigurationError({
+      message: "createOAuthTokenSecretSource requires a refresh callback",
+      retryable: false
+    });
+  }
+  const skewMs = options.skewMs ?? 6e4;
+  const now = options.now ?? (() => Date.now());
+  if (skewMs < 0) {
+    throw new ConfigurationError({
+      message: "OAuthTokenSecretSourceOptions.skewMs must be non-negative",
+      retryable: false
+    });
+  }
+  let cache;
+  let pending;
+  const renew = async () => {
+    const result = await refresh();
+    if (typeof result.accessToken !== "string" || result.accessToken === "") {
+      throw new ConfigurationError({
+        message: "OAuth refresh callback returned an empty access token",
+        retryable: false
+      });
+    }
+    let expiresAtMs;
+    if (result.expiresAt !== void 0) {
+      const ts = result.expiresAt.getTime();
+      if (Number.isFinite(ts)) expiresAtMs = ts;
+    } else if (typeof result.expiresInSeconds === "number") {
+      if (!Number.isFinite(result.expiresInSeconds) || result.expiresInSeconds <= 0) {
+        throw new ConfigurationError({
+          message: "OAuth refresh callback returned a non-positive expiresInSeconds",
+          retryable: false
+        });
+      }
+      expiresAtMs = now() + result.expiresInSeconds * 1e3;
+    }
+    const cached = { accessToken: result.accessToken, expiresAtMs };
+    cache = cached;
+    return cached;
+  };
+  return async () => {
+    const current = cache;
+    if (current !== void 0 && isFresh(current, skewMs, now)) {
+      return current.accessToken;
+    }
+    if (pending === void 0) {
+      pending = renew().finally(() => {
+        pending = void 0;
+      });
+    }
+    const refreshed = await pending;
+    return refreshed.accessToken;
+  };
+}
+function isFresh(token, skewMs, now) {
+  if (token.expiresAtMs === void 0) return true;
+  return token.expiresAtMs - skewMs > now();
+}
+
+// src/profiles/importers/KnownHostsParser.ts
+var import_node_buffer10 = require("buffer");
+var import_node_crypto3 = require("crypto");
+function parseKnownHosts2(text) {
+  const entries = [];
+  const lines = text.split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed === "" || trimmed.startsWith("#")) continue;
+    const entry = parseKnownHostsLine2(line);
+    if (entry !== void 0) entries.push(entry);
+  }
+  return entries;
+}
+function parseKnownHostsLine2(line) {
+  const tokens = line.trim().split(/\s+/);
+  if (tokens.length < 3) return void 0;
+  let index = 0;
+  let marker;
+  const first2 = tokens[index];
+  if (first2 === "@cert-authority" || first2 === "@revoked") {
+    marker = first2 === "@cert-authority" ? "cert-authority" : "revoked";
+    index += 1;
+  }
+  const hostField = tokens[index];
+  const keyType = tokens[index + 1];
+  const keyBase64 = tokens[index + 2];
+  if (hostField === void 0 || keyType === void 0 || keyBase64 === void 0) return void 0;
+  const commentTokens = tokens.slice(index + 3);
+  const comment = commentTokens.length > 0 ? commentTokens.join(" ") : void 0;
+  let hostPatterns = [];
+  let hashedSalt;
+  let hashedHash;
+  if (hostField.startsWith("|1|")) {
+    const parts = hostField.split("|");
+    if (parts.length < 4) return void 0;
+    hashedSalt = parts[2];
+    hashedHash = parts[3];
+  } else {
+    hostPatterns = hostField.split(",").filter((token) => token !== "");
+  }
+  const entry = {
+    hostPatterns,
+    keyBase64,
+    keyType,
+    raw: line
+  };
+  if (marker !== void 0) entry.marker = marker;
+  if (comment !== void 0) entry.comment = comment;
+  if (hashedSalt !== void 0) entry.hashedSalt = hashedSalt;
+  if (hashedHash !== void 0) entry.hashedHash = hashedHash;
+  return entry;
+}
+var DEFAULT_SSH_PORT = 22;
+function matchKnownHostsEntry(entry, host, port = DEFAULT_SSH_PORT) {
+  if (entry.hashedSalt !== void 0 && entry.hashedHash !== void 0) {
+    return matchesHashedEntry(entry.hashedSalt, entry.hashedHash, host, port);
+  }
+  let matched = false;
+  for (const pattern of entry.hostPatterns) {
+    if (pattern.startsWith("!")) {
+      const negated = pattern.slice(1);
+      if (matchesPlainPattern(negated, host, port)) return false;
+      continue;
+    }
+    if (matchesPlainPattern(pattern, host, port)) matched = true;
+  }
+  return matched;
+}
+function matchKnownHosts(entries, host, port = DEFAULT_SSH_PORT) {
+  return entries.filter((entry) => matchKnownHostsEntry(entry, host, port));
+}
+function matchesPlainPattern(pattern, host, port) {
+  const portMatch = pattern.match(/^\[(.+)\]:(\d+)$/);
+  if (portMatch) {
+    const [, hostPattern, portText] = portMatch;
+    if (hostPattern === void 0 || portText === void 0) return false;
+    const expectedPort = Number.parseInt(portText, 10);
+    if (Number.isNaN(expectedPort) || expectedPort !== port) return false;
+    return globMatch(hostPattern, host);
+  }
+  return port === DEFAULT_SSH_PORT && globMatch(pattern, host);
+}
+function globMatch(pattern, value) {
+  const regex = new RegExp(
+    `^${pattern.replace(/[.+^${}()|\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".")}$`,
+    "i"
+  );
+  return regex.test(value);
+}
+function matchesHashedEntry(salt, hash, host, port) {
+  const saltBuffer = import_node_buffer10.Buffer.from(salt, "base64");
+  if (saltBuffer.length === 0) return false;
+  const candidates = port === DEFAULT_SSH_PORT ? [host] : [`[${host}]:${String(port)}`, host];
+  for (const candidate of candidates) {
+    const expected = (0, import_node_crypto3.createHmac)("sha1", saltBuffer).update(candidate).digest("base64");
+    if (expected === hash) return true;
+  }
+  return false;
+}
+
+// src/profiles/importers/OpenSshConfigImporter.ts
+function parseOpenSshConfig(text) {
+  const entries = [];
+  let current;
+  let skipping = false;
+  const lines = text.split(/\r?\n/);
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/#.*$/, "").trim();
+    if (line === "") continue;
+    const match = line.match(/^([A-Za-z][A-Za-z0-9_-]*)\s*=?\s*(.*)$/);
+    if (!match) continue;
+    const [, keywordRaw, valueRaw] = match;
+    if (keywordRaw === void 0 || valueRaw === void 0) continue;
+    const keyword = keywordRaw.toLowerCase();
+    const value = valueRaw.trim();
+    if (keyword === "host") {
+      if (current !== void 0) entries.push(current);
+      current = { options: {}, patterns: tokenizeValues(value) };
+      skipping = false;
+      continue;
+    }
+    if (keyword === "match") {
+      if (current !== void 0) entries.push(current);
+      current = void 0;
+      skipping = true;
+      continue;
+    }
+    if (skipping || current === void 0) continue;
+    const values = tokenizeValues(value);
+    const existing = current.options[keyword];
+    if (existing === void 0) {
+      current.options[keyword] = [...values];
+    } else {
+      existing.push(...values);
+    }
+  }
+  if (current !== void 0) entries.push(current);
+  return entries;
+}
+function tokenizeValues(value) {
+  if (value === "") return [];
+  const tokens = [];
+  const regex = /"([^"]*)"|(\S+)/g;
+  let match;
+  while ((match = regex.exec(value)) !== null) {
+    tokens.push(match[1] ?? match[2] ?? "");
+  }
+  return tokens;
+}
+function resolveOpenSshHost(entries, alias) {
+  const merged = {};
+  const matched = [];
+  for (const entry of entries) {
+    if (!entryMatchesAlias(entry, alias)) continue;
+    matched.push(entry);
+    for (const [key, values] of Object.entries(entry.options)) {
+      if (merged[key] === void 0) merged[key] = [...values];
+    }
+  }
+  return { alias, matched, options: merged };
+}
+function entryMatchesAlias(entry, alias) {
+  let matched = false;
+  for (const pattern of entry.patterns) {
+    if (pattern.startsWith("!")) {
+      if (globMatch2(pattern.slice(1), alias)) return false;
+      continue;
+    }
+    if (globMatch2(pattern, alias)) matched = true;
+  }
+  return matched;
+}
+function globMatch2(pattern, value) {
+  const regex = new RegExp(
+    `^${pattern.replace(/[.+^${}()|\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".")}$`,
+    "i"
+  );
+  return regex.test(value);
+}
+function importOpenSshConfig(options) {
+  const { alias } = options;
+  const entries = options.entries ?? (options.text !== void 0 ? parseOpenSshConfig(options.text) : void 0);
+  if (entries === void 0) {
+    throw new ConfigurationError({
+      code: "openssh_config_input_missing",
+      message: "importOpenSshConfig requires either text or pre-parsed entries.",
+      retryable: false
+    });
+  }
+  const resolved = resolveOpenSshHost(entries, alias);
+  const optionsMap = resolved.options;
+  const host = first(optionsMap, "hostname") ?? alias;
+  const portText = first(optionsMap, "port");
+  const port = portText !== void 0 ? safeInt(portText) : void 0;
+  const user = first(optionsMap, "user");
+  const identityFiles = optionsMap["identityfile"] ?? [];
+  const knownHostsFiles = optionsMap["userknownhostsfile"] ?? [];
+  const connectTimeoutText = first(optionsMap, "connecttimeout");
+  const proxyJump = first(optionsMap, "proxyjump");
+  const kex = optionsMap["kexalgorithms"] ?? [];
+  const ciphers = optionsMap["ciphers"] ?? [];
+  const macs = optionsMap["macs"] ?? [];
+  const serverHostKey = optionsMap["hostkeyalgorithms"] ?? [];
+  const profile = { host, provider: "sftp" };
+  if (port !== void 0) profile.port = port;
+  if (user !== void 0) profile.username = { value: user };
+  if (connectTimeoutText !== void 0) {
+    const seconds = safeInt(connectTimeoutText);
+    if (seconds !== void 0) profile.timeoutMs = seconds * 1e3;
+  }
+  const ssh = {};
+  if (identityFiles.length > 0) {
+    const firstKey = identityFiles[0];
+    if (firstKey !== void 0) ssh.privateKey = { path: expandHome(firstKey) };
+  }
+  if (knownHostsFiles.length > 0) {
+    ssh.knownHosts = knownHostsFiles.map((path2) => ({ path: expandHome(path2) }));
+  }
+  const algorithms = {};
+  if (kex.length > 0) algorithms["kex"] = expandAlgorithms(kex);
+  if (ciphers.length > 0) algorithms["cipher"] = expandAlgorithms(ciphers);
+  if (macs.length > 0) algorithms["hmac"] = expandAlgorithms(macs);
+  if (serverHostKey.length > 0) algorithms["serverHostKey"] = expandAlgorithms(serverHostKey);
+  if (Object.keys(algorithms).length > 0) {
+    ssh.algorithms = algorithms;
+  }
+  if (Object.keys(ssh).length > 0) profile.ssh = ssh;
+  const result = {
+    identityFiles: identityFiles.map(expandHome),
+    profile,
+    resolved
+  };
+  if (proxyJump !== void 0) result.proxyJump = proxyJump;
+  return result;
+}
+function first(options, key) {
+  const values = options[key];
+  return values !== void 0 && values.length > 0 ? values[0] : void 0;
+}
+function safeInt(text) {
+  const value = Number.parseInt(text, 10);
+  return Number.isFinite(value) ? value : void 0;
+}
+function expandHome(path2) {
+  if (!path2.startsWith("~")) return path2;
+  const home = process.env["HOME"] ?? process.env["USERPROFILE"];
+  if (home === void 0) return path2;
+  if (path2 === "~") return home;
+  if (path2.startsWith("~/") || path2.startsWith("~\\")) return `${home}${path2.slice(1)}`;
+  return path2;
+}
+function expandAlgorithms(values) {
+  const out = [];
+  for (const value of values) {
+    for (const part of value.split(",")) {
+      const trimmed = part.trim();
+      if (trimmed !== "") out.push(trimmed);
+    }
+  }
+  return out;
+}
+
+// src/profiles/importers/FileZillaImporter.ts
+var import_node_buffer11 = require("buffer");
+function importFileZillaSites(xml) {
+  const events = tokenizeXml(xml);
+  if (events.length === 0) {
+    throw new ConfigurationError({
+      code: "filezilla_xml_empty",
+      message: "FileZilla sitemanager XML is empty.",
+      retryable: false
+    });
+  }
+  const sites = [];
+  const skipped = [];
+  const folderStack = [];
+  const folderNamePending = [];
+  let inServer = false;
+  let serverFields = {};
+  let serverPasswordEncoding;
+  let activeTag;
+  let captureFolderName = false;
+  for (const event of events) {
+    if (event.kind === "open") {
+      if (event.name === "Folder") {
+        folderStack.push("");
+        folderNamePending.push(true);
+        continue;
+      }
+      if (event.name === "Server") {
+        inServer = true;
+        serverFields = {};
+        serverPasswordEncoding = void 0;
+        continue;
+      }
+      activeTag = event.name;
+      if (event.name === "Pass" && inServer) {
+        serverPasswordEncoding = event.attributes["encoding"];
+      }
+      if (event.name === "Name" && !inServer && folderNamePending.length > 0) {
+        captureFolderName = true;
+      }
+      continue;
+    }
+    if (event.kind === "text") {
+      if (captureFolderName) {
+        const top = folderStack.length - 1;
+        if (top >= 0) folderStack[top] = event.text.trim();
+        captureFolderName = false;
+        continue;
+      }
+      if (inServer && activeTag !== void 0) {
+        serverFields[activeTag] = (serverFields[activeTag] ?? "") + event.text;
+      }
+      continue;
+    }
+    if (event.kind === "close") {
+      if (event.name === "Folder") {
+        folderStack.pop();
+        folderNamePending.pop();
+        continue;
+      }
+      if (event.name === "Server") {
+        const folder = folderStack.filter((segment) => segment !== "");
+        const result = buildSiteFromFields(serverFields, serverPasswordEncoding);
+        if (result.kind === "site") {
+          sites.push({ ...result.site, folder });
+        } else {
+          skipped.push({
+            folder,
+            name: result.name,
+            ...result.protocol !== void 0 ? { protocol: result.protocol } : {}
+          });
+        }
+        inServer = false;
+        serverFields = {};
+        serverPasswordEncoding = void 0;
+        activeTag = void 0;
+        continue;
+      }
+      if (activeTag === event.name) activeTag = void 0;
+    }
+  }
+  return { sites, skipped };
+}
+function buildSiteFromFields(fields, passwordEncoding) {
+  const name = (fields["Name"] ?? fields["Host"] ?? "Untitled").trim();
+  const host = (fields["Host"] ?? "").trim();
+  if (host === "") return { kind: "skipped", name };
+  const protocolText = fields["Protocol"];
+  const protocol = protocolText !== void 0 ? Number.parseInt(protocolText.trim(), 10) : 0;
+  const mapped = mapFileZillaProtocol(protocol);
+  if (mapped === void 0) {
+    return Number.isFinite(protocol) ? { kind: "skipped", name, protocol } : { kind: "skipped", name };
+  }
+  const profile = { host, provider: mapped.provider };
+  if (mapped.secure !== void 0) profile.secure = mapped.secure;
+  const portText = fields["Port"];
+  if (portText !== void 0) {
+    const port = Number.parseInt(portText.trim(), 10);
+    if (Number.isFinite(port)) profile.port = port;
+  }
+  const user = fields["User"]?.trim();
+  if (user !== void 0 && user !== "") profile.username = { value: user };
+  let password;
+  const rawPass = fields["Pass"];
+  if (rawPass !== void 0 && rawPass !== "") {
+    if (passwordEncoding === "base64") {
+      password = import_node_buffer11.Buffer.from(rawPass, "base64").toString("utf8");
+    } else {
+      password = rawPass;
+    }
+    if (password !== void 0 && password !== "") profile.password = { value: password };
+  }
+  const site = { name, profile };
+  if (password !== void 0) site.password = password;
+  const logonText = fields["Logontype"];
+  if (logonText !== void 0) {
+    const logonType = Number.parseInt(logonText.trim(), 10);
+    if (Number.isFinite(logonType)) site.logonType = logonType;
+  }
+  return { kind: "site", site };
+}
+function mapFileZillaProtocol(code) {
+  switch (code) {
+    case 0:
+      return { provider: "ftp" };
+    case 1:
+      return { provider: "sftp" };
+    case 4:
+      return { provider: "ftps", secure: true };
+    case 5:
+      return { provider: "ftps", secure: true };
+    case 6:
+      return { provider: "ftp", secure: false };
+    default:
+      return void 0;
+  }
+}
+function tokenizeXml(xml) {
+  const events = [];
+  let index = 0;
+  const length = xml.length;
+  while (index < length) {
+    const lt = xml.indexOf("<", index);
+    if (lt === -1) {
+      const text = xml.slice(index);
+      if (text.trim() !== "") events.push({ kind: "text", text: decodeEntities(text) });
+      break;
+    }
+    if (lt > index) {
+      const text = xml.slice(index, lt);
+      if (text.trim() !== "") events.push({ kind: "text", text: decodeEntities(text) });
+    }
+    if (xml.startsWith("<!--", lt)) {
+      const end = xml.indexOf("-->", lt + 4);
+      index = end === -1 ? length : end + 3;
+      continue;
+    }
+    if (xml.startsWith("<![CDATA[", lt)) {
+      const end = xml.indexOf("]]>", lt + 9);
+      const cdataEnd = end === -1 ? length : end;
+      events.push({ kind: "text", text: xml.slice(lt + 9, cdataEnd) });
+      index = end === -1 ? length : end + 3;
+      continue;
+    }
+    if (xml[lt + 1] === "?" || xml[lt + 1] === "!") {
+      const gt2 = xml.indexOf(">", lt + 1);
+      index = gt2 === -1 ? length : gt2 + 1;
+      continue;
+    }
+    const gt = xml.indexOf(">", lt + 1);
+    if (gt === -1) break;
+    const tagBody = xml.slice(lt + 1, gt);
+    if (tagBody.startsWith("/")) {
+      events.push({ kind: "close", name: tagBody.slice(1).trim() });
+    } else {
+      const selfClosing = tagBody.endsWith("/");
+      const body = selfClosing ? tagBody.slice(0, -1) : tagBody;
+      const { name, attributes } = parseTagBody(body.trim());
+      events.push({ attributes, kind: "open", name, selfClosing });
+      if (selfClosing) events.push({ kind: "close", name });
+    }
+    index = gt + 1;
+  }
+  return events;
+}
+function parseTagBody(body) {
+  const match = body.match(/^([A-Za-z_:][\w:.-]*)\s*(.*)$/);
+  if (!match) return { attributes: {}, name: body };
+  const name = match[1] ?? "";
+  const rest = match[2] ?? "";
+  const attributes = {};
+  const attrRegex = /([A-Za-z_:][\w:.-]*)\s*=\s*("([^"]*)"|'([^']*)')/g;
+  let attrMatch;
+  while ((attrMatch = attrRegex.exec(rest)) !== null) {
+    const key = attrMatch[1];
+    const value = attrMatch[3] ?? attrMatch[4] ?? "";
+    if (key !== void 0) attributes[key] = decodeEntities(value);
+  }
+  return { attributes, name };
+}
+function decodeEntities(text) {
+  return text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+}
+
+// src/profiles/importers/WinScpImporter.ts
+function importWinScpSessions(ini) {
+  const sections = parseIni(ini);
+  const sessionSections = sections.filter((section) => section.name.startsWith("Sessions\\"));
+  if (sessionSections.length === 0) {
+    throw new ConfigurationError({
+      code: "winscp_ini_no_sessions",
+      message: "WinSCP INI does not contain any [Sessions\\...] sections.",
+      retryable: false
+    });
+  }
+  const sessions = [];
+  const skipped = [];
+  for (const section of sessionSections) {
+    const decodedPath = decodeSessionPath(section.name.slice("Sessions\\".length));
+    const segments = decodedPath.split("/").filter((segment) => segment !== "");
+    const name = segments[segments.length - 1] ?? decodedPath;
+    const folder = segments.slice(0, -1);
+    const built = buildSessionProfile(name, section.values);
+    if (built.kind === "session") {
+      sessions.push({ ...built.session, folder });
+    } else {
+      skipped.push({
+        folder,
+        name,
+        ...built.fsProtocol !== void 0 ? { fsProtocol: built.fsProtocol } : {}
+      });
+    }
+  }
+  return { sessions, skipped };
+}
+function buildSessionProfile(name, values) {
+  const host = values["HostName"]?.trim();
+  if (host === void 0 || host === "") return { kind: "skipped" };
+  const fsProtocolText = values["FSProtocol"];
+  const fsProtocol = fsProtocolText !== void 0 ? Number.parseInt(fsProtocolText, 10) : 1;
+  const ftpsText = values["Ftps"];
+  const ftps = ftpsText !== void 0 ? Number.parseInt(ftpsText, 10) : 0;
+  const mapped = mapWinScpProtocol(fsProtocol, ftps);
+  if (mapped === void 0) {
+    return Number.isFinite(fsProtocol) ? { fsProtocol, kind: "skipped" } : { kind: "skipped" };
+  }
+  const profile = { host, provider: mapped.provider };
+  if (mapped.secure !== void 0) profile.secure = mapped.secure;
+  const portText = values["PortNumber"];
+  if (portText !== void 0) {
+    const port = Number.parseInt(portText, 10);
+    if (Number.isFinite(port)) profile.port = port;
+  }
+  const user = values["UserName"]?.trim();
+  if (user !== void 0 && user !== "") profile.username = { value: user };
+  if (mapped.provider === "sftp") {
+    const ssh = {};
+    const keyPath = values["PublicKeyFile"]?.trim();
+    if (keyPath !== void 0 && keyPath !== "") ssh.privateKey = { path: keyPath };
+    if (Object.keys(ssh).length > 0) profile.ssh = ssh;
+  }
+  const session = { name, profile };
+  if (Number.isFinite(fsProtocol)) session.fsProtocol = fsProtocol;
+  if (Number.isFinite(ftps) && ftps !== 0) session.ftps = ftps;
+  return { kind: "session", session };
+}
+function mapWinScpProtocol(fsProtocol, ftps) {
+  switch (fsProtocol) {
+    case 0:
+    case 1:
+    case 2:
+      return { provider: "sftp" };
+    case 5:
+      return ftps === 0 ? { provider: "ftp" } : { provider: "ftps", secure: ftps === 1 };
+    default:
+      return void 0;
+  }
+}
+function parseIni(text) {
+  const sections = [];
+  let current;
+  const lines = text.split(/\r?\n/);
+  for (const rawLine of lines) {
+    const line = rawLine.replace(/^\s*[#;].*$/, "").trim();
+    if (line === "") continue;
+    const sectionMatch = line.match(/^\[(.+)\]$/);
+    if (sectionMatch && sectionMatch[1] !== void 0) {
+      current = { name: sectionMatch[1], values: {} };
+      sections.push(current);
+      continue;
+    }
+    if (current === void 0) continue;
+    const eq = line.indexOf("=");
+    if (eq === -1) continue;
+    const key = line.slice(0, eq).trim();
+    const value = line.slice(eq + 1).trim();
+    if (key !== "") current.values[key] = value;
+  }
+  return sections;
+}
+function decodeSessionPath(name) {
+  try {
+    return decodeURIComponent(name);
+  } catch {
+    return name;
+  }
+}
+
+// src/errors/errorFactory.ts
+function errorFromFtpReply(input) {
+  const details = {
+    ftpCode: input.ftpCode,
+    message: input.message,
+    protocol: input.protocol ?? "ftp",
+    retryable: false
+  };
+  if (input.command !== void 0) details.command = input.command;
+  if (input.path !== void 0) details.path = input.path;
+  if (input.cause !== void 0) details.cause = input.cause;
+  if (input.ftpCode === 530) {
+    return new AuthenticationError(details);
+  }
+  if (input.ftpCode === 421) {
+    return new ConnectionError({
+      ...details,
+      retryable: true
+    });
+  }
+  if (input.ftpCode === 550) {
+    return mapFtp550(details);
+  }
+  if ([450, 451, 452].includes(input.ftpCode)) {
+    return new TransferError({
+      ...details,
+      retryable: true
+    });
+  }
+  if (input.ftpCode >= 400 && input.ftpCode < 500) {
+    return new ConnectionError({
+      ...details,
+      retryable: true
+    });
+  }
+  return new ProtocolError(details);
+}
+function mapFtp550(details) {
+  const lowerMessage = details.message.toLowerCase();
+  if (lowerMessage.includes("already") || lowerMessage.includes("exists")) {
+    return new PathAlreadyExistsError(details);
+  }
+  if (lowerMessage.includes("not found") || lowerMessage.includes("no such") || lowerMessage.includes("unavailable")) {
+    return new PathNotFoundError(details);
+  }
+  return new PermissionDeniedError(details);
+}
+
+// src/transfers/TransferPlan.ts
+function createTransferPlan(input) {
+  const plan = {
+    createdAt: input.now?.() ?? /* @__PURE__ */ new Date(),
+    dryRun: input.dryRun ?? true,
+    id: input.id,
+    steps: input.steps.map(clonePlanStep),
+    warnings: [...input.warnings ?? []]
+  };
+  if (input.metadata !== void 0) {
+    plan.metadata = { ...input.metadata };
+  }
+  return plan;
+}
+function summarizeTransferPlan(plan) {
+  const actions = {};
+  let destructiveSteps = 0;
+  let executableSteps = 0;
+  let skippedSteps = 0;
+  let totalExpectedBytes = 0;
+  for (const step of plan.steps) {
+    actions[step.action] = (actions[step.action] ?? 0) + 1;
+    destructiveSteps += step.destructive === true ? 1 : 0;
+    skippedSteps += step.action === "skip" ? 1 : 0;
+    executableSteps += step.action === "skip" ? 0 : 1;
+    totalExpectedBytes += step.expectedBytes ?? 0;
+  }
+  return {
+    actions,
+    destructiveSteps,
+    executableSteps,
+    skippedSteps,
+    totalExpectedBytes,
+    totalSteps: plan.steps.length
+  };
+}
+function createTransferJobsFromPlan(plan) {
+  return plan.steps.flatMap((step) => {
+    if (step.action === "skip") {
+      return [];
+    }
+    const job = {
+      id: `${plan.id}:${step.id}`,
+      operation: step.action
+    };
+    if (step.source !== void 0) job.source = cloneEndpoint2(step.source);
+    if (step.destination !== void 0) job.destination = cloneEndpoint2(step.destination);
+    if (step.expectedBytes !== void 0) job.totalBytes = step.expectedBytes;
+    if (step.metadata !== void 0) job.metadata = { ...step.metadata };
+    return [job];
+  });
+}
+function clonePlanStep(step) {
+  const clone = {
+    action: step.action,
+    id: step.id
+  };
+  if (step.source !== void 0) clone.source = cloneEndpoint2(step.source);
+  if (step.destination !== void 0) clone.destination = cloneEndpoint2(step.destination);
+  if (step.expectedBytes !== void 0) clone.expectedBytes = step.expectedBytes;
+  if (step.destructive !== void 0) clone.destructive = step.destructive;
+  if (step.reason !== void 0) clone.reason = step.reason;
+  if (step.metadata !== void 0) clone.metadata = { ...step.metadata };
+  return clone;
+}
+function cloneEndpoint2(endpoint) {
+  const clone = { path: endpoint.path };
+  if (endpoint.provider !== void 0) {
+    clone.provider = endpoint.provider;
+  }
+  return clone;
+}
+
+// src/transfers/TransferQueue.ts
+var TransferQueue = class {
+  engine;
+  items = [];
+  defaultExecutor;
+  resolveExecutor;
+  retry;
+  timeout;
+  bandwidthLimit;
+  onProgress;
+  onReceipt;
+  onError;
+  concurrency;
+  paused = false;
+  /**
+   * Creates a transfer queue.
+   *
+   * @param options - Queue engine, concurrency, executor, and observer options.
+   */
+  constructor(options = {}) {
+    this.engine = options.engine ?? new TransferEngine();
+    this.concurrency = normalizeConcurrency(options.concurrency);
+    this.defaultExecutor = options.executor;
+    this.resolveExecutor = options.resolveExecutor;
+    this.retry = options.retry;
+    this.timeout = options.timeout;
+    this.bandwidthLimit = options.bandwidthLimit;
+    this.onProgress = options.onProgress;
+    this.onReceipt = options.onReceipt;
+    this.onError = options.onError;
+  }
+  /** Adds a transfer job to the queue. */
+  add(job, executor) {
+    if (this.items.some((item2) => item2.id === job.id)) {
+      throw new ConfigurationError({
+        details: { jobId: job.id },
+        message: `Transfer queue already contains job: ${job.id}`,
+        retryable: false
+      });
+    }
+    const item = {
+      controller: new AbortController(),
+      id: job.id,
+      job: cloneTransferJob(job),
+      status: "queued"
+    };
+    if (executor !== void 0) {
+      item.executor = executor;
+    }
+    this.items.push(item);
+    return toPublicItem(item);
+  }
+  /** Pauses dispatch of new queued jobs. Running jobs are allowed to finish. */
+  pause() {
+    this.paused = true;
+  }
+  /** Resumes dispatch of queued jobs on the next `run()` call. */
+  resume() {
+    this.paused = false;
+  }
+  /** Updates queue concurrency for subsequent drains. */
+  setConcurrency(concurrency) {
+    this.concurrency = normalizeConcurrency(concurrency);
+  }
+  /** Cancels a queued or running job. */
+  cancel(jobId) {
+    const item = this.items.find((candidate) => candidate.id === jobId);
+    if (item === void 0 || item.status === "completed" || item.status === "failed" || item.status === "canceled") {
+      return false;
+    }
+    item.controller.abort();
+    if (item.status === "queued") {
+      item.status = "canceled";
+    }
+    return true;
+  }
+  /** Returns a queued item snapshot by id. */
+  get(jobId) {
+    const item = this.items.find((candidate) => candidate.id === jobId);
+    return item === void 0 ? void 0 : toPublicItem(item);
+  }
+  /** Lists queue item snapshots in insertion order. */
+  list() {
+    return this.items.map(toPublicItem);
+  }
+  /** Drains currently queued jobs until complete, failed, canceled, or paused. */
+  async run(options = {}) {
+    const workerCount = Math.max(1, Math.min(this.concurrency, this.countDispatchableItems()));
+    const workers = Array.from({ length: workerCount }, () => this.runWorker(options));
+    await Promise.all(workers);
+    return this.summarize();
+  }
+  /** Returns a queue summary without executing more work. */
+  summarize() {
+    const publicItems = this.items.map(toPublicItem);
+    return {
+      canceled: publicItems.filter((item) => item.status === "canceled").length,
+      completed: publicItems.filter((item) => item.status === "completed").length,
+      failed: publicItems.filter((item) => item.status === "failed").length,
+      failures: publicItems.filter((item) => item.status === "failed"),
+      queued: publicItems.filter((item) => item.status === "queued").length,
+      receipts: publicItems.filter(
+        (item) => item.receipt !== void 0
+      ).map((item) => item.receipt),
+      running: publicItems.filter((item) => item.status === "running").length,
+      total: publicItems.length
+    };
+  }
+  async runWorker(options) {
+    for (; ; ) {
+      const item = this.nextQueuedItem();
+      if (item === void 0) {
+        return;
+      }
+      await this.runItem(item, options);
+    }
+  }
+  nextQueuedItem() {
+    if (this.paused) {
+      return void 0;
+    }
+    const item = this.items.find((candidate) => candidate.status === "queued");
+    if (item !== void 0) {
+      item.status = item.controller.signal.aborted ? "canceled" : "running";
+    }
+    return item?.status === "running" ? item : void 0;
+  }
+  async runItem(item, options) {
+    const abortListener = createAbortForwarder(options.signal, item.controller);
+    try {
+      const executeOptions = {
+        signal: item.controller.signal
+      };
+      const onProgress = options.onProgress ?? this.onProgress;
+      const retry = options.retry ?? this.retry;
+      const timeout = options.timeout ?? this.timeout;
+      const bandwidthLimit = options.bandwidthLimit ?? this.bandwidthLimit;
+      if (onProgress !== void 0) {
+        executeOptions.onProgress = onProgress;
+      }
+      if (retry !== void 0) {
+        executeOptions.retry = retry;
+      }
+      if (timeout !== void 0) {
+        executeOptions.timeout = timeout;
+      }
+      if (bandwidthLimit !== void 0) {
+        executeOptions.bandwidthLimit = bandwidthLimit;
+      }
+      const receipt = await this.engine.execute(
+        item.job,
+        this.requireExecutor(item),
+        executeOptions
+      );
+      item.receipt = receipt;
+      item.status = "completed";
+      this.onReceipt?.(receipt);
+    } catch (error) {
+      item.error = error;
+      item.status = item.controller.signal.aborted ? "canceled" : "failed";
+      if (item.status === "failed") {
+        this.onError?.(toPublicItem(item), error);
+      }
+    } finally {
+      abortListener.dispose();
+    }
+  }
+  requireExecutor(item) {
+    const executor = item.executor ?? this.defaultExecutor ?? this.resolveExecutor?.(item.job);
+    if (executor === void 0) {
+      throw new ConfigurationError({
+        details: { jobId: item.job.id },
+        message: `Transfer queue job has no executor: ${item.job.id}`,
+        retryable: false
+      });
+    }
+    return executor;
+  }
+  countDispatchableItems() {
+    return this.items.filter((item) => item.status === "queued" && !item.controller.signal.aborted).length;
+  }
+};
+function normalizeConcurrency(value) {
+  if (value === void 0 || !Number.isFinite(value)) {
+    return 1;
+  }
+  return Math.max(1, Math.floor(value));
+}
+function createAbortForwarder(source, target) {
+  if (source === void 0) {
+    return { dispose: () => void 0 };
+  }
+  const abort = () => target.abort();
+  if (source.aborted) {
+    abort();
+    return { dispose: () => void 0 };
+  }
+  source.addEventListener("abort", abort, { once: true });
+  return {
+    dispose: () => source.removeEventListener("abort", abort)
+  };
+}
+function toPublicItem(item) {
+  const snapshot = {
+    id: item.id,
+    job: cloneTransferJob(item.job),
+    status: item.status
+  };
+  if (item.receipt !== void 0) snapshot.receipt = item.receipt;
+  if (item.error !== void 0) snapshot.error = item.error;
+  return snapshot;
+}
+function cloneTransferJob(job) {
+  const clone = {
+    id: job.id,
+    operation: job.operation
+  };
+  if (job.source !== void 0) clone.source = { ...job.source };
+  if (job.destination !== void 0) clone.destination = { ...job.destination };
+  if (job.totalBytes !== void 0) clone.totalBytes = job.totalBytes;
+  if (job.resumed !== void 0) clone.resumed = job.resumed;
+  if (job.metadata !== void 0) clone.metadata = { ...job.metadata };
+  return clone;
+}
+
+// src/sync/createRemoteBrowser.ts
+function parentRemotePath(input) {
+  const normalized = normalizeRemotePath(input);
+  if (normalized === "/") return "/";
+  const parts = normalized.split("/").filter(Boolean);
+  parts.pop();
+  if (parts.length === 0) return "/";
+  return `/${parts.join("/")}`;
+}
+function buildRemoteBreadcrumbs(input) {
+  const normalized = normalizeRemotePath(input);
+  const crumbs = [{ name: "/", path: "/" }];
+  if (normalized === "/") return crumbs;
+  const parts = normalized.split("/").filter(Boolean);
+  let cursor = "";
+  for (const part of parts) {
+    cursor += `/${part}`;
+    crumbs.push({ name: part, path: cursor });
+  }
+  return crumbs;
+}
+function sortRemoteEntries(entries, key = "name", order = "asc") {
+  const direction = order === "asc" ? 1 : -1;
+  return [...entries].sort((left, right) => {
+    if (key !== "type") {
+      const leftIsDir = left.type === "directory";
+      const rightIsDir = right.type === "directory";
+      if (leftIsDir !== rightIsDir) return leftIsDir ? -1 : 1;
+    }
+    const compared = compareEntriesByKey(left, right, key);
+    if (compared !== 0) return compared * direction;
+    return compareNames(left, right);
+  });
+}
+function filterRemoteEntries(entries, options = {}) {
+  const showHidden = options.showHidden ?? true;
+  const filter = options.filter;
+  return entries.filter((entry) => {
+    if (!showHidden && entry.name.startsWith(".")) return false;
+    if (filter !== void 0 && !filter(entry)) return false;
+    return true;
+  });
+}
+function createRemoteBrowser(options) {
+  const { fs } = options;
+  let currentPath = normalizeRemotePath(options.initialPath ?? "/");
+  let cachedEntries = [];
+  let sortKey = options.sortKey ?? "name";
+  let sortOrder = options.sortOrder ?? "asc";
+  let showHidden = options.showHidden ?? true;
+  const filter = options.filter;
+  async function loadCurrent() {
+    const raw = await fs.list(currentPath);
+    const projected = projectEntries(raw);
+    cachedEntries = projected;
+    return snapshot();
+  }
+  function projectEntries(raw) {
+    const filterOptions = { showHidden };
+    if (filter !== void 0) filterOptions.filter = filter;
+    const filtered = filterRemoteEntries(raw, filterOptions);
+    return sortRemoteEntries(filtered, sortKey, sortOrder);
+  }
+  function snapshot() {
+    return {
+      breadcrumbs: buildRemoteBreadcrumbs(currentPath),
+      entries: [...cachedEntries],
+      path: currentPath
+    };
+  }
+  async function navigate(target) {
+    currentPath = resolveTarget(currentPath, target);
+    return loadCurrent();
+  }
+  async function open2(entry) {
+    if (entry.type !== "directory") {
+      throw new TypeError(`Cannot open non-directory entry "${entry.path}" (type: ${entry.type})`);
+    }
+    return navigate(entry.path);
+  }
+  return {
+    breadcrumbs: () => buildRemoteBreadcrumbs(currentPath),
+    get entries() {
+      return cachedEntries;
+    },
+    navigate,
+    open: open2,
+    get path() {
+      return currentPath;
+    },
+    refresh: loadCurrent,
+    setShowHidden(value) {
+      showHidden = value;
+    },
+    setSort(key, order = sortOrder) {
+      sortKey = key;
+      sortOrder = order;
+    },
+    up: () => navigate(parentRemotePath(currentPath))
+  };
+}
+function resolveTarget(currentPath, target) {
+  if (target.startsWith("/")) return normalizeRemotePath(target);
+  if (target === "" || target === ".") return currentPath;
+  if (target === "..") return parentRemotePath(currentPath);
+  const base = currentPath === "/" ? "" : currentPath;
+  return normalizeRemotePath(`${base}/${target}`);
+}
+function compareEntriesByKey(left, right, key) {
+  switch (key) {
+    case "size":
+      return (left.size ?? 0) - (right.size ?? 0);
+    case "modifiedAt": {
+      const leftTime = left.modifiedAt?.getTime() ?? 0;
+      const rightTime = right.modifiedAt?.getTime() ?? 0;
+      return leftTime - rightTime;
+    }
+    case "type":
+      return left.type.localeCompare(right.type);
+    case "name":
+    default:
+      return compareNames(left, right);
+  }
+}
+function compareNames(left, right) {
+  return left.name.localeCompare(right.name, void 0, { numeric: true, sensitivity: "base" });
+}
+
+// src/sync/createSyncPlan.ts
+function createSyncPlan(options) {
+  const direction = options.direction ?? "source-to-destination";
+  const deletePolicy = options.deletePolicy ?? "never";
+  const conflictPolicy = options.conflictPolicy ?? "overwrite";
+  const includeDirectoryActions = options.includeDirectoryActions ?? false;
+  const sourceRoot = normalizeRemotePath(options.source.rootPath);
+  const destinationRoot = normalizeRemotePath(options.destination.rootPath);
+  const warnings = [];
+  const steps = [];
+  for (const entry of options.diff.entries) {
+    const context = {
+      conflictPolicy,
+      deletePolicy,
+      destinationRoot,
+      direction,
+      entry,
+      includeDirectoryActions,
+      sourceRoot,
+      warnings
+    };
+    if (options.source.provider !== void 0) context.sourceProvider = options.source.provider;
+    if (options.destination.provider !== void 0) {
+      context.destinationProvider = options.destination.provider;
+    }
+    const step = planEntry(context);
+    if (step !== void 0) steps.push(step);
+  }
+  const planInput = {
+    id: options.id,
+    steps,
+    warnings
+  };
+  if (options.dryRun !== void 0) planInput.dryRun = options.dryRun;
+  if (options.now !== void 0) planInput.now = options.now;
+  if (options.metadata !== void 0) planInput.metadata = options.metadata;
+  return createTransferPlan(planInput);
+}
+function planEntry(context) {
+  const { entry } = context;
+  const isDirectory = isDirectoryEntry(entry);
+  if (isDirectory && !context.includeDirectoryActions) {
+    return void 0;
+  }
+  switch (entry.status) {
+    case "added":
+      return planAdded(context);
+    case "removed":
+      return planRemoved(context);
+    case "modified":
+      return planModified(context);
+    case "unchanged":
+      return planUnchanged(context);
+    default:
+      return void 0;
+  }
+}
+function planAdded(context) {
+  if (context.direction === "source-to-destination") {
+    return createCopyStep(context, "source", "destination", expectedBytesFor(context.entry));
+  }
+  if (context.deletePolicy === "never") {
+    return createSkipStep(context, "Source-only entry preserved by delete policy");
+  }
+  return createDeleteStep(context, "source");
+}
+function planRemoved(context) {
+  if (context.direction === "destination-to-source") {
+    return createCopyStep(context, "destination", "source", expectedBytesFor(context.entry));
+  }
+  if (context.deletePolicy === "never") {
+    return createSkipStep(context, "Destination-only entry preserved by delete policy");
+  }
+  if (context.deletePolicy === "replace-only") {
+    return createSkipStep(
+      context,
+      "Destination-only entry preserved (no source replacement available)"
+    );
+  }
+  return createDeleteStep(context, "destination");
+}
+function planModified(context) {
+  switch (context.conflictPolicy) {
+    case "overwrite":
+      return createCopyStep(context, "source", "destination", expectedBytesFor(context.entry), {
+        destructive: true
+      });
+    case "prefer-destination":
+      return createCopyStep(context, "destination", "source", expectedBytesFor(context.entry), {
+        destructive: true
+      });
+    case "skip":
+      return createSkipStep(context, `Conflict skipped: ${context.entry.reasons.join(",")}`);
+    case "error":
+      throw new ConfigurationError({
+        details: {
+          path: context.entry.path,
+          reasons: context.entry.reasons
+        },
+        message: `Sync plan conflict at ${context.entry.path} with reasons: ${context.entry.reasons.join(", ")}`,
+        retryable: false
+      });
+    default:
+      return createSkipStep(context, "Conflict skipped");
+  }
+}
+function planUnchanged(context) {
+  return createSkipStep(context, "Entry already in sync");
+}
+function createCopyStep(context, fromSide, toSide, expectedBytes, overrides = {}) {
+  const step = {
+    action: "copy",
+    id: makeStepId(context.entry, `copy-${fromSide}-to-${toSide}`),
+    reason: describeReasons(context.entry, `Copy ${fromSide} to ${toSide}`)
+  };
+  step.source = endpointFor(context, fromSide);
+  step.destination = endpointFor(context, toSide);
+  if (expectedBytes !== void 0) step.expectedBytes = expectedBytes;
+  if (overrides.destructive === true) step.destructive = true;
+  if (overrides.metadata !== void 0) step.metadata = { ...overrides.metadata };
+  return step;
+}
+function createDeleteStep(context, side) {
+  return {
+    action: "delete",
+    destination: endpointFor(context, side),
+    destructive: true,
+    id: makeStepId(context.entry, `delete-${side}`),
+    reason: `Delete ${side} entry not present on the other side`
+  };
+}
+function createSkipStep(context, reason) {
+  return {
+    action: "skip",
+    id: makeStepId(context.entry, "skip"),
+    reason,
+    source: endpointFor(context, "source"),
+    destination: endpointFor(context, "destination")
+  };
+}
+function endpointFor(context, side) {
+  const root = side === "source" ? context.sourceRoot : context.destinationRoot;
+  const provider = side === "source" ? context.sourceProvider : context.destinationProvider;
+  const endpoint = {
+    path: joinRootAndRelative(root, context.entry.path)
+  };
+  if (provider !== void 0) endpoint.provider = provider;
+  return endpoint;
+}
+function joinRootAndRelative(rootPath, relativePath) {
+  if (rootPath === "/") return relativePath;
+  if (relativePath === "/") return rootPath;
+  return joinRemotePath(rootPath, relativePath);
+}
+function makeStepId(entry, suffix) {
+  return `${entry.path}#${suffix}`;
+}
+function describeReasons(entry, prefix) {
+  if (entry.reasons.length === 0) return prefix;
+  return `${prefix} (${entry.reasons.join(",")})`;
+}
+function expectedBytesFor(entry) {
+  return entry.source?.size ?? entry.destination?.size;
+}
+function isDirectoryEntry(entry) {
+  return entry.source?.type === "directory" || entry.destination?.type === "directory";
+}
+
+// src/sync/createAtomicDeployPlan.ts
+var DEFAULT_RELEASES_DIRECTORY = ".releases";
+var DEFAULT_RETAIN = 3;
+function createAtomicDeployPlan(options) {
+  const retain = options.retain ?? DEFAULT_RETAIN;
+  if (retain < 1) {
+    throw new ConfigurationError({
+      details: { retain },
+      message: "Atomic deploy retain count must be at least 1",
+      retryable: false
+    });
+  }
+  const livePath = normalizeRemotePath(options.destination.rootPath);
+  if (livePath === "/") {
+    throw new ConfigurationError({
+      message: "Atomic deploy destination rootPath must not be the filesystem root",
+      retryable: false
+    });
+  }
+  const strategy = options.strategy ?? "rename";
+  const now = options.now?.() ?? /* @__PURE__ */ new Date();
+  const releaseId = options.releaseId ?? defaultReleaseId(now);
+  const releasesRoot = joinRemotePath(
+    livePath,
+    options.releasesDirectory ?? DEFAULT_RELEASES_DIRECTORY
+  );
+  const stagingPath = joinRemotePath(releasesRoot, releaseId);
+  const backupPath = strategy === "rename" ? joinRemotePath(releasesRoot, `${releaseId}.previous`) : void 0;
+  const provider = options.destination.provider ?? options.source.provider;
+  const warnings = [];
+  const uploadPlan = createSyncPlan({
+    conflictPolicy: "overwrite",
+    deletePolicy: "never",
+    destination: {
+      ...options.destination.provider !== void 0 ? { provider: options.destination.provider } : {},
+      rootPath: stagingPath
+    },
+    diff: options.diff,
+    direction: "source-to-destination",
+    dryRun: options.dryRun ?? true,
+    id: `${options.id}/upload`,
+    includeDirectoryActions: false,
+    ...options.now !== void 0 ? { now: options.now } : {},
+    source: options.source
+  });
+  const activate = buildActivateSteps({
+    backupPath,
+    livePath,
+    planId: options.id,
+    provider,
+    stagingPath,
+    strategy
+  });
+  const prune = buildPruneSteps({
+    existingReleases: options.existingReleases ?? [],
+    planId: options.id,
+    provider,
+    releaseId,
+    releasesRoot,
+    retain
+  });
+  const plan = {
+    activate,
+    createdAt: now,
+    id: options.id,
+    livePath,
+    prune,
+    releaseId,
+    releasesRoot,
+    retain,
+    stagingPath,
+    strategy,
+    uploadPlan,
+    warnings
+  };
+  if (provider !== void 0) plan.provider = provider;
+  if (backupPath !== void 0) plan.backupPath = backupPath;
+  if (options.metadata !== void 0) plan.metadata = { ...options.metadata };
+  return plan;
+}
+function buildActivateSteps(context) {
+  if (context.strategy === "symlink") {
+    const step = {
+      destructive: true,
+      fromPath: context.stagingPath,
+      id: `${context.planId}/activate/symlink`,
+      operation: "symlink",
+      reason: "Update live symlink to point at the new release",
+      toPath: context.livePath
+    };
+    if (context.provider !== void 0) step.provider = context.provider;
+    return [step];
+  }
+  const steps = [];
+  if (context.backupPath !== void 0) {
+    const backup = {
+      destructive: true,
+      fromPath: context.livePath,
+      id: `${context.planId}/activate/backup`,
+      operation: "rename",
+      reason: "Rename current live path aside as a release backup",
+      toPath: context.backupPath
+    };
+    if (context.provider !== void 0) backup.provider = context.provider;
+    steps.push(backup);
+  }
+  const promote = {
+    destructive: true,
+    fromPath: context.stagingPath,
+    id: `${context.planId}/activate/promote`,
+    operation: "rename",
+    reason: "Promote the staged release to the live path",
+    toPath: context.livePath
+  };
+  if (context.provider !== void 0) promote.provider = context.provider;
+  steps.push(promote);
+  return steps;
+}
+function buildPruneSteps(context) {
+  if (context.existingReleases.length === 0) return [];
+  const normalizedRoot = normalizeRemotePath(context.releasesRoot);
+  const newReleasePath = joinRemotePath(normalizedRoot, context.releaseId);
+  const candidates = [...new Set(context.existingReleases.map((path2) => normalizeRemotePath(path2)))].filter((path2) => path2 !== newReleasePath).sort();
+  const releasesToRetain = Math.max(0, context.retain - 1);
+  if (candidates.length <= releasesToRetain) return [];
+  const toPrune = candidates.slice(0, candidates.length - releasesToRetain);
+  return toPrune.map((path2, index) => {
+    const step = {
+      id: `${context.planId}/prune/${index}`,
+      path: path2,
+      reason: "Older release exceeds retain window"
+    };
+    if (context.provider !== void 0) step.provider = context.provider;
+    return step;
+  });
+}
+function defaultReleaseId(now) {
+  return now.toISOString().replace(/[:.]/g, "-");
+}
+
+// src/sync/walkRemoteTree.ts
+async function* walkRemoteTree(fs, rootPath, options = {}) {
+  const recursive = options.recursive ?? true;
+  const includeDirectories = options.includeDirectories ?? true;
+  const includeFiles = options.includeFiles ?? true;
+  const followSymlinks = options.followSymlinks ?? false;
+  const root = normalizeRemotePath(rootPath);
+  const normalized = {
+    followSymlinks,
+    includeDirectories,
+    includeFiles,
+    recursive
+  };
+  if (options.maxDepth !== void 0) normalized.maxDepth = options.maxDepth;
+  if (options.filter !== void 0) normalized.filter = options.filter;
+  if (options.signal !== void 0) normalized.signal = options.signal;
+  yield* walkDirectory(fs, root, 0, normalized);
+}
+async function* walkDirectory(fs, path2, depth, options) {
+  throwIfAborted3(options.signal);
+  const entries = await fs.list(path2);
+  const sorted = [...entries].sort(compareEntries5);
+  for (const entry of sorted) {
+    if (options.filter !== void 0 && !options.filter(entry)) continue;
+    if (matchesEntryKind(entry, options.includeDirectories, options.includeFiles)) {
+      yield { depth, entry, parentPath: path2 };
+    }
+    if (options.recursive && canDescendInto(entry, options.followSymlinks) && (options.maxDepth === void 0 || depth < options.maxDepth)) {
+      yield* walkDirectory(fs, ensureDescendPath(entry, path2), depth + 1, options);
+    }
+  }
+}
+function matchesEntryKind(entry, includeDirectories, includeFiles) {
+  if (entry.type === "directory") return includeDirectories;
+  if (entry.type === "file") return includeFiles;
+  return true;
+}
+function canDescendInto(entry, followSymlinks) {
+  if (entry.type === "directory") return true;
+  return followSymlinks && entry.type === "symlink";
+}
+function ensureDescendPath(entry, parentPath) {
+  if (entry.path !== "" && entry.path !== entry.name) {
+    return normalizeRemotePath(entry.path);
+  }
+  return joinRemotePath(parentPath, entry.name);
+}
+function compareEntries5(left, right) {
+  if (left.path < right.path) return -1;
+  if (left.path > right.path) return 1;
+  return 0;
+}
+function throwIfAborted3(signal) {
+  if (signal?.aborted === true) {
+    throw new AbortError({
+      message: "Remote tree walk aborted",
+      retryable: false
+    });
+  }
+}
+
+// src/sync/diffRemoteTrees.ts
+async function diffRemoteTrees(source, sourcePath, destination, destinationPath, options = {}) {
+  const includeUnchanged = options.includeUnchanged ?? false;
+  const sourceRoot = normalizeRemotePath(sourcePath);
+  const destinationRoot = normalizeRemotePath(destinationPath);
+  const sourceWalk = createWalkOptions(options, options.sourceFilter);
+  const destinationWalk = createWalkOptions(options, options.destinationFilter);
+  const [sourceEntries, destinationEntries] = await Promise.all([
+    collectEntries(source, sourceRoot, sourceWalk),
+    collectEntries(destination, destinationRoot, destinationWalk)
+  ]);
+  const aligned = alignEntries(sourceEntries, destinationEntries);
+  const entries = [];
+  const summary = {
+    added: 0,
+    modified: 0,
+    removed: 0,
+    total: 0,
+    unchanged: 0
+  };
+  for (const { path: path2, source: sourceEntry, destination: destinationEntry } of aligned) {
+    summary.total += 1;
+    const reasons = [];
+    let status;
+    if (sourceEntry !== void 0 && destinationEntry === void 0) {
+      status = "added";
+      summary.added += 1;
+    } else if (sourceEntry === void 0 && destinationEntry !== void 0) {
+      status = "removed";
+      summary.removed += 1;
+    } else if (sourceEntry !== void 0 && destinationEntry !== void 0) {
+      const computedReasons = compareEntries6(sourceEntry, destinationEntry, options);
+      if (computedReasons.length === 0) {
+        status = "unchanged";
+        summary.unchanged += 1;
+      } else {
+        status = "modified";
+        reasons.push(...computedReasons);
+        summary.modified += 1;
+      }
+    } else {
+      continue;
+    }
+    if (status === "unchanged" && !includeUnchanged) continue;
+    const record = { path: path2, reasons, status };
+    if (sourceEntry !== void 0) record.source = sourceEntry;
+    if (destinationEntry !== void 0) record.destination = destinationEntry;
+    entries.push(record);
+  }
+  entries.sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
+  return { entries, summary };
+}
+function createWalkOptions(options, filter) {
+  const walk = options.walk ?? {};
+  const merged = {};
+  if (walk.recursive !== void 0) merged.recursive = walk.recursive;
+  if (walk.maxDepth !== void 0) merged.maxDepth = walk.maxDepth;
+  if (walk.includeDirectories !== void 0) merged.includeDirectories = walk.includeDirectories;
+  if (walk.includeFiles !== void 0) merged.includeFiles = walk.includeFiles;
+  if (walk.followSymlinks !== void 0) merged.followSymlinks = walk.followSymlinks;
+  const resolvedFilter = filter ?? walk.filter;
+  if (resolvedFilter !== void 0) merged.filter = resolvedFilter;
+  if (options.signal !== void 0) merged.signal = options.signal;
+  return merged;
+}
+async function collectEntries(fs, rootPath, walkOptions) {
+  const map = /* @__PURE__ */ new Map();
+  for await (const record of walkRemoteTree(fs, rootPath, walkOptions)) {
+    const collected = toCollectedEntry(record.entry, rootPath);
+    if (collected !== void 0) map.set(collected.relativePath, collected.entry);
+  }
+  return map;
+}
+function toCollectedEntry(entry, rootPath) {
+  const root = normalizeRemotePath(rootPath);
+  const path2 = normalizeRemotePath(entry.path);
+  if (path2 === root) return void 0;
+  if (root === "/") return { entry, relativePath: path2 };
+  if (path2.startsWith(`${root}/`)) {
+    return { entry, relativePath: path2.slice(root.length) };
+  }
+  return void 0;
+}
+function alignEntries(sourceEntries, destinationEntries) {
+  const paths = /* @__PURE__ */ new Set([...sourceEntries.keys(), ...destinationEntries.keys()]);
+  const aligned = [];
+  for (const path2 of paths) {
+    const pair = { path: path2 };
+    const source = sourceEntries.get(path2);
+    const destination = destinationEntries.get(path2);
+    if (source !== void 0) pair.source = source;
+    if (destination !== void 0) pair.destination = destination;
+    aligned.push(pair);
+  }
+  return aligned;
+}
+function compareEntries6(source, destination, options) {
+  const reasons = [];
+  const compareSize = options.compareSize ?? true;
+  const compareModifiedAt = options.compareModifiedAt ?? true;
+  const compareUniqueId = options.compareUniqueId ?? false;
+  const tolerance = options.modifiedAtToleranceMs ?? 1e3;
+  if (source.type !== destination.type) {
+    reasons.push("type");
+  }
+  if (compareSize && isSizeRelevant(source, destination) && source.size !== destination.size) {
+    reasons.push("size");
+  }
+  if (compareModifiedAt && isModifiedAtDifferent(source, destination, tolerance)) {
+    reasons.push("modifiedAt");
+  }
+  if (compareUniqueId && source.uniqueId !== void 0 && destination.uniqueId !== void 0 && source.uniqueId !== destination.uniqueId) {
+    reasons.push("checksum");
+  }
+  return reasons;
+}
+function isSizeRelevant(source, destination) {
+  if (source.type !== "file" || destination.type !== "file") return false;
+  return source.size !== void 0 && destination.size !== void 0;
+}
+function isModifiedAtDifferent(source, destination, toleranceMs) {
+  if (source.modifiedAt === void 0 || destination.modifiedAt === void 0) return false;
+  const delta = Math.abs(source.modifiedAt.getTime() - destination.modifiedAt.getTime());
+  return delta > toleranceMs;
+}
+
+// src/sync/manifest.ts
+var REMOTE_MANIFEST_FORMAT_VERSION = 1;
+async function createRemoteManifest(fs, rootPath, options = {}) {
+  const root = normalizeRemotePath(rootPath);
+  const walkOptions = { ...options.walk ?? {} };
+  const resolvedFilter = options.filter ?? options.walk?.filter;
+  if (resolvedFilter !== void 0) walkOptions.filter = resolvedFilter;
+  if (options.signal !== void 0) walkOptions.signal = options.signal;
+  const entries = [];
+  for await (const record of walkRemoteTree(fs, root, walkOptions)) {
+    const relativePath = relativeFromRoot(record.entry.path, root);
+    if (relativePath === void 0) continue;
+    entries.push(toManifestEntry(record.entry, relativePath));
+  }
+  entries.sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
+  const generatedAt = (options.now?.() ?? /* @__PURE__ */ new Date()).toISOString();
+  const manifest = {
+    entries,
+    formatVersion: REMOTE_MANIFEST_FORMAT_VERSION,
+    generatedAt,
+    root
+  };
+  if (options.provider !== void 0) manifest.provider = options.provider;
+  return manifest;
+}
+function serializeRemoteManifest(manifest, indent = 2) {
+  return JSON.stringify(manifest, void 0, indent);
+}
+function parseRemoteManifest(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    throw new ConfigurationError({
+      cause: error,
+      message: "Failed to parse remote manifest payload as JSON",
+      retryable: false
+    });
+  }
+  if (parsed === null || typeof parsed !== "object") {
+    throw new ConfigurationError({
+      message: "Remote manifest payload must be a JSON object",
+      retryable: false
+    });
+  }
+  const candidate = parsed;
+  if (candidate.formatVersion !== REMOTE_MANIFEST_FORMAT_VERSION) {
+    throw new ConfigurationError({
+      details: {
+        expected: REMOTE_MANIFEST_FORMAT_VERSION,
+        received: candidate.formatVersion
+      },
+      message: `Unsupported remote manifest formatVersion: ${String(candidate.formatVersion)}`,
+      retryable: false
+    });
+  }
+  if (typeof candidate.root !== "string" || candidate.root.length === 0) {
+    throw new ConfigurationError({
+      message: "Remote manifest root must be a non-empty string",
+      retryable: false
+    });
+  }
+  if (typeof candidate.generatedAt !== "string") {
+    throw new ConfigurationError({
+      message: "Remote manifest generatedAt must be an ISO timestamp string",
+      retryable: false
+    });
+  }
+  if (!Array.isArray(candidate.entries)) {
+    throw new ConfigurationError({
+      message: "Remote manifest entries must be an array",
+      retryable: false
+    });
+  }
+  const entries = candidate.entries.map((entry, index) => normalizeManifestEntry(entry, index));
+  const manifest = {
+    entries,
+    formatVersion: REMOTE_MANIFEST_FORMAT_VERSION,
+    generatedAt: candidate.generatedAt,
+    root: normalizeRemotePath(candidate.root)
+  };
+  if (typeof candidate.provider === "string") manifest.provider = candidate.provider;
+  return manifest;
+}
+function compareRemoteManifests(source, destination, options = {}) {
+  const includeUnchanged = options.includeUnchanged ?? false;
+  const sourceMap = indexEntries(source);
+  const destinationMap = indexEntries(destination);
+  const paths = /* @__PURE__ */ new Set([...sourceMap.keys(), ...destinationMap.keys()]);
+  const entries = [];
+  const summary = {
+    added: 0,
+    modified: 0,
+    removed: 0,
+    total: 0,
+    unchanged: 0
+  };
+  for (const path2 of paths) {
+    summary.total += 1;
+    const sourceEntry = sourceMap.get(path2);
+    const destinationEntry = destinationMap.get(path2);
+    const reasons = [];
+    let status;
+    if (sourceEntry !== void 0 && destinationEntry === void 0) {
+      status = "added";
+      summary.added += 1;
+    } else if (sourceEntry === void 0 && destinationEntry !== void 0) {
+      status = "removed";
+      summary.removed += 1;
+    } else if (sourceEntry !== void 0 && destinationEntry !== void 0) {
+      const computed = compareManifestEntries(sourceEntry, destinationEntry, options);
+      if (computed.length === 0) {
+        status = "unchanged";
+        summary.unchanged += 1;
+      } else {
+        status = "modified";
+        reasons.push(...computed);
+        summary.modified += 1;
+      }
+    } else {
+      continue;
+    }
+    if (status === "unchanged" && !includeUnchanged) continue;
+    const record = { path: path2, reasons, status };
+    if (sourceEntry !== void 0) {
+      record.source = manifestEntryToRemote(sourceEntry, source.root);
+    }
+    if (destinationEntry !== void 0) {
+      record.destination = manifestEntryToRemote(destinationEntry, destination.root);
+    }
+    entries.push(record);
+  }
+  entries.sort((left, right) => left.path < right.path ? -1 : left.path > right.path ? 1 : 0);
+  return { entries, summary };
+}
+function relativeFromRoot(entryPath, root) {
+  const path2 = normalizeRemotePath(entryPath);
+  if (path2 === root) return void 0;
+  if (root === "/") return path2;
+  if (path2.startsWith(`${root}/`)) return path2.slice(root.length);
+  return void 0;
+}
+function toManifestEntry(entry, relativePath) {
+  const manifestEntry = {
+    path: relativePath,
+    type: entry.type
+  };
+  if (entry.size !== void 0) manifestEntry.size = entry.size;
+  if (entry.modifiedAt !== void 0) manifestEntry.modifiedAt = entry.modifiedAt.toISOString();
+  if (entry.uniqueId !== void 0) manifestEntry.uniqueId = entry.uniqueId;
+  if (entry.symlinkTarget !== void 0) manifestEntry.symlinkTarget = entry.symlinkTarget;
+  return manifestEntry;
+}
+function normalizeManifestEntry(value, index) {
+  if (value === null || typeof value !== "object") {
+    throw new ConfigurationError({
+      details: { index },
+      message: `Remote manifest entry at index ${index} must be an object`,
+      retryable: false
+    });
+  }
+  const candidate = value;
+  if (typeof candidate.path !== "string" || candidate.path.length === 0) {
+    throw new ConfigurationError({
+      details: { index },
+      message: `Remote manifest entry at index ${index} must have a non-empty path`,
+      retryable: false
+    });
+  }
+  if (!isRemoteEntryType(candidate.type)) {
+    throw new ConfigurationError({
+      details: { index, received: candidate.type },
+      message: `Remote manifest entry at index ${index} has an invalid type`,
+      retryable: false
+    });
+  }
+  const entry = {
+    path: candidate.path,
+    type: candidate.type
+  };
+  if (typeof candidate.size === "number") entry.size = candidate.size;
+  if (typeof candidate.modifiedAt === "string") entry.modifiedAt = candidate.modifiedAt;
+  if (typeof candidate.uniqueId === "string") entry.uniqueId = candidate.uniqueId;
+  if (typeof candidate.symlinkTarget === "string") entry.symlinkTarget = candidate.symlinkTarget;
+  return entry;
+}
+function isRemoteEntryType(value) {
+  return value === "file" || value === "directory" || value === "symlink" || value === "unknown";
+}
+function indexEntries(manifest) {
+  const map = /* @__PURE__ */ new Map();
+  for (const entry of manifest.entries) map.set(entry.path, entry);
+  return map;
+}
+function manifestEntryToRemote(entry, root) {
+  const absolutePath2 = root === "/" ? entry.path : `${root}${entry.path}`;
+  const remote = {
+    name: deriveName(entry.path),
+    path: absolutePath2,
+    type: entry.type
+  };
+  if (entry.size !== void 0) remote.size = entry.size;
+  if (entry.modifiedAt !== void 0) {
+    const parsed = new Date(entry.modifiedAt);
+    if (!Number.isNaN(parsed.getTime())) remote.modifiedAt = parsed;
+  }
+  if (entry.uniqueId !== void 0) remote.uniqueId = entry.uniqueId;
+  if (entry.symlinkTarget !== void 0) remote.symlinkTarget = entry.symlinkTarget;
+  return remote;
+}
+function deriveName(path2) {
+  const segments = path2.split("/").filter(Boolean);
+  return segments.length === 0 ? "/" : segments[segments.length - 1] ?? "/";
+}
+function compareManifestEntries(source, destination, options) {
+  const reasons = [];
+  const compareSize = options.compareSize ?? true;
+  const compareModifiedAt = options.compareModifiedAt ?? true;
+  const compareUniqueId = options.compareUniqueId ?? false;
+  const tolerance = options.modifiedAtToleranceMs ?? 1e3;
+  if (source.type !== destination.type) reasons.push("type");
+  if (compareSize && source.type === "file" && destination.type === "file" && source.size !== void 0 && destination.size !== void 0 && source.size !== destination.size) {
+    reasons.push("size");
+  }
+  if (compareModifiedAt && isModifiedAtDifferent2(source, destination, tolerance)) {
+    reasons.push("modifiedAt");
+  }
+  if (compareUniqueId && source.uniqueId !== void 0 && destination.uniqueId !== void 0 && source.uniqueId !== destination.uniqueId) {
+    reasons.push("checksum");
+  }
+  return reasons;
+}
+function isModifiedAtDifferent2(source, destination, toleranceMs) {
+  if (source.modifiedAt === void 0 || destination.modifiedAt === void 0) return false;
+  const sourceTime = Date.parse(source.modifiedAt);
+  const destinationTime = Date.parse(destination.modifiedAt);
+  if (Number.isNaN(sourceTime) || Number.isNaN(destinationTime)) return false;
+  return Math.abs(sourceTime - destinationTime) > toleranceMs;
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  AbortError,
+  AuthenticationError,
+  AuthorizationError,
+  CLASSIC_PROVIDER_IDS,
+  ConfigurationError,
+  ConnectionError,
+  ParseError,
+  PathAlreadyExistsError,
+  PathNotFoundError,
+  PermissionDeniedError,
+  ProtocolError,
+  ProviderRegistry,
+  REDACTED,
+  REMOTE_MANIFEST_FORMAT_VERSION,
+  TimeoutError,
+  TransferClient,
+  TransferEngine,
+  TransferError,
+  TransferQueue,
+  UnsupportedFeatureError,
+  VerificationError,
+  ZeroTransfer,
+  ZeroTransferError,
+  assertSafeFtpArgument,
+  basenameRemotePath,
+  buildRemoteBreadcrumbs,
+  compareRemoteManifests,
+  copyBetween,
+  createAtomicDeployPlan,
+  createBandwidthThrottle,
+  createLocalProviderFactory,
+  createMemoryProviderFactory,
+  createMemoryS3MultipartResumeStore,
+  createOAuthTokenSecretSource,
+  createProgressEvent,
+  createProviderTransferExecutor,
+  createRemoteBrowser,
+  createRemoteManifest,
+  createS3ProviderFactory,
+  createSyncPlan,
+  createTransferClient,
+  createTransferJobsFromPlan,
+  createTransferPlan,
+  createTransferResult,
+  diffRemoteTrees,
+  downloadFile,
+  emitLog,
+  errorFromFtpReply,
+  filterRemoteEntries,
+  formatCapabilityMatrixMarkdown,
+  getBuiltinCapabilityMatrix,
+  importFileZillaSites,
+  importOpenSshConfig,
+  importWinScpSessions,
+  isClassicProviderId,
+  isSensitiveKey,
+  joinRemotePath,
+  matchKnownHosts,
+  matchKnownHostsEntry,
+  noopLogger,
+  normalizeRemotePath,
+  parentRemotePath,
+  parseKnownHosts,
+  parseOpenSshConfig,
+  parseRemoteManifest,
+  redactCommand,
+  redactConnectionProfile,
+  redactObject,
+  redactSecretSource,
+  redactValue,
+  resolveConnectionProfileSecrets,
+  resolveOpenSshHost,
+  resolveProviderId,
+  resolveSecret,
+  runConnectionDiagnostics,
+  serializeRemoteManifest,
+  sortRemoteEntries,
+  summarizeClientDiagnostics,
+  summarizeTransferPlan,
+  throttleByteIterable,
+  uploadFile,
+  validateConnectionProfile,
+  walkRemoteTree
+});
+//# sourceMappingURL=index.cjs.map
