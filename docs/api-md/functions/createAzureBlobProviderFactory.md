@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createAzureBlobProviderFactory(options): ProviderFactory;
 ```
 
-Defined in: [src/providers/cloud/AzureBlobProvider.ts:74](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/cloud/AzureBlobProvider.ts#L74)
+Defined in: [src/providers/cloud/AzureBlobProvider.ts:74](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/providers/cloud/AzureBlobProvider.ts#L74)
 
 Creates an Azure Blob Storage provider factory.
 

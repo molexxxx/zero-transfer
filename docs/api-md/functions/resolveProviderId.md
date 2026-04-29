@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function resolveProviderId(selection): ProviderId | undefined;
 ```
 
-Defined in: [src/core/ProviderId.ts:59](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/core/ProviderId.ts#L59)
+Defined in: [src/core/ProviderId.ts:59](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/core/ProviderId.ts#L59)
 
 Resolves the provider id from a profile, preferring the new `provider` field.
 

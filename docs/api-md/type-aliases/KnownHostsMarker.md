@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -10,6 +10,6 @@
 type KnownHostsMarker = "cert-authority" | "revoked";
 ```
 
-Defined in: [src/profiles/importers/KnownHostsParser.ts:10](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/profiles/importers/KnownHostsParser.ts#L10)
+Defined in: [src/profiles/importers/KnownHostsParser.ts:10](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/profiles/importers/KnownHostsParser.ts#L10)
 
 Marker prefixing a known_hosts line (`@cert-authority` or `@revoked`).

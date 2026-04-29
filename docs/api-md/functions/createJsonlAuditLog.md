@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createJsonlAuditLog(writer): MftAuditLog;
 ```
 
-Defined in: [src/mft/audit.ts:88](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/audit.ts#L88)
+Defined in: [src/mft/audit.ts:88](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/mft/audit.ts#L88)
 
 Creates an audit log that streams records as newline-delimited JSON.
 

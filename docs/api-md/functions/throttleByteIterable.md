@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -13,7 +13,7 @@ function throttleByteIterable(
 signal?): AsyncIterable<Uint8Array<ArrayBufferLike>>;
 ```
 
-Defined in: [src/transfers/BandwidthThrottle.ts:125](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/BandwidthThrottle.ts#L125)
+Defined in: [src/transfers/BandwidthThrottle.ts:125](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/transfers/BandwidthThrottle.ts#L125)
 
 Wraps an async iterable of byte chunks so each chunk is released only after
 the throttle has admitted its byte count.

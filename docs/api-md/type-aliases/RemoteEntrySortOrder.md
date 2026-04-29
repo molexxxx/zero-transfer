@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -10,6 +10,6 @@
 type RemoteEntrySortOrder = "asc" | "desc";
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:18](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/sync/createRemoteBrowser.ts#L18)
+Defined in: [src/sync/createRemoteBrowser.ts:18](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/sync/createRemoteBrowser.ts#L18)
 
 Sort direction supported by [sortRemoteEntries](../functions/sortRemoteEntries.md).

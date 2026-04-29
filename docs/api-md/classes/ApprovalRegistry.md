@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: ApprovalRegistry
 
-Defined in: [src/mft/approvals.ts:64](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/approvals.ts#L64)
+Defined in: [src/mft/approvals.ts:64](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/mft/approvals.ts#L64)
 
 In-memory approval registry.
 
@@ -33,7 +33,7 @@ approve(
    now?): ApprovalRequest;
 ```
 
-Defined in: [src/mft/approvals.ts:118](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/approvals.ts#L118)
+Defined in: [src/mft/approvals.ts:118](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/mft/approvals.ts#L118)
 
 Approves a pending request.
 
@@ -64,7 +64,7 @@ create(input, now?): {
 };
 ```
 
-Defined in: [src/mft/approvals.ts:76](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/approvals.ts#L76)
+Defined in: [src/mft/approvals.ts:76](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/mft/approvals.ts#L76)
 
 Creates a new request and returns a promise that resolves when the request
 transitions out of `"pending"` state.
@@ -92,8 +92,8 @@ The created request and a promise tracking its resolution.
 
 | Name | Type | Defined in |
 | ------ | ------ | ------ |
-| `request` | [`ApprovalRequest`](../interfaces/ApprovalRequest.md) | [src/mft/approvals.ts:79](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/approvals.ts#L79) |
-| `settled` | `Promise`\<[`ApprovalRequest`](../interfaces/ApprovalRequest.md)\> | [src/mft/approvals.ts:79](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/approvals.ts#L79) |
+| `request` | [`ApprovalRequest`](../interfaces/ApprovalRequest.md) | [src/mft/approvals.ts:79](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/mft/approvals.ts#L79) |
+| `settled` | `Promise`\<[`ApprovalRequest`](../interfaces/ApprovalRequest.md)\> | [src/mft/approvals.ts:79](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/mft/approvals.ts#L79) |
 
 ***
 
@@ -103,7 +103,7 @@ The created request and a promise tracking its resolution.
 get(id): ApprovalRequest | undefined;
 ```
 
-Defined in: [src/mft/approvals.ts:149](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/approvals.ts#L149)
+Defined in: [src/mft/approvals.ts:149](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/mft/approvals.ts#L149)
 
 Looks up a request by id.
 
@@ -125,7 +125,7 @@ Looks up a request by id.
 list(): ApprovalRequest[];
 ```
 
-Defined in: [src/mft/approvals.ts:159](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/approvals.ts#L159)
+Defined in: [src/mft/approvals.ts:159](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/mft/approvals.ts#L159)
 
 Lists every request ever created.
 
@@ -141,7 +141,7 @@ Lists every request ever created.
 listPending(): ApprovalRequest[];
 ```
 
-Defined in: [src/mft/approvals.ts:154](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/approvals.ts#L154)
+Defined in: [src/mft/approvals.ts:154](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/mft/approvals.ts#L154)
 
 Lists pending requests in insertion order.
 
@@ -160,7 +160,7 @@ reject(
    now?): ApprovalRequest;
 ```
 
-Defined in: [src/mft/approvals.ts:134](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/approvals.ts#L134)
+Defined in: [src/mft/approvals.ts:134](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/mft/approvals.ts#L134)
 
 Rejects a pending request.
 

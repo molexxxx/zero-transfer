@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/core",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Provider-neutral contracts, transfer engine, queue, profiles, and errors.",
   "keywords": [
     "zero-transfer",
@@ -46,6 +46,6 @@
   },
   "sideEffects": false,
   "peerDependencies": {
-    "@zero-transfer/sdk": "0.1.3"
+    "@zero-transfer/sdk": "0.1.4"
   }
 }

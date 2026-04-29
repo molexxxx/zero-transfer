@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function joinRemotePath(...segments): string;
 ```
 
-Defined in: [src/utils/path.ts:85](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/utils/path.ts#L85)
+Defined in: [src/utils/path.ts:85](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/utils/path.ts#L85)
 
 Joins remote path segments and normalizes the result.
 

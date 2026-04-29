@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ProviderTransferOperations
 
-Defined in: [src/providers/ProviderTransferOperations.ts:71](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/ProviderTransferOperations.ts#L71)
+Defined in: [src/providers/ProviderTransferOperations.ts:71](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/providers/ProviderTransferOperations.ts#L71)
 
 Optional read/write surface exposed by provider sessions that support transfer streaming.
 
@@ -20,7 +20,7 @@ read(request):
 | Promise<ProviderTransferReadResult>;
 ```
 
-Defined in: [src/providers/ProviderTransferOperations.ts:73](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/ProviderTransferOperations.ts#L73)
+Defined in: [src/providers/ProviderTransferOperations.ts:73](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/providers/ProviderTransferOperations.ts#L73)
 
 Opens readable content for a provider endpoint.
 
@@ -45,7 +45,7 @@ write(request):
 | Promise<TransferExecutionResult>;
 ```
 
-Defined in: [src/providers/ProviderTransferOperations.ts:77](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/ProviderTransferOperations.ts#L77)
+Defined in: [src/providers/ProviderTransferOperations.ts:77](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/providers/ProviderTransferOperations.ts#L77)
 
 Writes readable content to a provider endpoint.
 

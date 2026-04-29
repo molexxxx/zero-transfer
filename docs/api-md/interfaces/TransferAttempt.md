@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: TransferAttempt
 
-Defined in: [src/transfers/TransferJob.ts:107](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferJob.ts#L107)
+Defined in: [src/transfers/TransferJob.ts:107](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/transfers/TransferJob.ts#L107)
 
 Execution attempt retained in a transfer receipt.
 
@@ -14,9 +14,9 @@ Execution attempt retained in a transfer receipt.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="attempt"></a> `attempt` | `number` | One-based attempt number. | [src/transfers/TransferJob.ts:109](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferJob.ts#L109) |
-| <a id="bytestransferred"></a> `bytesTransferred` | `number` | Bytes reported by the attempt before completion or failure. | [src/transfers/TransferJob.ts:117](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferJob.ts#L117) |
-| <a id="completedat"></a> `completedAt` | `Date` | Time this attempt finished or failed. | [src/transfers/TransferJob.ts:113](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferJob.ts#L113) |
-| <a id="durationms"></a> `durationMs` | `number` | Attempt duration in milliseconds. | [src/transfers/TransferJob.ts:115](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferJob.ts#L115) |
-| <a id="error"></a> `error?` | [`TransferAttemptError`](TransferAttemptError.md) | Error summary for failed attempts. | [src/transfers/TransferJob.ts:119](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferJob.ts#L119) |
-| <a id="startedat"></a> `startedAt` | `Date` | Time this attempt began. | [src/transfers/TransferJob.ts:111](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferJob.ts#L111) |
+| <a id="attempt"></a> `attempt` | `number` | One-based attempt number. | [src/transfers/TransferJob.ts:109](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/transfers/TransferJob.ts#L109) |
+| <a id="bytestransferred"></a> `bytesTransferred` | `number` | Bytes reported by the attempt before completion or failure. | [src/transfers/TransferJob.ts:117](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/transfers/TransferJob.ts#L117) |
+| <a id="completedat"></a> `completedAt` | `Date` | Time this attempt finished or failed. | [src/transfers/TransferJob.ts:113](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/transfers/TransferJob.ts#L113) |
+| <a id="durationms"></a> `durationMs` | `number` | Attempt duration in milliseconds. | [src/transfers/TransferJob.ts:115](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/transfers/TransferJob.ts#L115) |
+| <a id="error"></a> `error?` | [`TransferAttemptError`](TransferAttemptError.md) | Error summary for failed attempts. | [src/transfers/TransferJob.ts:119](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/transfers/TransferJob.ts#L119) |
+| <a id="startedat"></a> `startedAt` | `Date` | Time this attempt began. | [src/transfers/TransferJob.ts:111](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/transfers/TransferJob.ts#L111) |

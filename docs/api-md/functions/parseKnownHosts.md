@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function parseKnownHosts(text): KnownHostsEntry[];
 ```
 
-Defined in: [src/profiles/importers/KnownHostsParser.ts:39](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/profiles/importers/KnownHostsParser.ts#L39)
+Defined in: [src/profiles/importers/KnownHostsParser.ts:39](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/profiles/importers/KnownHostsParser.ts#L39)
 
 Parses OpenSSH `known_hosts` content into structured entries. Comment and blank lines are skipped.
 Lines that cannot be parsed are silently dropped so callers can tolerate hand-edited files.

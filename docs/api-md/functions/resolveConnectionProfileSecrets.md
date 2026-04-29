@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function resolveConnectionProfileSecrets(profile, options?): Promise<ResolvedConnectionProfile>;
 ```
 
-Defined in: [src/profiles/resolveConnectionProfileSecrets.ts:61](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/profiles/resolveConnectionProfileSecrets.ts#L61)
+Defined in: [src/profiles/resolveConnectionProfileSecrets.ts:61](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/profiles/resolveConnectionProfileSecrets.ts#L61)
 
 Resolves credential and TLS material secret sources without mutating the original profile.
 

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: RemotePermissions
 
-Defined in: [src/types/public.ts:25](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/types/public.ts#L25)
+Defined in: [src/types/public.ts:25](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/types/public.ts#L25)
 
 Portable permission metadata for a remote entry.
 
@@ -14,7 +14,7 @@ Portable permission metadata for a remote entry.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="group"></a> `group?` | `string` | Group permission component when the protocol exposes it. | [src/types/public.ts:31](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/types/public.ts#L31) |
-| <a id="other"></a> `other?` | `string` | Other/world permission component when the protocol exposes it. | [src/types/public.ts:33](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/types/public.ts#L33) |
-| <a id="raw"></a> `raw?` | `string` | Raw protocol permission text, such as Unix mode characters or MLSD `perm` facts. | [src/types/public.ts:27](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/types/public.ts#L27) |
-| <a id="user"></a> `user?` | `string` | User/owner permission component when the protocol exposes it. | [src/types/public.ts:29](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/types/public.ts#L29) |
+| <a id="group"></a> `group?` | `string` | Group permission component when the protocol exposes it. | [src/types/public.ts:31](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/types/public.ts#L31) |
+| <a id="other"></a> `other?` | `string` | Other/world permission component when the protocol exposes it. | [src/types/public.ts:33](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/types/public.ts#L33) |
+| <a id="raw"></a> `raw?` | `string` | Raw protocol permission text, such as Unix mode characters or MLSD `perm` facts. | [src/types/public.ts:27](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/types/public.ts#L27) |
+| <a id="user"></a> `user?` | `string` | User/owner permission component when the protocol exposes it. | [src/types/public.ts:29](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/types/public.ts#L29) |

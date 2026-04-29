@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.3**](../README.md)
+[**ZeroTransfer SDK v0.1.4**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ProviderFactory\<TProvider\>
 
-Defined in: [src/providers/ProviderFactory.ts:11](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/ProviderFactory.ts#L11)
+Defined in: [src/providers/ProviderFactory.ts:11](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/providers/ProviderFactory.ts#L11)
 
 Factory registered with [ProviderRegistry](../classes/ProviderRegistry.md) to create providers on demand.
 
@@ -24,7 +24,7 @@ Factory registered with [ProviderRegistry](../classes/ProviderRegistry.md) to cr
 create(): TProvider;
 ```
 
-Defined in: [src/providers/ProviderFactory.ts:17](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/ProviderFactory.ts#L17)
+Defined in: [src/providers/ProviderFactory.ts:17](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/providers/ProviderFactory.ts#L17)
 
 Creates an isolated provider instance for a connection attempt.
 
@@ -36,5 +36,5 @@ Creates an isolated provider instance for a connection attempt.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="capabilities"></a> `capabilities` | [`CapabilitySet`](CapabilitySet.md) | Capability snapshot available without opening a network connection. | [src/providers/ProviderFactory.ts:15](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/ProviderFactory.ts#L15) |
-| <a id="id"></a> `id` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id created by this factory. | [src/providers/ProviderFactory.ts:13](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/ProviderFactory.ts#L13) |
+| <a id="capabilities"></a> `capabilities` | [`CapabilitySet`](CapabilitySet.md) | Capability snapshot available without opening a network connection. | [src/providers/ProviderFactory.ts:15](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/providers/ProviderFactory.ts#L15) |
+| <a id="id"></a> `id` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id created by this factory. | [src/providers/ProviderFactory.ts:13](https://github.com/tonywied17/zero-transfer/blob/047adaab6146959fed931c4dae5960a8d04e8ae2/src/providers/ProviderFactory.ts#L13) |
