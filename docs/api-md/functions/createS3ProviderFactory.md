@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.2**](../README.md)
+[**ZeroTransfer SDK v0.1.3**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createS3ProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/web/S3Provider.ts:177](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/web/S3Provider.ts#L177)
+Defined in: [src/providers/web/S3Provider.ts:177](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/web/S3Provider.ts#L177)
 
 Creates an S3-compatible provider factory.
 

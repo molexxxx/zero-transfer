@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.2**](../README.md)
+[**ZeroTransfer SDK v0.1.3**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: SftpJumpHostOptions
 
-Defined in: [src/providers/classic/sftp/jumpHost.ts:20](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/classic/sftp/jumpHost.ts#L20)
+Defined in: [src/providers/classic/sftp/jumpHost.ts:20](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/classic/sftp/jumpHost.ts#L20)
 
 Options for [createSftpJumpHostSocketFactory](../functions/createSftpJumpHostSocketFactory.md).
 
@@ -14,7 +14,7 @@ Options for [createSftpJumpHostSocketFactory](../functions/createSftpJumpHostSoc
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="bastion"></a> `bastion?` | `ConnectConfig` | Static ssh2 connect configuration for the bastion. Mutually exclusive with [buildBastion](#buildbastion). | [src/providers/classic/sftp/jumpHost.ts:22](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/classic/sftp/jumpHost.ts#L22) |
-| <a id="buildbastion"></a> `buildBastion?` | (`context`) => `ConnectConfig` \| `Promise`\<`ConnectConfig`\> | Per-connection builder used to refresh credentials before each tunnel attempt. | [src/providers/classic/sftp/jumpHost.ts:24](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/classic/sftp/jumpHost.ts#L24) |
-| <a id="createclient"></a> `createClient?` | () => `Client` | Optional ssh2 client factory override used in tests. | [src/providers/classic/sftp/jumpHost.ts:28](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/classic/sftp/jumpHost.ts#L28) |
-| <a id="logger"></a> `logger?` | [`ZeroTransferLogger`](ZeroTransferLogger.md) | Optional logger used for tunnel diagnostics. | [src/providers/classic/sftp/jumpHost.ts:26](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/classic/sftp/jumpHost.ts#L26) |
+| <a id="bastion"></a> `bastion?` | `ConnectConfig` | Static ssh2 connect configuration for the bastion. Mutually exclusive with [buildBastion](#buildbastion). | [src/providers/classic/sftp/jumpHost.ts:22](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/classic/sftp/jumpHost.ts#L22) |
+| <a id="buildbastion"></a> `buildBastion?` | (`context`) => `ConnectConfig` \| `Promise`\<`ConnectConfig`\> | Per-connection builder used to refresh credentials before each tunnel attempt. | [src/providers/classic/sftp/jumpHost.ts:24](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/classic/sftp/jumpHost.ts#L24) |
+| <a id="createclient"></a> `createClient?` | () => `Client` | Optional ssh2 client factory override used in tests. | [src/providers/classic/sftp/jumpHost.ts:28](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/classic/sftp/jumpHost.ts#L28) |
+| <a id="logger"></a> `logger?` | [`ZeroTransferLogger`](ZeroTransferLogger.md) | Optional logger used for tunnel diagnostics. | [src/providers/classic/sftp/jumpHost.ts:26](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/classic/sftp/jumpHost.ts#L26) |

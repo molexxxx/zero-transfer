@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.2**](../README.md)
+[**ZeroTransfer SDK v0.1.3**](../README.md)
 
 ***
 
@@ -13,7 +13,7 @@ function nextCronFireAt(
    timezone?): Date | undefined;
 ```
 
-Defined in: [src/mft/cron.ts:79](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/mft/cron.ts#L79)
+Defined in: [src/mft/cron.ts:79](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/cron.ts#L79)
 
 Computes the next time at which a cron expression fires strictly after `from`.
 

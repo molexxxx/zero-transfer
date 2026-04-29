@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.2**](../README.md)
+[**ZeroTransfer SDK v0.1.3**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: CompareRemoteManifestsOptions
 
-Defined in: [src/sync/manifest.ts:79](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/sync/manifest.ts#L79)
+Defined in: [src/sync/manifest.ts:79](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/sync/manifest.ts#L79)
 
 Options accepted by [compareRemoteManifests](../functions/compareRemoteManifests.md).
 
@@ -14,8 +14,8 @@ Options accepted by [compareRemoteManifests](../functions/compareRemoteManifests
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="comparemodifiedat"></a> `compareModifiedAt?` | `boolean` | Whether modification timestamps participate in the comparison. Defaults to `true`. | [src/sync/manifest.ts:85](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/sync/manifest.ts#L85) |
-| <a id="comparesize"></a> `compareSize?` | `boolean` | Whether sizes participate in the comparison. Defaults to `true`. | [src/sync/manifest.ts:87](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/sync/manifest.ts#L87) |
-| <a id="compareuniqueid"></a> `compareUniqueId?` | `boolean` | Whether to require matching `uniqueId` checksums when both entries expose one. Defaults to `false`. | [src/sync/manifest.ts:89](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/sync/manifest.ts#L89) |
-| <a id="includeunchanged"></a> `includeUnchanged?` | `boolean` | Whether unchanged entries are included in the result. Defaults to `false`. | [src/sync/manifest.ts:81](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/sync/manifest.ts#L81) |
-| <a id="modifiedattolerancems"></a> `modifiedAtToleranceMs?` | `number` | Tolerance in milliseconds applied to `modifiedAt` comparisons. Defaults to `1000`. | [src/sync/manifest.ts:83](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/sync/manifest.ts#L83) |
+| <a id="comparemodifiedat"></a> `compareModifiedAt?` | `boolean` | Whether modification timestamps participate in the comparison. Defaults to `true`. | [src/sync/manifest.ts:85](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/sync/manifest.ts#L85) |
+| <a id="comparesize"></a> `compareSize?` | `boolean` | Whether sizes participate in the comparison. Defaults to `true`. | [src/sync/manifest.ts:87](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/sync/manifest.ts#L87) |
+| <a id="compareuniqueid"></a> `compareUniqueId?` | `boolean` | Whether to require matching `uniqueId` checksums when both entries expose one. Defaults to `false`. | [src/sync/manifest.ts:89](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/sync/manifest.ts#L89) |
+| <a id="includeunchanged"></a> `includeUnchanged?` | `boolean` | Whether unchanged entries are included in the result. Defaults to `false`. | [src/sync/manifest.ts:81](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/sync/manifest.ts#L81) |
+| <a id="modifiedattolerancems"></a> `modifiedAtToleranceMs?` | `number` | Tolerance in milliseconds applied to `modifiedAt` comparisons. Defaults to `1000`. | [src/sync/manifest.ts:83](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/sync/manifest.ts#L83) |

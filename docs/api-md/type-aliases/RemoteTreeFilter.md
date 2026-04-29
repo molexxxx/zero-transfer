@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.2**](../README.md)
+[**ZeroTransfer SDK v0.1.3**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 type RemoteTreeFilter = (entry) => boolean;
 ```
 
-Defined in: [src/sync/walkRemoteTree.ts:12](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/sync/walkRemoteTree.ts#L12)
+Defined in: [src/sync/walkRemoteTree.ts:12](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/sync/walkRemoteTree.ts#L12)
 
 Filter callback applied to each visited entry. Returning `false` skips the entry.
 

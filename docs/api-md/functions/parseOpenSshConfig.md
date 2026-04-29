@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.2**](../README.md)
+[**ZeroTransfer SDK v0.1.3**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function parseOpenSshConfig(text): OpenSshConfigEntry[];
 ```
 
-Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:29](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/profiles/importers/OpenSshConfigImporter.ts#L29)
+Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:29](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/profiles/importers/OpenSshConfigImporter.ts#L29)
 
 Parses OpenSSH `ssh_config` text into structured `Host` blocks.
 

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.2**](../README.md)
+[**ZeroTransfer SDK v0.1.3**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createHttpProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/web/HttpProvider.ts:69](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/web/HttpProvider.ts#L69)
+Defined in: [src/providers/web/HttpProvider.ts:69](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/web/HttpProvider.ts#L69)
 
 Creates a provider factory backed by HTTP(S) GET/HEAD.
 

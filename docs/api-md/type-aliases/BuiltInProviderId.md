@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.2**](../README.md)
+[**ZeroTransfer SDK v0.1.3**](../README.md)
 
 ***
 
@@ -22,6 +22,6 @@ type BuiltInProviderId =
   | "one-drive";
 ```
 
-Defined in: [src/core/ProviderId.ts:14](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/core/ProviderId.ts#L14)
+Defined in: [src/core/ProviderId.ts:14](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/core/ProviderId.ts#L14)
 
 Provider ids reserved for first-party ZeroTransfer adapters.

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.2**](../README.md)
+[**ZeroTransfer SDK v0.1.3**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: TransferPlan
 
-Defined in: [src/transfers/TransferPlan.ts:48](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/transfers/TransferPlan.ts#L48)
+Defined in: [src/transfers/TransferPlan.ts:48](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferPlan.ts#L48)
 
 Provider-neutral transfer plan.
 
@@ -14,9 +14,9 @@ Provider-neutral transfer plan.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="createdat"></a> `createdAt` | `Date` | Time the plan was created. | [src/transfers/TransferPlan.ts:54](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/transfers/TransferPlan.ts#L54) |
-| <a id="dryrun"></a> `dryRun` | `boolean` | Whether this plan should be treated as a dry run. | [src/transfers/TransferPlan.ts:52](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/transfers/TransferPlan.ts#L52) |
-| <a id="id"></a> `id` | `string` | Stable plan identifier. | [src/transfers/TransferPlan.ts:50](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/transfers/TransferPlan.ts#L50) |
-| <a id="metadata"></a> `metadata?` | `Record`\<`string`, `unknown`\> | Caller-defined metadata retained for diagnostics. | [src/transfers/TransferPlan.ts:60](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/transfers/TransferPlan.ts#L60) |
-| <a id="steps"></a> `steps` | [`TransferPlanStep`](TransferPlanStep.md)[] | Planned steps in execution order. | [src/transfers/TransferPlan.ts:56](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/transfers/TransferPlan.ts#L56) |
-| <a id="warnings"></a> `warnings` | `string`[] | Non-fatal plan warnings. | [src/transfers/TransferPlan.ts:58](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/transfers/TransferPlan.ts#L58) |
+| <a id="createdat"></a> `createdAt` | `Date` | Time the plan was created. | [src/transfers/TransferPlan.ts:54](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferPlan.ts#L54) |
+| <a id="dryrun"></a> `dryRun` | `boolean` | Whether this plan should be treated as a dry run. | [src/transfers/TransferPlan.ts:52](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferPlan.ts#L52) |
+| <a id="id"></a> `id` | `string` | Stable plan identifier. | [src/transfers/TransferPlan.ts:50](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferPlan.ts#L50) |
+| <a id="metadata"></a> `metadata?` | `Record`\<`string`, `unknown`\> | Caller-defined metadata retained for diagnostics. | [src/transfers/TransferPlan.ts:60](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferPlan.ts#L60) |
+| <a id="steps"></a> `steps` | [`TransferPlanStep`](TransferPlanStep.md)[] | Planned steps in execution order. | [src/transfers/TransferPlan.ts:56](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferPlan.ts#L56) |
+| <a id="warnings"></a> `warnings` | `string`[] | Non-fatal plan warnings. | [src/transfers/TransferPlan.ts:58](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/transfers/TransferPlan.ts#L58) |

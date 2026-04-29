@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.2**](../README.md)
+[**ZeroTransfer SDK v0.1.3**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createGcsProviderFactory(options): ProviderFactory;
 ```
 
-Defined in: [src/providers/cloud/GcsProvider.ts:67](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/providers/cloud/GcsProvider.ts#L67)
+Defined in: [src/providers/cloud/GcsProvider.ts:67](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/providers/cloud/GcsProvider.ts#L67)
 
 Creates a Google Cloud Storage provider factory.
 

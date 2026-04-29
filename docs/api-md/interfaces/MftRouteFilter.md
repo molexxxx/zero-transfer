@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.2**](../README.md)
+[**ZeroTransfer SDK v0.1.3**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: MftRouteFilter
 
-Defined in: [src/mft/MftRoute.ts:23](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/mft/MftRoute.ts#L23)
+Defined in: [src/mft/MftRoute.ts:23](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/MftRoute.ts#L23)
 
 Optional filter metadata reserved for tree-aware route execution.
 
@@ -14,5 +14,5 @@ Optional filter metadata reserved for tree-aware route execution.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="exclude"></a> `exclude?` | readonly `string`[] | Glob patterns whose matches should be excluded. | [src/mft/MftRoute.ts:27](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/mft/MftRoute.ts#L27) |
-| <a id="include"></a> `include?` | readonly `string`[] | Glob patterns whose matches should be included. | [src/mft/MftRoute.ts:25](https://github.com/tonywied17/zero-transfer/blob/9c538dfa994368eb539b24fbf6f1c32f72785ec0/src/mft/MftRoute.ts#L25) |
+| <a id="exclude"></a> `exclude?` | readonly `string`[] | Glob patterns whose matches should be excluded. | [src/mft/MftRoute.ts:27](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/MftRoute.ts#L27) |
+| <a id="include"></a> `include?` | readonly `string`[] | Glob patterns whose matches should be included. | [src/mft/MftRoute.ts:25](https://github.com/tonywied17/zero-transfer/blob/7827dc828825b195183dc542bf70a9bd2962626e/src/mft/MftRoute.ts#L25) |
