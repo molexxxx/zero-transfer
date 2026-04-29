@@ -6,7 +6,7 @@
 
 # Interface: S3MultipartPart
 
-Defined in: [src/providers/web/S3Provider.ts:100](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/providers/web/S3Provider.ts#L100)
+Defined in: [src/providers/web/S3Provider.ts:100](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/web/S3Provider.ts#L100)
 
 Single part recorded in a multipart-upload checkpoint.
 
@@ -14,6 +14,6 @@ Single part recorded in a multipart-upload checkpoint.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="byteend"></a> `byteEnd` | `number` | Cumulative byte offset reached after this part (exclusive). | [src/providers/web/S3Provider.ts:104](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/providers/web/S3Provider.ts#L104) |
-| <a id="etag"></a> `etag` | `string` | - | [src/providers/web/S3Provider.ts:102](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/providers/web/S3Provider.ts#L102) |
-| <a id="partnumber"></a> `partNumber` | `number` | - | [src/providers/web/S3Provider.ts:101](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/providers/web/S3Provider.ts#L101) |
+| <a id="byteend"></a> `byteEnd` | `number` | Cumulative byte offset reached after this part (exclusive). | [src/providers/web/S3Provider.ts:104](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/web/S3Provider.ts#L104) |
+| <a id="etag"></a> `etag` | `string` | - | [src/providers/web/S3Provider.ts:102](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/web/S3Provider.ts#L102) |
+| <a id="partnumber"></a> `partNumber` | `number` | - | [src/providers/web/S3Provider.ts:101](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/web/S3Provider.ts#L101) |

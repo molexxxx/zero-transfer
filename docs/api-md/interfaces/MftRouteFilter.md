@@ -6,7 +6,7 @@
 
 # Interface: MftRouteFilter
 
-Defined in: [src/mft/MftRoute.ts:23](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/MftRoute.ts#L23)
+Defined in: [src/mft/MftRoute.ts:23](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/MftRoute.ts#L23)
 
 Optional filter metadata reserved for tree-aware route execution.
 
@@ -14,5 +14,5 @@ Optional filter metadata reserved for tree-aware route execution.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="exclude"></a> `exclude?` | readonly `string`[] | Glob patterns whose matches should be excluded. | [src/mft/MftRoute.ts:27](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/MftRoute.ts#L27) |
-| <a id="include"></a> `include?` | readonly `string`[] | Glob patterns whose matches should be included. | [src/mft/MftRoute.ts:25](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/MftRoute.ts#L25) |
+| <a id="exclude"></a> `exclude?` | readonly `string`[] | Glob patterns whose matches should be excluded. | [src/mft/MftRoute.ts:27](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/MftRoute.ts#L27) |
+| <a id="include"></a> `include?` | readonly `string`[] | Glob patterns whose matches should be included. | [src/mft/MftRoute.ts:25](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/MftRoute.ts#L25) |

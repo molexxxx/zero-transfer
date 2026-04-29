@@ -20,7 +20,7 @@ import { createGoogleDriveProviderFactory } from "@zero-transfer/google-drive";
 
 ## Public surface
 
-This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **2** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
+This package publishes a narrowed surface of **2** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
 
 | Symbol                                                                                                                                                | Kind      | Notes              |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |

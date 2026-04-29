@@ -10,6 +10,6 @@
 type RemoteTreeDiffReason = "type" | "size" | "modifiedAt" | "checksum";
 ```
 
-Defined in: [src/sync/diffRemoteTrees.ts:19](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/sync/diffRemoteTrees.ts#L19)
+Defined in: [src/sync/diffRemoteTrees.ts:19](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/sync/diffRemoteTrees.ts#L19)
 
 Reason an entry is considered modified.

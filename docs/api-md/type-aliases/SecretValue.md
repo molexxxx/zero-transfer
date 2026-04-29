@@ -10,6 +10,6 @@
 type SecretValue = string | Buffer;
 ```
 
-Defined in: [src/profiles/SecretSource.ts:12](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/profiles/SecretSource.ts#L12)
+Defined in: [src/profiles/SecretSource.ts:12](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/profiles/SecretSource.ts#L12)
 
 Resolved secret value accepted by profile credential fields.

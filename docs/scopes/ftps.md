@@ -14,7 +14,7 @@ FTPS over explicit `AUTH TLS` or implicit TLS, with PEM/PFX/P12 certificate sour
 
 ## Public surface
 
-This is the actual surface published by [`@zero-transfer/ftps`](https://www.npmjs.com/package/@zero-transfer/ftps). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
+This is the actual surface published by [`@zero-transfer/ftps`](https://www.npmjs.com/package/@zero-transfer/ftps). These symbols are also available from [`@zero-transfer/sdk`](../api-md/README.md); the links below point to the full API reference:
 
 | Symbol | Kind | Notes |
 | --- | --- | --- |

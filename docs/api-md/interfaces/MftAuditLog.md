@@ -6,7 +6,7 @@
 
 # Interface: MftAuditLog
 
-Defined in: [src/mft/audit.ts:39](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/audit.ts#L39)
+Defined in: [src/mft/audit.ts:39](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/audit.ts#L39)
 
 Append-only audit log surface.
 
@@ -18,7 +18,7 @@ Append-only audit log surface.
 list(): Promise<readonly MftAuditEntry[]>;
 ```
 
-Defined in: [src/mft/audit.ts:43](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/audit.ts#L43)
+Defined in: [src/mft/audit.ts:43](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/audit.ts#L43)
 
 Returns recorded entries in insertion order.
 
@@ -34,7 +34,7 @@ Returns recorded entries in insertion order.
 record(entry): Promise<void>;
 ```
 
-Defined in: [src/mft/audit.ts:41](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/audit.ts#L41)
+Defined in: [src/mft/audit.ts:41](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/audit.ts#L41)
 
 Records a new audit entry.
 

@@ -6,7 +6,7 @@
 
 # Class: ScheduleRegistry
 
-Defined in: [src/mft/ScheduleRegistry.ts:10](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/ScheduleRegistry.ts#L10)
+Defined in: [src/mft/ScheduleRegistry.ts:10](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/ScheduleRegistry.ts#L10)
 
 Mutable in-memory registry of MFT schedules.
 
@@ -20,7 +20,7 @@ Mutable in-memory registry of MFT schedules.
 get size(): number;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:93](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/ScheduleRegistry.ts#L93)
+Defined in: [src/mft/ScheduleRegistry.ts:93](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/ScheduleRegistry.ts#L93)
 
 Number of schedules currently registered.
 
@@ -36,7 +36,7 @@ Number of schedules currently registered.
 new ScheduleRegistry(schedules?): ScheduleRegistry;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:18](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/ScheduleRegistry.ts#L18)
+Defined in: [src/mft/ScheduleRegistry.ts:18](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/ScheduleRegistry.ts#L18)
 
 Creates a registry and optionally seeds it with schedules.
 
@@ -58,7 +58,7 @@ Creates a registry and optionally seeds it with schedules.
 get(scheduleId): MftSchedule | undefined;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:62](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/ScheduleRegistry.ts#L62)
+Defined in: [src/mft/ScheduleRegistry.ts:62](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/ScheduleRegistry.ts#L62)
 
 Gets a schedule when registered.
 
@@ -80,7 +80,7 @@ Gets a schedule when registered.
 has(scheduleId): boolean;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:57](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/ScheduleRegistry.ts#L57)
+Defined in: [src/mft/ScheduleRegistry.ts:57](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/ScheduleRegistry.ts#L57)
 
 Checks whether a schedule id is registered.
 
@@ -102,7 +102,7 @@ Checks whether a schedule id is registered.
 list(): MftSchedule[];
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:88](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/ScheduleRegistry.ts#L88)
+Defined in: [src/mft/ScheduleRegistry.ts:88](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/ScheduleRegistry.ts#L88)
 
 Returns all schedules in registration order.
 
@@ -118,7 +118,7 @@ Returns all schedules in registration order.
 register(schedule): this;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:31](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/ScheduleRegistry.ts#L31)
+Defined in: [src/mft/ScheduleRegistry.ts:31](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/ScheduleRegistry.ts#L31)
 
 Registers a schedule.
 
@@ -146,7 +146,7 @@ This registry for fluent setup.
 require(scheduleId): MftSchedule;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:73](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/ScheduleRegistry.ts#L73)
+Defined in: [src/mft/ScheduleRegistry.ts:73](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/ScheduleRegistry.ts#L73)
 
 Gets a schedule or throws when missing.
 
@@ -174,7 +174,7 @@ The schedule.
 unregister(scheduleId): boolean;
 ```
 
-Defined in: [src/mft/ScheduleRegistry.ts:52](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/ScheduleRegistry.ts#L52)
+Defined in: [src/mft/ScheduleRegistry.ts:52](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/ScheduleRegistry.ts#L52)
 
 Removes a schedule.
 

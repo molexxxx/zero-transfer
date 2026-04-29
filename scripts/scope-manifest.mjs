@@ -2,10 +2,9 @@
 /**
  * Manifest mapping each future scoped package to its eventual public surface.
  *
- * Today every stub re-exports the full @zero-transfer/sdk; this manifest is
- * the source of truth for the per-scope docs and READMEs that describe what
- * each package will narrow to. When a scope graduates to its own narrowed
- * surface, update the `exports` list here and regenerate the docs.
+ * Scoped packages publish narrowed surfaces based on this manifest.
+ * The `exports` lists below are the source of truth for per-scope docs,
+ * package READMEs, and generated package metadata.
  *
  * `examples` references files under examples/ (relative to repo root) that
  * showcase the scope.

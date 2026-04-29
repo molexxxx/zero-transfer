@@ -10,7 +10,7 @@
 function createSyncPlan(options): TransferPlan;
 ```
 
-Defined in: [src/sync/createSyncPlan.ts:84](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/sync/createSyncPlan.ts#L84)
+Defined in: [src/sync/createSyncPlan.ts:84](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/sync/createSyncPlan.ts#L84)
 
 Builds a [TransferPlan](../interfaces/TransferPlan.md) that reconciles two remote subtrees.
 

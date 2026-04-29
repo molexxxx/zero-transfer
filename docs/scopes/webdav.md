@@ -14,7 +14,7 @@ WebDAV provider — PROPFIND-based `list`/`stat`, ranged GET, PUT uploads, Basic
 
 ## Public surface
 
-This is the actual surface published by [`@zero-transfer/webdav`](https://www.npmjs.com/package/@zero-transfer/webdav). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
+This is the actual surface published by [`@zero-transfer/webdav`](https://www.npmjs.com/package/@zero-transfer/webdav). These symbols are also available from [`@zero-transfer/sdk`](../api-md/README.md); the links below point to the full API reference:
 
 | Symbol | Kind | Notes |
 | --- | --- | --- |

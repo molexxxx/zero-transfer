@@ -10,7 +10,7 @@
 function importOpenSshConfig(options): ImportOpenSshConfigResult;
 ```
 
-Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:167](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/profiles/importers/OpenSshConfigImporter.ts#L167)
+Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:167](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/profiles/importers/OpenSshConfigImporter.ts#L167)
 
 Builds a [ConnectionProfile](../interfaces/ConnectionProfile.md) for the given SSH alias from `ssh_config` text or pre-parsed entries.
 

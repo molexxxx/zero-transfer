@@ -10,7 +10,7 @@
 function resolveSecret(source, options?): Promise<SecretValue>;
 ```
 
-Defined in: [src/profiles/SecretSource.ts:68](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/profiles/SecretSource.ts#L68)
+Defined in: [src/profiles/SecretSource.ts:68](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/profiles/SecretSource.ts#L68)
 
 Resolves a secret source into a string or Buffer without logging the value.
 

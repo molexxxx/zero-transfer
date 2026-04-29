@@ -14,7 +14,7 @@ SFTP over SSH with password / private-key / agent / keyboard-interactive authent
 
 ## Public surface
 
-This is the actual surface published by [`@zero-transfer/sftp`](https://www.npmjs.com/package/@zero-transfer/sftp). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
+This is the actual surface published by [`@zero-transfer/sftp`](https://www.npmjs.com/package/@zero-transfer/sftp). These symbols are also available from [`@zero-transfer/sdk`](../api-md/README.md); the links below point to the full API reference:
 
 | Symbol | Kind | Notes |
 | --- | --- | --- |

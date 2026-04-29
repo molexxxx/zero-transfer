@@ -14,7 +14,7 @@ Azure Blob Storage provider — SAS-token or AAD bearer auth, container-scoped p
 
 ## Public surface
 
-This is the actual surface published by [`@zero-transfer/azure-blob`](https://www.npmjs.com/package/@zero-transfer/azure-blob). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
+This is the actual surface published by [`@zero-transfer/azure-blob`](https://www.npmjs.com/package/@zero-transfer/azure-blob). These symbols are also available from [`@zero-transfer/sdk`](../api-md/README.md); the links below point to the full API reference:
 
 | Symbol | Kind | Notes |
 | --- | --- | --- |

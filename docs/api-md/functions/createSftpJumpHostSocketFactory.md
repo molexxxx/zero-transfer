@@ -10,7 +10,7 @@
 function createSftpJumpHostSocketFactory(options): SshSocketFactory;
 ```
 
-Defined in: [src/providers/classic/sftp/jumpHost.ts:38](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/providers/classic/sftp/jumpHost.ts#L38)
+Defined in: [src/providers/classic/sftp/jumpHost.ts:38](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/classic/sftp/jumpHost.ts#L38)
 
 Builds an [SshSocketFactory](../type-aliases/SshSocketFactory.md) that tunnels SFTP connections through a bastion host.
 

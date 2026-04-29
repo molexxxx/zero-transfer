@@ -14,7 +14,7 @@ Managed File Transfer workflow primitives: routes, schedules (interval + cron), 
 
 ## Public surface
 
-This is the actual surface published by [`@zero-transfer/mft`](https://www.npmjs.com/package/@zero-transfer/mft). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
+This is the actual surface published by [`@zero-transfer/mft`](https://www.npmjs.com/package/@zero-transfer/mft). These symbols are also available from [`@zero-transfer/sdk`](../api-md/README.md); the links below point to the full API reference:
 
 | Symbol | Kind | Notes |
 | --- | --- | --- |

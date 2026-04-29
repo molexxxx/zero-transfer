@@ -10,7 +10,7 @@
 function buildRemoteBreadcrumbs(input): RemoteBreadcrumb[];
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:100](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/sync/createRemoteBrowser.ts#L100)
+Defined in: [src/sync/createRemoteBrowser.ts:100](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/sync/createRemoteBrowser.ts#L100)
 
 Builds breadcrumbs from `/` down to the supplied path.
 

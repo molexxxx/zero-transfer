@@ -14,7 +14,7 @@ Google Drive provider over OAuth bearer tokens — paginated folder listings fro
 
 ## Public surface
 
-This is the actual surface published by [`@zero-transfer/google-drive`](https://www.npmjs.com/package/@zero-transfer/google-drive). Every symbol is re-exported from [`@zero-transfer/sdk`](../api-md/README.md) and links into the full API reference:
+This is the actual surface published by [`@zero-transfer/google-drive`](https://www.npmjs.com/package/@zero-transfer/google-drive). These symbols are also available from [`@zero-transfer/sdk`](../api-md/README.md); the links below point to the full API reference:
 
 | Symbol | Kind | Notes |
 | --- | --- | --- |

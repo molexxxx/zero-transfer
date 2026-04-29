@@ -10,7 +10,7 @@
 function inboxProcessedPath(inbox): string;
 ```
 
-Defined in: [src/mft/conventions.ts:99](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/conventions.ts#L99)
+Defined in: [src/mft/conventions.ts:99](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/conventions.ts#L99)
 
 Computes the absolute path used to archive successfully processed files.
 

@@ -6,7 +6,7 @@
 
 # Interface: IntervalScheduleTrigger
 
-Defined in: [src/mft/MftSchedule.ts:14](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/MftSchedule.ts#L14)
+Defined in: [src/mft/MftSchedule.ts:14](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/MftSchedule.ts#L14)
 
 Repeats every `everyMs` milliseconds from a fixed reference point.
 
@@ -14,6 +14,6 @@ Repeats every `everyMs` milliseconds from a fixed reference point.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="anchor"></a> `anchor?` | `Date` | Reference time used to anchor the interval. Defaults to the scheduler start time. Fires occur at `anchor + n * everyMs` for the smallest `n` strictly after `from`. | [src/mft/MftSchedule.ts:23](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/MftSchedule.ts#L23) |
-| <a id="everyms"></a> `everyMs` | `number` | Period between fires in milliseconds. Must be a positive finite number. | [src/mft/MftSchedule.ts:18](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/MftSchedule.ts#L18) |
-| <a id="kind"></a> `kind` | `"interval"` | Discriminator. | [src/mft/MftSchedule.ts:16](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/mft/MftSchedule.ts#L16) |
+| <a id="anchor"></a> `anchor?` | `Date` | Reference time used to anchor the interval. Defaults to the scheduler start time. Fires occur at `anchor + n * everyMs` for the smallest `n` strictly after `from`. | [src/mft/MftSchedule.ts:23](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/MftSchedule.ts#L23) |
+| <a id="everyms"></a> `everyMs` | `number` | Period between fires in milliseconds. Must be a positive finite number. | [src/mft/MftSchedule.ts:18](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/MftSchedule.ts#L18) |
+| <a id="kind"></a> `kind` | `"interval"` | Discriminator. | [src/mft/MftSchedule.ts:16](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/MftSchedule.ts#L16) |

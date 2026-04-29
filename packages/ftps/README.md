@@ -20,7 +20,7 @@ import { createFtpsProviderFactory } from "@zero-transfer/ftps";
 
 ## Public surface
 
-This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **4** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
+This package publishes a narrowed surface of **4** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
 
 | Symbol                                                                                                                                  | Kind      | Notes              |
 | --------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |

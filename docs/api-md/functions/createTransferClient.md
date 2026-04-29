@@ -10,7 +10,7 @@
 function createTransferClient(options?): TransferClient;
 ```
 
-Defined in: [src/core/createTransferClient.ts:56](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/core/createTransferClient.ts#L56)
+Defined in: [src/core/createTransferClient.ts:56](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/core/createTransferClient.ts#L56)
 
 Creates a provider-neutral transfer client.
 

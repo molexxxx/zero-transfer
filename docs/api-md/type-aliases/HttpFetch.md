@@ -10,7 +10,7 @@
 type HttpFetch = (input, init?) => Promise<Response>;
 ```
 
-Defined in: [src/providers/web/httpInternals.ts:18](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/providers/web/httpInternals.ts#L18)
+Defined in: [src/providers/web/httpInternals.ts:18](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/web/httpInternals.ts#L18)
 
 Fetch implementation accepted by web-family providers.
 

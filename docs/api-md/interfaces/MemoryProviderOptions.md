@@ -6,7 +6,7 @@
 
 # Interface: MemoryProviderOptions
 
-Defined in: [src/providers/memory/MemoryProvider.ts:72](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/providers/memory/MemoryProvider.ts#L72)
+Defined in: [src/providers/memory/MemoryProvider.ts:72](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/memory/MemoryProvider.ts#L72)
 
 Options used to create a deterministic memory provider factory.
 
@@ -14,4 +14,4 @@ Options used to create a deterministic memory provider factory.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="entries"></a> `entries?` | `Iterable`\<[`MemoryProviderEntry`](MemoryProviderEntry.md), `any`, `any`\> | Entries available to sessions created by this provider factory. | [src/providers/memory/MemoryProvider.ts:74](https://github.com/tonywied17/zero-transfer/blob/1389ffb013b0c2f9be4dc4d19fa0b4a7ab3a2441/src/providers/memory/MemoryProvider.ts#L74) |
+| <a id="entries"></a> `entries?` | `Iterable`\<[`MemoryProviderEntry`](MemoryProviderEntry.md), `any`, `any`\> | Entries available to sessions created by this provider factory. | [src/providers/memory/MemoryProvider.ts:74](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/memory/MemoryProvider.ts#L74) |

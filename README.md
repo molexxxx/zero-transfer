@@ -63,7 +63,7 @@ await uploadFile({
 # Batteries-included SDK (every provider):
 npm install @zero-transfer/sdk
 
-# Or pick a scoped slice (today these re-export the full SDK; future releases will narrow):
+# Or pick a scoped package with a narrowed export surface:
 npm install @zero-transfer/sftp
 npm install @zero-transfer/s3
 npm install @zero-transfer/mft
@@ -73,7 +73,7 @@ Requires Node.js **>=20**.
 
 ## Scoped packages
 
-ZeroTransfer publishes 13 scoped packages under the [`@zero-transfer`](https://www.npmjs.com/org/zero-transfer) npm organization. [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) is the batteries-included distribution; the other 12 are **narrowly scoped** packages that re-export only the symbols listed in their [scope page](docs/scopes/README.md). Pick one to keep your dependency tree tight, or install the SDK if you want every provider in one go.
+ZeroTransfer publishes 13 scoped packages under the [`@zero-transfer`](https://www.npmjs.com/org/zero-transfer) npm organization. [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) is the batteries-included distribution; the other 12 are **narrowly scoped** packages that publish only the symbols listed in their [scope page](docs/scopes/README.md). Pick one to keep your dependency tree tight, or install the SDK if you want every provider in one go.
 
 | Package                                                                                    | Summary                                                                       | Docs                                      |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ----------------------------------------- |
