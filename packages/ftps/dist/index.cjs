@@ -78,8 +78,6 @@ __export(ftps_exports, {
   emitLog: () => emitLog,
   errorFromFtpReply: () => errorFromFtpReply,
   filterRemoteEntries: () => filterRemoteEntries,
-  formatCapabilityMatrixMarkdown: () => formatCapabilityMatrixMarkdown,
-  getBuiltinCapabilityMatrix: () => getBuiltinCapabilityMatrix,
   importFileZillaSites: () => importFileZillaSites,
   importOpenSshConfig: () => importOpenSshConfig,
   importWinScpSessions: () => importWinScpSessions,
@@ -91,7 +89,7 @@ __export(ftps_exports, {
   noopLogger: () => noopLogger,
   normalizeRemotePath: () => normalizeRemotePath,
   parentRemotePath: () => parentRemotePath,
-  parseKnownHosts: () => parseKnownHosts2,
+  parseKnownHosts: () => parseKnownHosts,
   parseOpenSshConfig: () => parseOpenSshConfig,
   parseRemoteManifest: () => parseRemoteManifest,
   redactCommand: () => redactCommand,
@@ -1884,60 +1882,10 @@ function summarizeDiagnosticError(error) {
   return { message: String(error) };
 }
 
-// src/providers/classic/ftp/FtpProvider.ts
-var import_node_buffer3 = require("buffer");
-var import_node_net = require("net");
-var import_node_tls = require("tls");
-
-// src/profiles/resolveConnectionProfileSecrets.ts
-async function resolveConnectionProfileSecrets(profile, options = {}) {
-  const { password, ssh, tls, username, ...rest } = profile;
-  const resolved = { ...rest };
-  if (username !== void 0) {
-    resolved.username = await resolveSecret(username, options);
-  }
-  if (password !== void 0) {
-    resolved.password = await resolveSecret(password, options);
-  }
-  if (tls !== void 0) {
-    resolved.tls = await resolveTlsProfile(tls, options);
-  }
-  if (ssh !== void 0) {
-    resolved.ssh = await resolveSshProfile(ssh, options);
-  }
-  return resolved;
-}
-async function resolveSshProfile(profile, options) {
-  const { knownHosts, passphrase, privateKey, ...rest } = profile;
-  const resolved = { ...rest };
-  if (privateKey !== void 0) resolved.privateKey = await resolveSecret(privateKey, options);
-  if (passphrase !== void 0) resolved.passphrase = await resolveSecret(passphrase, options);
-  if (knownHosts !== void 0)
-    resolved.knownHosts = await resolveKnownHostsSource(knownHosts, options);
-  return resolved;
-}
-async function resolveKnownHostsSource(source, options) {
-  if (Array.isArray(source)) {
-    return Promise.all(source.map((item) => resolveSecret(item, options)));
-  }
-  return resolveSecret(source, options);
-}
-async function resolveTlsProfile(profile, options) {
-  const { ca, cert, key, passphrase, pfx, ...rest } = profile;
-  const resolved = { ...rest };
-  if (ca !== void 0) resolved.ca = await resolveTlsSecretSource(ca, options);
-  if (cert !== void 0) resolved.cert = await resolveSecret(cert, options);
-  if (key !== void 0) resolved.key = await resolveSecret(key, options);
-  if (passphrase !== void 0) resolved.passphrase = await resolveSecret(passphrase, options);
-  if (pfx !== void 0) resolved.pfx = await resolveSecret(pfx, options);
-  return resolved;
-}
-async function resolveTlsSecretSource(source, options) {
-  if (Array.isArray(source)) {
-    return Promise.all(source.map((item) => resolveSecret(item, options)));
-  }
-  return resolveSecret(source, options);
-}
+// src/providers/local/LocalProvider.ts
+var import_node_fs = require("fs");
+var import_promises2 = require("fs/promises");
+var import_node_path2 = __toESM(require("path"));
 
 // src/utils/path.ts
 var UNSAFE_FTP_ARGUMENT_PATTERN = /[\r\n]/;
@@ -1992,4890 +1940,7 @@ function basenameRemotePath(input) {
   return parts[parts.length - 1] ?? normalized;
 }
 
-// src/providers/classic/ftp/FtpListParser.ts
-var UNIX_LIST_MONTHS = new Map(
-  ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].map(
-    (month, index) => [month, index]
-  )
-);
-function parseMlsdList(input, directory = ".") {
-  return input.split(/\r?\n/).map((line) => line.trimEnd()).filter((line) => line.length > 0).map((line) => parseMlsdLine(line, directory)).filter((entry) => entry.name !== "." && entry.name !== "..");
-}
-function parseUnixList(input, directory = ".", now = /* @__PURE__ */ new Date()) {
-  return input.split(/\r?\n/).map((line) => line.trimEnd()).filter((line) => line.length > 0 && !line.toLowerCase().startsWith("total ")).map((line) => parseUnixListLine(line, directory, now)).filter((entry) => entry.name !== "." && entry.name !== "..");
-}
-function parseUnixListLine(line, directory = ".", now = /* @__PURE__ */ new Date()) {
-  const match = /^(\S{10})\s+\d+\s+(\S+)\s+(\S+)\s+(\d+)\s+([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4}|\d{1,2}:\d{2})\s+(.+)$/.exec(
-    line
-  );
-  if (match === null) {
-    throw new ParseError({
-      details: { line },
-      message: `Malformed Unix LIST line: ${line}`,
-      retryable: false
-    });
-  }
-  const [, mode = "", owner, group, sizeText, monthText, dayText, yearOrTime, rawName] = match;
-  const { name, symlinkTarget } = parseUnixListName(rawName, mode);
-  const entry = {
-    name,
-    path: joinRemotePath(directory, name),
-    permissions: { raw: mode },
-    raw: { line },
-    type: mapUnixListType(mode)
-  };
-  const modifiedAt = parseUnixListTimestamp(monthText, dayText, yearOrTime, now);
-  if (owner !== void 0) entry.owner = owner;
-  if (group !== void 0) entry.group = group;
-  if (sizeText !== void 0) entry.size = Number(sizeText);
-  if (modifiedAt !== void 0) entry.modifiedAt = modifiedAt;
-  if (symlinkTarget !== void 0) entry.symlinkTarget = symlinkTarget;
-  return entry;
-}
-function parseMlsdLine(line, directory = ".") {
-  const separatorIndex = line.indexOf(" ");
-  if (separatorIndex <= 0 || separatorIndex === line.length - 1) {
-    throw new ParseError({
-      message: `Malformed MLSD line: ${line}`,
-      retryable: false,
-      details: {
-        line
-      }
-    });
-  }
-  const factText = line.slice(0, separatorIndex);
-  const name = line.slice(separatorIndex + 1);
-  const facts = parseFacts(factText);
-  const type = mapMlsdType(facts.get("type"));
-  const modifiedAt = parseMlstTimestamp(facts.get("modify"));
-  const sizeText = facts.get("size");
-  const permissions = facts.get("perm");
-  const uniqueId = facts.get("unique");
-  const entry = {
-    name,
-    path: joinRemotePath(directory, name),
-    raw: {
-      facts: Object.fromEntries(facts),
-      line
-    },
-    type
-  };
-  if (sizeText !== void 0) entry.size = Number(sizeText);
-  if (modifiedAt !== void 0) entry.modifiedAt = modifiedAt;
-  if (permissions !== void 0) entry.permissions = { raw: permissions };
-  if (uniqueId !== void 0) entry.uniqueId = uniqueId;
-  return entry;
-}
-function parseMlstTimestamp(input) {
-  if (input === void 0) {
-    return void 0;
-  }
-  const timestampMatch = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:\.(\d{1,3}))?$/.exec(input);
-  if (timestampMatch === null) {
-    return void 0;
-  }
-  const [, year, month, day, hour, minute, second, millisecond = "0"] = timestampMatch;
-  const normalizedMillisecond = millisecond.padEnd(3, "0");
-  return new Date(
-    Date.UTC(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-      Number(hour),
-      Number(minute),
-      Number(second),
-      Number(normalizedMillisecond)
-    )
-  );
-}
-function parseFacts(input) {
-  const facts = /* @__PURE__ */ new Map();
-  for (const fact of input.split(";")) {
-    if (fact.length === 0) {
-      continue;
-    }
-    const separatorIndex = fact.indexOf("=");
-    if (separatorIndex <= 0) {
-      continue;
-    }
-    facts.set(fact.slice(0, separatorIndex).toLowerCase(), fact.slice(separatorIndex + 1));
-  }
-  return facts;
-}
-function mapMlsdType(input) {
-  switch (input?.toLowerCase()) {
-    case "file":
-      return "file";
-    case "cdir":
-    case "dir":
-    case "pdir":
-      return "directory";
-    case "os.unix=slink":
-      return "symlink";
-    default:
-      return "unknown";
-  }
-}
-function mapUnixListType(mode) {
-  switch (mode[0]) {
-    case "-":
-      return "file";
-    case "d":
-      return "directory";
-    case "l":
-      return "symlink";
-    default:
-      return "unknown";
-  }
-}
-function parseUnixListTimestamp(monthText, dayText, yearOrTime, now) {
-  if (monthText === void 0 || dayText === void 0 || yearOrTime === void 0) {
-    return void 0;
-  }
-  const month = UNIX_LIST_MONTHS.get(monthText.toLowerCase());
-  const day = Number(dayText);
-  if (month === void 0 || !Number.isInteger(day) || day < 1 || day > 31) {
-    return void 0;
-  }
-  if (/^\d{4}$/.test(yearOrTime)) {
-    return new Date(Date.UTC(Number(yearOrTime), month, day));
-  }
-  const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(yearOrTime);
-  if (timeMatch === null) {
-    return void 0;
-  }
-  const [, hourText, minuteText] = timeMatch;
-  const hour = Number(hourText);
-  const minute = Number(minuteText);
-  if (hour > 23 || minute > 59) {
-    return void 0;
-  }
-  return new Date(Date.UTC(now.getUTCFullYear(), month, day, hour, minute));
-}
-function parseUnixListName(rawName, mode) {
-  const name = rawName ?? "";
-  if (!mode.startsWith("l")) {
-    return { name };
-  }
-  const separator = " -> ";
-  const separatorIndex = name.indexOf(separator);
-  if (separatorIndex < 0) {
-    return { name };
-  }
-  return {
-    name: name.slice(0, separatorIndex),
-    symlinkTarget: name.slice(separatorIndex + separator.length)
-  };
-}
-
-// src/providers/classic/ftp/FtpResponseParser.ts
-var FTP_LINE_PATTERN = /^(\d{3})([ -])(.*)$/;
-var FtpResponseParser = class {
-  buffer = "";
-  pendingResponse;
-  /**
-   * Adds incoming socket data and returns any complete responses.
-   *
-   * @param chunk - Buffer or string chunk from the FTP control connection.
-   * @returns Zero or more complete parsed responses.
-   * @throws {@link ParseError} When a malformed standalone response line is received.
-   */
-  push(chunk) {
-    this.buffer += chunk.toString();
-    const rawLines = this.buffer.split(/\r?\n/);
-    this.buffer = rawLines.pop() ?? "";
-    const responses = [];
-    for (const rawLine of rawLines) {
-      const response = this.consumeLine(rawLine);
-      if (response !== void 0) {
-        responses.push(response);
-      }
-    }
-    return responses;
-  }
-  /**
-   * Clears buffered text and any incomplete multi-line response state.
-   *
-   * @returns Nothing.
-   */
-  reset() {
-    this.buffer = "";
-    this.pendingResponse = void 0;
-  }
-  /**
-   * Checks whether the parser is holding buffered or incomplete response data.
-   *
-   * @returns `true` when there is unconsumed text or an open multi-line response.
-   */
-  hasPendingResponse() {
-    return this.pendingResponse !== void 0 || this.buffer.length > 0;
-  }
-  /**
-   * Consumes one line of FTP response text.
-   *
-   * @param rawLine - Line without a trailing CRLF delimiter.
-   * @returns A complete response when the line finishes one, otherwise `undefined`.
-   * @throws {@link ParseError} When a malformed standalone line is encountered.
-   */
-  consumeLine(rawLine) {
-    const lineMatch = FTP_LINE_PATTERN.exec(rawLine);
-    if (lineMatch === null) {
-      if (this.pendingResponse !== void 0) {
-        this.pendingResponse.lines.push(rawLine);
-        this.pendingResponse.rawLines.push(rawLine);
-        return void 0;
-      }
-      if (rawLine.length === 0) {
-        return void 0;
-      }
-      throw new ParseError({
-        message: `Malformed FTP response line: ${rawLine}`,
-        retryable: false,
-        details: {
-          rawLine
-        }
-      });
-    }
-    const code = Number(lineMatch[1]);
-    const separator = lineMatch[2];
-    const message = lineMatch[3];
-    if (this.pendingResponse !== void 0) {
-      this.pendingResponse.lines.push(messageFromRawLine(rawLine, this.pendingResponse.code));
-      this.pendingResponse.rawLines.push(rawLine);
-      if (code === this.pendingResponse.code && separator === " ") {
-        const completed = this.pendingResponse;
-        this.pendingResponse = void 0;
-        return buildResponse(completed.code, completed.lines, completed.rawLines);
-      }
-      return void 0;
-    }
-    if (separator === "-") {
-      this.pendingResponse = {
-        code,
-        lines: [message],
-        rawLines: [rawLine]
-      };
-      return void 0;
-    }
-    return buildResponse(code, [message], [rawLine]);
-  }
-};
-function buildResponse(code, lines, rawLines) {
-  const status = classifyStatus(code);
-  return {
-    code,
-    message: lines.join("\n"),
-    lines,
-    raw: rawLines.join("\n"),
-    status,
-    preliminary: status === "preliminary",
-    completion: status === "completion",
-    intermediate: status === "intermediate",
-    transientFailure: status === "transientFailure",
-    permanentFailure: status === "permanentFailure"
-  };
-}
-function classifyStatus(code) {
-  if (code >= 100 && code < 200) return "preliminary";
-  if (code >= 200 && code < 300) return "completion";
-  if (code >= 300 && code < 400) return "intermediate";
-  if (code >= 400 && code < 500) return "transientFailure";
-  return "permanentFailure";
-}
-function messageFromRawLine(rawLine, code) {
-  const codeText = String(code);
-  if (rawLine.startsWith(`${codeText} `) || rawLine.startsWith(`${codeText}-`)) {
-    return rawLine.slice(4);
-  }
-  return rawLine;
-}
-
-// src/providers/classic/ftp/FtpProvider.ts
-var FTP_PROVIDER_ID = "ftp";
-var FTPS_PROVIDER_ID = "ftps";
-var DEFAULT_FTP_PORT = 21;
-var DEFAULT_FTPS_IMPLICIT_PORT = 990;
-var DEFAULT_PASSIVE_HOST_STRATEGY = "control";
-var FTP_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTP_PROVIDER_ID, [
-  "Classic FTP provider foundation with MLST/MLSD metadata, EPSV/PASV passive mode, timeout-guarded operations, and RETR/STOR streaming support"
-]);
-var FTPS_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTPS_PROVIDER_ID, [
-  "FTPS provider foundation with explicit AUTH TLS or implicit TLS, PBSZ/PROT setup, TLS profile support, MLST/MLSD metadata, EPSV/PASV passive mode, and RETR/STOR streaming support"
-]);
-function createClassicFtpCapabilities(provider, notes) {
-  return {
-    provider,
-    authentication: provider === FTPS_PROVIDER_ID ? ["anonymous", "password", "client-certificate"] : ["anonymous", "password"],
-    list: true,
-    stat: true,
-    readStream: true,
-    writeStream: true,
-    serverSideCopy: false,
-    serverSideMove: false,
-    resumeDownload: true,
-    resumeUpload: true,
-    checksum: [],
-    atomicRename: false,
-    chmod: false,
-    chown: false,
-    symlink: true,
-    metadata: ["modifiedAt", "permissions", "uniqueId"],
-    maxConcurrency: 1,
-    notes
-  };
-}
-function createFtpProviderFactory(options = {}) {
-  return {
-    id: FTP_PROVIDER_ID,
-    capabilities: FTP_PROVIDER_CAPABILITIES,
-    create: () => new FtpProvider({
-      capabilities: FTP_PROVIDER_CAPABILITIES,
-      defaultPort: options.defaultPort ?? DEFAULT_FTP_PORT,
-      passiveHostStrategy: options.passiveHostStrategy ?? DEFAULT_PASSIVE_HOST_STRATEGY,
-      providerId: FTP_PROVIDER_ID
-    })
-  };
-}
-function createFtpsProviderFactory(options = {}) {
-  const mode = options.mode ?? "explicit";
-  const defaultPort = options.defaultPort ?? (mode === "implicit" ? DEFAULT_FTPS_IMPLICIT_PORT : DEFAULT_FTP_PORT);
-  return {
-    id: FTPS_PROVIDER_ID,
-    capabilities: FTPS_PROVIDER_CAPABILITIES,
-    create: () => new FtpProvider({
-      capabilities: FTPS_PROVIDER_CAPABILITIES,
-      defaultPort,
-      passiveHostStrategy: options.passiveHostStrategy ?? DEFAULT_PASSIVE_HOST_STRATEGY,
-      providerId: FTPS_PROVIDER_ID,
-      security: {
-        dataProtection: options.dataProtection ?? "private",
-        mode
-      }
-    })
-  };
-}
-var FtpProvider = class {
-  /**
-   * Creates a provider instance for a single connection attempt.
-   *
-   * @param config - Provider id, defaults, capabilities, and optional FTPS settings.
-   */
-  constructor(config) {
-    this.config = config;
-    this.id = config.providerId;
-    this.capabilities = config.capabilities;
-  }
-  config;
-  /** Stable provider id registered in the transfer client. */
-  id;
-  /** Provider capability snapshot exposed without opening a connection. */
-  capabilities;
-  /**
-   * Opens an FTP-family transfer session from a provider-neutral connection profile.
-   *
-   * @param profile - Connection profile containing host, credentials, timeout, and optional TLS settings.
-   * @returns Connected transfer session with filesystem and transfer operations.
-   */
-  async connect(profile) {
-    const resolvedProfile = await resolveConnectionProfileSecrets(profile);
-    const port = resolvedProfile.port ?? this.config.defaultPort;
-    const connectOptions = {
-      host: resolvedProfile.host,
-      passiveHostStrategy: this.config.passiveHostStrategy,
-      port,
-      providerId: this.config.providerId
-    };
-    if (this.config.security !== void 0) {
-      const pinnedFingerprint256 = createTlsPinnedFingerprints(resolvedProfile);
-      connectOptions.security = {
-        ...this.config.security,
-        ...pinnedFingerprint256 === void 0 ? {} : { pinnedFingerprint256 },
-        tlsOptions: createTlsConnectionOptions(resolvedProfile)
-      };
-    }
-    if (resolvedProfile.signal !== void 0) {
-      connectOptions.signal = resolvedProfile.signal;
-    }
-    if (resolvedProfile.timeoutMs !== void 0) {
-      connectOptions.timeoutMs = resolvedProfile.timeoutMs;
-    }
-    const control = await FtpControlConnection.connect(connectOptions);
-    try {
-      await authenticateFtpSession(
-        control,
-        resolvedProfile.username === void 0 ? "anonymous" : secretToString(resolvedProfile.username),
-        resolvedProfile.password === void 0 ? "anonymous@" : secretToString(resolvedProfile.password),
-        resolvedProfile.host
-      );
-      return new FtpTransferSession(control, this.capabilities);
-    } catch (error) {
-      control.close();
-      throw error;
-    }
-  }
-};
-var FtpTransferSession = class {
-  /**
-   * Creates session facades over an authenticated control connection.
-   *
-   * @param control - Authenticated FTP-family control connection.
-   * @param capabilities - Capability snapshot to expose through the session.
-   */
-  constructor(control, capabilities) {
-    this.control = control;
-    this.provider = control.providerId;
-    this.capabilities = capabilities;
-    this.fs = new FtpFileSystem(control);
-    this.transfers = new FtpTransferOperations(control);
-  }
-  control;
-  /** Provider id selected for this session. */
-  provider;
-  /** Capability snapshot for this connected session. */
-  capabilities;
-  /** Remote file-system operations backed by FTP metadata/data commands. */
-  fs;
-  /** Stream-oriented provider transfer operations. */
-  transfers;
-  /** Disconnects the control connection, swallowing QUIT cleanup noise. */
-  async disconnect() {
-    try {
-      await this.control.sendCommand("QUIT");
-    } catch {
-    } finally {
-      this.control.close();
-    }
-  }
-};
-var FtpTransferOperations = class {
-  constructor(control) {
-    this.control = control;
-  }
-  control;
-  async read(request) {
-    request.throwIfAborted();
-    const remotePath = normalizeFtpPath(request.endpoint.path);
-    const range = resolveReadRange(request.range);
-    await expectCompletion(this.control, "TYPE I", remotePath);
-    const dataConnection = await openPassiveDataCommand(
-      this.control,
-      `RETR ${remotePath}`,
-      remotePath,
-      {
-        offset: range.offset
-      }
-    );
-    request.throwIfAborted();
-    const result = {
-      content: createPassiveReadSource(
-        this.control,
-        dataConnection,
-        `RETR ${remotePath}`,
-        remotePath,
-        range,
-        request
-      )
-    };
-    if (range.length !== void 0) {
-      result.totalBytes = range.length;
-    }
-    if (range.offset > 0) {
-      result.bytesRead = range.offset;
-    }
-    return result;
-  }
-  async write(request) {
-    request.throwIfAborted();
-    const remotePath = normalizeFtpPath(request.endpoint.path);
-    const offset = normalizeOptionalByteCount(request.offset, "offset", remotePath);
-    await expectCompletion(this.control, "TYPE I", remotePath);
-    const bytesTransferred = await writePassiveDataCommand(
-      this.control,
-      `STOR ${remotePath}`,
-      remotePath,
-      request,
-      offset === void 0 ? {} : { offset }
-    );
-    const result = {
-      bytesTransferred,
-      resumed: offset !== void 0 && offset > 0,
-      totalBytes: request.totalBytes ?? (offset ?? 0) + bytesTransferred,
-      verified: request.verification?.verified ?? false
-    };
-    if (request.verification !== void 0) {
-      result.verification = cloneVerification2(request.verification);
-    }
-    return result;
-  }
-};
-var FtpFileSystem = class {
-  constructor(control) {
-    this.control = control;
-  }
-  control;
-  async list(path2) {
-    const remotePath = normalizeFtpPath(path2);
-    await expectCompletion(this.control, "TYPE I", remotePath);
-    const entries = await readDirectoryEntries(this.control, remotePath);
-    return entries.sort(compareEntries);
-  }
-  async stat(path2) {
-    const remotePath = normalizeFtpPath(path2);
-    const response = await this.control.sendCommand(`MLST ${remotePath}`);
-    assertPathCommandSucceeded(response, "MLST", remotePath, this.control.providerId);
-    const factLine = response.lines.map((line) => line.trim()).find(isFtpFactLine);
-    if (factLine === void 0) {
-      throw createProtocolError(
-        "MLST",
-        `${this.control.providerId.toUpperCase()} MLST response did not include a fact line`,
-        response,
-        this.control.providerId
-      );
-    }
-    const entry = parseMlsdLine(factLine, getParentPath(remotePath) ?? "/");
-    return {
-      ...entry,
-      exists: true,
-      name: basenameRemotePath(remotePath),
-      path: remotePath
-    };
-  }
-  async remove(path2, options = {}) {
-    const remotePath = normalizeFtpPath(path2);
-    const response = await this.control.sendCommand(`DELE ${remotePath}`);
-    if (response.completion) return;
-    if (response.code === 550 && options.ignoreMissing) return;
-    assertPathCommandSucceeded(response, "DELE", remotePath, this.control.providerId);
-  }
-  async rename(from, to) {
-    const fromPath = normalizeFtpPath(from);
-    const toPath = normalizeFtpPath(to);
-    const rnfr = await this.control.sendCommand(`RNFR ${fromPath}`);
-    if (!rnfr.intermediate && !rnfr.completion) {
-      assertPathCommandSucceeded(rnfr, "RNFR", fromPath, this.control.providerId);
-    }
-    await expectCompletion(this.control, `RNTO ${toPath}`, toPath);
-  }
-  async mkdir(path2, options = {}) {
-    const remotePath = normalizeFtpPath(path2);
-    if (!options.recursive) {
-      await expectCompletion(this.control, `MKD ${remotePath}`, remotePath);
-      return;
-    }
-    const segments = remotePath.split("/").filter((s) => s.length > 0);
-    let current = "";
-    for (const segment of segments) {
-      current = `${current}/${segment}`;
-      const response = await this.control.sendCommand(`MKD ${current}`);
-      if (response.completion) continue;
-      if (response.code === 550) continue;
-      assertPathCommandSucceeded(response, "MKD", current, this.control.providerId);
-    }
-  }
-  async rmdir(path2, options = {}) {
-    const remotePath = normalizeFtpPath(path2);
-    if (options.recursive) {
-      await this.removeDirectoryRecursive(remotePath);
-      return;
-    }
-    const response = await this.control.sendCommand(`RMD ${remotePath}`);
-    if (response.completion) return;
-    if (response.code === 550 && options.ignoreMissing) return;
-    assertPathCommandSucceeded(response, "RMD", remotePath, this.control.providerId);
-  }
-  async removeDirectoryRecursive(remotePath) {
-    let entries;
-    try {
-      entries = await readDirectoryEntries(this.control, remotePath);
-    } catch (error) {
-      if (error instanceof PathNotFoundError) return;
-      throw error;
-    }
-    for (const entry of entries) {
-      if (entry.name === "." || entry.name === "..") continue;
-      const childPath = entry.path.startsWith("/") ? entry.path : normalizeFtpPath(`${remotePath.replace(/\/+$/, "")}/${entry.name}`);
-      if (entry.type === "directory") {
-        await this.removeDirectoryRecursive(childPath);
-      } else {
-        const del = await this.control.sendCommand(`DELE ${childPath}`);
-        if (!del.completion && del.code !== 550) {
-          assertPathCommandSucceeded(del, "DELE", childPath, this.control.providerId);
-        }
-      }
-    }
-    const response = await this.control.sendCommand(`RMD ${remotePath}`);
-    if (response.completion) return;
-    if (response.code === 550) return;
-    assertPathCommandSucceeded(response, "RMD", remotePath, this.control.providerId);
-  }
-};
-var FtpControlConnection = class _FtpControlConnection {
-  /**
-   * Creates a control connection around an already-open socket.
-   *
-   * @param socket - Plain TCP or TLS socket connected to the server.
-   * @param host - Host used for diagnostics and passive endpoint defaults.
-   * @param passiveHostStrategy - Host selection strategy for PASV data endpoints.
-   * @param providerId - Provider id used for errors and sessions.
-   * @param timeoutMs - Optional timeout applied to control reads.
-   * @param security - Optional FTPS settings, omitted for plain FTP.
-   */
-  constructor(socket, host, passiveHostStrategy, providerId, timeoutMs, security) {
-    this.host = host;
-    this.passiveHostStrategy = passiveHostStrategy;
-    this.providerId = providerId;
-    this.timeoutMs = timeoutMs;
-    this.security = security;
-    this.socket = socket;
-    this.attachSocket(socket);
-  }
-  host;
-  passiveHostStrategy;
-  providerId;
-  timeoutMs;
-  security;
-  parser = new FtpResponseParser();
-  responses = [];
-  waiters = [];
-  closedError;
-  socket;
-  handleSocketData = (chunk) => this.handleData(chunk);
-  handleSocketError = (error) => {
-    this.failPending(createConnectionError(this.host, error, this.providerId));
-  };
-  handleSocketClose = () => {
-    this.failPending(
-      new ConnectionError({
-        host: this.host,
-        message: `${this.providerId.toUpperCase()} control connection closed`,
-        protocol: this.providerId,
-        retryable: true
-      })
-    );
-  };
-  /** Host used for EPSV passive data connections. */
-  get passiveHost() {
-    return this.host;
-  }
-  /** Host selection strategy used for PASV data endpoints. */
-  get passiveEndpointHostStrategy() {
-    return this.passiveHostStrategy;
-  }
-  /** Timeout inherited by command waits and passive data operations. */
-  get operationTimeoutMs() {
-    return this.timeoutMs;
-  }
-  /** FTPS security settings for encrypted passive data sockets. */
-  get dataTlsSecurity() {
-    return this.security?.dataProtection === "private" ? this.security : void 0;
-  }
-  /**
-   * Opens a new control connection, reads the greeting, and negotiates FTPS when configured.
-   *
-   * @param options - Socket and provider connection options.
-   * @returns Connected control connection ready for authentication.
-   */
-  static async connect(options) {
-    const socket = createControlSocket(options);
-    const control = new _FtpControlConnection(
-      socket,
-      options.host,
-      options.passiveHostStrategy,
-      options.providerId,
-      options.timeoutMs,
-      options.security
-    );
-    try {
-      await waitForSocketConnect(
-        socket,
-        options,
-        options.security?.mode === "implicit" ? "secureConnect" : "connect"
-      );
-      if (options.security?.mode === "implicit") {
-        assertPinnedTlsCertificate(socket, options.security, options.host, options.providerId);
-      }
-      const greeting = await control.readFinalResponse({ operation: "greeting" });
-      if (!greeting.completion) {
-        throw createProtocolError(
-          "greeting",
-          `${options.providerId.toUpperCase()} server greeting was not successful`,
-          greeting,
-          options.providerId
-        );
-      }
-      if (options.security?.mode === "explicit") {
-        await negotiateExplicitFtps(control, options.security);
-      } else if (options.security?.mode === "implicit") {
-        await configureFtpsProtection(control, options.security);
-      }
-      return control;
-    } catch (error) {
-      control.close();
-      throw error;
-    }
-  }
-  /**
-   * Writes one raw FTP command line to the control socket.
-   *
-   * @param command - Command text without CRLF.
-   */
-  writeCommand(command) {
-    this.socket.write(`${command}\r
-`);
-  }
-  /**
-   * Sends a command and waits for the final non-preliminary response.
-   *
-   * @param command - Command text without CRLF.
-   * @returns Final FTP response for the command.
-   */
-  async sendCommand(command) {
-    this.writeCommand(command);
-    return this.readFinalResponse({ command, operation: "command response" });
-  }
-  /**
-   * Reads responses until a final response is reached.
-   *
-   * @param context - Timeout diagnostic context for the wait.
-   * @returns Final FTP response, skipping any preliminary 1xx replies.
-   */
-  async readFinalResponse(context = { operation: "response" }) {
-    let response = await this.readResponse(context);
-    while (response.preliminary) {
-      response = await this.readResponse(context);
-    }
-    return response;
-  }
-  /**
-   * Reads the next parsed control-channel response.
-   *
-   * @param context - Timeout diagnostic context for the wait.
-   * @returns Next parsed response from the control channel.
-   */
-  readResponse(context = { operation: "response" }) {
-    const response = this.responses.shift();
-    if (response !== void 0) {
-      return Promise.resolve(response);
-    }
-    if (this.closedError !== void 0) {
-      return Promise.reject(this.closedError);
-    }
-    return new Promise((resolve, reject) => {
-      let timeout;
-      const clearWaiterTimeout = () => {
-        if (timeout !== void 0) {
-          clearTimeout(timeout);
-        }
-      };
-      const waiter = {
-        reject(error) {
-          clearWaiterTimeout();
-          reject(error);
-        },
-        resolve(response2) {
-          clearWaiterTimeout();
-          resolve(response2);
-        }
-      };
-      this.waiters.push(waiter);
-      const timeoutMs = this.timeoutMs;
-      if (timeoutMs !== void 0) {
-        timeout = setTimeout(() => {
-          const error = createFtpTimeoutError({
-            ...context,
-            host: this.host,
-            providerId: this.providerId,
-            timeoutMs
-          });
-          this.failPending(error);
-          this.close();
-        }, timeoutMs);
-      }
-    });
-  }
-  /** Closes the current control socket. */
-  close() {
-    if (!this.socket.destroyed) {
-      this.socket.end();
-      this.socket.destroy();
-    }
-  }
-  /**
-   * Upgrades an explicit-FTPS control connection from plain TCP to TLS.
-   *
-   * @param security - Resolved FTPS security settings and TLS options.
-   */
-  async upgradeToTls(security) {
-    const plainSocket = this.socket;
-    this.detachSocket(plainSocket);
-    const tlsSocket = (0, import_node_tls.connect)({ ...security.tlsOptions, socket: plainSocket });
-    this.socket = tlsSocket;
-    this.attachSocket(tlsSocket);
-    const connectOptions = {
-      host: this.host,
-      passiveHostStrategy: this.passiveHostStrategy,
-      port: 0,
-      providerId: this.providerId
-    };
-    if (this.timeoutMs !== void 0) {
-      connectOptions.timeoutMs = this.timeoutMs;
-    }
-    await waitForSocketConnect(tlsSocket, connectOptions, "secureConnect", "TLS negotiation");
-    assertPinnedTlsCertificate(tlsSocket, security, this.host, this.providerId);
-  }
-  /**
-   * Attaches shared parser and failure handlers to the active control socket.
-   *
-   * @param socket - Socket that should feed control-channel responses.
-   */
-  attachSocket(socket) {
-    socket.on("data", this.handleSocketData);
-    socket.on("error", this.handleSocketError);
-    socket.on("close", this.handleSocketClose);
-  }
-  /**
-   * Detaches shared parser and failure handlers before replacing a control socket.
-   *
-   * @param socket - Socket being removed from the control connection.
-   */
-  detachSocket(socket) {
-    socket.off("data", this.handleSocketData);
-    socket.off("error", this.handleSocketError);
-    socket.off("close", this.handleSocketClose);
-  }
-  /**
-   * Parses inbound control-channel bytes into queued responses.
-   *
-   * @param chunk - Socket data chunk from the control channel.
-   */
-  handleData(chunk) {
-    try {
-      for (const response of this.parser.push(chunk)) {
-        this.enqueueResponse(response);
-      }
-    } catch (error) {
-      this.failPending(
-        error instanceof Error ? error : createConnectionError(this.host, error, this.providerId)
-      );
-    }
-  }
-  /**
-   * Delivers a parsed response to a waiter or queues it for the next read.
-   *
-   * @param response - Parsed FTP response.
-   */
-  enqueueResponse(response) {
-    const waiter = this.waiters.shift();
-    if (waiter === void 0) {
-      this.responses.push(response);
-      return;
-    }
-    waiter.resolve(response);
-  }
-  /**
-   * Fails outstanding waits and records the first terminal connection error.
-   *
-   * @param error - Error that closed or invalidated the control connection.
-   */
-  failPending(error) {
-    if (this.closedError !== void 0) {
-      return;
-    }
-    this.closedError = error;
-    for (const waiter of this.waiters.splice(0)) {
-      waiter.reject(error);
-    }
-  }
-};
-async function expectCompletion(control, command, path2) {
-  const response = await control.sendCommand(command);
-  assertPathCommandSucceeded(response, command, path2, control.providerId);
-}
-async function readPassiveDataCommand(control, command, path2, options = {}) {
-  const dataConnection = await openPassiveDataCommand(control, command, path2, options);
-  try {
-    const payload = await collectPassiveData(
-      dataConnection,
-      control.operationTimeoutMs,
-      path2,
-      control.providerId
-    );
-    const finalResponse = await control.readFinalResponse({
-      command,
-      operation: "data command completion",
-      path: path2
-    });
-    assertPathCommandSucceeded(finalResponse, command, path2, control.providerId);
-    return payload;
-  } catch (error) {
-    dataConnection.close();
-    throw error;
-  }
-}
-async function readDirectoryEntries(control, path2) {
-  try {
-    const payload2 = await readPassiveDataCommand(control, `MLSD ${path2}`, path2);
-    return parseMlsdList(payload2.toString("utf8"), path2);
-  } catch (error) {
-    if (!isUnsupportedFtpCommandError(error, "MLSD")) {
-      throw error;
-    }
-  }
-  const payload = await readPassiveDataCommand(control, `LIST ${path2}`, path2);
-  return parseUnixList(payload.toString("utf8"), path2);
-}
-async function openPassiveDataCommand(control, command, path2, options = {}) {
-  const offset = normalizeOptionalByteCount(options.offset, "offset", path2);
-  if (offset !== void 0 && offset > 0) {
-    await sendRestartOffset(control, offset, path2);
-  }
-  const passiveEndpoint = await openPassiveEndpoint(control, path2);
-  const dataConnection = openPassiveDataConnection(
-    passiveEndpoint,
-    control.operationTimeoutMs,
-    path2,
-    control
-  );
-  try {
-    await dataConnection.ready;
-    control.writeCommand(command);
-    const initialResponse = await control.readResponse({
-      command,
-      operation: "data command response",
-      path: path2
-    });
-    if (!initialResponse.preliminary) {
-      dataConnection.close();
-      assertPathCommandSucceeded(initialResponse, command, path2, control.providerId);
-      throw createProtocolError(
-        command,
-        `${control.providerId.toUpperCase()} data command did not open a data transfer`,
-        initialResponse,
-        control.providerId
-      );
-    }
-    return dataConnection;
-  } catch (error) {
-    dataConnection.close();
-    throw error;
-  }
-}
-async function openPassiveEndpoint(control, path2) {
-  const extendedPassiveResponse = await control.sendCommand("EPSV");
-  if (extendedPassiveResponse.completion) {
-    return parseExtendedPassiveEndpoint(
-      extendedPassiveResponse,
-      control.passiveHost,
-      control.providerId
-    );
-  }
-  if (!isExtendedPassiveUnsupported(extendedPassiveResponse)) {
-    assertPathCommandSucceeded(extendedPassiveResponse, "EPSV", path2, control.providerId);
-  }
-  const passiveResponse = await control.sendCommand("PASV");
-  assertPathCommandSucceeded(passiveResponse, "PASV", path2, control.providerId);
-  return parsePassiveEndpoint(
-    passiveResponse,
-    control.passiveHost,
-    control.passiveEndpointHostStrategy,
-    control.providerId
-  );
-}
-async function writePassiveDataCommand(control, command, path2, request, options = {}) {
-  const dataConnection = await openPassiveDataCommand(control, command, path2, options);
-  let bytesTransferred = 0;
-  const timeoutContext = {
-    host: dataConnection.endpoint.host,
-    operation: "passive data transfer",
-    path: path2,
-    providerId: control.providerId
-  };
-  try {
-    for await (const chunk of request.content) {
-      request.throwIfAborted();
-      const output = new Uint8Array(chunk);
-      await writeSocketChunk(
-        dataConnection.socket,
-        output,
-        control.operationTimeoutMs,
-        timeoutContext
-      );
-      bytesTransferred += output.byteLength;
-      request.reportProgress(bytesTransferred, request.totalBytes);
-    }
-    await endSocket(dataConnection.socket, control.operationTimeoutMs, timeoutContext);
-    const finalResponse = await control.readFinalResponse({
-      command,
-      operation: "data command completion",
-      path: path2
-    });
-    assertPathCommandSucceeded(finalResponse, command, path2, control.providerId);
-    return bytesTransferred;
-  } catch (error) {
-    dataConnection.close();
-    throw error;
-  }
-}
-async function sendRestartOffset(control, offset, path2) {
-  const response = await control.sendCommand(`REST ${offset}`);
-  if (response.completion || response.intermediate) {
-    return;
-  }
-  assertPathCommandSucceeded(response, "REST", path2, control.providerId);
-}
-function openPassiveDataConnection(endpoint, timeoutMs, path2, control) {
-  const dataSecurity = control.dataTlsSecurity;
-  const socket = dataSecurity === void 0 ? (0, import_node_net.createConnection)({ host: endpoint.host, port: endpoint.port }) : (0, import_node_tls.connect)({ ...dataSecurity.tlsOptions, host: endpoint.host, port: endpoint.port });
-  socket.on("error", () => void 0);
-  const ready = new Promise((resolve, reject) => {
-    let settled = false;
-    let timeout;
-    const readyEvent = dataSecurity === void 0 ? "connect" : "secureConnect";
-    const cleanup = () => {
-      socket.off(readyEvent, handleConnect);
-      socket.off("error", handleError);
-      if (timeout !== void 0) {
-        clearTimeout(timeout);
-      }
-    };
-    const rejectOnce = (error) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      cleanup();
-      socket.destroy();
-      reject(error);
-    };
-    const handleConnect = () => {
-      if (settled) {
-        return;
-      }
-      try {
-        if (dataSecurity !== void 0) {
-          assertPinnedTlsCertificate(socket, dataSecurity, endpoint.host, control.providerId);
-        }
-        settled = true;
-        cleanup();
-        resolve();
-      } catch (error) {
-        rejectOnce(
-          error instanceof Error ? error : createConnectionError(endpoint.host, error, control.providerId)
-        );
-      }
-    };
-    const handleError = (error) => {
-      rejectOnce(
-        error instanceof TimeoutError ? error : createConnectionError(endpoint.host, error, control.providerId)
-      );
-    };
-    socket.once(readyEvent, handleConnect);
-    socket.once("error", handleError);
-    if (timeoutMs !== void 0) {
-      timeout = setTimeout(
-        () => rejectOnce(
-          createFtpTimeoutError({
-            host: endpoint.host,
-            operation: "passive data connection",
-            path: path2,
-            providerId: control.providerId,
-            timeoutMs
-          })
-        ),
-        timeoutMs
-      );
-    }
-  });
-  return {
-    endpoint,
-    ready,
-    socket,
-    close() {
-      socket.destroy();
-    }
-  };
-}
-async function collectPassiveData(dataConnection, timeoutMs, path2, providerId) {
-  const chunks = [];
-  const clearIdleTimeout = setSocketTimeout(dataConnection.socket, timeoutMs, {
-    host: dataConnection.endpoint.host,
-    operation: "passive data transfer",
-    path: path2,
-    providerId
-  });
-  try {
-    for await (const chunk of dataConnection.socket) {
-      chunks.push(import_node_buffer3.Buffer.from(chunk));
-    }
-  } finally {
-    clearIdleTimeout();
-  }
-  return import_node_buffer3.Buffer.concat(chunks);
-}
-async function* createPassiveReadSource(control, dataConnection, command, path2, range, request) {
-  let bytesEmitted = 0;
-  let completed = false;
-  let clearIdleTimeout = () => void 0;
-  const closeOnAbort = () => dataConnection.close();
-  request.signal?.addEventListener("abort", closeOnAbort, { once: true });
-  try {
-    clearIdleTimeout = setSocketTimeout(dataConnection.socket, control.operationTimeoutMs, {
-      host: dataConnection.endpoint.host,
-      operation: "passive data transfer",
-      path: path2,
-      providerId: control.providerId
-    });
-    for await (const chunk of dataConnection.socket) {
-      request.throwIfAborted();
-      const buffer = import_node_buffer3.Buffer.from(chunk);
-      if (range.length === void 0) {
-        bytesEmitted += buffer.byteLength;
-        yield new Uint8Array(buffer);
-        continue;
-      }
-      const remaining = range.length - bytesEmitted;
-      if (remaining <= 0) {
-        continue;
-      }
-      const output = buffer.subarray(0, Math.min(remaining, buffer.byteLength));
-      bytesEmitted += output.byteLength;
-      if (output.byteLength > 0) {
-        yield new Uint8Array(output);
-      }
-    }
-    const finalResponse = await control.readFinalResponse({
-      command,
-      operation: "data command completion",
-      path: path2
-    });
-    assertPathCommandSucceeded(finalResponse, command, path2, control.providerId);
-    completed = true;
-  } finally {
-    clearIdleTimeout();
-    request.signal?.removeEventListener("abort", closeOnAbort);
-    if (!completed) {
-      dataConnection.close();
-    }
-  }
-}
-function writeSocketChunk(socket, chunk, timeoutMs, context) {
-  if (chunk.byteLength === 0) {
-    return Promise.resolve();
-  }
-  return new Promise((resolve, reject) => {
-    const clearIdleTimeout = setSocketTimeout(socket, timeoutMs, context);
-    const handleError = (error) => {
-      clearIdleTimeout();
-      socket.off("error", handleError);
-      reject(error);
-    };
-    socket.once("error", handleError);
-    socket.write(chunk, (error) => {
-      clearIdleTimeout();
-      socket.off("error", handleError);
-      if (error != null) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
-}
-function endSocket(socket, timeoutMs, context) {
-  return new Promise((resolve, reject) => {
-    const clearIdleTimeout = setSocketTimeout(socket, timeoutMs, context);
-    const handleError = (error) => {
-      clearIdleTimeout();
-      socket.off("error", handleError);
-      reject(error);
-    };
-    socket.once("error", handleError);
-    socket.end(() => {
-      clearIdleTimeout();
-      socket.off("error", handleError);
-      resolve();
-    });
-  });
-}
-function resolveReadRange(range) {
-  if (range === void 0) {
-    return { offset: 0 };
-  }
-  const resolved = {
-    offset: normalizeByteCount(range.offset, "offset", "/")
-  };
-  if (range.length !== void 0) {
-    resolved.length = normalizeByteCount(range.length, "length", "/");
-  }
-  return resolved;
-}
-function normalizeOptionalByteCount(value, field, path2) {
-  return value === void 0 ? void 0 : normalizeByteCount(value, field, path2);
-}
-function normalizeByteCount(value, field, path2) {
-  if (!Number.isFinite(value) || value < 0) {
-    throw new ConfigurationError({
-      details: { field, provider: FTP_PROVIDER_ID },
-      message: `FTP provider ${field} must be a non-negative number`,
-      path: path2,
-      protocol: FTP_PROVIDER_ID,
-      retryable: false
-    });
-  }
-  return Math.floor(value);
-}
-function cloneVerification2(verification) {
-  const clone = { verified: verification.verified };
-  if (verification.method !== void 0) clone.method = verification.method;
-  if (verification.checksum !== void 0) clone.checksum = verification.checksum;
-  if (verification.expectedChecksum !== void 0) {
-    clone.expectedChecksum = verification.expectedChecksum;
-  }
-  if (verification.actualChecksum !== void 0) clone.actualChecksum = verification.actualChecksum;
-  if (verification.details !== void 0) clone.details = { ...verification.details };
-  return clone;
-}
-function parsePassiveEndpoint(response, controlHost, hostStrategy, providerId) {
-  const endpointMatch = /(\d+),(\d+),(\d+),(\d+),(\d+),(\d+)/.exec(response.message);
-  if (endpointMatch === null) {
-    throw createProtocolError(
-      "PASV",
-      `${providerId.toUpperCase()} PASV response did not include a host and port`,
-      response,
-      providerId
-    );
-  }
-  const [, first2, second, third, fourth, highByte, lowByte] = endpointMatch;
-  const parts = [first2, second, third, fourth, highByte, lowByte].map((part) => Number(part));
-  if (parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
-    throw createProtocolError(
-      "PASV",
-      `${providerId.toUpperCase()} PASV response included an invalid host or port`,
-      response,
-      providerId
-    );
-  }
-  const advertisedHost = `${parts[0]}.${parts[1]}.${parts[2]}.${parts[3]}`;
-  return {
-    host: hostStrategy === "advertised" ? advertisedHost : controlHost,
-    port: parts[4] * 256 + parts[5]
-  };
-}
-function parseExtendedPassiveEndpoint(response, host, providerId) {
-  const endpointMatch = /\((.+)\)/.exec(response.message);
-  if (endpointMatch === null) {
-    throw createProtocolError(
-      "EPSV",
-      `${providerId.toUpperCase()} EPSV response did not include a port`,
-      response,
-      providerId
-    );
-  }
-  const endpointText = endpointMatch[1] ?? "";
-  const delimiter = endpointText[0];
-  if (delimiter === void 0) {
-    throw createProtocolError(
-      "EPSV",
-      `${providerId.toUpperCase()} EPSV response did not include a delimiter`,
-      response,
-      providerId
-    );
-  }
-  const parts = endpointText.split(delimiter);
-  const port = Number(parts[3]);
-  if (!Number.isInteger(port) || port <= 0 || port > 65535) {
-    throw createProtocolError(
-      "EPSV",
-      `${providerId.toUpperCase()} EPSV response included an invalid port`,
-      response,
-      providerId
-    );
-  }
-  return { host, port };
-}
-function isExtendedPassiveUnsupported(response) {
-  return response.code === 500 || response.code === 501 || response.code === 502 || response.code === 504 || response.code === 522;
-}
-function isUnsupportedFtpCommandError(error, commandName) {
-  return error instanceof ProtocolError && error.command?.startsWith(commandName) === true && isUnsupportedFtpCommandCode(error.ftpCode);
-}
-function isUnsupportedFtpCommandCode(code) {
-  return code === 500 || code === 501 || code === 502 || code === 504;
-}
-function createControlSocket(options) {
-  if (options.security?.mode === "implicit") {
-    return (0, import_node_tls.connect)({
-      ...options.security.tlsOptions,
-      host: options.host,
-      port: options.port
-    });
-  }
-  return (0, import_node_net.createConnection)({ host: options.host, port: options.port });
-}
-async function negotiateExplicitFtps(control, security) {
-  const authResponse = await control.sendCommand("AUTH TLS");
-  if (!authResponse.completion) {
-    throw createProtocolError(
-      "AUTH TLS",
-      "FTPS AUTH TLS negotiation failed",
-      authResponse,
-      control.providerId
-    );
-  }
-  await control.upgradeToTls(security);
-  await configureFtpsProtection(control, security);
-}
-async function configureFtpsProtection(control, security) {
-  await expectCompletion(control, "PBSZ 0", "/");
-  await expectCompletion(control, security.dataProtection === "private" ? "PROT P" : "PROT C", "/");
-}
-function createTlsConnectionOptions(profile) {
-  const tlsProfile = profile.tls;
-  const options = {
-    rejectUnauthorized: tlsProfile?.rejectUnauthorized ?? true
-  };
-  const servername = tlsProfile?.servername ?? ((0, import_node_net.isIP)(profile.host) === 0 ? profile.host : void 0);
-  if (servername !== void 0) {
-    options.servername = servername;
-  }
-  if (tlsProfile === void 0) {
-    return options;
-  }
-  if (tlsProfile.ca !== void 0) options.ca = normalizeTlsSecretValue(tlsProfile.ca);
-  if (tlsProfile.cert !== void 0) options.cert = normalizeTlsSecretValue(tlsProfile.cert);
-  if (tlsProfile.key !== void 0) options.key = normalizeTlsSecretValue(tlsProfile.key);
-  if (tlsProfile.pfx !== void 0) options.pfx = normalizeTlsSecretValue(tlsProfile.pfx);
-  if (tlsProfile.passphrase !== void 0)
-    options.passphrase = secretToString(tlsProfile.passphrase);
-  if (tlsProfile.minVersion !== void 0) options.minVersion = tlsProfile.minVersion;
-  if (tlsProfile.maxVersion !== void 0) options.maxVersion = tlsProfile.maxVersion;
-  if (tlsProfile.checkServerIdentity !== void 0) {
-    options.checkServerIdentity = tlsProfile.checkServerIdentity;
-  }
-  return options;
-}
-function createTlsPinnedFingerprints(profile) {
-  const pinnedFingerprint256 = profile.tls?.pinnedFingerprint256;
-  if (pinnedFingerprint256 === void 0) {
-    return void 0;
-  }
-  const fingerprints = Array.isArray(pinnedFingerprint256) ? pinnedFingerprint256 : [pinnedFingerprint256];
-  if (fingerprints.length === 0) {
-    throw new ConfigurationError({
-      details: { pinnedFingerprint256 },
-      message: "FTPS tls.pinnedFingerprint256 must include at least one SHA-256 fingerprint",
-      protocol: FTPS_PROVIDER_ID,
-      retryable: false
-    });
-  }
-  return fingerprints.map(normalizePinnedFingerprint256);
-}
-function normalizePinnedFingerprint256(fingerprint) {
-  const normalized = fingerprint.trim().replace(/:/g, "").toLowerCase();
-  if (!/^[a-f0-9]{64}$/.test(normalized)) {
-    throw new ConfigurationError({
-      details: { pinnedFingerprint256: fingerprint },
-      message: "FTPS tls.pinnedFingerprint256 must be a SHA-256 hex fingerprint",
-      protocol: FTPS_PROVIDER_ID,
-      retryable: false
-    });
-  }
-  return normalized;
-}
-function assertPinnedTlsCertificate(socket, security, host, providerId) {
-  const pinnedFingerprint256 = security.pinnedFingerprint256;
-  if (pinnedFingerprint256 === void 0) {
-    return;
-  }
-  if (!isTlsSocket(socket)) {
-    throw createConnectionError(
-      host,
-      new Error("FTPS certificate pinning requires a TLS socket"),
-      providerId
-    );
-  }
-  const certificate = socket.getPeerCertificate();
-  const actualFingerprint = normalizeCertificateFingerprint256(certificate);
-  if (pinnedFingerprint256.includes(actualFingerprint)) {
-    return;
-  }
-  throw createConnectionError(
-    host,
-    new Error("FTPS server certificate SHA-256 fingerprint did not match tls.pinnedFingerprint256"),
-    providerId
-  );
-}
-function isTlsSocket(socket) {
-  return typeof socket.getPeerCertificate === "function";
-}
-function normalizeCertificateFingerprint256(certificate) {
-  return certificate.fingerprint256.replace(/:/g, "").toLowerCase();
-}
-function normalizeTlsSecretValue(value) {
-  if (Array.isArray(value)) {
-    return value.map((item) => import_node_buffer3.Buffer.isBuffer(item) ? import_node_buffer3.Buffer.from(item) : item);
-  }
-  return import_node_buffer3.Buffer.isBuffer(value) ? import_node_buffer3.Buffer.from(value) : value;
-}
-async function authenticateFtpSession(control, username, password, host) {
-  const safeUsername = assertSafeFtpArgument(username, "username");
-  const safePassword = assertSafeFtpArgument(password, "password");
-  const userResponse = await control.sendCommand(`USER ${safeUsername}`);
-  if (userResponse.completion) {
-    return;
-  }
-  if (!userResponse.intermediate) {
-    throw createAuthenticationError(host, "USER", userResponse, control.providerId);
-  }
-  const passwordResponse = await control.sendCommand(`PASS ${safePassword}`);
-  if (!passwordResponse.completion) {
-    throw createAuthenticationError(host, "PASS", passwordResponse, control.providerId);
-  }
-}
-function assertPathCommandSucceeded(response, command, path2, providerId) {
-  if (response.completion) {
-    return;
-  }
-  if (response.code === 550) {
-    throw new PathNotFoundError({
-      command,
-      ftpCode: response.code,
-      message: `${providerId.toUpperCase()} path not found: ${path2}`,
-      path: path2,
-      protocol: providerId,
-      retryable: false
-    });
-  }
-  throw createProtocolError(
-    command,
-    `${providerId.toUpperCase()} command failed: ${command}`,
-    response,
-    providerId
-  );
-}
-function waitForSocketConnect(socket, options, readyEvent = "connect", operation = "connection") {
-  return new Promise((resolve, reject) => {
-    let settled = false;
-    let timeout;
-    const cleanup = () => {
-      socket.off("connect", handleConnect);
-      socket.off(readyEvent, handleConnect);
-      socket.off("error", handleError);
-      options.signal?.removeEventListener("abort", handleAbort);
-      if (timeout !== void 0) {
-        clearTimeout(timeout);
-      }
-    };
-    const rejectOnce = (error) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      cleanup();
-      socket.destroy();
-      reject(error);
-    };
-    const handleConnect = () => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      cleanup();
-      resolve();
-    };
-    const handleError = (error) => rejectOnce(createConnectionError(options.host, error, options.providerId));
-    const handleAbort = () => rejectOnce(
-      new AbortError({
-        details: { operation },
-        host: options.host,
-        message: `${options.providerId.toUpperCase()} ${operation} aborted`,
-        protocol: options.providerId,
-        retryable: false
-      })
-    );
-    socket.once(readyEvent, handleConnect);
-    socket.once("error", handleError);
-    if (options.signal?.aborted === true) {
-      handleAbort();
-      return;
-    }
-    options.signal?.addEventListener("abort", handleAbort, { once: true });
-    const timeoutMs = options.timeoutMs;
-    if (timeoutMs !== void 0) {
-      timeout = setTimeout(
-        () => rejectOnce(
-          createFtpTimeoutError({
-            host: options.host,
-            operation,
-            providerId: options.providerId,
-            timeoutMs
-          })
-        ),
-        timeoutMs
-      );
-    }
-  });
-}
-function createFtpTimeoutError(input) {
-  const details = {
-    operation: input.operation,
-    timeoutMs: input.timeoutMs
-  };
-  return new TimeoutError({
-    details,
-    host: input.host,
-    message: `${input.providerId.toUpperCase()} ${input.operation} timed out after ${input.timeoutMs}ms`,
-    protocol: input.providerId,
-    retryable: true,
-    ...input.command === void 0 ? {} : { command: input.command },
-    ...input.path === void 0 ? {} : { path: input.path }
-  });
-}
-function setSocketTimeout(socket, timeoutMs, context) {
-  if (timeoutMs === void 0) {
-    return () => void 0;
-  }
-  const handleTimeout = () => {
-    socket.destroy(createFtpTimeoutError({ ...context, timeoutMs }));
-  };
-  socket.setTimeout(timeoutMs);
-  socket.once("timeout", handleTimeout);
-  return () => {
-    socket.off("timeout", handleTimeout);
-    socket.setTimeout(0);
-  };
-}
-function createAuthenticationError(host, command, response, providerId) {
-  return new AuthenticationError({
-    command,
-    ftpCode: response.code,
-    host,
-    message: `${providerId.toUpperCase()} authentication failed during ${command}`,
-    protocol: providerId,
-    retryable: false
-  });
-}
-function createConnectionError(host, cause, providerId) {
-  return new ConnectionError({
-    cause,
-    host,
-    message: `${providerId.toUpperCase()} connection failed`,
-    protocol: providerId,
-    retryable: true
-  });
-}
-function createProtocolError(command, message, response, providerId) {
-  return new ProtocolError({
-    command,
-    ftpCode: response.code,
-    message,
-    protocol: providerId,
-    retryable: response.transientFailure
-  });
-}
-function normalizeFtpPath(path2) {
-  const normalized = normalizeRemotePath(path2);
-  if (normalized === "." || normalized === "/") {
-    return "/";
-  }
-  return normalized.startsWith("/") ? normalized : `/${normalized}`;
-}
-function getParentPath(path2) {
-  if (path2 === "/") {
-    return void 0;
-  }
-  const parentEnd = path2.lastIndexOf("/");
-  return parentEnd <= 0 ? "/" : path2.slice(0, parentEnd);
-}
-function isFtpFactLine(line) {
-  return line.includes(";") && line.includes(" ");
-}
-function compareEntries(left, right) {
-  return left.path.localeCompare(right.path);
-}
-function secretToString(value) {
-  return import_node_buffer3.Buffer.isBuffer(value) ? value.toString("utf8") : value;
-}
-
-// src/providers/classic/sftp/SftpProvider.ts
-var import_node_buffer4 = require("buffer");
-var import_node_crypto = require("crypto");
-var import_ssh2 = __toESM(require("ssh2"));
-var { Client: SshClientCtor, utils } = import_ssh2.default;
-var SFTP_PROVIDER_ID = "sftp";
-var SFTP_DEFAULT_PORT = 22;
-var SFTP_PROVIDER_CAPABILITIES = {
-  provider: SFTP_PROVIDER_ID,
-  authentication: ["password", "private-key", "agent", "keyboard-interactive"],
-  list: true,
-  stat: true,
-  readStream: true,
-  writeStream: true,
-  serverSideCopy: false,
-  serverSideMove: false,
-  resumeDownload: true,
-  resumeUpload: true,
-  checksum: [],
-  atomicRename: false,
-  chmod: false,
-  chown: false,
-  symlink: true,
-  metadata: ["accessedAt", "group", "modifiedAt", "owner", "permissions"],
-  maxConcurrency: 8,
-  notes: [
-    "Initial ssh2-backed SFTP provider with password/private-key/agent authentication, metadata reads, and transfer streams"
-  ]
-};
-function createSftpProviderFactory(options = {}) {
-  validateSftpProviderOptions(options);
-  return {
-    id: SFTP_PROVIDER_ID,
-    capabilities: SFTP_PROVIDER_CAPABILITIES,
-    create: () => new SftpProvider(options)
-  };
-}
-var SftpProvider = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  id = SFTP_PROVIDER_ID;
-  capabilities = SFTP_PROVIDER_CAPABILITIES;
-  async connect(profile) {
-    const resolvedProfile = await resolveConnectionProfileSecrets(profile);
-    const username = requireTextCredential(resolvedProfile.username, "username");
-    const authentication = resolveSftpAuthentication(resolvedProfile);
-    const client = await connectSshClient(resolvedProfile, this.options, username, authentication);
-    try {
-      const sftp = await openSftpSession(client, resolvedProfile);
-      return new SftpTransferSession(client, sftp);
-    } catch (error) {
-      client.end();
-      throw mapSftpError(error, {
-        command: "SFTP",
-        host: resolvedProfile.host
-      });
-    }
-  }
-};
-var SftpTransferSession = class {
-  constructor(client, sftp) {
-    this.client = client;
-    this.sftp = sftp;
-    this.client.on("error", noop);
-    this.fs = new SftpFileSystem(sftp);
-    this.transfers = new SftpTransferOperations(sftp);
-  }
-  client;
-  sftp;
-  provider = SFTP_PROVIDER_ID;
-  capabilities = SFTP_PROVIDER_CAPABILITIES;
-  fs;
-  transfers;
-  disconnect() {
-    return Promise.resolve().then(() => {
-      this.client.end();
-    });
-  }
-  raw() {
-    return {
-      client: this.client,
-      sftp: this.sftp
-    };
-  }
-};
-var SftpTransferOperations = class {
-  constructor(sftp) {
-    this.sftp = sftp;
-  }
-  sftp;
-  async read(request) {
-    request.throwIfAborted();
-    const remotePath = normalizeSftpPath(request.endpoint.path);
-    try {
-      const stats = await readSftpStats(this.sftp, remotePath);
-      if (!stats.isFile()) {
-        throw createSftpPathNotFoundError(remotePath, `SFTP path is not a file: ${remotePath}`);
-      }
-      const range = resolveSftpReadRange(stats.size, request.range);
-      const result = {
-        content: createSftpReadSource(this.sftp, remotePath, range, request),
-        totalBytes: range.length
-      };
-      if (range.offset > 0) {
-        result.bytesRead = range.offset;
-      }
-      return result;
-    } catch (error) {
-      throw mapSftpError(error, { command: "READ", path: remotePath });
-    }
-  }
-  async write(request) {
-    request.throwIfAborted();
-    const remotePath = normalizeSftpPath(request.endpoint.path);
-    const offset = normalizeOptionalByteCount2(request.offset, "offset", remotePath);
-    try {
-      const bytesTransferred = await writeSftpContent(this.sftp, remotePath, request, offset);
-      const result = {
-        bytesTransferred,
-        resumed: offset !== void 0 && offset > 0,
-        totalBytes: request.totalBytes ?? (offset ?? 0) + bytesTransferred,
-        verified: request.verification?.verified ?? false
-      };
-      if (request.verification !== void 0) {
-        result.verification = cloneVerification3(request.verification);
-      }
-      return result;
-    } catch (error) {
-      throw mapSftpError(error, { command: "WRITE", path: remotePath });
-    }
-  }
-};
-var SftpFileSystem = class {
-  constructor(sftp) {
-    this.sftp = sftp;
-  }
-  sftp;
-  async list(path2, options = {}) {
-    throwIfAborted2(options.signal, path2, "list");
-    const remotePath = normalizeSftpPath(path2);
-    try {
-      const entries = await readSftpDirectory(this.sftp, remotePath);
-      return entries.filter((entry) => entry.filename !== "." && entry.filename !== "..").map((entry) => mapSftpDirectoryEntry(remotePath, entry)).sort(compareEntries2);
-    } catch (error) {
-      throw mapSftpError(error, { command: "READDIR", path: remotePath });
-    }
-  }
-  async stat(path2, options = {}) {
-    throwIfAborted2(options.signal, path2, "stat");
-    const remotePath = normalizeSftpPath(path2);
-    try {
-      const stats = await readSftpStats(this.sftp, remotePath);
-      return {
-        ...mapSftpStats(remotePath, basenameRemotePath(remotePath), stats),
-        exists: true
-      };
-    } catch (error) {
-      throw mapSftpError(error, { command: "LSTAT", path: remotePath });
-    }
-  }
-  async remove(path2, options = {}) {
-    throwIfAborted2(options.signal, path2, "remove");
-    const remotePath = normalizeSftpPath(path2);
-    try {
-      await sftpUnlink(this.sftp, remotePath);
-    } catch (error) {
-      const mapped = mapSftpError(error, { command: "REMOVE", path: remotePath });
-      if (options.ignoreMissing && mapped instanceof PathNotFoundError) return;
-      throw mapped;
-    }
-  }
-  async rename(from, to, options = {}) {
-    throwIfAborted2(options.signal, from, "rename");
-    const fromPath = normalizeSftpPath(from);
-    const toPath = normalizeSftpPath(to);
-    try {
-      await sftpRename(this.sftp, fromPath, toPath);
-    } catch (error) {
-      throw mapSftpError(error, { command: "RENAME", path: fromPath });
-    }
-  }
-  async mkdir(path2, options = {}) {
-    throwIfAborted2(options.signal, path2, "mkdir");
-    const remotePath = normalizeSftpPath(path2);
-    if (!options.recursive) {
-      try {
-        await sftpMkdir(this.sftp, remotePath);
-      } catch (error) {
-        throw mapSftpError(error, { command: "MKDIR", path: remotePath });
-      }
-      return;
-    }
-    const segments = remotePath.split("/").filter((s) => s.length > 0);
-    let current = "";
-    for (const segment of segments) {
-      current = `${current}/${segment}`;
-      try {
-        await sftpMkdir(this.sftp, current);
-      } catch (error) {
-        try {
-          const stats = await readSftpStats(this.sftp, current);
-          if (stats.isDirectory()) continue;
-        } catch {
-        }
-        throw mapSftpError(error, { command: "MKDIR", path: current });
-      }
-    }
-  }
-  async rmdir(path2, options = {}) {
-    throwIfAborted2(options.signal, path2, "rmdir");
-    const remotePath = normalizeSftpPath(path2);
-    if (options.recursive) {
-      await this.removeDirectoryRecursive(remotePath);
-      return;
-    }
-    try {
-      await sftpRmdir(this.sftp, remotePath);
-    } catch (error) {
-      const mapped = mapSftpError(error, { command: "RMDIR", path: remotePath });
-      if (options.ignoreMissing && mapped instanceof PathNotFoundError) return;
-      throw mapped;
-    }
-  }
-  async removeDirectoryRecursive(remotePath) {
-    let entries;
-    try {
-      entries = await readSftpDirectory(this.sftp, remotePath);
-    } catch (error) {
-      const mapped = mapSftpError(error, { command: "READDIR", path: remotePath });
-      if (mapped instanceof PathNotFoundError) return;
-      throw mapped;
-    }
-    for (const entry of entries) {
-      if (entry.filename === "." || entry.filename === "..") continue;
-      const childPath = `${remotePath.replace(/\/+$/, "")}/${entry.filename}`.replace(/\/+/g, "/");
-      const isDir = entry.attrs.isDirectory();
-      try {
-        if (isDir) {
-          await this.removeDirectoryRecursive(childPath);
-        } else {
-          await sftpUnlink(this.sftp, childPath);
-        }
-      } catch (error) {
-        throw mapSftpError(error, {
-          command: isDir ? "RMDIR" : "REMOVE",
-          path: childPath
-        });
-      }
-    }
-    try {
-      await sftpRmdir(this.sftp, remotePath);
-    } catch (error) {
-      throw mapSftpError(error, { command: "RMDIR", path: remotePath });
-    }
-  }
-};
-async function connectSshClient(profile, options, username, authentication) {
-  const client = new SshClientCtor();
-  let config;
-  try {
-    config = await createConnectConfig(profile, options, username, authentication);
-  } catch (error) {
-    client.end();
-    throw mapSftpConnectionError(error, profile.host);
-  }
-  return new Promise((resolve, reject) => {
-    let settled = false;
-    const fail = (error) => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      cleanup();
-      client.end();
-      reject(mapSftpConnectionError(error, profile.host));
-    };
-    const handleAbort = () => {
-      fail(
-        new AbortError({
-          details: { operation: "connect" },
-          host: profile.host,
-          message: "SFTP connection was aborted",
-          protocol: "sftp",
-          retryable: false
-        })
-      );
-    };
-    const handleReady = () => {
-      settled = true;
-      cleanup();
-      resolve(client);
-    };
-    const handleTimeout = () => {
-      fail(
-        new TimeoutError({
-          details: { operation: "connect" },
-          host: profile.host,
-          message: "SFTP connection timed out",
-          protocol: "sftp",
-          retryable: true
-        })
-      );
-    };
-    const cleanup = () => {
-      client.off("ready", handleReady);
-      client.off("error", fail);
-      client.off("timeout", handleTimeout);
-      profile.signal?.removeEventListener("abort", handleAbort);
-    };
-    client.once("ready", handleReady);
-    client.once("error", fail);
-    client.once("timeout", handleTimeout);
-    if (profile.signal?.aborted === true) {
-      handleAbort();
-      return;
-    }
-    profile.signal?.addEventListener("abort", handleAbort, { once: true });
-    try {
-      client.connect(config);
-    } catch (error) {
-      fail(error);
-    }
-  });
-}
-async function createConnectConfig(profile, options, username, authentication) {
-  const config = {
-    authHandler: authentication.authHandler,
-    host: profile.host,
-    port: profile.port ?? SFTP_DEFAULT_PORT,
-    username
-  };
-  const timeoutMs = profile.timeoutMs ?? options.readyTimeoutMs;
-  if (timeoutMs !== void 0) {
-    config.readyTimeout = timeoutMs;
-    config.timeout = timeoutMs;
-  }
-  if (profile.ssh?.algorithms !== void 0) {
-    config.algorithms = profile.ssh.algorithms;
-  }
-  const socket = await createSftpSocket(profile, username);
-  if (socket !== void 0) {
-    config.sock = socket;
-  }
-  configureSftpHostKeyVerifier(config, profile, options);
-  return config;
-}
-async function createSftpSocket(profile, username) {
-  const socketFactory = profile.ssh?.socketFactory;
-  if (socketFactory === void 0) {
-    return void 0;
-  }
-  if (profile.signal?.aborted === true) {
-    throw new AbortError({
-      details: { operation: "connect" },
-      host: profile.host,
-      message: "SFTP connection was aborted",
-      protocol: "sftp",
-      retryable: false
-    });
-  }
-  const context = {
-    host: profile.host,
-    port: profile.port ?? SFTP_DEFAULT_PORT,
-    username
-  };
-  const socket = await socketFactory(
-    profile.signal === void 0 ? context : { ...context, signal: profile.signal }
-  );
-  if (typeof socket !== "object" || socket === null || typeof socket.pipe !== "function") {
-    throw new ConfigurationError({
-      details: { socket: typeof socket },
-      message: "Connection profile ssh.socketFactory must return a socket-like readable stream",
-      protocol: "sftp",
-      retryable: false
-    });
-  }
-  return socket;
-}
-function configureSftpHostKeyVerifier(config, profile, options) {
-  const policy = createSftpHostKeyPolicy(profile);
-  if (policy === void 0) {
-    if (options.hostHash !== void 0) config.hostHash = options.hostHash;
-    if (options.hostVerifier !== void 0) config.hostVerifier = options.hostVerifier;
-    return;
-  }
-  if (options.hostHash !== void 0 || options.hostVerifier !== void 0) {
-    throw new ConfigurationError({
-      details: { provider: SFTP_PROVIDER_ID },
-      message: "SFTP profile host-key policies cannot be combined with provider-level hostHash or hostVerifier options",
-      protocol: "sftp",
-      retryable: false
-    });
-  }
-  config.hostVerifier = (key) => verifySftpHostKey(policy, key);
-}
-function createSftpHostKeyPolicy(profile) {
-  const knownHosts = parseKnownHosts(profile.ssh?.knownHosts);
-  const pins = normalizeHostKeyPins(profile.ssh?.pinnedHostKeySha256);
-  if (knownHosts === void 0 && pins === void 0) {
-    return void 0;
-  }
-  const policy = {
-    host: profile.host,
-    port: profile.port ?? SFTP_DEFAULT_PORT
-  };
-  if (knownHosts !== void 0) policy.knownHosts = knownHosts;
-  if (pins !== void 0) policy.pinnedHostKeySha256 = pins;
-  return policy;
-}
-function verifySftpHostKey(policy, key) {
-  if (policy.pinnedHostKeySha256 !== void 0 && !policy.pinnedHostKeySha256.has(hashHostKey(key))) {
-    return false;
-  }
-  if (policy.knownHosts !== void 0 && !matchesKnownHosts(policy, key)) {
-    return false;
-  }
-  return true;
-}
-function parseKnownHosts(source) {
-  if (source === void 0) {
-    return void 0;
-  }
-  const values = Array.isArray(source) ? source : [source];
-  const entries = [];
-  for (const value of values) {
-    const text = import_node_buffer4.Buffer.isBuffer(value) ? value.toString("utf8") : value;
-    const lines = text.split(/\r?\n/);
-    lines.forEach((line, index) => {
-      const entry = parseKnownHostsLine(line, index + 1);
-      if (entry !== void 0) {
-        entries.push(entry);
-      }
-    });
-  }
-  return entries;
-}
-function parseKnownHostsLine(line, lineNumber) {
-  const trimmed = line.trim();
-  if (trimmed.length === 0 || trimmed.startsWith("#")) {
-    return void 0;
-  }
-  const fields = trimmed.split(/\s+/);
-  const offset = fields[0]?.startsWith("@") === true ? 1 : 0;
-  const hosts = fields[offset];
-  const keyType = fields[offset + 1];
-  const keyData = fields[offset + 2];
-  if (hosts === void 0 || keyType === void 0 || keyData === void 0) {
-    throw createKnownHostsConfigurationError(lineNumber, "is malformed");
-  }
-  const key = parseKnownHostPublicKey(`${keyType} ${keyData}`, lineNumber);
-  return {
-    key,
-    patterns: hosts.split(",").filter((pattern) => pattern.length > 0)
-  };
-}
-function parseKnownHostPublicKey(value, lineNumber) {
-  const parsed = utils.parseKey(value);
-  if (parsed instanceof Error) {
-    throw createKnownHostsConfigurationError(lineNumber, parsed.message);
-  }
-  const parsedValues = Array.isArray(parsed) ? parsed : [parsed];
-  const parsedKey = parsedValues[0];
-  if (!isParsedKey(parsedKey)) {
-    throw createKnownHostsConfigurationError(lineNumber, "does not contain a public key");
-  }
-  return parsedKey;
-}
-function isParsedKey(value) {
-  return typeof value === "object" && value !== null && typeof value.getPublicSSH === "function";
-}
-function matchesKnownHosts(policy, key) {
-  return policy.knownHosts?.some((entry) => knownHostEntryMatches(entry, policy, key)) === true;
-}
-function knownHostEntryMatches(entry, policy, key) {
-  const candidates = createKnownHostCandidates(policy.host, policy.port);
-  let hostMatched = false;
-  for (const pattern of entry.patterns) {
-    const negated = pattern.startsWith("!");
-    const hostPattern = negated ? pattern.slice(1) : pattern;
-    const patternMatched = candidates.some(
-      (candidate) => knownHostPatternMatches(hostPattern, candidate)
-    );
-    if (negated && patternMatched) {
-      return false;
-    }
-    if (patternMatched) {
-      hostMatched = true;
-    }
-  }
-  return hostMatched && entry.key.getPublicSSH().equals(key);
-}
-function createKnownHostCandidates(host, port) {
-  const candidates = [host, `[${host}]:${port}`];
-  return port === SFTP_DEFAULT_PORT ? candidates : [`[${host}]:${port}`, host];
-}
-function knownHostPatternMatches(pattern, candidate) {
-  if (pattern.startsWith("|1|")) {
-    return hashedKnownHostPatternMatches(pattern, candidate);
-  }
-  return wildcardKnownHostPatternToRegExp(pattern).test(candidate);
-}
-function wildcardKnownHostPatternToRegExp(pattern) {
-  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".");
-  return new RegExp(`^${escaped}$`, "i");
-}
-function hashedKnownHostPatternMatches(pattern, candidate) {
-  const [, version, saltText, hashText] = pattern.split("|");
-  if (version !== "1" || saltText === void 0 || hashText === void 0) {
-    return false;
-  }
-  const salt = import_node_buffer4.Buffer.from(saltText, "base64");
-  const expected = import_node_buffer4.Buffer.from(hashText, "base64");
-  const actual = (0, import_node_crypto.createHmac)("sha1", salt).update(candidate).digest();
-  return expected.byteLength === actual.byteLength && (0, import_node_crypto.timingSafeEqual)(expected, actual);
-}
-function normalizeHostKeyPins(value) {
-  if (value === void 0) {
-    return void 0;
-  }
-  const pins = typeof value === "string" ? [value] : value;
-  return new Set(pins.map((pin) => normalizeHostKeyPin(pin)));
-}
-function normalizeHostKeyPin(value) {
-  const trimmed = value.trim();
-  const hex = trimmed.replace(/:/g, "");
-  if (hex.length === 64 && /^[a-f0-9]+$/i.test(hex)) {
-    return import_node_buffer4.Buffer.from(hex, "hex").toString("base64").replace(/=+$/g, "");
-  }
-  const bare = trimmed.startsWith("SHA256:") ? trimmed.slice("SHA256:".length) : trimmed;
-  return import_node_buffer4.Buffer.from(padBase642(bare), "base64").toString("base64").replace(/=+$/g, "");
-}
-function hashHostKey(key) {
-  return (0, import_node_crypto.createHash)("sha256").update(key).digest("base64").replace(/=+$/g, "");
-}
-function padBase642(value) {
-  const remainder = value.length % 4;
-  return remainder === 0 ? value : `${value}${"=".repeat(4 - remainder)}`;
-}
-function createKnownHostsConfigurationError(lineNumber, reason) {
-  return new ConfigurationError({
-    details: { lineNumber, provider: SFTP_PROVIDER_ID },
-    message: `SFTP known_hosts line ${lineNumber} ${reason}`,
-    protocol: "sftp",
-    retryable: false
-  });
-}
-function resolveSftpAuthentication(profile) {
-  const agent = profile.ssh?.agent;
-  const password = resolveOptionalTextCredential(profile.password, "password");
-  const privateKey = profile.ssh?.privateKey;
-  const passphrase = profile.ssh?.passphrase;
-  const keyboardInteractive = profile.ssh?.keyboardInteractive;
-  const username = requireTextCredential(profile.username, "username");
-  const authHandler = [];
-  if (privateKey !== void 0) {
-    const method = {
-      key: privateKey,
-      type: "publickey",
-      username
-    };
-    if (passphrase !== void 0) method.passphrase = passphrase;
-    authHandler.push(method);
-  }
-  if (password !== void 0) {
-    authHandler.push({
-      password,
-      type: "password",
-      username
-    });
-  }
-  if (agent !== void 0) {
-    authHandler.push({
-      agent,
-      type: "agent",
-      username
-    });
-  }
-  if (keyboardInteractive !== void 0) {
-    authHandler.push({
-      prompt: (name, instructions, language, prompts, finish) => {
-        handleKeyboardInteractiveChallenge(
-          {
-            instructions,
-            language,
-            name,
-            prompts
-          },
-          keyboardInteractive,
-          finish
-        );
-      },
-      type: "keyboard-interactive",
-      username
-    });
-  }
-  if (authHandler.length === 0) {
-    throw new ConfigurationError({
-      details: { provider: SFTP_PROVIDER_ID },
-      message: "SFTP profiles require a password, ssh.privateKey, ssh.agent, or ssh.keyboardInteractive",
-      protocol: "sftp",
-      retryable: false
-    });
-  }
-  return { authHandler };
-}
-function handleKeyboardInteractiveChallenge(challenge, handler, finish) {
-  Promise.resolve().then(() => handler(challenge)).then((answers) => finish(Array.from(answers))).catch(() => finish([]));
-}
-function openSftpSession(client, profile) {
-  return new Promise((resolve, reject) => {
-    client.sftp((error, sftp) => {
-      if (error !== void 0) {
-        reject(
-          mapSftpError(error, {
-            command: "SFTP",
-            host: profile.host
-          })
-        );
-        return;
-      }
-      resolve(sftp);
-    });
-  });
-}
-function readSftpDirectory(sftp, path2) {
-  return new Promise((resolve, reject) => {
-    sftp.readdir(path2, (error, entries) => {
-      if (error !== void 0) {
-        reject(error);
-        return;
-      }
-      resolve(entries);
-    });
-  });
-}
-function readSftpStats(sftp, path2) {
-  return new Promise((resolve, reject) => {
-    sftp.lstat(path2, (error, stats) => {
-      if (error !== void 0) {
-        reject(error);
-        return;
-      }
-      resolve(stats);
-    });
-  });
-}
-function sftpUnlink(sftp, path2) {
-  return new Promise((resolve, reject) => {
-    sftp.unlink(path2, (error) => {
-      if (error !== void 0 && error !== null) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
-}
-function sftpRename(sftp, from, to) {
-  return new Promise((resolve, reject) => {
-    sftp.rename(from, to, (error) => {
-      if (error !== void 0 && error !== null) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
-}
-function sftpMkdir(sftp, path2) {
-  return new Promise((resolve, reject) => {
-    sftp.mkdir(path2, (error) => {
-      if (error !== void 0 && error !== null) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
-}
-function sftpRmdir(sftp, path2) {
-  return new Promise((resolve, reject) => {
-    sftp.rmdir(path2, (error) => {
-      if (error !== void 0 && error !== null) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
-}
-async function* createSftpReadSource(sftp, path2, range, request) {
-  if (range.length <= 0) {
-    return;
-  }
-  const stream = sftp.createReadStream(path2, {
-    end: range.offset + range.length - 1,
-    start: range.offset
-  });
-  const closeOnAbort = () => stream.destroy();
-  request.signal?.addEventListener("abort", closeOnAbort, { once: true });
-  try {
-    for await (const chunk of stream) {
-      request.throwIfAborted();
-      yield new Uint8Array(import_node_buffer4.Buffer.from(chunk));
-    }
-  } catch (error) {
-    throw mapSftpError(error, { command: "READ", path: path2 });
-  } finally {
-    request.signal?.removeEventListener("abort", closeOnAbort);
-  }
-}
-async function writeSftpContent(sftp, path2, request, offset) {
-  const stream = createSftpWriteStream(sftp, path2, offset);
-  const closeOnAbort = () => stream.destroy();
-  let bytesTransferred = 0;
-  request.signal?.addEventListener("abort", closeOnAbort, { once: true });
-  try {
-    for await (const chunk of request.content) {
-      request.throwIfAborted();
-      await writeSftpChunk(stream, chunk);
-      bytesTransferred += chunk.byteLength;
-      request.reportProgress(bytesTransferred, request.totalBytes);
-    }
-    await endSftpWriteStream(stream);
-    return bytesTransferred;
-  } catch (error) {
-    stream.destroy();
-    throw error;
-  } finally {
-    request.signal?.removeEventListener("abort", closeOnAbort);
-  }
-}
-function createSftpWriteStream(sftp, path2, offset) {
-  if (offset === void 0) {
-    return sftp.createWriteStream(path2, { flags: "w" });
-  }
-  return sftp.createWriteStream(path2, { flags: "r+", start: offset });
-}
-function writeSftpChunk(stream, chunk) {
-  if (chunk.byteLength === 0) {
-    return Promise.resolve();
-  }
-  return new Promise((resolve, reject) => {
-    const cleanup = () => {
-      stream.off("error", handleError);
-    };
-    const handleError = (error) => {
-      cleanup();
-      reject(error);
-    };
-    stream.once("error", handleError);
-    stream.write(import_node_buffer4.Buffer.from(chunk), (error) => {
-      cleanup();
-      if (error != null) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
-}
-function endSftpWriteStream(stream) {
-  return new Promise((resolve, reject) => {
-    const cleanup = () => {
-      stream.off("close", handleClose);
-      stream.off("error", handleError);
-    };
-    const handleClose = () => {
-      cleanup();
-      resolve();
-    };
-    const handleError = (error) => {
-      cleanup();
-      reject(error);
-    };
-    stream.once("close", handleClose);
-    stream.once("error", handleError);
-    stream.end();
-  });
-}
-function resolveSftpReadRange(size, range) {
-  if (range === void 0) {
-    return { length: size, offset: 0 };
-  }
-  const requestedOffset = normalizeByteCount2(range.offset, "offset", "/");
-  const requestedLength = range.length === void 0 ? size - Math.min(requestedOffset, size) : normalizeByteCount2(range.length, "length", "/");
-  const offset = Math.min(requestedOffset, size);
-  const length = Math.max(0, Math.min(requestedLength, size - offset));
-  return { length, offset };
-}
-function normalizeOptionalByteCount2(value, field, path2) {
-  return value === void 0 ? void 0 : normalizeByteCount2(value, field, path2);
-}
-function normalizeByteCount2(value, field, path2) {
-  if (!Number.isFinite(value) || value < 0) {
-    throw new ConfigurationError({
-      details: { field, provider: SFTP_PROVIDER_ID },
-      message: `SFTP provider ${field} must be a non-negative number`,
-      path: path2,
-      protocol: "sftp",
-      retryable: false
-    });
-  }
-  return Math.floor(value);
-}
-function cloneVerification3(verification) {
-  const clone = { verified: verification.verified };
-  if (verification.method !== void 0) clone.method = verification.method;
-  if (verification.checksum !== void 0) clone.checksum = verification.checksum;
-  if (verification.expectedChecksum !== void 0) {
-    clone.expectedChecksum = verification.expectedChecksum;
-  }
-  if (verification.actualChecksum !== void 0) clone.actualChecksum = verification.actualChecksum;
-  if (verification.details !== void 0) clone.details = { ...verification.details };
-  return clone;
-}
-function mapSftpDirectoryEntry(directory, entry) {
-  return mapSftpStats(joinRemotePath(directory, entry.filename), entry.filename, entry.attrs, {
-    longname: entry.longname
-  });
-}
-function mapSftpStats(path2, name, stats, raw = {}) {
-  const entry = {
-    group: String(stats.gid),
-    name,
-    owner: String(stats.uid),
-    path: path2,
-    permissions: { raw: formatSftpMode(stats.mode) },
-    raw: {
-      attrs: serializeSftpStats(stats),
-      ...raw
-    },
-    type: mapSftpEntryType(stats)
-  };
-  const accessedAt = sftpSecondsToDate(stats.atime);
-  const modifiedAt = sftpSecondsToDate(stats.mtime);
-  entry.size = stats.size;
-  entry.accessedAt = accessedAt;
-  entry.modifiedAt = modifiedAt;
-  return entry;
-}
-function mapSftpEntryType(stats) {
-  if (stats.isFile()) return "file";
-  if (stats.isDirectory()) return "directory";
-  if (stats.isSymbolicLink()) return "symlink";
-  return "unknown";
-}
-function serializeSftpStats(stats) {
-  return {
-    atime: stats.atime,
-    gid: stats.gid,
-    mode: stats.mode,
-    mtime: stats.mtime,
-    size: stats.size,
-    uid: stats.uid
-  };
-}
-function sftpSecondsToDate(value) {
-  return new Date(value * 1e3);
-}
-function formatSftpMode(mode) {
-  return mode.toString(8).padStart(6, "0");
-}
-function normalizeSftpPath(path2) {
-  return normalizeRemotePath(path2);
-}
-function compareEntries2(left, right) {
-  return left.path.localeCompare(right.path);
-}
-function requireTextCredential(value, field) {
-  const text = resolveOptionalTextCredential(value, field);
-  if (text === void 0) {
-    throw new ConfigurationError({
-      details: { field, provider: SFTP_PROVIDER_ID },
-      message: `SFTP profiles require a ${field}`,
-      protocol: "sftp",
-      retryable: false
-    });
-  }
-  return text;
-}
-function resolveOptionalTextCredential(value, field) {
-  if (value === void 0) {
-    return void 0;
-  }
-  const text = import_node_buffer4.Buffer.isBuffer(value) ? value.toString("utf8") : value;
-  if (text.length === 0) {
-    throw new ConfigurationError({
-      details: { field, provider: SFTP_PROVIDER_ID },
-      message: `SFTP profile ${field} must be non-empty`,
-      protocol: "sftp",
-      retryable: false
-    });
-  }
-  return text;
-}
-function validateSftpProviderOptions(options) {
-  if (options.readyTimeoutMs !== void 0 && (!Number.isFinite(options.readyTimeoutMs) || options.readyTimeoutMs <= 0)) {
-    throw new ConfigurationError({
-      details: { readyTimeoutMs: options.readyTimeoutMs },
-      message: "SFTP provider readyTimeoutMs must be a positive finite number",
-      protocol: "sftp",
-      retryable: false
-    });
-  }
-}
-function createSftpPathNotFoundError(path2, message) {
-  return new PathNotFoundError({
-    details: { provider: SFTP_PROVIDER_ID },
-    message,
-    path: path2,
-    protocol: "sftp",
-    retryable: false
-  });
-}
-function throwIfAborted2(signal, path2, operation) {
-  if (signal?.aborted !== true) {
-    return;
-  }
-  throw new AbortError({
-    details: { operation },
-    message: `SFTP ${operation} was aborted`,
-    path: path2,
-    protocol: "sftp",
-    retryable: false
-  });
-}
-function mapSftpConnectionError(error, host) {
-  if (error instanceof ZeroTransferError) {
-    return error;
-  }
-  if (isSftpAuthenticationError(error)) {
-    return new AuthenticationError({
-      cause: error,
-      host,
-      message: "SFTP authentication failed",
-      protocol: "sftp",
-      retryable: false
-    });
-  }
-  return new ConnectionError({
-    cause: error,
-    details: { originalMessage: getErrorMessage(error) },
-    host,
-    message: `SFTP connection failed: ${getErrorMessage(error)}`,
-    protocol: "sftp",
-    retryable: true
-  });
-}
-function mapSftpError(error, context) {
-  if (error instanceof ZeroTransferError) {
-    return error;
-  }
-  const sftpCode = getSftpStatusCode(error);
-  const baseDetails = createSftpErrorBase(error, context, sftpCode);
-  if (sftpCode === 2 || isMissingPathMessage(error)) {
-    return new PathNotFoundError({
-      ...baseDetails,
-      message: `SFTP path not found: ${context.path ?? "unknown"}`,
-      retryable: false
-    });
-  }
-  if (sftpCode === 3) {
-    return new PermissionDeniedError({
-      ...baseDetails,
-      message: `SFTP permission denied: ${context.path ?? context.command}`,
-      retryable: false,
-      sftpCode
-    });
-  }
-  return new ProtocolError({
-    ...baseDetails,
-    details: { originalMessage: getErrorMessage(error) },
-    message: `SFTP ${context.command} failed: ${getErrorMessage(error)}`,
-    retryable: sftpCode === 6 || sftpCode === 7
-  });
-}
-function createSftpErrorBase(error, context, sftpCode) {
-  const base = {
-    cause: error,
-    command: context.command,
-    protocol: "sftp"
-  };
-  if (context.host !== void 0) base.host = context.host;
-  if (context.path !== void 0) base.path = context.path;
-  if (sftpCode !== void 0) base.sftpCode = sftpCode;
-  return base;
-}
-function getSftpStatusCode(error) {
-  const code = isRecord2(error) ? error.code : void 0;
-  if (typeof code === "number") {
-    return code;
-  }
-  return void 0;
-}
-function isSftpAuthenticationError(error) {
-  if (!isRecord2(error)) {
-    return false;
-  }
-  const level = error.level;
-  const message = getErrorMessage(error).toLowerCase();
-  return level === "client-authentication" || message.includes("authentication");
-}
-function isMissingPathMessage(error) {
-  return /no such file|not found/i.test(getErrorMessage(error));
-}
-function getErrorMessage(error) {
-  return error instanceof Error ? error.message : String(error);
-}
-function isRecord2(value) {
-  return typeof value === "object" && value !== null;
-}
-function noop() {
-}
-
-// src/providers/web/httpInternals.ts
-var import_node_buffer5 = require("buffer");
-function buildBaseUrl(profile, options) {
-  const protocol = options.secure ? "https:" : "http:";
-  const portSegment = profile.port !== void 0 ? `:${profile.port}` : "";
-  const path2 = options.basePath.length === 0 ? "/" : ensureLeadingSlash(options.basePath);
-  try {
-    return new URL(`${protocol}//${profile.host}${portSegment}${path2}`);
-  } catch (error) {
-    throw new ConfigurationError({
-      cause: error,
-      details: { host: profile.host, port: profile.port },
-      message: "Invalid host or basePath for HTTP-family provider",
-      retryable: false
-    });
-  }
-}
-function resolveUrl(baseUrl, remotePath) {
-  const trimmedBase = baseUrl.pathname.replace(/\/+$/, "");
-  const suffix = remotePath === "/" ? "" : remotePath;
-  const merged = new URL(baseUrl.toString());
-  merged.pathname = `${trimmedBase}${suffix}`;
-  return merged;
-}
-function ensureLeadingSlash(value) {
-  return value.startsWith("/") ? value : `/${value}`;
-}
-async function dispatchRequest(options, url, init) {
-  const headers = { ...options.headers, ...init.headers ?? {} };
-  const controller = new AbortController();
-  const upstreamSignal = init.signal ?? null;
-  if (upstreamSignal !== null) {
-    if (upstreamSignal.aborted) controller.abort(upstreamSignal.reason);
-    else upstreamSignal.addEventListener("abort", () => controller.abort(upstreamSignal.reason));
-  }
-  let timer;
-  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
-    timer = setTimeout(
-      () => controller.abort(new Error("HTTP request timed out")),
-      options.timeoutMs
-    );
-  }
-  try {
-    return await options.fetch(url.toString(), {
-      ...init,
-      headers,
-      signal: controller.signal
-    });
-  } catch (error) {
-    if (controller.signal.aborted && upstreamSignal?.aborted !== true) {
-      throw new TimeoutError({
-        cause: error,
-        details: { timeoutMs: options.timeoutMs, url: url.toString() },
-        message: `HTTP request to ${url.toString()} timed out after ${String(options.timeoutMs)}ms`,
-        retryable: true
-      });
-    }
-    throw new ConnectionError({
-      cause: error,
-      details: { url: url.toString() },
-      message: `HTTP request to ${url.toString()} failed`,
-      retryable: true
-    });
-  } finally {
-    if (timer !== void 0) clearTimeout(timer);
-  }
-}
-function parseContentRangeTotal(value) {
-  const match = /\/(\d+)\s*$/.exec(value);
-  if (match === null) return void 0;
-  const total = Number.parseInt(match[1] ?? "", 10);
-  return Number.isFinite(total) ? total : void 0;
-}
-function parseTotalBytes(response, rangeOffset) {
-  if (response.status === 206) {
-    const contentRange = response.headers.get("content-range");
-    if (contentRange !== null) {
-      const total = parseContentRangeTotal(contentRange);
-      if (total !== void 0) return total;
-    }
-  }
-  const contentLength = response.headers.get("content-length");
-  if (contentLength === null) return void 0;
-  const length = Number.parseInt(contentLength, 10);
-  if (!Number.isFinite(length) || length < 0) return void 0;
-  return rangeOffset !== void 0 && rangeOffset > 0 ? length + rangeOffset : length;
-}
-function formatRangeHeader(offset, length) {
-  if (length === void 0) return `bytes=${String(offset)}-`;
-  const end = offset + length - 1;
-  return `bytes=${String(offset)}-${String(end)}`;
-}
-function mapResponseError(response, path2) {
-  const details = { path: path2, status: response.status, statusText: response.statusText };
-  if (response.status === 401) {
-    return new AuthenticationError({
-      details,
-      message: `HTTP authentication failed for ${path2} (${String(response.status)})`,
-      retryable: false
-    });
-  }
-  if (response.status === 403) {
-    return new PermissionDeniedError({
-      details,
-      message: `HTTP access forbidden for ${path2} (${String(response.status)})`,
-      retryable: false
-    });
-  }
-  if (response.status === 404) {
-    return new PathNotFoundError({
-      details,
-      message: `HTTP path not found: ${path2}`,
-      retryable: false
-    });
-  }
-  return new ConnectionError({
-    details,
-    message: `HTTP request for ${path2} failed with status ${String(response.status)}`,
-    retryable: response.status >= 500
-  });
-}
-async function* webStreamToAsyncIterable(body) {
-  const reader = body.getReader();
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value !== void 0) yield value;
-    }
-  } finally {
-    reader.releaseLock();
-  }
-}
-function secretToString2(value) {
-  if (typeof value === "string") return value;
-  if (value instanceof Uint8Array || import_node_buffer5.Buffer.isBuffer(value)) {
-    return import_node_buffer5.Buffer.from(value).toString("utf8");
-  }
-  return String(value);
-}
-
-// src/providers/cloud/DropboxProvider.ts
-var DROPBOX_API_BASE = "https://api.dropboxapi.com";
-var DROPBOX_CONTENT_BASE = "https://content.dropboxapi.com";
-var DROPBOX_CHECKSUM_CAPABILITIES = ["dropbox-content-hash"];
-function createDropboxProviderFactory(options = {}) {
-  const id = options.id ?? "dropbox";
-  const fetchImpl = options.fetch ?? globalThis.fetch;
-  const apiBaseUrl = options.apiBaseUrl ?? DROPBOX_API_BASE;
-  const contentBaseUrl = options.contentBaseUrl ?? DROPBOX_CONTENT_BASE;
-  if (typeof fetchImpl !== "function") {
-    throw new ConfigurationError({
-      message: "Global fetch is unavailable; supply DropboxProviderOptions.fetch explicitly",
-      retryable: false
-    });
-  }
-  const capabilities = {
-    atomicRename: false,
-    authentication: ["token", "oauth"],
-    checksum: [...DROPBOX_CHECKSUM_CAPABILITIES],
-    chmod: false,
-    chown: false,
-    list: true,
-    maxConcurrency: 4,
-    metadata: ["modifiedAt", "uniqueId"],
-    notes: [
-      "Dropbox provider performs single-shot uploads via /2/files/upload; resumable upload sessions are not yet supported."
-    ],
-    provider: id,
-    readStream: true,
-    resumeDownload: true,
-    resumeUpload: false,
-    serverSideCopy: false,
-    serverSideMove: false,
-    stat: true,
-    symlink: false,
-    writeStream: true
-  };
-  return {
-    capabilities,
-    create: () => new DropboxProvider({
-      apiBaseUrl,
-      capabilities,
-      contentBaseUrl,
-      defaultHeaders: { ...options.defaultHeaders ?? {} },
-      fetch: fetchImpl,
-      id
-    }),
-    id
-  };
-}
-var DropboxProvider = class {
-  constructor(internals) {
-    this.internals = internals;
-    this.id = internals.id;
-    this.capabilities = internals.capabilities;
-  }
-  internals;
-  id;
-  capabilities;
-  async connect(profile) {
-    if (profile.password === void 0) {
-      throw new ConfigurationError({
-        message: "Dropbox provider requires a bearer token via profile.password",
-        retryable: false
-      });
-    }
-    const token = secretToString2(await resolveSecret(profile.password));
-    if (token === "") {
-      throw new ConfigurationError({
-        message: "Dropbox bearer token resolved to an empty string",
-        retryable: false
-      });
-    }
-    const sessionOptions = {
-      apiBaseUrl: this.internals.apiBaseUrl,
-      capabilities: this.internals.capabilities,
-      contentBaseUrl: this.internals.contentBaseUrl,
-      defaultHeaders: this.internals.defaultHeaders,
-      fetch: this.internals.fetch,
-      id: this.internals.id,
-      token
-    };
-    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
-    return new DropboxSession(sessionOptions);
-  }
-};
-var DropboxSession = class {
-  provider;
-  capabilities;
-  fs;
-  transfers;
-  constructor(options) {
-    this.provider = options.id;
-    this.capabilities = options.capabilities;
-    this.fs = new DropboxFileSystem(options);
-    this.transfers = new DropboxTransferOperations(options);
-  }
-  disconnect() {
-    return Promise.resolve();
-  }
-};
-var DropboxFileSystem = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async list(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const apiPath = toDropboxPath(normalized);
-    const entries = [];
-    let cursor;
-    do {
-      const body = cursor === void 0 ? { include_media_info: false, path: apiPath, recursive: false } : { cursor };
-      const endpoint = cursor === void 0 ? "/2/files/list_folder" : "/2/files/list_folder/continue";
-      const response = await dropboxRpc(this.options, endpoint, body);
-      const parsed = await response.json();
-      for (const raw of parsed.entries) {
-        const entry = toRemoteEntry(raw, normalized);
-        if (entry !== void 0) entries.push(entry);
-      }
-      cursor = parsed.has_more === true ? parsed.cursor : void 0;
-    } while (cursor !== void 0);
-    return entries;
-  }
-  async stat(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const apiPath = toDropboxPath(normalized);
-    const response = await dropboxRpc(this.options, "/2/files/get_metadata", {
-      include_deleted: false,
-      include_has_explicit_shared_members: false,
-      include_media_info: false,
-      path: apiPath
-    });
-    const raw = await response.json();
-    const parent = parentDir(normalized);
-    const entry = toRemoteEntry(raw, parent);
-    if (entry === void 0) {
-      throw new PathNotFoundError({
-        details: { path: normalized },
-        message: `Dropbox returned no metadata for ${normalized}`,
-        retryable: false
-      });
-    }
-    return { ...entry, exists: true };
-  }
-};
-var DropboxTransferOperations = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async read(request) {
-    request.throwIfAborted();
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const apiArg = JSON.stringify({ path: toDropboxPath(normalized) });
-    const headers = {
-      "Dropbox-API-Arg": apiArg
-    };
-    if (request.range !== void 0) {
-      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
-    }
-    const url = `${this.options.contentBaseUrl}/2/files/download`;
-    const response = await dropboxFetch(this.options, url, "POST", {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      extraHeaders: headers
-    });
-    if (!response.ok && response.status !== 206) {
-      throw mapDropboxResponseError(response, normalized, await safeReadText(response));
-    }
-    const body = response.body;
-    if (body === null) {
-      throw new ConnectionError({
-        details: { path: normalized },
-        message: `Dropbox download for ${normalized} produced no body`,
-        retryable: true
-      });
-    }
-    const result = {
-      content: webStreamToAsyncIterable(body)
-    };
-    const totalBytes = parseTotalBytes(response, request.range?.offset);
-    if (totalBytes !== void 0) result.totalBytes = totalBytes;
-    if (request.range?.offset !== void 0 && request.range.offset > 0) {
-      result.bytesRead = request.range.offset;
-    }
-    const hash = readApiResultHeader(response)?.content_hash;
-    if (typeof hash === "string" && hash.length > 0) result.checksum = hash;
-    return result;
-  }
-  async write(request) {
-    request.throwIfAborted();
-    if (request.offset !== void 0 && request.offset > 0) {
-      throw new UnsupportedFeatureError({
-        details: { offset: request.offset },
-        message: "Dropbox provider does not yet support resumable upload sessions",
-        retryable: false
-      });
-    }
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const buffered = await collectChunks(request.content);
-    const apiArg = JSON.stringify({
-      autorename: false,
-      mode: "overwrite",
-      mute: true,
-      path: toDropboxPath(normalized),
-      strict_conflict: false
-    });
-    const url = `${this.options.contentBaseUrl}/2/files/upload`;
-    const response = await dropboxFetch(this.options, url, "POST", {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      body: buffered,
-      extraHeaders: {
-        "content-type": "application/octet-stream",
-        "Dropbox-API-Arg": apiArg
-      }
-    });
-    if (!response.ok) {
-      throw mapDropboxResponseError(response, normalized, await safeReadText(response));
-    }
-    const meta = await response.json();
-    request.reportProgress(buffered.byteLength, buffered.byteLength);
-    const result = {
-      bytesTransferred: buffered.byteLength,
-      totalBytes: buffered.byteLength
-    };
-    if (typeof meta.content_hash === "string" && meta.content_hash.length > 0) {
-      result.checksum = meta.content_hash;
-    }
-    return result;
-  }
-};
-async function dropboxFetch(options, url, method, fetchOptions = {}) {
-  const headers = {
-    ...options.defaultHeaders,
-    ...fetchOptions.extraHeaders ?? {},
-    authorization: `Bearer ${options.token}`
-  };
-  const init = { headers, method };
-  if (fetchOptions.body !== void 0) {
-    init.body = fetchOptions.body;
-  }
-  const controller = new AbortController();
-  const upstream = fetchOptions.signal ?? null;
-  if (upstream !== null) {
-    if (upstream.aborted) controller.abort(upstream.reason);
-    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
-  }
-  let timer;
-  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
-    timer = setTimeout(
-      () => controller.abort(new Error("Dropbox request timed out")),
-      options.timeoutMs
-    );
-  }
-  try {
-    return await options.fetch(url, { ...init, signal: controller.signal });
-  } catch (error) {
-    throw new ConnectionError({
-      cause: error,
-      details: { url },
-      message: `Dropbox request to ${url} failed`,
-      retryable: true
-    });
-  } finally {
-    if (timer !== void 0) clearTimeout(timer);
-  }
-}
-async function dropboxRpc(options, endpoint, body) {
-  const url = `${options.apiBaseUrl}${endpoint}`;
-  const encoded = new TextEncoder().encode(JSON.stringify(body));
-  const response = await dropboxFetch(options, url, "POST", {
-    body: encoded,
-    extraHeaders: { "content-type": "application/json" }
-  });
-  if (!response.ok) {
-    const text = await safeReadText(response);
-    throw mapDropboxResponseError(response, endpoint, text);
-  }
-  return response;
-}
-function mapDropboxResponseError(response, contextPath, bodyText) {
-  const details = {
-    bodyText: bodyText.slice(0, 500),
-    path: contextPath,
-    status: response.status,
-    statusText: response.statusText
-  };
-  if (response.status === 401) {
-    return new AuthenticationError({
-      details,
-      message: `Dropbox authentication failed for ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 403) {
-    return new PermissionDeniedError({
-      details,
-      message: `Dropbox access forbidden for ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 409 && /not_found/.test(bodyText)) {
-    return new PathNotFoundError({
-      details,
-      message: `Dropbox path not found: ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 429) {
-    return new ConnectionError({
-      details,
-      message: `Dropbox rate limit hit for ${contextPath}`,
-      retryable: true
-    });
-  }
-  return new ConnectionError({
-    details,
-    message: `Dropbox request for ${contextPath} failed with status ${String(response.status)}`,
-    retryable: response.status >= 500
-  });
-}
-function toRemoteEntry(raw, parentPath) {
-  if (raw[".tag"] === "deleted") return void 0;
-  const displayName = raw.name;
-  const path2 = raw.path_display ?? joinDropboxPath(parentPath, displayName);
-  const entry = {
-    name: basenameRemotePath(path2),
-    path: path2,
-    raw,
-    type: raw[".tag"] === "folder" ? "directory" : "file"
-  };
-  if (raw[".tag"] === "file") {
-    const file = raw;
-    if (typeof file.size === "number") entry.size = file.size;
-    const modified = file.server_modified ?? file.client_modified;
-    if (typeof modified === "string") {
-      const parsed = new Date(modified);
-      if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
-    }
-    if (typeof file.content_hash === "string") entry.uniqueId = file.content_hash;
-    else if (typeof file.id === "string") entry.uniqueId = file.id;
-  } else if (typeof raw.id === "string") {
-    entry.uniqueId = raw.id;
-  }
-  return entry;
-}
-function toDropboxPath(normalized) {
-  if (normalized === "/" || normalized === "") return "";
-  return normalized;
-}
-function joinDropboxPath(parent, name) {
-  if (parent === "" || parent === "/") return `/${name}`;
-  return parent.endsWith("/") ? `${parent}${name}` : `${parent}/${name}`;
-}
-function parentDir(normalized) {
-  if (normalized === "/" || normalized === "") return "/";
-  const idx = normalized.lastIndexOf("/");
-  if (idx <= 0) return "/";
-  return normalized.slice(0, idx);
-}
-async function safeReadText(response) {
-  try {
-    return await response.text();
-  } catch {
-    return "";
-  }
-}
-function readApiResultHeader(response) {
-  const header = response.headers.get("dropbox-api-result");
-  if (header === null || header === "") return void 0;
-  try {
-    return JSON.parse(header);
-  } catch {
-    return void 0;
-  }
-}
-async function collectChunks(source) {
-  const chunks = [];
-  let total = 0;
-  for await (const chunk of source) {
-    chunks.push(chunk);
-    total += chunk.byteLength;
-  }
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return out;
-}
-
-// src/providers/cloud/GoogleDriveProvider.ts
-var import_node_buffer6 = require("buffer");
-var GDRIVE_API_BASE = "https://www.googleapis.com/drive/v3";
-var GDRIVE_UPLOAD_BASE = "https://www.googleapis.com/upload/drive/v3";
-var GDRIVE_FOLDER_MIME = "application/vnd.google-apps.folder";
-var GDRIVE_CHECKSUM_CAPABILITIES = ["md5", "sha256", "crc32c"];
-var GDRIVE_FILE_FIELDS = "id,name,mimeType,size,modifiedTime,createdTime,md5Checksum,sha256Checksum,parents,trashed";
-var GDRIVE_LIST_FIELDS = `nextPageToken,files(${GDRIVE_FILE_FIELDS})`;
-function createGoogleDriveProviderFactory(options = {}) {
-  const id = options.id ?? "google-drive";
-  const fetchImpl = options.fetch ?? globalThis.fetch;
-  const apiBaseUrl = options.apiBaseUrl ?? GDRIVE_API_BASE;
-  const uploadBaseUrl = options.uploadBaseUrl ?? GDRIVE_UPLOAD_BASE;
-  const rootFolderId = options.rootFolderId ?? "root";
-  if (typeof fetchImpl !== "function") {
-    throw new ConfigurationError({
-      message: "Global fetch is unavailable; supply GoogleDriveProviderOptions.fetch explicitly",
-      retryable: false
-    });
-  }
-  const capabilities = {
-    atomicRename: false,
-    authentication: ["token", "oauth"],
-    checksum: [...GDRIVE_CHECKSUM_CAPABILITIES],
-    chmod: false,
-    chown: false,
-    list: true,
-    maxConcurrency: 4,
-    metadata: ["modifiedAt", "createdAt", "mimeType", "uniqueId"],
-    notes: [
-      "Google Drive provider performs single-shot multipart uploads via /upload/drive/v3/files; resumable upload sessions are not yet supported."
-    ],
-    provider: id,
-    readStream: true,
-    resumeDownload: true,
-    resumeUpload: false,
-    serverSideCopy: false,
-    serverSideMove: false,
-    stat: true,
-    symlink: false,
-    writeStream: true
-  };
-  return {
-    capabilities,
-    create: () => new GoogleDriveProvider({
-      apiBaseUrl,
-      capabilities,
-      defaultHeaders: { ...options.defaultHeaders ?? {} },
-      fetch: fetchImpl,
-      id,
-      rootFolderId,
-      uploadBaseUrl
-    }),
-    id
-  };
-}
-var GoogleDriveProvider = class {
-  constructor(internals) {
-    this.internals = internals;
-    this.id = internals.id;
-    this.capabilities = internals.capabilities;
-  }
-  internals;
-  id;
-  capabilities;
-  async connect(profile) {
-    if (profile.password === void 0) {
-      throw new ConfigurationError({
-        message: "Google Drive provider requires a bearer token via profile.password",
-        retryable: false
-      });
-    }
-    const token = secretToString2(await resolveSecret(profile.password));
-    if (token === "") {
-      throw new ConfigurationError({
-        message: "Google Drive bearer token resolved to an empty string",
-        retryable: false
-      });
-    }
-    const sessionOptions = {
-      apiBaseUrl: this.internals.apiBaseUrl,
-      capabilities: this.internals.capabilities,
-      defaultHeaders: this.internals.defaultHeaders,
-      fetch: this.internals.fetch,
-      id: this.internals.id,
-      rootFolderId: this.internals.rootFolderId,
-      token,
-      uploadBaseUrl: this.internals.uploadBaseUrl
-    };
-    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
-    return new GoogleDriveSession(sessionOptions);
-  }
-};
-var GoogleDriveSession = class {
-  provider;
-  capabilities;
-  fs;
-  transfers;
-  constructor(options) {
-    this.provider = options.id;
-    this.capabilities = options.capabilities;
-    const resolver = new GoogleDrivePathResolver(options);
-    this.fs = new GoogleDriveFileSystem(options, resolver);
-    this.transfers = new GoogleDriveTransferOperations(options, resolver);
-  }
-  disconnect() {
-    return Promise.resolve();
-  }
-};
-var GoogleDrivePathResolver = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  cache = /* @__PURE__ */ new Map();
-  /** Resolves an absolute remote path to the Drive file resource for that node. */
-  async resolvePath(path2) {
-    const normalized = normalizeRemotePath(path2);
-    if (normalized === "/" || normalized === "") {
-      return {
-        id: this.options.rootFolderId,
-        mimeType: GDRIVE_FOLDER_MIME,
-        name: ""
-      };
-    }
-    const cached = this.cache.get(normalized);
-    if (cached !== void 0) return cached;
-    const segments = normalized.split("/").filter((s) => s !== "");
-    let parent = {
-      id: this.options.rootFolderId,
-      mimeType: GDRIVE_FOLDER_MIME,
-      name: ""
-    };
-    let walked = "";
-    for (const segment of segments) {
-      const child = await this.findChild(parent.id, segment);
-      if (child === void 0) {
-        throw new PathNotFoundError({
-          details: { path: normalized },
-          message: `Google Drive path not found: ${normalized}`,
-          retryable: false
-        });
-      }
-      walked = `${walked}/${segment}`;
-      this.cache.set(walked, child);
-      parent = child;
-    }
-    return parent;
-  }
-  /** Resolves the parent folder id for a path; throws on missing parent. */
-  async resolveParentId(path2) {
-    const normalized = normalizeRemotePath(path2);
-    if (normalized === "/" || normalized === "") return this.options.rootFolderId;
-    const idx = normalized.lastIndexOf("/");
-    if (idx <= 0) return this.options.rootFolderId;
-    const parentPath = normalized.slice(0, idx);
-    const parent = await this.resolvePath(parentPath);
-    return parent.id;
-  }
-  async findChild(parentId, name) {
-    const q = `'${escapeDriveQ(parentId)}' in parents and name = '${escapeDriveQ(name)}' and trashed = false`;
-    const response = await driveApi(
-      this.options,
-      "GET",
-      `/files?${buildSearch({
-        fields: GDRIVE_LIST_FIELDS,
-        pageSize: "10",
-        q,
-        supportsAllDrives: "true",
-        includeItemsFromAllDrives: "true"
-      })}`
-    );
-    const parsed = await response.json();
-    return parsed.files.find((f) => f.name === name);
-  }
-};
-var GoogleDriveFileSystem = class {
-  constructor(options, resolver) {
-    this.options = options;
-    this.resolver = resolver;
-  }
-  options;
-  resolver;
-  async list(path2) {
-    const folder = await this.resolver.resolvePath(path2);
-    if (folder.mimeType !== GDRIVE_FOLDER_MIME && folder.id !== this.options.rootFolderId) {
-      throw new PathNotFoundError({
-        details: { path: path2 },
-        message: `Google Drive path is not a folder: ${path2}`,
-        retryable: false
-      });
-    }
-    const normalized = normalizeRemotePath(path2);
-    const entries = [];
-    let pageToken;
-    do {
-      const params = {
-        fields: GDRIVE_LIST_FIELDS,
-        includeItemsFromAllDrives: "true",
-        pageSize: "100",
-        q: `'${escapeDriveQ(folder.id)}' in parents and trashed = false`,
-        supportsAllDrives: "true"
-      };
-      if (pageToken !== void 0) params["pageToken"] = pageToken;
-      const response = await driveApi(this.options, "GET", `/files?${buildSearch(params)}`);
-      const parsed = await response.json();
-      for (const file of parsed.files) {
-        entries.push(toRemoteEntry2(file, normalized));
-      }
-      pageToken = parsed.nextPageToken;
-    } while (pageToken !== void 0);
-    return entries;
-  }
-  async stat(path2) {
-    const file = await this.resolver.resolvePath(path2);
-    const normalized = normalizeRemotePath(path2);
-    const parent = parentDir2(normalized);
-    const entry = toRemoteEntry2(file, parent);
-    return { ...entry, exists: true };
-  }
-};
-var GoogleDriveTransferOperations = class {
-  constructor(options, resolver) {
-    this.options = options;
-    this.resolver = resolver;
-  }
-  options;
-  resolver;
-  async read(request) {
-    request.throwIfAborted();
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const file = await this.resolver.resolvePath(normalized);
-    const headers = {};
-    if (request.range !== void 0) {
-      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
-    }
-    const params = buildSearch({ alt: "media", supportsAllDrives: "true" });
-    const response = await driveFetch(
-      this.options,
-      "GET",
-      `${this.options.apiBaseUrl}/files/${encodeURIComponent(file.id)}?${params}`,
-      {
-        ...request.signal !== void 0 ? { signal: request.signal } : {},
-        extraHeaders: headers
-      }
-    );
-    if (!response.ok && response.status !== 206) {
-      throw mapGoogleDriveResponseError(response, normalized, await safeReadText2(response));
-    }
-    const body = response.body;
-    if (body === null) {
-      throw new ConnectionError({
-        details: { path: normalized },
-        message: `Google Drive download for ${normalized} produced no body`,
-        retryable: true
-      });
-    }
-    const result = {
-      content: webStreamToAsyncIterable(body)
-    };
-    const totalBytes = parseTotalBytes(response, request.range?.offset);
-    if (totalBytes !== void 0) result.totalBytes = totalBytes;
-    if (request.range?.offset !== void 0 && request.range.offset > 0) {
-      result.bytesRead = request.range.offset;
-    }
-    if (typeof file.md5Checksum === "string" && file.md5Checksum.length > 0) {
-      result.checksum = file.md5Checksum;
-    }
-    return result;
-  }
-  async write(request) {
-    request.throwIfAborted();
-    if (request.offset !== void 0 && request.offset > 0) {
-      throw new UnsupportedFeatureError({
-        details: { offset: request.offset },
-        message: "Google Drive provider does not yet support resumable upload sessions",
-        retryable: false
-      });
-    }
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const buffered = await collectChunks2(request.content);
-    const parentId = await this.resolver.resolveParentId(normalized);
-    const name = basenameRemotePath(normalized);
-    const existing = await this.findExisting(parentId, name);
-    const metadata = { name };
-    if (existing === void 0) metadata["parents"] = [parentId];
-    const boundary = `----zt-boundary-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
-    const bodyParts = [];
-    const enc = new TextEncoder();
-    bodyParts.push(
-      enc.encode(
-        `--${boundary}\r
-Content-Type: application/json; charset=UTF-8\r
-\r
-${JSON.stringify(metadata)}\r
-`
-      )
-    );
-    bodyParts.push(enc.encode(`--${boundary}\r
-Content-Type: application/octet-stream\r
-\r
-`));
-    bodyParts.push(buffered);
-    bodyParts.push(enc.encode(`\r
---${boundary}--\r
-`));
-    const body = concatChunks(bodyParts);
-    const url = existing === void 0 ? `${this.options.uploadBaseUrl}/files?uploadType=multipart&supportsAllDrives=true&fields=${encodeURIComponent(GDRIVE_FILE_FIELDS)}` : `${this.options.uploadBaseUrl}/files/${encodeURIComponent(existing.id)}?uploadType=multipart&supportsAllDrives=true&fields=${encodeURIComponent(GDRIVE_FILE_FIELDS)}`;
-    const method = existing === void 0 ? "POST" : "PATCH";
-    const response = await driveFetch(this.options, method, url, {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      body,
-      extraHeaders: { "content-type": `multipart/related; boundary=${boundary}` }
-    });
-    if (!response.ok) {
-      throw mapGoogleDriveResponseError(response, normalized, await safeReadText2(response));
-    }
-    const meta = await response.json();
-    request.reportProgress(buffered.byteLength, buffered.byteLength);
-    const result = {
-      bytesTransferred: buffered.byteLength,
-      totalBytes: buffered.byteLength
-    };
-    if (typeof meta.md5Checksum === "string" && meta.md5Checksum.length > 0) {
-      result.checksum = meta.md5Checksum;
-    }
-    return result;
-  }
-  async findExisting(parentId, name) {
-    const q = `'${escapeDriveQ(parentId)}' in parents and name = '${escapeDriveQ(name)}' and trashed = false`;
-    const response = await driveApi(
-      this.options,
-      "GET",
-      `/files?${buildSearch({
-        fields: GDRIVE_LIST_FIELDS,
-        includeItemsFromAllDrives: "true",
-        pageSize: "10",
-        q,
-        supportsAllDrives: "true"
-      })}`
-    );
-    const parsed = await response.json();
-    return parsed.files.find((f) => f.name === name);
-  }
-};
-async function driveFetch(options, method, url, fetchOptions = {}) {
-  const headers = {
-    ...options.defaultHeaders,
-    ...fetchOptions.extraHeaders ?? {},
-    authorization: `Bearer ${options.token}`
-  };
-  const init = { headers, method };
-  if (fetchOptions.body !== void 0) {
-    init.body = fetchOptions.body;
-  }
-  const controller = new AbortController();
-  const upstream = fetchOptions.signal ?? null;
-  if (upstream !== null) {
-    if (upstream.aborted) controller.abort(upstream.reason);
-    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
-  }
-  let timer;
-  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
-    timer = setTimeout(
-      () => controller.abort(new Error("Google Drive request timed out")),
-      options.timeoutMs
-    );
-  }
-  try {
-    return await options.fetch(url, { ...init, signal: controller.signal });
-  } catch (error) {
-    throw new ConnectionError({
-      cause: error,
-      details: { url },
-      message: `Google Drive request to ${url} failed`,
-      retryable: true
-    });
-  } finally {
-    if (timer !== void 0) clearTimeout(timer);
-  }
-}
-async function driveApi(options, method, apiPath) {
-  const url = `${options.apiBaseUrl}${apiPath}`;
-  const response = await driveFetch(options, method, url);
-  if (!response.ok) {
-    const text = await safeReadText2(response);
-    throw mapGoogleDriveResponseError(response, apiPath, text);
-  }
-  return response;
-}
-function mapGoogleDriveResponseError(response, contextPath, bodyText) {
-  const details = {
-    bodyText: bodyText.slice(0, 500),
-    path: contextPath,
-    status: response.status,
-    statusText: response.statusText
-  };
-  if (response.status === 401) {
-    return new AuthenticationError({
-      details,
-      message: `Google Drive authentication failed for ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 403) {
-    return new PermissionDeniedError({
-      details,
-      message: `Google Drive access forbidden for ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 404) {
-    return new PathNotFoundError({
-      details,
-      message: `Google Drive path not found: ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 429) {
-    return new ConnectionError({
-      details,
-      message: `Google Drive rate limit hit for ${contextPath}`,
-      retryable: true
-    });
-  }
-  return new ConnectionError({
-    details,
-    message: `Google Drive request for ${contextPath} failed with status ${String(response.status)}`,
-    retryable: response.status >= 500
-  });
-}
-function toRemoteEntry2(file, parent) {
-  const path2 = joinDrivePath(parent, file.name);
-  const entry = {
-    name: file.name,
-    path: path2,
-    raw: file,
-    type: file.mimeType === GDRIVE_FOLDER_MIME ? "directory" : "file",
-    uniqueId: file.id
-  };
-  if (typeof file.size === "string") {
-    const sized = Number(file.size);
-    if (Number.isFinite(sized)) entry.size = sized;
-  }
-  if (typeof file.modifiedTime === "string") {
-    const parsed = new Date(file.modifiedTime);
-    if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
-  }
-  if (typeof file.createdTime === "string") {
-    const parsed = new Date(file.createdTime);
-    if (!Number.isNaN(parsed.getTime())) entry.createdAt = parsed;
-  }
-  return entry;
-}
-function joinDrivePath(parent, name) {
-  if (parent === "" || parent === "/") return `/${name}`;
-  return parent.endsWith("/") ? `${parent}${name}` : `${parent}/${name}`;
-}
-function parentDir2(normalized) {
-  if (normalized === "/" || normalized === "") return "/";
-  const idx = normalized.lastIndexOf("/");
-  if (idx <= 0) return "/";
-  return normalized.slice(0, idx);
-}
-function escapeDriveQ(value) {
-  return value.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
-}
-function buildSearch(params) {
-  const search = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) search.set(k, v);
-  return search.toString();
-}
-async function safeReadText2(response) {
-  try {
-    return await response.text();
-  } catch {
-    return "";
-  }
-}
-async function collectChunks2(source) {
-  const chunks = [];
-  let total = 0;
-  for await (const chunk of source) {
-    chunks.push(chunk);
-    total += chunk.byteLength;
-  }
-  return concatChunks(chunks, total);
-}
-function concatChunks(chunks, totalSize) {
-  const total = totalSize ?? chunks.reduce((acc, c) => acc + c.byteLength, 0);
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return out;
-}
-
-// src/providers/cloud/OneDriveProvider.ts
-var ONEDRIVE_DRIVE_BASE = "https://graph.microsoft.com/v1.0/me/drive";
-var ONEDRIVE_CHECKSUM_CAPABILITIES = ["sha1", "sha256", "quickxorhash"];
-function createOneDriveProviderFactory(options = {}) {
-  const id = options.id ?? "one-drive";
-  const fetchImpl = options.fetch ?? globalThis.fetch;
-  const driveBaseUrl = (options.driveBaseUrl ?? ONEDRIVE_DRIVE_BASE).replace(/\/+$/u, "");
-  if (typeof fetchImpl !== "function") {
-    throw new ConfigurationError({
-      message: "Global fetch is unavailable; supply OneDriveProviderOptions.fetch explicitly",
-      retryable: false
-    });
-  }
-  const capabilities = {
-    atomicRename: false,
-    authentication: ["token", "oauth"],
-    checksum: [...ONEDRIVE_CHECKSUM_CAPABILITIES],
-    chmod: false,
-    chown: false,
-    list: true,
-    maxConcurrency: 4,
-    metadata: ["modifiedAt", "createdAt", "uniqueId"],
-    notes: [
-      "OneDrive provider performs single-shot uploads via PUT /content; resumable upload sessions are not yet supported."
-    ],
-    provider: id,
-    readStream: true,
-    resumeDownload: true,
-    resumeUpload: false,
-    serverSideCopy: false,
-    serverSideMove: false,
-    stat: true,
-    symlink: false,
-    writeStream: true
-  };
-  return {
-    capabilities,
-    create: () => new OneDriveProvider({
-      capabilities,
-      defaultHeaders: { ...options.defaultHeaders ?? {} },
-      driveBaseUrl,
-      fetch: fetchImpl,
-      id
-    }),
-    id
-  };
-}
-var OneDriveProvider = class {
-  constructor(internals) {
-    this.internals = internals;
-    this.id = internals.id;
-    this.capabilities = internals.capabilities;
-  }
-  internals;
-  id;
-  capabilities;
-  async connect(profile) {
-    if (profile.password === void 0) {
-      throw new ConfigurationError({
-        message: "OneDrive provider requires a bearer token via profile.password",
-        retryable: false
-      });
-    }
-    const token = secretToString2(await resolveSecret(profile.password));
-    if (token === "") {
-      throw new ConfigurationError({
-        message: "OneDrive bearer token resolved to an empty string",
-        retryable: false
-      });
-    }
-    const sessionOptions = {
-      capabilities: this.internals.capabilities,
-      defaultHeaders: this.internals.defaultHeaders,
-      driveBaseUrl: this.internals.driveBaseUrl,
-      fetch: this.internals.fetch,
-      id: this.internals.id,
-      token
-    };
-    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
-    return new OneDriveSession(sessionOptions);
-  }
-};
-var OneDriveSession = class {
-  provider;
-  capabilities;
-  fs;
-  transfers;
-  constructor(options) {
-    this.provider = options.id;
-    this.capabilities = options.capabilities;
-    this.fs = new OneDriveFileSystem(options);
-    this.transfers = new OneDriveTransferOperations(options);
-  }
-  disconnect() {
-    return Promise.resolve();
-  }
-};
-var OneDriveFileSystem = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async list(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const initial = `${this.options.driveBaseUrl}${itemChildrenSegment(normalized)}`;
-    const entries = [];
-    let nextUrl = initial;
-    while (nextUrl !== void 0) {
-      const response = await graphFetch(this.options, "GET", nextUrl);
-      if (!response.ok) {
-        throw mapOneDriveResponseError(response, normalized, await safeReadText3(response));
-      }
-      const parsed = await response.json();
-      for (const item of parsed.value) {
-        entries.push(toRemoteEntry3(item, normalized));
-      }
-      nextUrl = parsed["@odata.nextLink"];
-    }
-    return entries;
-  }
-  async stat(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const url = `${this.options.driveBaseUrl}${itemSegment(normalized)}`;
-    const response = await graphFetch(this.options, "GET", url);
-    if (!response.ok) {
-      throw mapOneDriveResponseError(response, normalized, await safeReadText3(response));
-    }
-    const item = await response.json();
-    const parent = parentDir3(normalized);
-    const entry = toRemoteEntry3(item, parent);
-    return { ...entry, exists: true };
-  }
-};
-var OneDriveTransferOperations = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async read(request) {
-    request.throwIfAborted();
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const url = `${this.options.driveBaseUrl}${itemSegment(normalized)}/content`;
-    const headers = {};
-    if (request.range !== void 0) {
-      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
-    }
-    const meta = await this.fetchItem(normalized);
-    const response = await graphFetch(this.options, "GET", url, {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      extraHeaders: headers
-    });
-    if (!response.ok && response.status !== 206) {
-      throw mapOneDriveResponseError(response, normalized, await safeReadText3(response));
-    }
-    const body = response.body;
-    if (body === null) {
-      throw new ConnectionError({
-        details: { path: normalized },
-        message: `OneDrive download for ${normalized} produced no body`,
-        retryable: true
-      });
-    }
-    const result = {
-      content: webStreamToAsyncIterable(body)
-    };
-    const totalBytes = parseTotalBytes(response, request.range?.offset);
-    if (totalBytes !== void 0) result.totalBytes = totalBytes;
-    if (request.range?.offset !== void 0 && request.range.offset > 0) {
-      result.bytesRead = request.range.offset;
-    }
-    const checksum = preferHash(meta.file?.hashes);
-    if (checksum !== void 0) result.checksum = checksum;
-    return result;
-  }
-  async write(request) {
-    request.throwIfAborted();
-    if (request.offset !== void 0 && request.offset > 0) {
-      throw new UnsupportedFeatureError({
-        details: { offset: request.offset },
-        message: "OneDrive provider does not yet support resumable upload sessions",
-        retryable: false
-      });
-    }
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const buffered = await collectChunks3(request.content);
-    const url = `${this.options.driveBaseUrl}${itemSegment(normalized)}/content`;
-    const response = await graphFetch(this.options, "PUT", url, {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      body: buffered,
-      extraHeaders: { "content-type": "application/octet-stream" }
-    });
-    if (!response.ok) {
-      throw mapOneDriveResponseError(response, normalized, await safeReadText3(response));
-    }
-    const item = await response.json();
-    request.reportProgress(buffered.byteLength, buffered.byteLength);
-    const result = {
-      bytesTransferred: buffered.byteLength,
-      totalBytes: buffered.byteLength
-    };
-    const checksum = preferHash(item.file?.hashes);
-    if (checksum !== void 0) result.checksum = checksum;
-    return result;
-  }
-  async fetchItem(normalized) {
-    const url = `${this.options.driveBaseUrl}${itemSegment(normalized)}`;
-    const response = await graphFetch(this.options, "GET", url);
-    if (!response.ok) {
-      throw mapOneDriveResponseError(response, normalized, await safeReadText3(response));
-    }
-    return await response.json();
-  }
-};
-async function graphFetch(options, method, url, fetchOptions = {}) {
-  const headers = {
-    accept: "application/json",
-    ...options.defaultHeaders,
-    ...fetchOptions.extraHeaders ?? {},
-    authorization: `Bearer ${options.token}`
-  };
-  const init = { headers, method };
-  if (fetchOptions.body !== void 0) {
-    init.body = fetchOptions.body;
-  }
-  const controller = new AbortController();
-  const upstream = fetchOptions.signal ?? null;
-  if (upstream !== null) {
-    if (upstream.aborted) controller.abort(upstream.reason);
-    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
-  }
-  let timer;
-  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
-    timer = setTimeout(
-      () => controller.abort(new Error("OneDrive request timed out")),
-      options.timeoutMs
-    );
-  }
-  try {
-    return await options.fetch(url, { ...init, signal: controller.signal });
-  } catch (error) {
-    throw new ConnectionError({
-      cause: error,
-      details: { url },
-      message: `OneDrive request to ${url} failed`,
-      retryable: true
-    });
-  } finally {
-    if (timer !== void 0) clearTimeout(timer);
-  }
-}
-function mapOneDriveResponseError(response, contextPath, bodyText) {
-  const details = {
-    bodyText: bodyText.slice(0, 500),
-    path: contextPath,
-    status: response.status,
-    statusText: response.statusText
-  };
-  if (response.status === 401) {
-    return new AuthenticationError({
-      details,
-      message: `OneDrive authentication failed for ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 403) {
-    return new PermissionDeniedError({
-      details,
-      message: `OneDrive access forbidden for ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 404) {
-    return new PathNotFoundError({
-      details,
-      message: `OneDrive path not found: ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 429) {
-    return new ConnectionError({
-      details,
-      message: `OneDrive rate limit hit for ${contextPath}`,
-      retryable: true
-    });
-  }
-  return new ConnectionError({
-    details,
-    message: `OneDrive request for ${contextPath} failed with status ${String(response.status)}`,
-    retryable: response.status >= 500
-  });
-}
-function toRemoteEntry3(item, parent) {
-  const path2 = joinPath(parent, item.name);
-  const entry = {
-    name: item.name,
-    path: path2,
-    raw: item,
-    type: item.folder !== void 0 ? "directory" : "file",
-    uniqueId: item.id
-  };
-  if (typeof item.size === "number") entry.size = item.size;
-  if (typeof item.lastModifiedDateTime === "string") {
-    const parsed = new Date(item.lastModifiedDateTime);
-    if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
-  }
-  if (typeof item.createdDateTime === "string") {
-    const parsed = new Date(item.createdDateTime);
-    if (!Number.isNaN(parsed.getTime())) entry.createdAt = parsed;
-  }
-  return entry;
-}
-function preferHash(hashes) {
-  if (hashes === void 0) return void 0;
-  if (typeof hashes.sha256Hash === "string" && hashes.sha256Hash.length > 0) {
-    return hashes.sha256Hash;
-  }
-  if (typeof hashes.sha1Hash === "string" && hashes.sha1Hash.length > 0) {
-    return hashes.sha1Hash;
-  }
-  if (typeof hashes.quickXorHash === "string" && hashes.quickXorHash.length > 0) {
-    return hashes.quickXorHash;
-  }
-  return void 0;
-}
-function itemSegment(normalized) {
-  if (normalized === "/" || normalized === "") return "/root";
-  const trimmed = normalized.replace(/^\/+/u, "");
-  return `/root:/${encodeDrivePath(trimmed)}:`;
-}
-function itemChildrenSegment(normalized) {
-  if (normalized === "/" || normalized === "") return "/root/children";
-  const trimmed = normalized.replace(/^\/+/u, "");
-  return `/root:/${encodeDrivePath(trimmed)}:/children`;
-}
-function encodeDrivePath(value) {
-  return value.split("/").map((segment) => encodeURIComponent(segment)).join("/");
-}
-function joinPath(parent, name) {
-  if (parent === "" || parent === "/") return `/${name}`;
-  return parent.endsWith("/") ? `${parent}${name}` : `${parent}/${name}`;
-}
-function parentDir3(normalized) {
-  if (normalized === "/" || normalized === "") return "/";
-  const idx = normalized.lastIndexOf("/");
-  if (idx <= 0) return "/";
-  return normalized.slice(0, idx);
-}
-async function safeReadText3(response) {
-  try {
-    return await response.text();
-  } catch {
-    return "";
-  }
-}
-async function collectChunks3(source) {
-  const chunks = [];
-  let total = 0;
-  for await (const chunk of source) {
-    chunks.push(chunk);
-    total += chunk.byteLength;
-  }
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return out;
-}
-
-// src/providers/cloud/AzureBlobProvider.ts
-var AZURE_BLOB_API_VERSION = "2023-11-03";
-var AZURE_CHECKSUM_CAPABILITIES = ["md5"];
-function createAzureBlobProviderFactory(options) {
-  if (typeof options.container !== "string" || options.container === "") {
-    throw new ConfigurationError({
-      message: "AzureBlobProviderOptions.container is required",
-      retryable: false
-    });
-  }
-  const id = options.id ?? "azure-blob";
-  const fetchImpl = options.fetch ?? globalThis.fetch;
-  if (typeof fetchImpl !== "function") {
-    throw new ConfigurationError({
-      message: "Global fetch is unavailable; supply AzureBlobProviderOptions.fetch explicitly",
-      retryable: false
-    });
-  }
-  const endpoint = resolveAzureEndpoint(options);
-  const apiVersion = options.apiVersion ?? AZURE_BLOB_API_VERSION;
-  const capabilities = {
-    atomicRename: false,
-    authentication: ["token", "oauth"],
-    checksum: [...AZURE_CHECKSUM_CAPABILITIES],
-    chmod: false,
-    chown: false,
-    list: true,
-    maxConcurrency: 4,
-    metadata: ["modifiedAt", "uniqueId"],
-    notes: [
-      "Azure Blob provider performs single-shot block-blob uploads via PUT; staged-block + Put Block List uploads are not yet supported."
-    ],
-    provider: id,
-    readStream: true,
-    resumeDownload: true,
-    resumeUpload: false,
-    serverSideCopy: false,
-    serverSideMove: false,
-    stat: true,
-    symlink: false,
-    writeStream: true
-  };
-  return {
-    capabilities,
-    create: () => new AzureBlobProvider({
-      apiVersion,
-      capabilities,
-      container: options.container,
-      defaultHeaders: { ...options.defaultHeaders ?? {} },
-      endpoint,
-      fetch: fetchImpl,
-      id,
-      ...options.sasToken !== void 0 ? { sasToken: options.sasToken } : {}
-    }),
-    id
-  };
-}
-function resolveAzureEndpoint(options) {
-  if (typeof options.endpoint === "string" && options.endpoint !== "") {
-    return options.endpoint.replace(/\/+$/u, "");
-  }
-  if (typeof options.account === "string" && options.account !== "") {
-    return `https://${options.account}.blob.core.windows.net`;
-  }
-  throw new ConfigurationError({
-    message: "AzureBlobProviderOptions requires either `account` or `endpoint`",
-    retryable: false
-  });
-}
-var AzureBlobProvider = class {
-  constructor(internals) {
-    this.internals = internals;
-    this.id = internals.id;
-    this.capabilities = internals.capabilities;
-  }
-  internals;
-  id;
-  capabilities;
-  async connect(profile) {
-    let bearerToken;
-    if (profile.password !== void 0) {
-      bearerToken = secretToString2(await resolveSecret(profile.password));
-      if (bearerToken === "") bearerToken = void 0;
-    }
-    if (bearerToken === void 0 && this.internals.sasToken === void 0) {
-      throw new ConfigurationError({
-        message: "Azure Blob provider requires either a SAS token (via options.sasToken) or a bearer token (via profile.password)",
-        retryable: false
-      });
-    }
-    const sessionOptions = {
-      apiVersion: this.internals.apiVersion,
-      capabilities: this.internals.capabilities,
-      container: this.internals.container,
-      defaultHeaders: this.internals.defaultHeaders,
-      endpoint: this.internals.endpoint,
-      fetch: this.internals.fetch,
-      id: this.internals.id
-    };
-    if (bearerToken !== void 0) sessionOptions.bearerToken = bearerToken;
-    if (this.internals.sasToken !== void 0) sessionOptions.sasToken = this.internals.sasToken;
-    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
-    return new AzureBlobSession(sessionOptions);
-  }
-};
-var AzureBlobSession = class {
-  provider;
-  capabilities;
-  fs;
-  transfers;
-  constructor(options) {
-    this.provider = options.id;
-    this.capabilities = options.capabilities;
-    this.fs = new AzureBlobFileSystem(options);
-    this.transfers = new AzureBlobTransferOperations(options);
-  }
-  disconnect() {
-    return Promise.resolve();
-  }
-};
-var AzureBlobFileSystem = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async list(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const prefix = toAzureBlobPrefix(normalized);
-    const entries = [];
-    let marker;
-    do {
-      const params = {
-        comp: "list",
-        delimiter: "/",
-        restype: "container"
-      };
-      if (prefix !== "") params["prefix"] = prefix;
-      if (marker !== void 0) params["marker"] = marker;
-      const url = buildContainerUrl(this.options, params);
-      const response = await azureFetch(this.options, "GET", url);
-      if (!response.ok) {
-        throw mapAzureResponseError(response, normalized, await safeReadText4(response));
-      }
-      const xml = await response.text();
-      const parsed = parseListBlobsResponse(xml);
-      for (const blob of parsed.blobs) {
-        if (blob.name.startsWith(prefix)) {
-          const entry = blobToEntry(blob, prefix, normalized);
-          if (entry !== void 0) entries.push(entry);
-        }
-      }
-      for (const dir of parsed.prefixes) {
-        const entry = prefixToEntry(dir, prefix, normalized);
-        if (entry !== void 0) entries.push(entry);
-      }
-      marker = parsed.nextMarker;
-    } while (marker !== void 0 && marker !== "");
-    return entries;
-  }
-  async stat(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const url = buildBlobUrl(this.options, normalized);
-    const response = await azureFetch(this.options, "HEAD", url);
-    if (!response.ok) {
-      throw mapAzureResponseError(response, normalized, await safeReadText4(response));
-    }
-    const sizeHeader = response.headers.get("content-length");
-    const size = sizeHeader !== null ? Number(sizeHeader) : void 0;
-    const lastModified = response.headers.get("last-modified");
-    const etag = response.headers.get("etag") ?? void 0;
-    const md5 = response.headers.get("content-md5") ?? void 0;
-    const stat = {
-      exists: true,
-      name: basenameRemotePath2(normalized),
-      path: normalized,
-      type: "file"
-    };
-    if (typeof size === "number" && Number.isFinite(size)) stat.size = size;
-    if (lastModified !== null) {
-      const parsed = new Date(lastModified);
-      if (!Number.isNaN(parsed.getTime())) stat.modifiedAt = parsed;
-    }
-    if (etag !== void 0) stat.uniqueId = etag;
-    else if (md5 !== void 0) stat.uniqueId = md5;
-    return stat;
-  }
-};
-var AzureBlobTransferOperations = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async read(request) {
-    request.throwIfAborted();
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const url = buildBlobUrl(this.options, normalized);
-    const headers = {};
-    if (request.range !== void 0) {
-      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
-    }
-    const response = await azureFetch(this.options, "GET", url, {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      extraHeaders: headers
-    });
-    if (!response.ok && response.status !== 206) {
-      throw mapAzureResponseError(response, normalized, await safeReadText4(response));
-    }
-    const body = response.body;
-    if (body === null) {
-      throw new ConnectionError({
-        details: { path: normalized },
-        message: `Azure Blob download for ${normalized} produced no body`,
-        retryable: true
-      });
-    }
-    const result = {
-      content: webStreamToAsyncIterable(body)
-    };
-    const totalBytes = parseTotalBytes(response, request.range?.offset);
-    if (totalBytes !== void 0) result.totalBytes = totalBytes;
-    if (request.range?.offset !== void 0 && request.range.offset > 0) {
-      result.bytesRead = request.range.offset;
-    }
-    const md5 = response.headers.get("content-md5");
-    if (md5 !== null && md5 !== "") result.checksum = md5;
-    return result;
-  }
-  async write(request) {
-    request.throwIfAborted();
-    if (request.offset !== void 0 && request.offset > 0) {
-      throw new UnsupportedFeatureError({
-        details: { offset: request.offset },
-        message: "Azure Blob provider does not yet support staged-block resumable uploads",
-        retryable: false
-      });
-    }
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const buffered = await collectChunks4(request.content);
-    const url = buildBlobUrl(this.options, normalized);
-    const response = await azureFetch(this.options, "PUT", url, {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      body: buffered,
-      extraHeaders: {
-        "content-type": "application/octet-stream",
-        "x-ms-blob-type": "BlockBlob"
-      }
-    });
-    if (!response.ok) {
-      throw mapAzureResponseError(response, normalized, await safeReadText4(response));
-    }
-    request.reportProgress(buffered.byteLength, buffered.byteLength);
-    const result = {
-      bytesTransferred: buffered.byteLength,
-      totalBytes: buffered.byteLength
-    };
-    const md5 = response.headers.get("content-md5");
-    if (md5 !== null && md5 !== "") result.checksum = md5;
-    return result;
-  }
-};
-async function azureFetch(options, method, url, fetchOptions = {}) {
-  const headers = {
-    ...options.defaultHeaders,
-    ...fetchOptions.extraHeaders ?? {},
-    "x-ms-version": options.apiVersion
-  };
-  if (options.bearerToken !== void 0) {
-    headers["authorization"] = `Bearer ${options.bearerToken}`;
-  }
-  const init = { headers, method };
-  if (fetchOptions.body !== void 0) {
-    init.body = fetchOptions.body;
-  }
-  const controller = new AbortController();
-  const upstream = fetchOptions.signal ?? null;
-  if (upstream !== null) {
-    if (upstream.aborted) controller.abort(upstream.reason);
-    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
-  }
-  let timer;
-  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
-    timer = setTimeout(
-      () => controller.abort(new Error("Azure Blob request timed out")),
-      options.timeoutMs
-    );
-  }
-  try {
-    return await options.fetch(url, { ...init, signal: controller.signal });
-  } catch (error) {
-    throw new ConnectionError({
-      cause: error,
-      details: { url },
-      message: `Azure Blob request to ${url} failed`,
-      retryable: true
-    });
-  } finally {
-    if (timer !== void 0) clearTimeout(timer);
-  }
-}
-function buildContainerUrl(options, params) {
-  const search = new URLSearchParams(params);
-  appendSas(search, options.sasToken);
-  return `${options.endpoint}/${encodeURIComponent(options.container)}?${search.toString()}`;
-}
-function buildBlobUrl(options, normalized) {
-  const blobPath = normalized.replace(/^\/+/u, "");
-  const encoded = blobPath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
-  const base = `${options.endpoint}/${encodeURIComponent(options.container)}/${encoded}`;
-  if (options.sasToken !== void 0 && options.sasToken !== "") {
-    return `${base}?${options.sasToken}`;
-  }
-  return base;
-}
-function appendSas(search, sasToken) {
-  if (sasToken === void 0 || sasToken === "") return;
-  const sas = new URLSearchParams(sasToken);
-  for (const [k, v] of sas.entries()) search.set(k, v);
-}
-function parseListBlobsResponse(xml) {
-  const blobs = [];
-  for (const match of xml.matchAll(/<Blob>([\s\S]*?)<\/Blob>/g)) {
-    const block = match[1] ?? "";
-    const name = extractTag(block, "Name");
-    if (name === void 0) continue;
-    const blob = { name };
-    const length = extractTag(block, "Content-Length");
-    if (length !== void 0) {
-      const parsed = Number(length);
-      if (Number.isFinite(parsed)) blob.contentLength = parsed;
-    }
-    const md5 = extractTag(block, "Content-MD5");
-    if (md5 !== void 0 && md5 !== "") blob.contentMd5 = md5;
-    const etag = extractTag(block, "Etag");
-    if (etag !== void 0 && etag !== "") blob.etag = etag;
-    const last = extractTag(block, "Last-Modified");
-    if (last !== void 0 && last !== "") blob.lastModified = last;
-    blobs.push(blob);
-  }
-  const prefixes = [];
-  for (const match of xml.matchAll(/<BlobPrefix>([\s\S]*?)<\/BlobPrefix>/g)) {
-    const block = match[1] ?? "";
-    const name = extractTag(block, "Name");
-    if (name !== void 0) prefixes.push(name);
-  }
-  const nextMarker = extractTag(xml, "NextMarker");
-  const result = { blobs, prefixes };
-  if (nextMarker !== void 0 && nextMarker !== "") result.nextMarker = nextMarker;
-  return result;
-}
-function extractTag(block, tag) {
-  const re = new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`);
-  const match = re.exec(block);
-  if (match === null) return void 0;
-  return decodeXmlText(match[1] ?? "");
-}
-function decodeXmlText(value) {
-  return value.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
-}
-function blobToEntry(blob, prefix, parent) {
-  const tail = blob.name.slice(prefix.length);
-  if (tail === "" || tail.includes("/")) return void 0;
-  const entry = {
-    name: tail,
-    path: joinPath2(parent, tail),
-    raw: blob,
-    type: "file",
-    uniqueId: blob.etag ?? blob.contentMd5 ?? blob.name
-  };
-  if (typeof blob.contentLength === "number") entry.size = blob.contentLength;
-  if (typeof blob.lastModified === "string") {
-    const parsed = new Date(blob.lastModified);
-    if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
-  }
-  return entry;
-}
-function prefixToEntry(prefixedName, prefix, parent) {
-  const tail = prefixedName.slice(prefix.length).replace(/\/+$/u, "");
-  if (tail === "" || tail.includes("/")) return void 0;
-  return {
-    name: tail,
-    path: joinPath2(parent, tail),
-    type: "directory",
-    uniqueId: prefixedName
-  };
-}
-function toAzureBlobPrefix(normalized) {
-  if (normalized === "/" || normalized === "") return "";
-  const trimmed = normalized.replace(/^\/+/u, "");
-  return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
-}
-function joinPath2(parent, name) {
-  if (parent === "" || parent === "/") return `/${name}`;
-  return parent.endsWith("/") ? `${parent}${name}` : `${parent}/${name}`;
-}
-function basenameRemotePath2(normalized) {
-  if (normalized === "/" || normalized === "") return "";
-  const trimmed = normalized.replace(/\/+$/u, "");
-  const idx = trimmed.lastIndexOf("/");
-  return idx === -1 ? trimmed : trimmed.slice(idx + 1);
-}
-function mapAzureResponseError(response, contextPath, bodyText) {
-  const details = {
-    bodyText: bodyText.slice(0, 500),
-    path: contextPath,
-    status: response.status,
-    statusText: response.statusText
-  };
-  if (response.status === 401) {
-    return new AuthenticationError({
-      details,
-      message: `Azure Blob authentication failed for ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 403) {
-    return new PermissionDeniedError({
-      details,
-      message: `Azure Blob access forbidden for ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 404) {
-    return new PathNotFoundError({
-      details,
-      message: `Azure Blob path not found: ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 429) {
-    return new ConnectionError({
-      details,
-      message: `Azure Blob throttled for ${contextPath}`,
-      retryable: true
-    });
-  }
-  return new ConnectionError({
-    details,
-    message: `Azure Blob request for ${contextPath} failed with status ${String(response.status)}`,
-    retryable: response.status >= 500
-  });
-}
-async function safeReadText4(response) {
-  try {
-    return await response.text();
-  } catch {
-    return "";
-  }
-}
-async function collectChunks4(source) {
-  const chunks = [];
-  let total = 0;
-  for await (const chunk of source) {
-    chunks.push(chunk);
-    total += chunk.byteLength;
-  }
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return out;
-}
-
-// src/providers/cloud/GcsProvider.ts
-var GCS_JSON_API_BASE = "https://storage.googleapis.com/storage/v1";
-var GCS_UPLOAD_API_BASE = "https://storage.googleapis.com/upload/storage/v1";
-var GCS_CHECKSUM_CAPABILITIES = ["md5", "crc32c"];
-function createGcsProviderFactory(options) {
-  if (typeof options.bucket !== "string" || options.bucket === "") {
-    throw new ConfigurationError({
-      message: "GcsProviderOptions.bucket is required",
-      retryable: false
-    });
-  }
-  const id = options.id ?? "gcs";
-  const fetchImpl = options.fetch ?? globalThis.fetch;
-  if (typeof fetchImpl !== "function") {
-    throw new ConfigurationError({
-      message: "Global fetch is unavailable; supply GcsProviderOptions.fetch explicitly",
-      retryable: false
-    });
-  }
-  const apiBaseUrl = (options.apiBaseUrl ?? GCS_JSON_API_BASE).replace(/\/+$/u, "");
-  const uploadBaseUrl = (options.uploadBaseUrl ?? GCS_UPLOAD_API_BASE).replace(/\/+$/u, "");
-  const capabilities = {
-    atomicRename: false,
-    authentication: ["token", "oauth"],
-    checksum: [...GCS_CHECKSUM_CAPABILITIES],
-    chmod: false,
-    chown: false,
-    list: true,
-    maxConcurrency: 4,
-    metadata: ["modifiedAt", "createdAt", "uniqueId"],
-    notes: [
-      "GCS provider performs single-shot media uploads via /upload?uploadType=media; resumable upload sessions are not yet supported."
-    ],
-    provider: id,
-    readStream: true,
-    resumeDownload: true,
-    resumeUpload: false,
-    serverSideCopy: false,
-    serverSideMove: false,
-    stat: true,
-    symlink: false,
-    writeStream: true
-  };
-  return {
-    capabilities,
-    create: () => new GcsProvider({
-      apiBaseUrl,
-      bucket: options.bucket,
-      capabilities,
-      defaultHeaders: { ...options.defaultHeaders ?? {} },
-      fetch: fetchImpl,
-      id,
-      uploadBaseUrl
-    }),
-    id
-  };
-}
-var GcsProvider = class {
-  constructor(internals) {
-    this.internals = internals;
-    this.id = internals.id;
-    this.capabilities = internals.capabilities;
-  }
-  internals;
-  id;
-  capabilities;
-  async connect(profile) {
-    if (profile.password === void 0) {
-      throw new ConfigurationError({
-        message: "GCS provider requires a bearer token via profile.password",
-        retryable: false
-      });
-    }
-    const token = secretToString2(await resolveSecret(profile.password));
-    if (token === "") {
-      throw new ConfigurationError({
-        message: "GCS bearer token resolved to an empty string",
-        retryable: false
-      });
-    }
-    const sessionOptions = {
-      apiBaseUrl: this.internals.apiBaseUrl,
-      bucket: this.internals.bucket,
-      capabilities: this.internals.capabilities,
-      defaultHeaders: this.internals.defaultHeaders,
-      fetch: this.internals.fetch,
-      id: this.internals.id,
-      token,
-      uploadBaseUrl: this.internals.uploadBaseUrl
-    };
-    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
-    return new GcsSession(sessionOptions);
-  }
-};
-var GcsSession = class {
-  provider;
-  capabilities;
-  fs;
-  transfers;
-  constructor(options) {
-    this.provider = options.id;
-    this.capabilities = options.capabilities;
-    this.fs = new GcsFileSystem(options);
-    this.transfers = new GcsTransferOperations(options);
-  }
-  disconnect() {
-    return Promise.resolve();
-  }
-};
-var GcsFileSystem = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async list(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const prefix = toGcsPrefix(normalized);
-    const entries = [];
-    let pageToken;
-    do {
-      const params = { delimiter: "/" };
-      if (prefix !== "") params["prefix"] = prefix;
-      if (pageToken !== void 0) params["pageToken"] = pageToken;
-      const url = `${this.options.apiBaseUrl}/b/${encodeURIComponent(this.options.bucket)}/o?${buildSearch2(params)}`;
-      const response = await gcsFetch(this.options, "GET", url);
-      if (!response.ok) {
-        throw mapGcsResponseError(response, normalized, await safeReadText5(response));
-      }
-      const parsed = await response.json();
-      for (const item of parsed.items ?? []) {
-        const entry = objectToEntry(item, prefix, normalized);
-        if (entry !== void 0) entries.push(entry);
-      }
-      for (const dirPrefix of parsed.prefixes ?? []) {
-        const entry = prefixToEntry2(dirPrefix, prefix, normalized);
-        if (entry !== void 0) entries.push(entry);
-      }
-      pageToken = parsed.nextPageToken;
-    } while (pageToken !== void 0);
-    return entries;
-  }
-  async stat(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const objectName = toGcsObjectName(normalized);
-    const url = `${this.options.apiBaseUrl}/b/${encodeURIComponent(this.options.bucket)}/o/${encodeURIComponent(objectName)}`;
-    const response = await gcsFetch(this.options, "GET", url);
-    if (!response.ok) {
-      throw mapGcsResponseError(response, normalized, await safeReadText5(response));
-    }
-    const item = await response.json();
-    const parent = parentDir4(normalized);
-    const entry = objectToEntry(item, toGcsPrefix(parent), parent);
-    if (entry === void 0) {
-      throw new PathNotFoundError({
-        details: { path: normalized },
-        message: `GCS path not found: ${normalized}`,
-        retryable: false
-      });
-    }
-    return { ...entry, exists: true };
-  }
-};
-var GcsTransferOperations = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async read(request) {
-    request.throwIfAborted();
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const objectName = toGcsObjectName(normalized);
-    const url = `${this.options.apiBaseUrl}/b/${encodeURIComponent(this.options.bucket)}/o/${encodeURIComponent(objectName)}?alt=media`;
-    const headers = {};
-    if (request.range !== void 0) {
-      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
-    }
-    const response = await gcsFetch(this.options, "GET", url, {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      extraHeaders: headers
-    });
-    if (!response.ok && response.status !== 206) {
-      throw mapGcsResponseError(response, normalized, await safeReadText5(response));
-    }
-    const body = response.body;
-    if (body === null) {
-      throw new ConnectionError({
-        details: { path: normalized },
-        message: `GCS download for ${normalized} produced no body`,
-        retryable: true
-      });
-    }
-    const result = {
-      content: webStreamToAsyncIterable(body)
-    };
-    const totalBytes = parseTotalBytes(response, request.range?.offset);
-    if (totalBytes !== void 0) result.totalBytes = totalBytes;
-    if (request.range?.offset !== void 0 && request.range.offset > 0) {
-      result.bytesRead = request.range.offset;
-    }
-    const md5 = response.headers.get("x-goog-hash") ?? response.headers.get("content-md5");
-    if (md5 !== null && md5 !== "") result.checksum = md5;
-    return result;
-  }
-  async write(request) {
-    request.throwIfAborted();
-    if (request.offset !== void 0 && request.offset > 0) {
-      throw new UnsupportedFeatureError({
-        details: { offset: request.offset },
-        message: "GCS provider does not yet support resumable upload sessions",
-        retryable: false
-      });
-    }
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const objectName = toGcsObjectName(normalized);
-    const buffered = await collectChunks5(request.content);
-    const url = `${this.options.uploadBaseUrl}/b/${encodeURIComponent(this.options.bucket)}/o?uploadType=media&name=${encodeURIComponent(objectName)}`;
-    const response = await gcsFetch(this.options, "POST", url, {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      body: buffered,
-      extraHeaders: { "content-type": "application/octet-stream" }
-    });
-    if (!response.ok) {
-      throw mapGcsResponseError(response, normalized, await safeReadText5(response));
-    }
-    const item = await response.json();
-    request.reportProgress(buffered.byteLength, buffered.byteLength);
-    const result = {
-      bytesTransferred: buffered.byteLength,
-      totalBytes: buffered.byteLength
-    };
-    if (typeof item.md5Hash === "string" && item.md5Hash !== "") result.checksum = item.md5Hash;
-    return result;
-  }
-};
-async function gcsFetch(options, method, url, fetchOptions = {}) {
-  const headers = {
-    accept: "application/json",
-    ...options.defaultHeaders,
-    ...fetchOptions.extraHeaders ?? {},
-    authorization: `Bearer ${options.token}`
-  };
-  const init = { headers, method };
-  if (fetchOptions.body !== void 0) {
-    init.body = fetchOptions.body;
-  }
-  const controller = new AbortController();
-  const upstream = fetchOptions.signal ?? null;
-  if (upstream !== null) {
-    if (upstream.aborted) controller.abort(upstream.reason);
-    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
-  }
-  let timer;
-  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
-    timer = setTimeout(
-      () => controller.abort(new Error("GCS request timed out")),
-      options.timeoutMs
-    );
-  }
-  try {
-    return await options.fetch(url, { ...init, signal: controller.signal });
-  } catch (error) {
-    throw new ConnectionError({
-      cause: error,
-      details: { url },
-      message: `GCS request to ${url} failed`,
-      retryable: true
-    });
-  } finally {
-    if (timer !== void 0) clearTimeout(timer);
-  }
-}
-function objectToEntry(item, prefix, parent) {
-  const tail = item.name.startsWith(prefix) ? item.name.slice(prefix.length) : item.name;
-  if (tail === "" || tail.includes("/")) return void 0;
-  const entry = {
-    name: tail,
-    path: joinPath3(parent, tail),
-    raw: item,
-    type: "file",
-    uniqueId: item.etag ?? item.md5Hash ?? item.name
-  };
-  if (typeof item.size === "string") {
-    const sized = Number(item.size);
-    if (Number.isFinite(sized)) entry.size = sized;
-  }
-  if (typeof item.updated === "string") {
-    const parsed = new Date(item.updated);
-    if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
-  }
-  if (typeof item.timeCreated === "string") {
-    const parsed = new Date(item.timeCreated);
-    if (!Number.isNaN(parsed.getTime())) entry.createdAt = parsed;
-  }
-  return entry;
-}
-function prefixToEntry2(prefixedName, prefix, parent) {
-  const tail = prefixedName.slice(prefix.length).replace(/\/+$/u, "");
-  if (tail === "" || tail.includes("/")) return void 0;
-  return {
-    name: tail,
-    path: joinPath3(parent, tail),
-    type: "directory",
-    uniqueId: prefixedName
-  };
-}
-function toGcsPrefix(normalized) {
-  if (normalized === "/" || normalized === "") return "";
-  const trimmed = normalized.replace(/^\/+/u, "");
-  return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
-}
-function toGcsObjectName(normalized) {
-  return normalized.replace(/^\/+/u, "");
-}
-function parentDir4(normalized) {
-  if (normalized === "/" || normalized === "") return "/";
-  const idx = normalized.lastIndexOf("/");
-  if (idx <= 0) return "/";
-  return normalized.slice(0, idx);
-}
-function joinPath3(parent, name) {
-  if (parent === "" || parent === "/") return `/${name}`;
-  return parent.endsWith("/") ? `${parent}${name}` : `${parent}/${name}`;
-}
-function buildSearch2(params) {
-  const search = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) search.set(k, v);
-  return search.toString();
-}
-function mapGcsResponseError(response, contextPath, bodyText) {
-  const details = {
-    bodyText: bodyText.slice(0, 500),
-    path: contextPath,
-    status: response.status,
-    statusText: response.statusText
-  };
-  if (response.status === 401) {
-    return new AuthenticationError({
-      details,
-      message: `GCS authentication failed for ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 403) {
-    return new PermissionDeniedError({
-      details,
-      message: `GCS access forbidden for ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 404) {
-    return new PathNotFoundError({
-      details,
-      message: `GCS path not found: ${contextPath}`,
-      retryable: false
-    });
-  }
-  if (response.status === 429) {
-    return new ConnectionError({
-      details,
-      message: `GCS rate limit hit for ${contextPath}`,
-      retryable: true
-    });
-  }
-  return new ConnectionError({
-    details,
-    message: `GCS request for ${contextPath} failed with status ${String(response.status)}`,
-    retryable: response.status >= 500
-  });
-}
-async function safeReadText5(response) {
-  try {
-    return await response.text();
-  } catch {
-    return "";
-  }
-}
-async function collectChunks5(source) {
-  const chunks = [];
-  let total = 0;
-  for await (const chunk of source) {
-    chunks.push(chunk);
-    total += chunk.byteLength;
-  }
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return out;
-}
-
 // src/providers/local/LocalProvider.ts
-var import_node_fs = require("fs");
-var import_promises2 = require("fs/promises");
-var import_node_path2 = __toESM(require("path"));
 var LOCAL_PROVIDER_ID = "local";
 var LOCAL_PROVIDER_CAPABILITIES = {
   provider: LOCAL_PROVIDER_ID,
@@ -6943,7 +2008,7 @@ var LocalTransferOperations = class {
     if (entry.type !== "file") {
       throw createPathNotFoundError(remotePath, `Local provider path is not a file: ${remotePath}`);
     }
-    const range = resolveReadRange2(entry.size ?? 0, request.range);
+    const range = resolveReadRange(entry.size ?? 0, request.range);
     const result = {
       content: createLocalReadSource(resolveLocalPath(this.rootPath, remotePath), range),
       totalBytes: range.length
@@ -6958,7 +2023,7 @@ var LocalTransferOperations = class {
     const remotePath = normalizeLocalProviderPath(request.endpoint.path);
     const localPath = resolveLocalPath(this.rootPath, remotePath);
     const content = await collectTransferContent(request);
-    const offset = normalizeOptionalByteCount3(request.offset, "offset", remotePath);
+    const offset = normalizeOptionalByteCount(request.offset, "offset", remotePath);
     await ensureLocalParentDirectory(localPath, remotePath);
     await writeLocalContent(localPath, remotePath, content, offset);
     const stat = await readLocalEntry(this.rootPath, remotePath);
@@ -6971,7 +2036,7 @@ var LocalTransferOperations = class {
       result.totalBytes = stat.size;
     }
     if (request.verification !== void 0) {
-      result.verification = cloneVerification4(request.verification);
+      result.verification = cloneVerification2(request.verification);
     }
     return result;
   }
@@ -6995,7 +2060,7 @@ var LocalFileSystem = class {
     const entries = await Promise.all(
       names.map((name) => readLocalEntry(this.rootPath, joinRemotePath(remotePath, name)))
     );
-    return entries.sort(compareEntries3);
+    return entries.sort(compareEntries);
   }
   async stat(path2) {
     return readLocalEntry(this.rootPath, normalizeLocalProviderPath(path2));
@@ -7049,12 +2114,12 @@ var LocalFileSystem = class {
 function isNodeErrno(error, code) {
   return typeof error === "object" && error !== null && "code" in error && error.code === code;
 }
-function resolveReadRange2(size, range) {
+function resolveReadRange(size, range) {
   if (range === void 0) {
     return { length: size, offset: 0 };
   }
-  const requestedOffset = normalizeByteCount3(range.offset, "offset", "/");
-  const requestedLength = range.length === void 0 ? size - Math.min(requestedOffset, size) : normalizeByteCount3(range.length, "length", "/");
+  const requestedOffset = normalizeByteCount(range.offset, "offset", "/");
+  const requestedLength = range.length === void 0 ? size - Math.min(requestedOffset, size) : normalizeByteCount(range.length, "length", "/");
   const offset = Math.min(requestedOffset, size);
   const length = Math.max(0, Math.min(requestedLength, size - offset));
   return { length, offset };
@@ -7081,9 +2146,9 @@ async function collectTransferContent(request) {
     byteLength += clonedChunk.byteLength;
     request.reportProgress(byteLength, request.totalBytes);
   }
-  return concatChunks2(chunks, byteLength);
+  return concatChunks(chunks, byteLength);
 }
-function concatChunks2(chunks, byteLength) {
+function concatChunks(chunks, byteLength) {
   const content = new Uint8Array(byteLength);
   let offset = 0;
   for (const chunk of chunks) {
@@ -7125,10 +2190,10 @@ async function openLocalFileForOffsetWrite(localPath) {
     throw error;
   }
 }
-function normalizeOptionalByteCount3(value, field, remotePath) {
-  return value === void 0 ? void 0 : normalizeByteCount3(value, field, remotePath);
+function normalizeOptionalByteCount(value, field, remotePath) {
+  return value === void 0 ? void 0 : normalizeByteCount(value, field, remotePath);
 }
-function normalizeByteCount3(value, field, remotePath) {
+function normalizeByteCount(value, field, remotePath) {
   if (!Number.isFinite(value) || value < 0) {
     throw new ConfigurationError({
       details: { field, provider: LOCAL_PROVIDER_ID },
@@ -7139,7 +2204,7 @@ function normalizeByteCount3(value, field, remotePath) {
   }
   return Math.floor(value);
 }
-function cloneVerification4(verification) {
+function cloneVerification2(verification) {
   const clone = { verified: verification.verified };
   if (verification.method !== void 0) clone.method = verification.method;
   if (verification.checksum !== void 0) clone.checksum = verification.checksum;
@@ -7241,7 +2306,7 @@ function formatMode(mode) {
 function cloneDate(value) {
   return new Date(value.getTime());
 }
-function compareEntries3(left, right) {
+function compareEntries(left, right) {
   return left.path.localeCompare(right.path);
 }
 function mapLocalFileSystemError(error, remotePath) {
@@ -7279,7 +2344,7 @@ function getErrorCode(error) {
 }
 
 // src/providers/memory/MemoryProvider.ts
-var import_node_buffer7 = require("buffer");
+var import_node_buffer3 = require("buffer");
 var MEMORY_PROVIDER_ID = "memory";
 var MEMORY_PROVIDER_CAPABILITIES = {
   provider: MEMORY_PROVIDER_ID,
@@ -7358,8 +2423,8 @@ var MemoryFileSystem = class {
         );
       }
       return [...this.state.entries.values()].filter(
-        (entry) => entry.path !== normalizedPath && getParentPath2(entry.path) === normalizedPath
-      ).map(cloneRemoteEntry).sort(compareEntries4);
+        (entry) => entry.path !== normalizedPath && getParentPath(entry.path) === normalizedPath
+      ).map(cloneRemoteEntry).sort(compareEntries2);
     });
   }
   stat(path2) {
@@ -7415,7 +2480,7 @@ var MemoryFileSystem = class {
       if (options.recursive) {
         ensureParentDirectories(this.state.entries, normalized);
       } else {
-        const parent = getParentPath2(normalized);
+        const parent = getParentPath(normalized);
         if (parent !== void 0 && !this.state.entries.has(parent)) {
           throw createPathNotFoundError2(parent, `Memory parent not found: ${parent}`);
         }
@@ -7435,7 +2500,7 @@ var MemoryFileSystem = class {
         throw createPathNotFoundError2(normalized, `Memory path is not a directory: ${normalized}`);
       }
       const children = [...this.state.entries.values()].filter(
-        (child) => child.path !== normalized && getParentPath2(child.path) === normalized
+        (child) => child.path !== normalized && getParentPath(child.path) === normalized
       );
       if (children.length > 0 && !options.recursive) {
         throw createInvalidFixtureError(normalized, `Memory directory not empty: ${normalized}`);
@@ -7446,7 +2511,7 @@ var MemoryFileSystem = class {
         if (!next) continue;
         if (next.type === "directory") {
           for (const grand of this.state.entries.values()) {
-            if (grand.path !== next.path && getParentPath2(grand.path) === next.path) {
+            if (grand.path !== next.path && getParentPath(grand.path) === next.path) {
               stack.push(grand);
             }
           }
@@ -7496,7 +2561,7 @@ var MemoryTransferOperations = class {
       throw createInvalidFixtureError(path2, `Memory path is a directory: ${path2}`);
     }
     const writtenContent = await collectTransferContent2(request);
-    const offset = normalizeOptionalByteCount4(request.offset, "offset");
+    const offset = normalizeOptionalByteCount2(request.offset, "offset");
     const previousContent = this.state.content.get(path2) ?? new Uint8Array(0);
     const content = offset === void 0 ? writtenContent : mergeContentAtOffset(previousContent, writtenContent, offset);
     ensureParentDirectories(this.state.entries, path2);
@@ -7509,7 +2574,7 @@ var MemoryTransferOperations = class {
       verified: request.verification?.verified ?? false
     };
     if (request.verification !== void 0) {
-      result.verification = cloneVerification5(request.verification);
+      result.verification = cloneVerification3(request.verification);
     }
     return result;
   }
@@ -7570,7 +2635,7 @@ function normalizeMemoryContent(content) {
   if (content === void 0) {
     return void 0;
   }
-  return typeof content === "string" ? import_node_buffer7.Buffer.from(content) : new Uint8Array(content);
+  return typeof content === "string" ? import_node_buffer3.Buffer.from(content) : new Uint8Array(content);
 }
 function createWrittenFileEntry(path2, size) {
   return {
@@ -7613,14 +2678,14 @@ function normalizeMemoryPath(path2) {
 }
 function getAncestorPaths(path2) {
   const ancestors = [];
-  let parentPath = getParentPath2(path2);
+  let parentPath = getParentPath(path2);
   while (parentPath !== void 0 && parentPath !== "/") {
     ancestors.unshift(parentPath);
-    parentPath = getParentPath2(parentPath);
+    parentPath = getParentPath(parentPath);
   }
   return ancestors;
 }
-function getParentPath2(path2) {
+function getParentPath(path2) {
   if (path2 === "/") {
     return void 0;
   }
@@ -7641,8 +2706,8 @@ function resolveByteRange(size, range) {
   if (range === void 0) {
     return { length: size, offset: 0 };
   }
-  const requestedOffset = normalizeByteCount4(range.offset, "offset");
-  const requestedLength = range.length === void 0 ? size - Math.min(requestedOffset, size) : normalizeByteCount4(range.length, "length");
+  const requestedOffset = normalizeByteCount2(range.offset, "offset");
+  const requestedLength = range.length === void 0 ? size - Math.min(requestedOffset, size) : normalizeByteCount2(range.length, "length");
   const offset = Math.min(requestedOffset, size);
   const length = Math.max(0, Math.min(requestedLength, size - offset));
   return { length, offset };
@@ -7657,9 +2722,9 @@ async function collectTransferContent2(request) {
     byteLength += clonedChunk.byteLength;
     request.reportProgress(byteLength, request.totalBytes);
   }
-  return concatChunks3(chunks, byteLength);
+  return concatChunks2(chunks, byteLength);
 }
-function concatChunks3(chunks, byteLength) {
+function concatChunks2(chunks, byteLength) {
   const content = new Uint8Array(byteLength);
   let offset = 0;
   for (const chunk of chunks) {
@@ -7680,16 +2745,16 @@ async function* createMemoryContentSource(content) {
   await Promise.resolve();
   yield new Uint8Array(content);
 }
-function normalizeOptionalByteCount4(value, field) {
-  return value === void 0 ? void 0 : normalizeByteCount4(value, field);
+function normalizeOptionalByteCount2(value, field) {
+  return value === void 0 ? void 0 : normalizeByteCount2(value, field);
 }
-function normalizeByteCount4(value, field) {
+function normalizeByteCount2(value, field) {
   if (!Number.isFinite(value) || value < 0) {
     throw createInvalidFixtureError("/", `Memory provider ${field} must be a non-negative number`);
   }
   return Math.floor(value);
 }
-function cloneVerification5(verification) {
+function cloneVerification3(verification) {
   const clone = { verified: verification.verified };
   if (verification.method !== void 0) clone.method = verification.method;
   if (verification.checksum !== void 0) clone.checksum = verification.checksum;
@@ -7733,7 +2798,7 @@ function cloneDate2(value) {
 function clonePermissions(permissions) {
   return { ...permissions };
 }
-function compareEntries4(left, right) {
+function compareEntries2(left, right) {
   return left.path.localeCompare(right.path);
 }
 function createPathNotFoundError2(path2, message) {
@@ -7753,1323 +2818,54 @@ function createInvalidFixtureError(path2, message) {
   });
 }
 
-// src/providers/web/HttpProvider.ts
-var import_node_buffer8 = require("buffer");
-var HTTP_CHECKSUM_CAPABILITIES = ["etag"];
-function createHttpProviderFactory(options = {}) {
-  const id = options.id ?? "http";
-  const secure = options.secure ?? id === "https";
-  const basePath = options.basePath ?? "";
-  const fetchImpl = options.fetch ?? globalThis.fetch;
-  if (typeof fetchImpl !== "function") {
-    throw new ConfigurationError({
-      message: "Global fetch is unavailable; supply HttpProviderOptions.fetch explicitly",
-      retryable: false
-    });
+// src/profiles/resolveConnectionProfileSecrets.ts
+async function resolveConnectionProfileSecrets(profile, options = {}) {
+  const { password, ssh, tls, username, ...rest } = profile;
+  const resolved = { ...rest };
+  if (username !== void 0) {
+    resolved.username = await resolveSecret(username, options);
   }
-  const capabilities = {
-    atomicRename: false,
-    authentication: ["anonymous", "password", "token"],
-    checksum: [...HTTP_CHECKSUM_CAPABILITIES],
-    chmod: false,
-    chown: false,
-    list: false,
-    maxConcurrency: 8,
-    metadata: ["modifiedAt", "mimeType", "uniqueId"],
-    notes: ["Read-only HTTP(S) provider. Uploads are not supported."],
-    provider: id,
-    readStream: true,
-    resumeDownload: true,
-    resumeUpload: false,
-    serverSideCopy: false,
-    serverSideMove: false,
-    stat: true,
-    symlink: false,
-    writeStream: false
-  };
-  return {
-    capabilities,
-    create: () => new HttpProvider({
-      basePath,
-      capabilities,
-      defaultHeaders: { ...options.defaultHeaders ?? {} },
-      fetch: fetchImpl,
-      id,
-      secure
-    }),
-    id
-  };
+  if (password !== void 0) {
+    resolved.password = await resolveSecret(password, options);
+  }
+  if (tls !== void 0) {
+    resolved.tls = await resolveTlsProfile(tls, options);
+  }
+  if (ssh !== void 0) {
+    resolved.ssh = await resolveSshProfile(ssh, options);
+  }
+  return resolved;
 }
-var HttpProvider = class {
-  constructor(internals) {
-    this.internals = internals;
-    this.id = internals.id;
-    this.capabilities = internals.capabilities;
-  }
-  internals;
-  id;
-  capabilities;
-  async connect(profile) {
-    const headers = { ...this.internals.defaultHeaders };
-    if (profile.username !== void 0) {
-      const username = await resolveSecret(profile.username);
-      const password = profile.password !== void 0 ? await resolveSecret(profile.password) : "";
-      const usernameText = secretToString2(username);
-      const passwordText = secretToString2(password);
-      headers["Authorization"] = `Basic ${import_node_buffer8.Buffer.from(`${usernameText}:${passwordText}`).toString("base64")}`;
-    }
-    const baseUrl = buildSessionBaseUrl(profile, this.internals);
-    const sessionOptions = {
-      baseUrl,
-      capabilities: this.internals.capabilities,
-      fetch: this.internals.fetch,
-      headers,
-      id: this.internals.id
-    };
-    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
-    const session = new HttpTransferSession(sessionOptions);
-    return session;
-  }
-};
-var HttpTransferSession = class {
-  constructor(options) {
-    this.options = options;
-    this.provider = options.id;
-    this.capabilities = options.capabilities;
-    this.fs = new HttpFileSystem(options);
-    this.transfers = new HttpTransferOperations(options);
-  }
-  options;
-  provider;
-  capabilities;
-  fs;
-  transfers;
-  disconnect() {
-    return Promise.resolve();
-  }
-};
-var HttpFileSystem = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  list() {
-    return Promise.reject(
-      new UnsupportedFeatureError({
-        message: "HTTP provider does not support directory listing",
-        retryable: false
-      })
-    );
-  }
-  async stat(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const url = resolveUrl(this.options.baseUrl, normalized);
-    const response = await dispatchRequest(this.options, url, {
-      method: "HEAD"
-    });
-    if (!response.ok) {
-      throw mapResponseError(response, normalized);
-    }
-    return responseToStat(response, normalized);
-  }
-};
-var HttpTransferOperations = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async read(request) {
-    request.throwIfAborted();
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const url = resolveUrl(this.options.baseUrl, normalized);
-    const headers = {};
-    if (request.range !== void 0) {
-      headers["Range"] = formatRangeHeader(request.range.offset, request.range.length);
-    }
-    const requestInit = {
-      headers,
-      method: "GET"
-    };
-    if (request.signal !== void 0) requestInit.signal = request.signal;
-    const response = await dispatchRequest(this.options, url, requestInit);
-    if (!response.ok && response.status !== 206) {
-      throw mapResponseError(response, normalized);
-    }
-    const body = response.body;
-    if (body === null) {
-      throw new ConnectionError({
-        message: `HTTP response had no body for ${url.toString()}`,
-        retryable: true
-      });
-    }
-    const result = {
-      content: webStreamToAsyncIterable(body)
-    };
-    const totalBytes = parseTotalBytes(response, request.range?.offset);
-    if (totalBytes !== void 0) result.totalBytes = totalBytes;
-    if (request.range?.offset !== void 0 && request.range.offset > 0) {
-      result.bytesRead = request.range.offset;
-    }
-    const etag = response.headers.get("etag");
-    if (etag !== null) result.checksum = etag;
-    return result;
-  }
-  write() {
-    return Promise.reject(
-      new UnsupportedFeatureError({
-        message: "HTTP provider is read-only; uploads are not supported",
-        retryable: false
-      })
-    );
-  }
-};
-function buildSessionBaseUrl(profile, internals) {
-  return buildBaseUrl(profile, { basePath: internals.basePath, secure: internals.secure });
+async function resolveSshProfile(profile, options) {
+  const { knownHosts, passphrase, privateKey, ...rest } = profile;
+  const resolved = { ...rest };
+  if (privateKey !== void 0) resolved.privateKey = await resolveSecret(privateKey, options);
+  if (passphrase !== void 0) resolved.passphrase = await resolveSecret(passphrase, options);
+  if (knownHosts !== void 0)
+    resolved.knownHosts = await resolveKnownHostsSource(knownHosts, options);
+  return resolved;
 }
-function responseToStat(response, normalizedPath) {
-  const stat = {
-    exists: true,
-    name: basenameRemotePath(normalizedPath),
-    path: normalizedPath,
-    type: "file"
-  };
-  const contentLength = response.headers.get("content-length");
-  if (contentLength !== null) {
-    const size = Number.parseInt(contentLength, 10);
-    if (Number.isFinite(size) && size >= 0) stat.size = size;
+async function resolveKnownHostsSource(source, options) {
+  if (Array.isArray(source)) {
+    return Promise.all(source.map((item) => resolveSecret(item, options)));
   }
-  const lastModified = response.headers.get("last-modified");
-  if (lastModified !== null) {
-    const parsed = new Date(lastModified);
-    if (!Number.isNaN(parsed.getTime())) stat.modifiedAt = parsed;
-  }
-  const etag = response.headers.get("etag");
-  if (etag !== null) stat.uniqueId = etag;
-  return stat;
+  return resolveSecret(source, options);
 }
-
-// src/providers/web/WebDavProvider.ts
-var import_node_buffer9 = require("buffer");
-var WEBDAV_CHECKSUM_CAPABILITIES = ["etag"];
-function createWebDavProviderFactory(options = {}) {
-  const id = options.id ?? "webdav";
-  const secure = options.secure ?? false;
-  const basePath = options.basePath ?? "";
-  const fetchImpl = options.fetch ?? globalThis.fetch;
-  if (typeof fetchImpl !== "function") {
-    throw new ConfigurationError({
-      message: "Global fetch is unavailable; supply WebDavProviderOptions.fetch explicitly",
-      retryable: false
-    });
-  }
-  const capabilities = {
-    atomicRename: false,
-    authentication: ["anonymous", "password", "token"],
-    checksum: [...WEBDAV_CHECKSUM_CAPABILITIES],
-    chmod: false,
-    chown: false,
-    list: true,
-    maxConcurrency: 8,
-    metadata: ["modifiedAt", "mimeType", "uniqueId"],
-    notes: ["WebDAV provider buffers PUT bodies in memory; chunked uploads are not yet supported."],
-    provider: id,
-    readStream: true,
-    resumeDownload: true,
-    resumeUpload: false,
-    serverSideCopy: false,
-    serverSideMove: false,
-    stat: true,
-    symlink: false,
-    writeStream: true
-  };
-  return {
-    capabilities,
-    create: () => new WebDavProvider({
-      basePath,
-      capabilities,
-      defaultHeaders: { ...options.defaultHeaders ?? {} },
-      fetch: fetchImpl,
-      id,
-      secure
-    }),
-    id
-  };
+async function resolveTlsProfile(profile, options) {
+  const { ca, cert, key, passphrase, pfx, ...rest } = profile;
+  const resolved = { ...rest };
+  if (ca !== void 0) resolved.ca = await resolveTlsSecretSource(ca, options);
+  if (cert !== void 0) resolved.cert = await resolveSecret(cert, options);
+  if (key !== void 0) resolved.key = await resolveSecret(key, options);
+  if (passphrase !== void 0) resolved.passphrase = await resolveSecret(passphrase, options);
+  if (pfx !== void 0) resolved.pfx = await resolveSecret(pfx, options);
+  return resolved;
 }
-var WebDavProvider = class {
-  constructor(internals) {
-    this.internals = internals;
-    this.id = internals.id;
-    this.capabilities = internals.capabilities;
+async function resolveTlsSecretSource(source, options) {
+  if (Array.isArray(source)) {
+    return Promise.all(source.map((item) => resolveSecret(item, options)));
   }
-  internals;
-  id;
-  capabilities;
-  async connect(profile) {
-    const headers = { ...this.internals.defaultHeaders };
-    if (profile.username !== void 0) {
-      const username = await resolveSecret(profile.username);
-      const password = profile.password !== void 0 ? await resolveSecret(profile.password) : "";
-      const usernameText = secretToString2(username);
-      const passwordText = secretToString2(password);
-      headers["Authorization"] = `Basic ${import_node_buffer9.Buffer.from(`${usernameText}:${passwordText}`).toString(
-        "base64"
-      )}`;
-    }
-    const baseUrl = buildBaseUrl(profile, {
-      basePath: this.internals.basePath,
-      secure: this.internals.secure
-    });
-    const sessionOptions = {
-      baseUrl,
-      capabilities: this.internals.capabilities,
-      fetch: this.internals.fetch,
-      headers,
-      id: this.internals.id
-    };
-    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
-    return new WebDavSession(sessionOptions);
-  }
-};
-var WebDavSession = class {
-  provider;
-  capabilities;
-  fs;
-  transfers;
-  constructor(options) {
-    this.provider = options.id;
-    this.capabilities = options.capabilities;
-    this.fs = new WebDavFileSystem(options);
-    this.transfers = new WebDavTransferOperations(options);
-  }
-  disconnect() {
-    return Promise.resolve();
-  }
-};
-var WebDavFileSystem = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async list(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const url = resolveUrl(this.options.baseUrl, normalized);
-    const response = await dispatchRequest(this.options, url, {
-      headers: { Depth: "1", "Content-Type": "application/xml" },
-      method: "PROPFIND"
-    });
-    if (!response.ok && response.status !== 207) {
-      throw mapResponseError(response, normalized);
-    }
-    const body = await response.text();
-    const entries = parsePropfindResponses(body, this.options.baseUrl);
-    return entries.filter((entry) => entry.path !== normalized && entry.path !== `${normalized}/`).map((entry) => normalizeEntry(entry, normalized));
-  }
-  async stat(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const url = resolveUrl(this.options.baseUrl, normalized);
-    const response = await dispatchRequest(this.options, url, {
-      headers: { Depth: "0", "Content-Type": "application/xml" },
-      method: "PROPFIND"
-    });
-    if (!response.ok && response.status !== 207) {
-      throw mapResponseError(response, normalized);
-    }
-    const body = await response.text();
-    const entries = parsePropfindResponses(body, this.options.baseUrl);
-    const target = entries.find((entry2) => entry2.path === normalized || entry2.path === `${normalized}/`) ?? entries[0];
-    if (target === void 0) {
-      throw new ProtocolError({
-        details: { path: normalized },
-        message: "WebDAV PROPFIND returned no responses",
-        retryable: false
-      });
-    }
-    const entry = normalizeEntry(target, parentOf(normalized));
-    const stat = {
-      exists: true,
-      name: entry.name,
-      path: normalized,
-      type: entry.type
-    };
-    if (entry.size !== void 0) stat.size = entry.size;
-    if (entry.modifiedAt !== void 0) stat.modifiedAt = entry.modifiedAt;
-    if (entry.uniqueId !== void 0) stat.uniqueId = entry.uniqueId;
-    return stat;
-  }
-};
-var WebDavTransferOperations = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async read(request) {
-    request.throwIfAborted();
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const url = resolveUrl(this.options.baseUrl, normalized);
-    const headers = {};
-    if (request.range !== void 0) {
-      headers["Range"] = formatRangeHeader(request.range.offset, request.range.length);
-    }
-    const init = {
-      headers,
-      method: "GET"
-    };
-    if (request.signal !== void 0) init.signal = request.signal;
-    const response = await dispatchRequest(this.options, url, init);
-    if (!response.ok && response.status !== 206) {
-      throw mapResponseError(response, normalized);
-    }
-    const body = response.body;
-    if (body === null) {
-      throw new ConnectionError({
-        message: `WebDAV response had no body for ${url.toString()}`,
-        retryable: true
-      });
-    }
-    const result = {
-      content: webStreamToAsyncIterable(body)
-    };
-    const totalBytes = parseTotalBytes(response, request.range?.offset);
-    if (totalBytes !== void 0) result.totalBytes = totalBytes;
-    if (request.range?.offset !== void 0 && request.range.offset > 0) {
-      result.bytesRead = request.range.offset;
-    }
-    const etag = response.headers.get("etag");
-    if (etag !== null) result.checksum = etag;
-    return result;
-  }
-  async write(request) {
-    request.throwIfAborted();
-    if (request.offset !== void 0 && request.offset > 0) {
-      throw new UnsupportedFeatureError({
-        details: { offset: request.offset },
-        message: "WebDAV provider does not support resumable uploads",
-        retryable: false
-      });
-    }
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const url = resolveUrl(this.options.baseUrl, normalized);
-    const buffered = await collectChunks6(request.content);
-    const headers = {
-      "Content-Length": String(buffered.byteLength),
-      "Content-Type": "application/octet-stream"
-    };
-    const init = {
-      body: buffered,
-      headers,
-      method: "PUT"
-    };
-    if (request.signal !== void 0) init.signal = request.signal;
-    const response = await dispatchRequest(this.options, url, init);
-    if (!response.ok) {
-      throw mapResponseError(response, normalized);
-    }
-    request.reportProgress(buffered.byteLength, buffered.byteLength);
-    const result = {
-      bytesTransferred: buffered.byteLength,
-      totalBytes: buffered.byteLength
-    };
-    const etag = response.headers.get("etag");
-    if (etag !== null) result.checksum = etag;
-    return result;
-  }
-};
-async function collectChunks6(source) {
-  const chunks = [];
-  let total = 0;
-  for await (const chunk of source) {
-    chunks.push(chunk);
-    total += chunk.byteLength;
-  }
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return out;
-}
-function parsePropfindResponses(xml, baseUrl) {
-  const entries = [];
-  const responseRegex = /<(?:[a-zA-Z0-9-]+:)?response\b[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9-]+:)?response>/gi;
-  let match;
-  while ((match = responseRegex.exec(xml)) !== null) {
-    const inner = match[1] ?? "";
-    const href = extractTag2(inner, "href");
-    if (href === void 0) continue;
-    const path2 = decodeHref(href, baseUrl);
-    const propBlock = extractTag2(inner, "prop") ?? inner;
-    const isCollection = /<(?:[a-zA-Z0-9-]+:)?collection\b/i.test(propBlock);
-    const sizeText = extractTag2(propBlock, "getcontentlength");
-    const modifiedText = extractTag2(propBlock, "getlastmodified");
-    const etag = extractTag2(propBlock, "getetag");
-    const entry = {
-      path: path2,
-      type: isCollection ? "directory" : "file"
-    };
-    if (sizeText !== void 0) {
-      const size = Number.parseInt(sizeText.trim(), 10);
-      if (Number.isFinite(size) && size >= 0) entry.size = size;
-    }
-    if (modifiedText !== void 0) {
-      const parsed = new Date(modifiedText.trim());
-      if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
-    }
-    if (etag !== void 0) entry.uniqueId = etag.trim();
-    entries.push(entry);
-  }
-  return entries;
-}
-function extractTag2(xml, localName) {
-  const pattern = new RegExp(
-    `<(?:[a-zA-Z0-9-]+:)?${localName}\\b[^>]*?(?:/>|>([\\s\\S]*?)</(?:[a-zA-Z0-9-]+:)?${localName}>)`,
-    "i"
-  );
-  const match = pattern.exec(xml);
-  if (match === null) return void 0;
-  return match[1] ?? "";
-}
-function decodeHref(rawHref, baseUrl) {
-  const decoded = decodeURIComponent(rawHref.trim());
-  let pathname = decoded;
-  if (/^https?:\/\//i.test(decoded)) {
-    try {
-      pathname = new URL(decoded).pathname;
-    } catch {
-      pathname = decoded;
-    }
-  }
-  const basePathname = baseUrl.pathname.replace(/\/+$/, "");
-  if (basePathname.length > 0 && pathname.startsWith(basePathname)) {
-    pathname = pathname.slice(basePathname.length);
-  }
-  if (!pathname.startsWith("/")) pathname = `/${pathname}`;
-  if (pathname.length > 1 && pathname.endsWith("/")) pathname = pathname.slice(0, -1);
-  return pathname;
-}
-function normalizeEntry(entry, parentPath) {
-  const trimmed = entry.path.endsWith("/") ? entry.path.slice(0, -1) : entry.path;
-  const name = basenameRemotePath(trimmed === "" ? "/" : trimmed);
-  const result = {
-    name: name === "" ? trimmed : name,
-    path: trimmed === "" ? "/" : trimmed,
-    type: entry.type
-  };
-  if (entry.size !== void 0) result.size = entry.size;
-  if (entry.modifiedAt !== void 0) result.modifiedAt = entry.modifiedAt;
-  if (entry.uniqueId !== void 0) result.uniqueId = entry.uniqueId;
-  void parentPath;
-  return result;
-}
-function parentOf(path2) {
-  if (path2 === "/" || path2 === "") return "/";
-  const idx = path2.lastIndexOf("/");
-  if (idx <= 0) return "/";
-  return path2.slice(0, idx);
-}
-
-// src/providers/web/awsSigv4.ts
-var import_node_crypto2 = require("crypto");
-function signSigV4(input) {
-  const now = input.now ?? /* @__PURE__ */ new Date();
-  const amzDate = formatAmzDate(now);
-  const dateStamp = amzDate.slice(0, 8);
-  const payloadHash = input.body !== void 0 ? sha256Hex(input.body) : sha256Hex(new Uint8Array());
-  input.headers["host"] = input.url.host;
-  input.headers["x-amz-date"] = amzDate;
-  input.headers["x-amz-content-sha256"] = payloadHash;
-  if (input.sessionToken !== void 0) {
-    input.headers["x-amz-security-token"] = input.sessionToken;
-  }
-  const canonicalUri = canonicalizePath(input.url.pathname);
-  const canonicalQuery = canonicalizeQuery(input.url.searchParams);
-  const lowerHeaders = Object.entries(input.headers).map(([name, value]) => [
-    name.toLowerCase(),
-    value.trim().replace(/\s+/g, " ")
-  ]).sort((entryA, entryB) => entryA[0] < entryB[0] ? -1 : entryA[0] > entryB[0] ? 1 : 0);
-  const canonicalHeaders = lowerHeaders.map(([n, v]) => `${n}:${v}
-`).join("");
-  const signedHeaders = lowerHeaders.map(([n]) => n).join(";");
-  const canonicalRequest = [
-    input.method.toUpperCase(),
-    canonicalUri,
-    canonicalQuery,
-    canonicalHeaders,
-    signedHeaders,
-    payloadHash
-  ].join("\n");
-  const credentialScope = `${dateStamp}/${input.region}/${input.service}/aws4_request`;
-  const stringToSign = [
-    "AWS4-HMAC-SHA256",
-    amzDate,
-    credentialScope,
-    sha256Hex(Buffer.from(canonicalRequest, "utf8"))
-  ].join("\n");
-  const kDate = hmac(`AWS4${input.secretAccessKey}`, dateStamp);
-  const kRegion = hmac(kDate, input.region);
-  const kService = hmac(kRegion, input.service);
-  const kSigning = hmac(kService, "aws4_request");
-  const signature = hmacHex(kSigning, stringToSign);
-  const authorization = `AWS4-HMAC-SHA256 Credential=${input.accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  input.headers["authorization"] = authorization;
-  return { authorization, signedHeaders };
-}
-function formatAmzDate(now) {
-  const iso = now.toISOString();
-  return `${iso.slice(0, 4)}${iso.slice(5, 7)}${iso.slice(8, 10)}T${iso.slice(11, 13)}${iso.slice(14, 16)}${iso.slice(17, 19)}Z`;
-}
-function canonicalizePath(pathname) {
-  if (pathname.length === 0) return "/";
-  return pathname.split("/").map((segment) => encodeRfc3986(decodeURIComponent(segment))).join("/");
-}
-function canonicalizeQuery(params) {
-  const entries = [];
-  params.forEach((value, key) => {
-    entries.push([key, value]);
-  });
-  entries.sort(
-    ([ka, va], [kb, vb]) => ka === kb ? va < vb ? -1 : va > vb ? 1 : 0 : ka < kb ? -1 : 1
-  );
-  return entries.map(([key, value]) => `${encodeRfc3986(key)}=${encodeRfc3986(value)}`).join("&");
-}
-function encodeRfc3986(value) {
-  return encodeURIComponent(value).replace(
-    /[!'()*]/g,
-    (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`
-  );
-}
-function sha256Hex(data) {
-  return (0, import_node_crypto2.createHash)("sha256").update(data).digest("hex");
-}
-function hmac(key, data) {
-  return (0, import_node_crypto2.createHmac)("sha256", key).update(data, "utf8").digest();
-}
-function hmacHex(key, data) {
-  return (0, import_node_crypto2.createHmac)("sha256", key).update(data, "utf8").digest("hex");
-}
-
-// src/providers/web/S3Provider.ts
-var DEFAULT_MULTIPART_PART_SIZE = 8 * 1024 * 1024;
-var DEFAULT_MULTIPART_THRESHOLD = 8 * 1024 * 1024;
-var S3_CHECKSUM_CAPABILITIES = ["etag"];
-function createS3ProviderFactory(options = {}) {
-  const id = options.id ?? "s3";
-  const region = options.region ?? "us-east-1";
-  const service = options.service ?? "s3";
-  const pathStyle = options.pathStyle ?? true;
-  const fetchImpl = options.fetch ?? globalThis.fetch;
-  const endpoint = options.endpoint ?? `https://s3.${region}.amazonaws.com`;
-  if (typeof fetchImpl !== "function") {
-    throw new ConfigurationError({
-      message: "Global fetch is unavailable; supply S3ProviderOptions.fetch explicitly",
-      retryable: false
-    });
-  }
-  let endpointUrl;
-  try {
-    endpointUrl = new URL(endpoint);
-  } catch (error) {
-    throw new ConfigurationError({
-      cause: error,
-      details: { endpoint },
-      message: "S3 provider received an invalid endpoint URL",
-      retryable: false
-    });
-  }
-  const multipartEnabled = options.multipart?.enabled ?? false;
-  const multipart = {
-    enabled: multipartEnabled,
-    partSizeBytes: options.multipart?.partSizeBytes ?? DEFAULT_MULTIPART_PART_SIZE,
-    thresholdBytes: options.multipart?.thresholdBytes ?? DEFAULT_MULTIPART_THRESHOLD,
-    ...options.multipart?.resumeStore !== void 0 ? { resumeStore: options.multipart.resumeStore } : {}
-  };
-  const capabilities = {
-    atomicRename: false,
-    authentication: ["password", "token"],
-    checksum: [...S3_CHECKSUM_CAPABILITIES],
-    chmod: false,
-    chown: false,
-    list: true,
-    maxConcurrency: 16,
-    metadata: ["modifiedAt", "mimeType", "uniqueId"],
-    notes: multipartEnabled ? [
-      `S3 multipart upload enabled (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`
-    ] : [
-      "S3 provider performs single-shot PUT uploads; pass multipart.enabled to stream large objects."
-    ],
-    provider: id,
-    readStream: true,
-    resumeDownload: true,
-    resumeUpload: multipartEnabled,
-    serverSideCopy: false,
-    serverSideMove: false,
-    stat: true,
-    symlink: false,
-    writeStream: true
-  };
-  return {
-    capabilities,
-    create: () => new S3Provider({
-      capabilities,
-      defaultHeaders: { ...options.defaultHeaders ?? {} },
-      endpointUrl,
-      fetch: fetchImpl,
-      id,
-      multipart,
-      pathStyle,
-      region,
-      service,
-      ...options.bucket !== void 0 ? { bucket: options.bucket } : {},
-      ...options.sessionToken !== void 0 ? { sessionToken: options.sessionToken } : {}
-    }),
-    id
-  };
-}
-var S3Provider = class {
-  constructor(internals) {
-    this.internals = internals;
-    this.id = internals.id;
-    this.capabilities = internals.capabilities;
-  }
-  internals;
-  id;
-  capabilities;
-  async connect(profile) {
-    if (profile.username === void 0 || profile.password === void 0) {
-      throw new ConfigurationError({
-        message: "S3 provider requires username (access key id) and password (secret access key)",
-        retryable: false
-      });
-    }
-    const accessKeyId = secretToString2(await resolveSecret(profile.username));
-    const secretAccessKey = secretToString2(await resolveSecret(profile.password));
-    const sessionToken = this.internals.sessionToken !== void 0 ? secretToString2(await resolveSecret(this.internals.sessionToken)) : void 0;
-    const bucket = profile.host !== void 0 && profile.host !== "" ? profile.host : this.internals.bucket;
-    if (bucket === void 0 || bucket === "") {
-      throw new ConfigurationError({
-        message: "S3 provider requires a bucket via S3ProviderOptions.bucket or ConnectionProfile.host",
-        retryable: false
-      });
-    }
-    const sessionOptions = {
-      accessKeyId,
-      bucket,
-      capabilities: this.internals.capabilities,
-      defaultHeaders: this.internals.defaultHeaders,
-      endpointUrl: this.internals.endpointUrl,
-      fetch: this.internals.fetch,
-      id: this.internals.id,
-      multipart: this.internals.multipart,
-      pathStyle: this.internals.pathStyle,
-      region: this.internals.region,
-      secretAccessKey,
-      service: this.internals.service
-    };
-    if (sessionToken !== void 0) sessionOptions.sessionToken = sessionToken;
-    if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
-    return new S3Session(sessionOptions);
-  }
-};
-var S3Session = class {
-  provider;
-  capabilities;
-  fs;
-  transfers;
-  constructor(options) {
-    this.provider = options.id;
-    this.capabilities = options.capabilities;
-    this.fs = new S3FileSystem(options);
-    this.transfers = new S3TransferOperations(options);
-  }
-  disconnect() {
-    return Promise.resolve();
-  }
-};
-var S3FileSystem = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async list(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const prefix = normalized === "/" ? "" : `${normalized.slice(1)}/`;
-    const url = buildBucketUrl(this.options);
-    url.searchParams.set("list-type", "2");
-    url.searchParams.set("delimiter", "/");
-    if (prefix.length > 0) url.searchParams.set("prefix", prefix);
-    const response = await s3Fetch(this.options, "GET", url);
-    if (!response.ok) throw mapResponseError(response, normalized);
-    const body = await response.text();
-    return parseListObjectsV2(body, prefix);
-  }
-  async stat(path2) {
-    const normalized = normalizeRemotePath(path2);
-    const url = buildObjectUrl(this.options, normalized);
-    const response = await s3Fetch(this.options, "HEAD", url);
-    if (!response.ok) throw mapResponseError(response, normalized);
-    const stat = {
-      exists: true,
-      name: basenameRemotePath(normalized),
-      path: normalized,
-      type: "file"
-    };
-    const contentLength = response.headers.get("content-length");
-    if (contentLength !== null) {
-      const size = Number.parseInt(contentLength, 10);
-      if (Number.isFinite(size) && size >= 0) stat.size = size;
-    }
-    const lastModified = response.headers.get("last-modified");
-    if (lastModified !== null) {
-      const parsed = new Date(lastModified);
-      if (!Number.isNaN(parsed.getTime())) stat.modifiedAt = parsed;
-    }
-    const etag = response.headers.get("etag");
-    if (etag !== null) stat.uniqueId = etag;
-    return stat;
-  }
-};
-var S3TransferOperations = class {
-  constructor(options) {
-    this.options = options;
-  }
-  options;
-  async read(request) {
-    request.throwIfAborted();
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const url = buildObjectUrl(this.options, normalized);
-    const headers = {};
-    if (request.range !== void 0) {
-      headers["range"] = formatRangeHeader(request.range.offset, request.range.length);
-    }
-    const response = await s3Fetch(this.options, "GET", url, {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      extraHeaders: headers
-    });
-    if (!response.ok && response.status !== 206) {
-      throw mapResponseError(response, normalized);
-    }
-    const body = response.body;
-    if (body === null) {
-      throw new ConnectionError({
-        message: `S3 response had no body for ${url.toString()}`,
-        retryable: true
-      });
-    }
-    const result = {
-      content: webStreamToAsyncIterable(body)
-    };
-    const totalBytes = parseTotalBytes(response, request.range?.offset);
-    if (totalBytes !== void 0) result.totalBytes = totalBytes;
-    if (request.range?.offset !== void 0 && request.range.offset > 0) {
-      result.bytesRead = request.range.offset;
-    }
-    const etag = response.headers.get("etag");
-    if (etag !== null) result.checksum = etag;
-    return result;
-  }
-  async write(request) {
-    request.throwIfAborted();
-    const normalized = normalizeRemotePath(request.endpoint.path);
-    const multipart = this.options.multipart;
-    const offset = request.offset ?? 0;
-    if (offset > 0) {
-      if (!multipart.enabled || multipart.resumeStore === void 0) {
-        throw new UnsupportedFeatureError({
-          details: { offset },
-          message: "S3 provider requires multipart.enabled and multipart.resumeStore to resume an upload",
-          retryable: false
-        });
-      }
-      return this.writeMultipart(request, normalized, offset);
-    }
-    if (multipart.enabled) {
-      return this.writeMultipart(request, normalized, 0);
-    }
-    return this.writeSingleShot(request, normalized);
-  }
-  async writeSingleShot(request, normalized) {
-    const url = buildObjectUrl(this.options, normalized);
-    const buffered = await collectChunks7(request.content);
-    const response = await s3Fetch(this.options, "PUT", url, {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      body: buffered,
-      extraHeaders: { "content-type": "application/octet-stream" }
-    });
-    if (!response.ok) throw mapResponseError(response, normalized);
-    request.reportProgress(buffered.byteLength, buffered.byteLength);
-    const result = {
-      bytesTransferred: buffered.byteLength,
-      totalBytes: buffered.byteLength
-    };
-    const etag = response.headers.get("etag");
-    if (etag !== null) result.checksum = etag;
-    return result;
-  }
-  async writeMultipart(request, normalized, requestedOffset) {
-    const multipart = this.options.multipart;
-    const partSize = multipart.partSizeBytes;
-    const objectUrl = buildObjectUrl(this.options, normalized);
-    const resumeStore = multipart.resumeStore;
-    const resumeKey = {
-      bucket: this.options.bucket,
-      jobId: request.job.id,
-      path: normalized
-    };
-    let existing;
-    if (resumeStore !== void 0) {
-      existing = await resumeStore.load(resumeKey) ?? void 0;
-    }
-    if (requestedOffset > 0) {
-      if (existing === void 0) {
-        throw new UnsupportedFeatureError({
-          details: { offset: requestedOffset },
-          message: "S3 provider has no resume checkpoint for this transfer",
-          retryable: false
-        });
-      }
-      const lastByteEnd = existing.parts[existing.parts.length - 1]?.byteEnd ?? 0;
-      if (lastByteEnd !== requestedOffset) {
-        throw new UnsupportedFeatureError({
-          details: { checkpointOffset: lastByteEnd, requestedOffset },
-          message: "S3 resume offset does not match the stored multipart checkpoint",
-          retryable: false
-        });
-      }
-    }
-    const iterator = request.content[Symbol.asyncIterator]();
-    const initialBuffer = [];
-    let initialSize = 0;
-    if (existing === void 0) {
-      while (initialSize <= multipart.thresholdBytes) {
-        const next = await iterator.next();
-        if (next.done === true) break;
-        const chunk = next.value;
-        if (chunk.byteLength === 0) continue;
-        initialBuffer.push(chunk);
-        initialSize += chunk.byteLength;
-      }
-      if (initialSize <= multipart.thresholdBytes) {
-        const buffered = concat(initialBuffer, initialSize);
-        return this.singleShotFromBuffer(request, normalized, buffered);
-      }
-    }
-    let uploadId;
-    if (existing !== void 0) {
-      uploadId = existing.uploadId;
-    } else {
-      const initiateUrl = new URL(objectUrl.toString());
-      initiateUrl.searchParams.set("uploads", "");
-      const initiateResponse = await s3Fetch(this.options, "POST", initiateUrl, {
-        ...request.signal !== void 0 ? { signal: request.signal } : {},
-        extraHeaders: { "content-type": "application/octet-stream" }
-      });
-      if (!initiateResponse.ok) throw mapResponseError(initiateResponse, normalized);
-      const initiateBody = await initiateResponse.text();
-      const initiated = innerText(initiateBody, "UploadId");
-      if (initiated === void 0 || initiated === "") {
-        throw new ConnectionError({
-          message: "S3 CreateMultipartUpload returned no UploadId",
-          retryable: true
-        });
-      }
-      uploadId = initiated;
-      if (resumeStore !== void 0) {
-        await resumeStore.save(resumeKey, { parts: [], uploadId });
-      }
-    }
-    const parts = existing !== void 0 ? [...existing.parts] : [];
-    const startedBytes = parts.length > 0 ? parts[parts.length - 1]?.byteEnd ?? 0 : 0;
-    let bytesTransferred = startedBytes;
-    let partNumber = parts.length + 1;
-    let buffer = [];
-    let bufferSize = 0;
-    if (existing === void 0) {
-      const trailing = concat(initialBuffer, initialSize);
-      buffer = [trailing];
-      bufferSize = trailing.byteLength;
-    }
-    const flushPart = async (final) => {
-      while (bufferSize >= partSize || final && bufferSize > 0) {
-        const take = final ? bufferSize : partSize;
-        const partBytes = sliceFromBuffers(buffer, take);
-        buffer = partBytes.remaining;
-        bufferSize -= partBytes.bytes.byteLength;
-        const partUrl = new URL(objectUrl.toString());
-        partUrl.searchParams.set("partNumber", String(partNumber));
-        partUrl.searchParams.set("uploadId", uploadId);
-        const partResponse = await s3Fetch(this.options, "PUT", partUrl, {
-          ...request.signal !== void 0 ? { signal: request.signal } : {},
-          body: partBytes.bytes
-        });
-        if (!partResponse.ok) {
-          throw mapResponseError(partResponse, normalized);
-        }
-        const partEtag = partResponse.headers.get("etag");
-        if (partEtag === null) {
-          throw new ConnectionError({
-            message: `S3 UploadPart returned no ETag for part ${String(partNumber)}`,
-            retryable: true
-          });
-        }
-        bytesTransferred += partBytes.bytes.byteLength;
-        parts.push({ byteEnd: bytesTransferred, etag: partEtag, partNumber });
-        if (resumeStore !== void 0) {
-          await resumeStore.save(resumeKey, { parts: [...parts], uploadId });
-        }
-        request.reportProgress(bytesTransferred, void 0);
-        partNumber += 1;
-      }
-    };
-    try {
-      await flushPart(false);
-      while (true) {
-        request.throwIfAborted();
-        const next = await iterator.next();
-        if (next.done === true) break;
-        if (next.value.byteLength === 0) continue;
-        buffer.push(next.value);
-        bufferSize += next.value.byteLength;
-        await flushPart(false);
-      }
-      await flushPart(true);
-    } catch (error) {
-      if (resumeStore === void 0) {
-        await abortMultipart(this.options, objectUrl, uploadId).catch(() => void 0);
-      }
-      throw error;
-    }
-    if (parts.length === 0) {
-      if (resumeStore !== void 0) await resumeStore.clear(resumeKey);
-      await abortMultipart(this.options, objectUrl, uploadId).catch(() => void 0);
-      throw new ConnectionError({
-        message: "S3 multipart upload completed with zero parts",
-        retryable: false
-      });
-    }
-    const completeUrl = new URL(objectUrl.toString());
-    completeUrl.searchParams.set("uploadId", uploadId);
-    const xmlBody = buildCompleteMultipartBody(parts);
-    const completeResponse = await s3Fetch(this.options, "POST", completeUrl, {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      body: new TextEncoder().encode(xmlBody),
-      extraHeaders: { "content-type": "application/xml" }
-    });
-    if (!completeResponse.ok) {
-      if (resumeStore === void 0) {
-        await abortMultipart(this.options, objectUrl, uploadId).catch(() => void 0);
-      }
-      throw mapResponseError(completeResponse, normalized);
-    }
-    if (resumeStore !== void 0) await resumeStore.clear(resumeKey);
-    const completeBody = await completeResponse.text();
-    const finalEtag = innerText(completeBody, "ETag");
-    const result = {
-      bytesTransferred,
-      totalBytes: bytesTransferred
-    };
-    if (finalEtag !== void 0) result.checksum = finalEtag;
-    return result;
-  }
-  async singleShotFromBuffer(request, normalized, buffered) {
-    const url = buildObjectUrl(this.options, normalized);
-    const response = await s3Fetch(this.options, "PUT", url, {
-      ...request.signal !== void 0 ? { signal: request.signal } : {},
-      body: buffered,
-      extraHeaders: { "content-type": "application/octet-stream" }
-    });
-    if (!response.ok) throw mapResponseError(response, normalized);
-    request.reportProgress(buffered.byteLength, buffered.byteLength);
-    const result = {
-      bytesTransferred: buffered.byteLength,
-      totalBytes: buffered.byteLength
-    };
-    const etag = response.headers.get("etag");
-    if (etag !== null) result.checksum = etag;
-    return result;
-  }
-};
-async function s3Fetch(options, method, url, fetchOptions = {}) {
-  const headers = {
-    ...options.defaultHeaders,
-    ...fetchOptions.extraHeaders ?? {}
-  };
-  if (fetchOptions.body !== void 0) {
-    headers["content-length"] = String(fetchOptions.body.byteLength);
-  }
-  signSigV4({
-    accessKeyId: options.accessKeyId,
-    headers,
-    method,
-    region: options.region,
-    secretAccessKey: options.secretAccessKey,
-    service: options.service,
-    url,
-    ...fetchOptions.body !== void 0 ? { body: fetchOptions.body } : {},
-    ...options.sessionToken !== void 0 ? { sessionToken: options.sessionToken } : {}
-  });
-  const init = { headers, method };
-  if (fetchOptions.body !== void 0) init.body = fetchOptions.body;
-  if (fetchOptions.signal !== void 0) init.signal = fetchOptions.signal;
-  const controller = new AbortController();
-  const upstreamSignal = init.signal ?? null;
-  if (upstreamSignal !== null) {
-    if (upstreamSignal.aborted) controller.abort(upstreamSignal.reason);
-    else upstreamSignal.addEventListener("abort", () => controller.abort(upstreamSignal.reason));
-  }
-  let timer;
-  if (options.timeoutMs !== void 0 && options.timeoutMs > 0) {
-    timer = setTimeout(
-      () => controller.abort(new Error("S3 request timed out")),
-      options.timeoutMs
-    );
-  }
-  try {
-    return await options.fetch(url.toString(), { ...init, signal: controller.signal });
-  } catch (error) {
-    throw new ConnectionError({
-      cause: error,
-      details: { url: url.toString() },
-      message: `S3 request to ${url.toString()} failed`,
-      retryable: true
-    });
-  } finally {
-    if (timer !== void 0) clearTimeout(timer);
-  }
-}
-function buildBucketUrl(options) {
-  const url = new URL(options.endpointUrl.toString());
-  if (options.pathStyle) {
-    url.pathname = `/${options.bucket}/`;
-  } else {
-    url.host = `${options.bucket}.${options.endpointUrl.host}`;
-    url.pathname = "/";
-  }
-  return url;
-}
-function buildObjectUrl(options, normalizedPath) {
-  const key = normalizedPath === "/" ? "" : normalizedPath.slice(1);
-  const url = buildBucketUrl(options);
-  if (options.pathStyle) {
-    url.pathname = `/${options.bucket}/${key}`;
-  } else {
-    url.pathname = `/${key}`;
-  }
-  return url;
-}
-async function collectChunks7(source) {
-  const chunks = [];
-  let total = 0;
-  for await (const chunk of source) {
-    chunks.push(chunk);
-    total += chunk.byteLength;
-  }
-  const out = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return out;
-}
-function concat(chunks, totalSize) {
-  const out = new Uint8Array(totalSize);
-  let offset = 0;
-  for (const chunk of chunks) {
-    out.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return out;
-}
-function sliceFromBuffers(buffers, size) {
-  const out = new Uint8Array(size);
-  let offset = 0;
-  let i = 0;
-  while (offset < size && i < buffers.length) {
-    const chunk = buffers[i];
-    if (chunk === void 0) {
-      i += 1;
-      continue;
-    }
-    const remaining = size - offset;
-    if (chunk.byteLength <= remaining) {
-      out.set(chunk, offset);
-      offset += chunk.byteLength;
-      i += 1;
-    } else {
-      out.set(chunk.subarray(0, remaining), offset);
-      const leftover = chunk.subarray(remaining);
-      const next = buffers.slice(i + 1);
-      next.unshift(leftover);
-      return { bytes: out, remaining: next };
-    }
-  }
-  return { bytes: out.subarray(0, offset), remaining: buffers.slice(i) };
-}
-async function abortMultipart(options, objectUrl, uploadId) {
-  const url = new URL(objectUrl.toString());
-  url.searchParams.set("uploadId", uploadId);
-  await s3Fetch(options, "DELETE", url);
-}
-function buildCompleteMultipartBody(parts) {
-  const partsXml = parts.map(
-    (part) => `<Part><PartNumber>${String(part.partNumber)}</PartNumber><ETag>${escapeXml(part.etag)}</ETag></Part>`
-  ).join("");
-  return `<?xml version="1.0" encoding="UTF-8"?><CompleteMultipartUpload>${partsXml}</CompleteMultipartUpload>`;
-}
-function escapeXml(value) {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
-}
-function parseListObjectsV2(xml, prefix) {
-  const entries = [];
-  const contentRegex = /<Contents\b[^>]*>([\s\S]*?)<\/Contents>/g;
-  let match;
-  while ((match = contentRegex.exec(xml)) !== null) {
-    const inner = match[1] ?? "";
-    const key = innerText(inner, "Key");
-    if (key === void 0 || key === prefix) continue;
-    const size = innerText(inner, "Size");
-    const lastModified = innerText(inner, "LastModified");
-    const etag = innerText(inner, "ETag");
-    const relative = key.startsWith(prefix) ? key.slice(prefix.length) : key;
-    if (relative === "") continue;
-    const path2 = `/${key}`;
-    const entry = {
-      name: basenameRemotePath(path2),
-      path: path2,
-      type: "file"
-    };
-    if (size !== void 0) {
-      const bytes = Number.parseInt(size, 10);
-      if (Number.isFinite(bytes) && bytes >= 0) entry.size = bytes;
-    }
-    if (lastModified !== void 0) {
-      const parsed = new Date(lastModified);
-      if (!Number.isNaN(parsed.getTime())) entry.modifiedAt = parsed;
-    }
-    if (etag !== void 0) entry.uniqueId = etag;
-    entries.push(entry);
-  }
-  const prefixRegex = /<CommonPrefixes\b[^>]*>([\s\S]*?)<\/CommonPrefixes>/g;
-  while ((match = prefixRegex.exec(xml)) !== null) {
-    const inner = match[1] ?? "";
-    const subPrefix = innerText(inner, "Prefix");
-    if (subPrefix === void 0) continue;
-    const trimmed = subPrefix.endsWith("/") ? subPrefix.slice(0, -1) : subPrefix;
-    const path2 = `/${trimmed}`;
-    entries.push({
-      name: basenameRemotePath(path2),
-      path: path2,
-      type: "directory"
-    });
-  }
-  return entries;
-}
-function innerText(xml, tag) {
-  const pattern = new RegExp(`<${tag}\\b[^>]*?(?:/>|>([\\s\\S]*?)</${tag}>)`, "i");
-  const match = pattern.exec(xml);
-  if (match === null) return void 0;
-  return (match[1] ?? "").trim();
-}
-
-// src/providers/capabilityMatrix.ts
-var noopFetch = () => Promise.reject(new Error("capabilityMatrix: fetch unused"));
-function getBuiltinCapabilityMatrix() {
-  return [
-    {
-      capabilities: createLocalProviderFactory().capabilities,
-      id: "local",
-      label: "Local file system"
-    },
-    {
-      capabilities: createMemoryProviderFactory().capabilities,
-      id: "memory",
-      label: "In-memory (test fixture)"
-    },
-    {
-      capabilities: createFtpProviderFactory().capabilities,
-      id: "ftp",
-      label: "FTP"
-    },
-    {
-      capabilities: createFtpsProviderFactory().capabilities,
-      id: "ftps",
-      label: "FTPS"
-    },
-    {
-      capabilities: createSftpProviderFactory().capabilities,
-      id: "sftp",
-      label: "SFTP"
-    },
-    {
-      capabilities: createHttpProviderFactory({ fetch: noopFetch }).capabilities,
-      id: "http",
-      label: "HTTP/HTTPS (read-only)"
-    },
-    {
-      capabilities: createWebDavProviderFactory({ fetch: noopFetch }).capabilities,
-      id: "webdav",
-      label: "WebDAV"
-    },
-    {
-      capabilities: createS3ProviderFactory({ fetch: noopFetch }).capabilities,
-      id: "s3",
-      label: "S3-compatible (single-shot uploads)"
-    },
-    {
-      capabilities: createS3ProviderFactory({
-        fetch: noopFetch,
-        multipart: { enabled: true }
-      }).capabilities,
-      id: "s3:multipart",
-      label: "S3-compatible (multipart uploads)"
-    },
-    {
-      capabilities: createDropboxProviderFactory({ fetch: noopFetch }).capabilities,
-      id: "dropbox",
-      label: "Dropbox"
-    },
-    {
-      capabilities: createGoogleDriveProviderFactory({ fetch: noopFetch }).capabilities,
-      id: "google-drive",
-      label: "Google Drive"
-    },
-    {
-      capabilities: createOneDriveProviderFactory({ fetch: noopFetch }).capabilities,
-      id: "one-drive",
-      label: "OneDrive / SharePoint"
-    },
-    {
-      capabilities: createAzureBlobProviderFactory({
-        container: "capability-matrix",
-        endpoint: "https://example.blob.core.windows.net",
-        fetch: noopFetch,
-        sasToken: "sv=ignored"
-      }).capabilities,
-      id: "azure-blob",
-      label: "Azure Blob Storage"
-    },
-    {
-      capabilities: createGcsProviderFactory({
-        bucket: "capability-matrix",
-        fetch: noopFetch
-      }).capabilities,
-      id: "gcs",
-      label: "Google Cloud Storage"
-    }
-  ];
-}
-function formatCapabilityMatrixMarkdown(matrix = getBuiltinCapabilityMatrix()) {
-  const header = "| Provider | list | stat | read | write | resume\u2193 | resume\u2191 | server-side copy/move | checksums | auth |";
-  const divider = "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |";
-  const rows = matrix.map((entry) => {
-    const c = entry.capabilities;
-    const yesNo = (value) => value ? "\u2705" : "\u274C";
-    const sideways = `${yesNo(c.serverSideCopy)} / ${yesNo(c.serverSideMove)}`;
-    const checksums = c.checksum.length === 0 ? "\u2014" : c.checksum.join(", ");
-    const auth = c.authentication.length === 0 ? "\u2014" : c.authentication.join(", ");
-    return `| ${entry.label} | ${yesNo(c.list)} | ${yesNo(c.stat)} | ${yesNo(c.readStream)} | ${yesNo(c.writeStream)} | ${yesNo(c.resumeDownload)} | ${yesNo(c.resumeUpload)} | ${sideways} | ${checksums} | ${auth} |`;
-  });
-  return [header, divider, ...rows].join("\n");
+  return resolveSecret(source, options);
 }
 
 // src/profiles/OAuthTokenSource.ts
@@ -9135,20 +2931,20 @@ function isFresh(token, skewMs, now) {
 }
 
 // src/profiles/importers/KnownHostsParser.ts
-var import_node_buffer10 = require("buffer");
-var import_node_crypto3 = require("crypto");
-function parseKnownHosts2(text) {
+var import_node_buffer4 = require("buffer");
+var import_node_crypto = require("crypto");
+function parseKnownHosts(text) {
   const entries = [];
   const lines = text.split(/\r?\n/);
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed === "" || trimmed.startsWith("#")) continue;
-    const entry = parseKnownHostsLine2(line);
+    const entry = parseKnownHostsLine(line);
     if (entry !== void 0) entries.push(entry);
   }
   return entries;
 }
-function parseKnownHostsLine2(line) {
+function parseKnownHostsLine(line) {
   const tokens = line.trim().split(/\s+/);
   if (tokens.length < 3) return void 0;
   let index = 0;
@@ -9225,11 +3021,11 @@ function globMatch(pattern, value) {
   return regex.test(value);
 }
 function matchesHashedEntry(salt, hash, host, port) {
-  const saltBuffer = import_node_buffer10.Buffer.from(salt, "base64");
+  const saltBuffer = import_node_buffer4.Buffer.from(salt, "base64");
   if (saltBuffer.length === 0) return false;
   const candidates = port === DEFAULT_SSH_PORT ? [host] : [`[${host}]:${String(port)}`, host];
   for (const candidate of candidates) {
-    const expected = (0, import_node_crypto3.createHmac)("sha1", saltBuffer).update(candidate).digest("base64");
+    const expected = (0, import_node_crypto.createHmac)("sha1", saltBuffer).update(candidate).digest("base64");
     if (expected === hash) return true;
   }
   return false;
@@ -9398,7 +3194,7 @@ function expandAlgorithms(values) {
 }
 
 // src/profiles/importers/FileZillaImporter.ts
-var import_node_buffer11 = require("buffer");
+var import_node_buffer5 = require("buffer");
 function importFileZillaSites(xml) {
   const events = tokenizeXml(xml);
   if (events.length === 0) {
@@ -9503,7 +3299,7 @@ function buildSiteFromFields(fields, passwordEncoding) {
   const rawPass = fields["Pass"];
   if (rawPass !== void 0 && rawPass !== "") {
     if (passwordEncoding === "base64") {
-      password = import_node_buffer11.Buffer.from(rawPass, "base64").toString("utf8");
+      password = import_node_buffer5.Buffer.from(rawPass, "base64").toString("utf8");
     } else {
       password = rawPass;
     }
@@ -10506,9 +4302,9 @@ async function* walkRemoteTree(fs, rootPath, options = {}) {
   yield* walkDirectory(fs, root, 0, normalized);
 }
 async function* walkDirectory(fs, path2, depth, options) {
-  throwIfAborted3(options.signal);
+  throwIfAborted2(options.signal);
   const entries = await fs.list(path2);
-  const sorted = [...entries].sort(compareEntries5);
+  const sorted = [...entries].sort(compareEntries3);
   for (const entry of sorted) {
     if (options.filter !== void 0 && !options.filter(entry)) continue;
     if (matchesEntryKind(entry, options.includeDirectories, options.includeFiles)) {
@@ -10534,12 +4330,12 @@ function ensureDescendPath(entry, parentPath) {
   }
   return joinRemotePath(parentPath, entry.name);
 }
-function compareEntries5(left, right) {
+function compareEntries3(left, right) {
   if (left.path < right.path) return -1;
   if (left.path > right.path) return 1;
   return 0;
 }
-function throwIfAborted3(signal) {
+function throwIfAborted2(signal) {
   if (signal?.aborted === true) {
     throw new AbortError({
       message: "Remote tree walk aborted",
@@ -10579,7 +4375,7 @@ async function diffRemoteTrees(source, sourcePath, destination, destinationPath,
       status = "removed";
       summary.removed += 1;
     } else if (sourceEntry !== void 0 && destinationEntry !== void 0) {
-      const computedReasons = compareEntries6(sourceEntry, destinationEntry, options);
+      const computedReasons = compareEntries4(sourceEntry, destinationEntry, options);
       if (computedReasons.length === 0) {
         status = "unchanged";
         summary.unchanged += 1;
@@ -10644,7 +4440,7 @@ function alignEntries(sourceEntries, destinationEntries) {
   }
   return aligned;
 }
-function compareEntries6(source, destination, options) {
+function compareEntries4(source, destination, options) {
   const reasons = [];
   const compareSize = options.compareSize ?? true;
   const compareModifiedAt = options.compareModifiedAt ?? true;
@@ -10913,6 +4709,1604 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   if (Number.isNaN(sourceTime) || Number.isNaN(destinationTime)) return false;
   return Math.abs(sourceTime - destinationTime) > toleranceMs;
 }
+
+// src/providers/classic/ftp/FtpProvider.ts
+var import_node_buffer6 = require("buffer");
+var import_node_net = require("net");
+var import_node_tls = require("tls");
+
+// src/providers/classic/ftp/FtpListParser.ts
+var UNIX_LIST_MONTHS = new Map(
+  ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].map(
+    (month, index) => [month, index]
+  )
+);
+function parseMlsdList(input, directory = ".") {
+  return input.split(/\r?\n/).map((line) => line.trimEnd()).filter((line) => line.length > 0).map((line) => parseMlsdLine(line, directory)).filter((entry) => entry.name !== "." && entry.name !== "..");
+}
+function parseUnixList(input, directory = ".", now = /* @__PURE__ */ new Date()) {
+  return input.split(/\r?\n/).map((line) => line.trimEnd()).filter((line) => line.length > 0 && !line.toLowerCase().startsWith("total ")).map((line) => parseUnixListLine(line, directory, now)).filter((entry) => entry.name !== "." && entry.name !== "..");
+}
+function parseUnixListLine(line, directory = ".", now = /* @__PURE__ */ new Date()) {
+  const match = /^(\S{10})\s+\d+\s+(\S+)\s+(\S+)\s+(\d+)\s+([A-Za-z]{3})\s+(\d{1,2})\s+(\d{4}|\d{1,2}:\d{2})\s+(.+)$/.exec(
+    line
+  );
+  if (match === null) {
+    throw new ParseError({
+      details: { line },
+      message: `Malformed Unix LIST line: ${line}`,
+      retryable: false
+    });
+  }
+  const [, mode = "", owner, group, sizeText, monthText, dayText, yearOrTime, rawName] = match;
+  const { name, symlinkTarget } = parseUnixListName(rawName, mode);
+  const entry = {
+    name,
+    path: joinRemotePath(directory, name),
+    permissions: { raw: mode },
+    raw: { line },
+    type: mapUnixListType(mode)
+  };
+  const modifiedAt = parseUnixListTimestamp(monthText, dayText, yearOrTime, now);
+  if (owner !== void 0) entry.owner = owner;
+  if (group !== void 0) entry.group = group;
+  if (sizeText !== void 0) entry.size = Number(sizeText);
+  if (modifiedAt !== void 0) entry.modifiedAt = modifiedAt;
+  if (symlinkTarget !== void 0) entry.symlinkTarget = symlinkTarget;
+  return entry;
+}
+function parseMlsdLine(line, directory = ".") {
+  const separatorIndex = line.indexOf(" ");
+  if (separatorIndex <= 0 || separatorIndex === line.length - 1) {
+    throw new ParseError({
+      message: `Malformed MLSD line: ${line}`,
+      retryable: false,
+      details: {
+        line
+      }
+    });
+  }
+  const factText = line.slice(0, separatorIndex);
+  const name = line.slice(separatorIndex + 1);
+  const facts = parseFacts(factText);
+  const type = mapMlsdType(facts.get("type"));
+  const modifiedAt = parseMlstTimestamp(facts.get("modify"));
+  const sizeText = facts.get("size");
+  const permissions = facts.get("perm");
+  const uniqueId = facts.get("unique");
+  const entry = {
+    name,
+    path: joinRemotePath(directory, name),
+    raw: {
+      facts: Object.fromEntries(facts),
+      line
+    },
+    type
+  };
+  if (sizeText !== void 0) entry.size = Number(sizeText);
+  if (modifiedAt !== void 0) entry.modifiedAt = modifiedAt;
+  if (permissions !== void 0) entry.permissions = { raw: permissions };
+  if (uniqueId !== void 0) entry.uniqueId = uniqueId;
+  return entry;
+}
+function parseMlstTimestamp(input) {
+  if (input === void 0) {
+    return void 0;
+  }
+  const timestampMatch = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:\.(\d{1,3}))?$/.exec(input);
+  if (timestampMatch === null) {
+    return void 0;
+  }
+  const [, year, month, day, hour, minute, second, millisecond = "0"] = timestampMatch;
+  const normalizedMillisecond = millisecond.padEnd(3, "0");
+  return new Date(
+    Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day),
+      Number(hour),
+      Number(minute),
+      Number(second),
+      Number(normalizedMillisecond)
+    )
+  );
+}
+function parseFacts(input) {
+  const facts = /* @__PURE__ */ new Map();
+  for (const fact of input.split(";")) {
+    if (fact.length === 0) {
+      continue;
+    }
+    const separatorIndex = fact.indexOf("=");
+    if (separatorIndex <= 0) {
+      continue;
+    }
+    facts.set(fact.slice(0, separatorIndex).toLowerCase(), fact.slice(separatorIndex + 1));
+  }
+  return facts;
+}
+function mapMlsdType(input) {
+  switch (input?.toLowerCase()) {
+    case "file":
+      return "file";
+    case "cdir":
+    case "dir":
+    case "pdir":
+      return "directory";
+    case "os.unix=slink":
+      return "symlink";
+    default:
+      return "unknown";
+  }
+}
+function mapUnixListType(mode) {
+  switch (mode[0]) {
+    case "-":
+      return "file";
+    case "d":
+      return "directory";
+    case "l":
+      return "symlink";
+    default:
+      return "unknown";
+  }
+}
+function parseUnixListTimestamp(monthText, dayText, yearOrTime, now) {
+  if (monthText === void 0 || dayText === void 0 || yearOrTime === void 0) {
+    return void 0;
+  }
+  const month = UNIX_LIST_MONTHS.get(monthText.toLowerCase());
+  const day = Number(dayText);
+  if (month === void 0 || !Number.isInteger(day) || day < 1 || day > 31) {
+    return void 0;
+  }
+  if (/^\d{4}$/.test(yearOrTime)) {
+    return new Date(Date.UTC(Number(yearOrTime), month, day));
+  }
+  const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(yearOrTime);
+  if (timeMatch === null) {
+    return void 0;
+  }
+  const [, hourText, minuteText] = timeMatch;
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  if (hour > 23 || minute > 59) {
+    return void 0;
+  }
+  return new Date(Date.UTC(now.getUTCFullYear(), month, day, hour, minute));
+}
+function parseUnixListName(rawName, mode) {
+  const name = rawName ?? "";
+  if (!mode.startsWith("l")) {
+    return { name };
+  }
+  const separator = " -> ";
+  const separatorIndex = name.indexOf(separator);
+  if (separatorIndex < 0) {
+    return { name };
+  }
+  return {
+    name: name.slice(0, separatorIndex),
+    symlinkTarget: name.slice(separatorIndex + separator.length)
+  };
+}
+
+// src/providers/classic/ftp/FtpResponseParser.ts
+var FTP_LINE_PATTERN = /^(\d{3})([ -])(.*)$/;
+var FtpResponseParser = class {
+  buffer = "";
+  pendingResponse;
+  /**
+   * Adds incoming socket data and returns any complete responses.
+   *
+   * @param chunk - Buffer or string chunk from the FTP control connection.
+   * @returns Zero or more complete parsed responses.
+   * @throws {@link ParseError} When a malformed standalone response line is received.
+   */
+  push(chunk) {
+    this.buffer += chunk.toString();
+    const rawLines = this.buffer.split(/\r?\n/);
+    this.buffer = rawLines.pop() ?? "";
+    const responses = [];
+    for (const rawLine of rawLines) {
+      const response = this.consumeLine(rawLine);
+      if (response !== void 0) {
+        responses.push(response);
+      }
+    }
+    return responses;
+  }
+  /**
+   * Clears buffered text and any incomplete multi-line response state.
+   *
+   * @returns Nothing.
+   */
+  reset() {
+    this.buffer = "";
+    this.pendingResponse = void 0;
+  }
+  /**
+   * Checks whether the parser is holding buffered or incomplete response data.
+   *
+   * @returns `true` when there is unconsumed text or an open multi-line response.
+   */
+  hasPendingResponse() {
+    return this.pendingResponse !== void 0 || this.buffer.length > 0;
+  }
+  /**
+   * Consumes one line of FTP response text.
+   *
+   * @param rawLine - Line without a trailing CRLF delimiter.
+   * @returns A complete response when the line finishes one, otherwise `undefined`.
+   * @throws {@link ParseError} When a malformed standalone line is encountered.
+   */
+  consumeLine(rawLine) {
+    const lineMatch = FTP_LINE_PATTERN.exec(rawLine);
+    if (lineMatch === null) {
+      if (this.pendingResponse !== void 0) {
+        this.pendingResponse.lines.push(rawLine);
+        this.pendingResponse.rawLines.push(rawLine);
+        return void 0;
+      }
+      if (rawLine.length === 0) {
+        return void 0;
+      }
+      throw new ParseError({
+        message: `Malformed FTP response line: ${rawLine}`,
+        retryable: false,
+        details: {
+          rawLine
+        }
+      });
+    }
+    const code = Number(lineMatch[1]);
+    const separator = lineMatch[2];
+    const message = lineMatch[3];
+    if (this.pendingResponse !== void 0) {
+      this.pendingResponse.lines.push(messageFromRawLine(rawLine, this.pendingResponse.code));
+      this.pendingResponse.rawLines.push(rawLine);
+      if (code === this.pendingResponse.code && separator === " ") {
+        const completed = this.pendingResponse;
+        this.pendingResponse = void 0;
+        return buildResponse(completed.code, completed.lines, completed.rawLines);
+      }
+      return void 0;
+    }
+    if (separator === "-") {
+      this.pendingResponse = {
+        code,
+        lines: [message],
+        rawLines: [rawLine]
+      };
+      return void 0;
+    }
+    return buildResponse(code, [message], [rawLine]);
+  }
+};
+function buildResponse(code, lines, rawLines) {
+  const status = classifyStatus(code);
+  return {
+    code,
+    message: lines.join("\n"),
+    lines,
+    raw: rawLines.join("\n"),
+    status,
+    preliminary: status === "preliminary",
+    completion: status === "completion",
+    intermediate: status === "intermediate",
+    transientFailure: status === "transientFailure",
+    permanentFailure: status === "permanentFailure"
+  };
+}
+function classifyStatus(code) {
+  if (code >= 100 && code < 200) return "preliminary";
+  if (code >= 200 && code < 300) return "completion";
+  if (code >= 300 && code < 400) return "intermediate";
+  if (code >= 400 && code < 500) return "transientFailure";
+  return "permanentFailure";
+}
+function messageFromRawLine(rawLine, code) {
+  const codeText = String(code);
+  if (rawLine.startsWith(`${codeText} `) || rawLine.startsWith(`${codeText}-`)) {
+    return rawLine.slice(4);
+  }
+  return rawLine;
+}
+
+// src/providers/classic/ftp/FtpProvider.ts
+var FTP_PROVIDER_ID = "ftp";
+var FTPS_PROVIDER_ID = "ftps";
+var DEFAULT_FTP_PORT = 21;
+var DEFAULT_FTPS_IMPLICIT_PORT = 990;
+var DEFAULT_PASSIVE_HOST_STRATEGY = "control";
+var FTP_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTP_PROVIDER_ID, [
+  "Classic FTP provider foundation with MLST/MLSD metadata, EPSV/PASV passive mode, timeout-guarded operations, and RETR/STOR streaming support"
+]);
+var FTPS_PROVIDER_CAPABILITIES = createClassicFtpCapabilities(FTPS_PROVIDER_ID, [
+  "FTPS provider foundation with explicit AUTH TLS or implicit TLS, PBSZ/PROT setup, TLS profile support, MLST/MLSD metadata, EPSV/PASV passive mode, and RETR/STOR streaming support"
+]);
+function createClassicFtpCapabilities(provider, notes) {
+  return {
+    provider,
+    authentication: provider === FTPS_PROVIDER_ID ? ["anonymous", "password", "client-certificate"] : ["anonymous", "password"],
+    list: true,
+    stat: true,
+    readStream: true,
+    writeStream: true,
+    serverSideCopy: false,
+    serverSideMove: false,
+    resumeDownload: true,
+    resumeUpload: true,
+    checksum: [],
+    atomicRename: false,
+    chmod: false,
+    chown: false,
+    symlink: true,
+    metadata: ["modifiedAt", "permissions", "uniqueId"],
+    maxConcurrency: 1,
+    notes
+  };
+}
+function createFtpsProviderFactory(options = {}) {
+  const mode = options.mode ?? "explicit";
+  const defaultPort = options.defaultPort ?? (mode === "implicit" ? DEFAULT_FTPS_IMPLICIT_PORT : DEFAULT_FTP_PORT);
+  return {
+    id: FTPS_PROVIDER_ID,
+    capabilities: FTPS_PROVIDER_CAPABILITIES,
+    create: () => new FtpProvider({
+      capabilities: FTPS_PROVIDER_CAPABILITIES,
+      defaultPort,
+      passiveHostStrategy: options.passiveHostStrategy ?? DEFAULT_PASSIVE_HOST_STRATEGY,
+      providerId: FTPS_PROVIDER_ID,
+      security: {
+        dataProtection: options.dataProtection ?? "private",
+        mode
+      }
+    })
+  };
+}
+var FtpProvider = class {
+  /**
+   * Creates a provider instance for a single connection attempt.
+   *
+   * @param config - Provider id, defaults, capabilities, and optional FTPS settings.
+   */
+  constructor(config) {
+    this.config = config;
+    this.id = config.providerId;
+    this.capabilities = config.capabilities;
+  }
+  config;
+  /** Stable provider id registered in the transfer client. */
+  id;
+  /** Provider capability snapshot exposed without opening a connection. */
+  capabilities;
+  /**
+   * Opens an FTP-family transfer session from a provider-neutral connection profile.
+   *
+   * @param profile - Connection profile containing host, credentials, timeout, and optional TLS settings.
+   * @returns Connected transfer session with filesystem and transfer operations.
+   */
+  async connect(profile) {
+    const resolvedProfile = await resolveConnectionProfileSecrets(profile);
+    const port = resolvedProfile.port ?? this.config.defaultPort;
+    const connectOptions = {
+      host: resolvedProfile.host,
+      passiveHostStrategy: this.config.passiveHostStrategy,
+      port,
+      providerId: this.config.providerId
+    };
+    if (this.config.security !== void 0) {
+      const pinnedFingerprint256 = createTlsPinnedFingerprints(resolvedProfile);
+      connectOptions.security = {
+        ...this.config.security,
+        ...pinnedFingerprint256 === void 0 ? {} : { pinnedFingerprint256 },
+        tlsOptions: createTlsConnectionOptions(resolvedProfile)
+      };
+    }
+    if (resolvedProfile.signal !== void 0) {
+      connectOptions.signal = resolvedProfile.signal;
+    }
+    if (resolvedProfile.timeoutMs !== void 0) {
+      connectOptions.timeoutMs = resolvedProfile.timeoutMs;
+    }
+    const control = await FtpControlConnection.connect(connectOptions);
+    try {
+      await authenticateFtpSession(
+        control,
+        resolvedProfile.username === void 0 ? "anonymous" : secretToString(resolvedProfile.username),
+        resolvedProfile.password === void 0 ? "anonymous@" : secretToString(resolvedProfile.password),
+        resolvedProfile.host
+      );
+      return new FtpTransferSession(control, this.capabilities);
+    } catch (error) {
+      control.close();
+      throw error;
+    }
+  }
+};
+var FtpTransferSession = class {
+  /**
+   * Creates session facades over an authenticated control connection.
+   *
+   * @param control - Authenticated FTP-family control connection.
+   * @param capabilities - Capability snapshot to expose through the session.
+   */
+  constructor(control, capabilities) {
+    this.control = control;
+    this.provider = control.providerId;
+    this.capabilities = capabilities;
+    this.fs = new FtpFileSystem(control);
+    this.transfers = new FtpTransferOperations(control);
+  }
+  control;
+  /** Provider id selected for this session. */
+  provider;
+  /** Capability snapshot for this connected session. */
+  capabilities;
+  /** Remote file-system operations backed by FTP metadata/data commands. */
+  fs;
+  /** Stream-oriented provider transfer operations. */
+  transfers;
+  /** Disconnects the control connection, swallowing QUIT cleanup noise. */
+  async disconnect() {
+    try {
+      await this.control.sendCommand("QUIT");
+    } catch {
+    } finally {
+      this.control.close();
+    }
+  }
+};
+var FtpTransferOperations = class {
+  constructor(control) {
+    this.control = control;
+  }
+  control;
+  async read(request) {
+    request.throwIfAborted();
+    const remotePath = normalizeFtpPath(request.endpoint.path);
+    const range = resolveReadRange2(request.range);
+    await expectCompletion(this.control, "TYPE I", remotePath);
+    const dataConnection = await openPassiveDataCommand(
+      this.control,
+      `RETR ${remotePath}`,
+      remotePath,
+      {
+        offset: range.offset
+      }
+    );
+    request.throwIfAborted();
+    const result = {
+      content: createPassiveReadSource(
+        this.control,
+        dataConnection,
+        `RETR ${remotePath}`,
+        remotePath,
+        range,
+        request
+      )
+    };
+    if (range.length !== void 0) {
+      result.totalBytes = range.length;
+    }
+    if (range.offset > 0) {
+      result.bytesRead = range.offset;
+    }
+    return result;
+  }
+  async write(request) {
+    request.throwIfAborted();
+    const remotePath = normalizeFtpPath(request.endpoint.path);
+    const offset = normalizeOptionalByteCount3(request.offset, "offset", remotePath);
+    await expectCompletion(this.control, "TYPE I", remotePath);
+    const bytesTransferred = await writePassiveDataCommand(
+      this.control,
+      `STOR ${remotePath}`,
+      remotePath,
+      request,
+      offset === void 0 ? {} : { offset }
+    );
+    const result = {
+      bytesTransferred,
+      resumed: offset !== void 0 && offset > 0,
+      totalBytes: request.totalBytes ?? (offset ?? 0) + bytesTransferred,
+      verified: request.verification?.verified ?? false
+    };
+    if (request.verification !== void 0) {
+      result.verification = cloneVerification4(request.verification);
+    }
+    return result;
+  }
+};
+var FtpFileSystem = class {
+  constructor(control) {
+    this.control = control;
+  }
+  control;
+  async list(path2) {
+    const remotePath = normalizeFtpPath(path2);
+    await expectCompletion(this.control, "TYPE I", remotePath);
+    const entries = await readDirectoryEntries(this.control, remotePath);
+    return entries.sort(compareEntries5);
+  }
+  async stat(path2) {
+    const remotePath = normalizeFtpPath(path2);
+    const response = await this.control.sendCommand(`MLST ${remotePath}`);
+    assertPathCommandSucceeded(response, "MLST", remotePath, this.control.providerId);
+    const factLine = response.lines.map((line) => line.trim()).find(isFtpFactLine);
+    if (factLine === void 0) {
+      throw createProtocolError(
+        "MLST",
+        `${this.control.providerId.toUpperCase()} MLST response did not include a fact line`,
+        response,
+        this.control.providerId
+      );
+    }
+    const entry = parseMlsdLine(factLine, getParentPath2(remotePath) ?? "/");
+    return {
+      ...entry,
+      exists: true,
+      name: basenameRemotePath(remotePath),
+      path: remotePath
+    };
+  }
+  async remove(path2, options = {}) {
+    const remotePath = normalizeFtpPath(path2);
+    const response = await this.control.sendCommand(`DELE ${remotePath}`);
+    if (response.completion) return;
+    if (response.code === 550 && options.ignoreMissing) return;
+    assertPathCommandSucceeded(response, "DELE", remotePath, this.control.providerId);
+  }
+  async rename(from, to) {
+    const fromPath = normalizeFtpPath(from);
+    const toPath = normalizeFtpPath(to);
+    const rnfr = await this.control.sendCommand(`RNFR ${fromPath}`);
+    if (!rnfr.intermediate && !rnfr.completion) {
+      assertPathCommandSucceeded(rnfr, "RNFR", fromPath, this.control.providerId);
+    }
+    await expectCompletion(this.control, `RNTO ${toPath}`, toPath);
+  }
+  async mkdir(path2, options = {}) {
+    const remotePath = normalizeFtpPath(path2);
+    if (!options.recursive) {
+      await expectCompletion(this.control, `MKD ${remotePath}`, remotePath);
+      return;
+    }
+    const segments = remotePath.split("/").filter((s) => s.length > 0);
+    let current = "";
+    for (const segment of segments) {
+      current = `${current}/${segment}`;
+      const response = await this.control.sendCommand(`MKD ${current}`);
+      if (response.completion) continue;
+      if (response.code === 550) continue;
+      assertPathCommandSucceeded(response, "MKD", current, this.control.providerId);
+    }
+  }
+  async rmdir(path2, options = {}) {
+    const remotePath = normalizeFtpPath(path2);
+    if (options.recursive) {
+      await this.removeDirectoryRecursive(remotePath);
+      return;
+    }
+    const response = await this.control.sendCommand(`RMD ${remotePath}`);
+    if (response.completion) return;
+    if (response.code === 550 && options.ignoreMissing) return;
+    assertPathCommandSucceeded(response, "RMD", remotePath, this.control.providerId);
+  }
+  async removeDirectoryRecursive(remotePath) {
+    let entries;
+    try {
+      entries = await readDirectoryEntries(this.control, remotePath);
+    } catch (error) {
+      if (error instanceof PathNotFoundError) return;
+      throw error;
+    }
+    for (const entry of entries) {
+      if (entry.name === "." || entry.name === "..") continue;
+      const childPath = entry.path.startsWith("/") ? entry.path : normalizeFtpPath(`${remotePath.replace(/\/+$/, "")}/${entry.name}`);
+      if (entry.type === "directory") {
+        await this.removeDirectoryRecursive(childPath);
+      } else {
+        const del = await this.control.sendCommand(`DELE ${childPath}`);
+        if (!del.completion && del.code !== 550) {
+          assertPathCommandSucceeded(del, "DELE", childPath, this.control.providerId);
+        }
+      }
+    }
+    const response = await this.control.sendCommand(`RMD ${remotePath}`);
+    if (response.completion) return;
+    if (response.code === 550) return;
+    assertPathCommandSucceeded(response, "RMD", remotePath, this.control.providerId);
+  }
+};
+var FtpControlConnection = class _FtpControlConnection {
+  /**
+   * Creates a control connection around an already-open socket.
+   *
+   * @param socket - Plain TCP or TLS socket connected to the server.
+   * @param host - Host used for diagnostics and passive endpoint defaults.
+   * @param passiveHostStrategy - Host selection strategy for PASV data endpoints.
+   * @param providerId - Provider id used for errors and sessions.
+   * @param timeoutMs - Optional timeout applied to control reads.
+   * @param security - Optional FTPS settings, omitted for plain FTP.
+   */
+  constructor(socket, host, passiveHostStrategy, providerId, timeoutMs, security) {
+    this.host = host;
+    this.passiveHostStrategy = passiveHostStrategy;
+    this.providerId = providerId;
+    this.timeoutMs = timeoutMs;
+    this.security = security;
+    this.socket = socket;
+    this.attachSocket(socket);
+  }
+  host;
+  passiveHostStrategy;
+  providerId;
+  timeoutMs;
+  security;
+  parser = new FtpResponseParser();
+  responses = [];
+  waiters = [];
+  closedError;
+  socket;
+  handleSocketData = (chunk) => this.handleData(chunk);
+  handleSocketError = (error) => {
+    this.failPending(createConnectionError(this.host, error, this.providerId));
+  };
+  handleSocketClose = () => {
+    this.failPending(
+      new ConnectionError({
+        host: this.host,
+        message: `${this.providerId.toUpperCase()} control connection closed`,
+        protocol: this.providerId,
+        retryable: true
+      })
+    );
+  };
+  /** Host used for EPSV passive data connections. */
+  get passiveHost() {
+    return this.host;
+  }
+  /** Host selection strategy used for PASV data endpoints. */
+  get passiveEndpointHostStrategy() {
+    return this.passiveHostStrategy;
+  }
+  /** Timeout inherited by command waits and passive data operations. */
+  get operationTimeoutMs() {
+    return this.timeoutMs;
+  }
+  /** FTPS security settings for encrypted passive data sockets. */
+  get dataTlsSecurity() {
+    return this.security?.dataProtection === "private" ? this.security : void 0;
+  }
+  /**
+   * Opens a new control connection, reads the greeting, and negotiates FTPS when configured.
+   *
+   * @param options - Socket and provider connection options.
+   * @returns Connected control connection ready for authentication.
+   */
+  static async connect(options) {
+    const socket = createControlSocket(options);
+    const control = new _FtpControlConnection(
+      socket,
+      options.host,
+      options.passiveHostStrategy,
+      options.providerId,
+      options.timeoutMs,
+      options.security
+    );
+    try {
+      await waitForSocketConnect(
+        socket,
+        options,
+        options.security?.mode === "implicit" ? "secureConnect" : "connect"
+      );
+      if (options.security?.mode === "implicit") {
+        assertPinnedTlsCertificate(socket, options.security, options.host, options.providerId);
+      }
+      const greeting = await control.readFinalResponse({ operation: "greeting" });
+      if (!greeting.completion) {
+        throw createProtocolError(
+          "greeting",
+          `${options.providerId.toUpperCase()} server greeting was not successful`,
+          greeting,
+          options.providerId
+        );
+      }
+      if (options.security?.mode === "explicit") {
+        await negotiateExplicitFtps(control, options.security);
+      } else if (options.security?.mode === "implicit") {
+        await configureFtpsProtection(control, options.security);
+      }
+      return control;
+    } catch (error) {
+      control.close();
+      throw error;
+    }
+  }
+  /**
+   * Writes one raw FTP command line to the control socket.
+   *
+   * @param command - Command text without CRLF.
+   */
+  writeCommand(command) {
+    this.socket.write(`${command}\r
+`);
+  }
+  /**
+   * Sends a command and waits for the final non-preliminary response.
+   *
+   * @param command - Command text without CRLF.
+   * @returns Final FTP response for the command.
+   */
+  async sendCommand(command) {
+    this.writeCommand(command);
+    return this.readFinalResponse({ command, operation: "command response" });
+  }
+  /**
+   * Reads responses until a final response is reached.
+   *
+   * @param context - Timeout diagnostic context for the wait.
+   * @returns Final FTP response, skipping any preliminary 1xx replies.
+   */
+  async readFinalResponse(context = { operation: "response" }) {
+    let response = await this.readResponse(context);
+    while (response.preliminary) {
+      response = await this.readResponse(context);
+    }
+    return response;
+  }
+  /**
+   * Reads the next parsed control-channel response.
+   *
+   * @param context - Timeout diagnostic context for the wait.
+   * @returns Next parsed response from the control channel.
+   */
+  readResponse(context = { operation: "response" }) {
+    const response = this.responses.shift();
+    if (response !== void 0) {
+      return Promise.resolve(response);
+    }
+    if (this.closedError !== void 0) {
+      return Promise.reject(this.closedError);
+    }
+    return new Promise((resolve, reject) => {
+      let timeout;
+      const clearWaiterTimeout = () => {
+        if (timeout !== void 0) {
+          clearTimeout(timeout);
+        }
+      };
+      const waiter = {
+        reject(error) {
+          clearWaiterTimeout();
+          reject(error);
+        },
+        resolve(response2) {
+          clearWaiterTimeout();
+          resolve(response2);
+        }
+      };
+      this.waiters.push(waiter);
+      const timeoutMs = this.timeoutMs;
+      if (timeoutMs !== void 0) {
+        timeout = setTimeout(() => {
+          const error = createFtpTimeoutError({
+            ...context,
+            host: this.host,
+            providerId: this.providerId,
+            timeoutMs
+          });
+          this.failPending(error);
+          this.close();
+        }, timeoutMs);
+      }
+    });
+  }
+  /** Closes the current control socket. */
+  close() {
+    if (!this.socket.destroyed) {
+      this.socket.end();
+      this.socket.destroy();
+    }
+  }
+  /**
+   * Upgrades an explicit-FTPS control connection from plain TCP to TLS.
+   *
+   * @param security - Resolved FTPS security settings and TLS options.
+   */
+  async upgradeToTls(security) {
+    const plainSocket = this.socket;
+    this.detachSocket(plainSocket);
+    const tlsSocket = (0, import_node_tls.connect)({ ...security.tlsOptions, socket: plainSocket });
+    this.socket = tlsSocket;
+    this.attachSocket(tlsSocket);
+    const connectOptions = {
+      host: this.host,
+      passiveHostStrategy: this.passiveHostStrategy,
+      port: 0,
+      providerId: this.providerId
+    };
+    if (this.timeoutMs !== void 0) {
+      connectOptions.timeoutMs = this.timeoutMs;
+    }
+    await waitForSocketConnect(tlsSocket, connectOptions, "secureConnect", "TLS negotiation");
+    assertPinnedTlsCertificate(tlsSocket, security, this.host, this.providerId);
+  }
+  /**
+   * Attaches shared parser and failure handlers to the active control socket.
+   *
+   * @param socket - Socket that should feed control-channel responses.
+   */
+  attachSocket(socket) {
+    socket.on("data", this.handleSocketData);
+    socket.on("error", this.handleSocketError);
+    socket.on("close", this.handleSocketClose);
+  }
+  /**
+   * Detaches shared parser and failure handlers before replacing a control socket.
+   *
+   * @param socket - Socket being removed from the control connection.
+   */
+  detachSocket(socket) {
+    socket.off("data", this.handleSocketData);
+    socket.off("error", this.handleSocketError);
+    socket.off("close", this.handleSocketClose);
+  }
+  /**
+   * Parses inbound control-channel bytes into queued responses.
+   *
+   * @param chunk - Socket data chunk from the control channel.
+   */
+  handleData(chunk) {
+    try {
+      for (const response of this.parser.push(chunk)) {
+        this.enqueueResponse(response);
+      }
+    } catch (error) {
+      this.failPending(
+        error instanceof Error ? error : createConnectionError(this.host, error, this.providerId)
+      );
+    }
+  }
+  /**
+   * Delivers a parsed response to a waiter or queues it for the next read.
+   *
+   * @param response - Parsed FTP response.
+   */
+  enqueueResponse(response) {
+    const waiter = this.waiters.shift();
+    if (waiter === void 0) {
+      this.responses.push(response);
+      return;
+    }
+    waiter.resolve(response);
+  }
+  /**
+   * Fails outstanding waits and records the first terminal connection error.
+   *
+   * @param error - Error that closed or invalidated the control connection.
+   */
+  failPending(error) {
+    if (this.closedError !== void 0) {
+      return;
+    }
+    this.closedError = error;
+    for (const waiter of this.waiters.splice(0)) {
+      waiter.reject(error);
+    }
+  }
+};
+async function expectCompletion(control, command, path2) {
+  const response = await control.sendCommand(command);
+  assertPathCommandSucceeded(response, command, path2, control.providerId);
+}
+async function readPassiveDataCommand(control, command, path2, options = {}) {
+  const dataConnection = await openPassiveDataCommand(control, command, path2, options);
+  try {
+    const payload = await collectPassiveData(
+      dataConnection,
+      control.operationTimeoutMs,
+      path2,
+      control.providerId
+    );
+    const finalResponse = await control.readFinalResponse({
+      command,
+      operation: "data command completion",
+      path: path2
+    });
+    assertPathCommandSucceeded(finalResponse, command, path2, control.providerId);
+    return payload;
+  } catch (error) {
+    dataConnection.close();
+    throw error;
+  }
+}
+async function readDirectoryEntries(control, path2) {
+  try {
+    const payload2 = await readPassiveDataCommand(control, `MLSD ${path2}`, path2);
+    return parseMlsdList(payload2.toString("utf8"), path2);
+  } catch (error) {
+    if (!isUnsupportedFtpCommandError(error, "MLSD")) {
+      throw error;
+    }
+  }
+  const payload = await readPassiveDataCommand(control, `LIST ${path2}`, path2);
+  return parseUnixList(payload.toString("utf8"), path2);
+}
+async function openPassiveDataCommand(control, command, path2, options = {}) {
+  const offset = normalizeOptionalByteCount3(options.offset, "offset", path2);
+  if (offset !== void 0 && offset > 0) {
+    await sendRestartOffset(control, offset, path2);
+  }
+  const passiveEndpoint = await openPassiveEndpoint(control, path2);
+  const dataConnection = openPassiveDataConnection(
+    passiveEndpoint,
+    control.operationTimeoutMs,
+    path2,
+    control
+  );
+  try {
+    await dataConnection.ready;
+    control.writeCommand(command);
+    const initialResponse = await control.readResponse({
+      command,
+      operation: "data command response",
+      path: path2
+    });
+    if (!initialResponse.preliminary) {
+      dataConnection.close();
+      assertPathCommandSucceeded(initialResponse, command, path2, control.providerId);
+      throw createProtocolError(
+        command,
+        `${control.providerId.toUpperCase()} data command did not open a data transfer`,
+        initialResponse,
+        control.providerId
+      );
+    }
+    return dataConnection;
+  } catch (error) {
+    dataConnection.close();
+    throw error;
+  }
+}
+async function openPassiveEndpoint(control, path2) {
+  const extendedPassiveResponse = await control.sendCommand("EPSV");
+  if (extendedPassiveResponse.completion) {
+    return parseExtendedPassiveEndpoint(
+      extendedPassiveResponse,
+      control.passiveHost,
+      control.providerId
+    );
+  }
+  if (!isExtendedPassiveUnsupported(extendedPassiveResponse)) {
+    assertPathCommandSucceeded(extendedPassiveResponse, "EPSV", path2, control.providerId);
+  }
+  const passiveResponse = await control.sendCommand("PASV");
+  assertPathCommandSucceeded(passiveResponse, "PASV", path2, control.providerId);
+  return parsePassiveEndpoint(
+    passiveResponse,
+    control.passiveHost,
+    control.passiveEndpointHostStrategy,
+    control.providerId
+  );
+}
+async function writePassiveDataCommand(control, command, path2, request, options = {}) {
+  const dataConnection = await openPassiveDataCommand(control, command, path2, options);
+  let bytesTransferred = 0;
+  const timeoutContext = {
+    host: dataConnection.endpoint.host,
+    operation: "passive data transfer",
+    path: path2,
+    providerId: control.providerId
+  };
+  try {
+    for await (const chunk of request.content) {
+      request.throwIfAborted();
+      const output = new Uint8Array(chunk);
+      await writeSocketChunk(
+        dataConnection.socket,
+        output,
+        control.operationTimeoutMs,
+        timeoutContext
+      );
+      bytesTransferred += output.byteLength;
+      request.reportProgress(bytesTransferred, request.totalBytes);
+    }
+    await endSocket(dataConnection.socket, control.operationTimeoutMs, timeoutContext);
+    const finalResponse = await control.readFinalResponse({
+      command,
+      operation: "data command completion",
+      path: path2
+    });
+    assertPathCommandSucceeded(finalResponse, command, path2, control.providerId);
+    return bytesTransferred;
+  } catch (error) {
+    dataConnection.close();
+    throw error;
+  }
+}
+async function sendRestartOffset(control, offset, path2) {
+  const response = await control.sendCommand(`REST ${offset}`);
+  if (response.completion || response.intermediate) {
+    return;
+  }
+  assertPathCommandSucceeded(response, "REST", path2, control.providerId);
+}
+function openPassiveDataConnection(endpoint, timeoutMs, path2, control) {
+  const dataSecurity = control.dataTlsSecurity;
+  const socket = dataSecurity === void 0 ? (0, import_node_net.createConnection)({ host: endpoint.host, port: endpoint.port }) : (0, import_node_tls.connect)({ ...dataSecurity.tlsOptions, host: endpoint.host, port: endpoint.port });
+  socket.on("error", () => void 0);
+  const ready = new Promise((resolve, reject) => {
+    let settled = false;
+    let timeout;
+    const readyEvent = dataSecurity === void 0 ? "connect" : "secureConnect";
+    const cleanup = () => {
+      socket.off(readyEvent, handleConnect);
+      socket.off("error", handleError);
+      if (timeout !== void 0) {
+        clearTimeout(timeout);
+      }
+    };
+    const rejectOnce = (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      socket.destroy();
+      reject(error);
+    };
+    const handleConnect = () => {
+      if (settled) {
+        return;
+      }
+      try {
+        if (dataSecurity !== void 0) {
+          assertPinnedTlsCertificate(socket, dataSecurity, endpoint.host, control.providerId);
+        }
+        settled = true;
+        cleanup();
+        resolve();
+      } catch (error) {
+        rejectOnce(
+          error instanceof Error ? error : createConnectionError(endpoint.host, error, control.providerId)
+        );
+      }
+    };
+    const handleError = (error) => {
+      rejectOnce(
+        error instanceof TimeoutError ? error : createConnectionError(endpoint.host, error, control.providerId)
+      );
+    };
+    socket.once(readyEvent, handleConnect);
+    socket.once("error", handleError);
+    if (timeoutMs !== void 0) {
+      timeout = setTimeout(
+        () => rejectOnce(
+          createFtpTimeoutError({
+            host: endpoint.host,
+            operation: "passive data connection",
+            path: path2,
+            providerId: control.providerId,
+            timeoutMs
+          })
+        ),
+        timeoutMs
+      );
+    }
+  });
+  return {
+    endpoint,
+    ready,
+    socket,
+    close() {
+      socket.destroy();
+    }
+  };
+}
+async function collectPassiveData(dataConnection, timeoutMs, path2, providerId) {
+  const chunks = [];
+  const clearIdleTimeout = setSocketTimeout(dataConnection.socket, timeoutMs, {
+    host: dataConnection.endpoint.host,
+    operation: "passive data transfer",
+    path: path2,
+    providerId
+  });
+  try {
+    for await (const chunk of dataConnection.socket) {
+      chunks.push(import_node_buffer6.Buffer.from(chunk));
+    }
+  } finally {
+    clearIdleTimeout();
+  }
+  return import_node_buffer6.Buffer.concat(chunks);
+}
+async function* createPassiveReadSource(control, dataConnection, command, path2, range, request) {
+  let bytesEmitted = 0;
+  let completed = false;
+  let clearIdleTimeout = () => void 0;
+  const closeOnAbort = () => dataConnection.close();
+  request.signal?.addEventListener("abort", closeOnAbort, { once: true });
+  try {
+    clearIdleTimeout = setSocketTimeout(dataConnection.socket, control.operationTimeoutMs, {
+      host: dataConnection.endpoint.host,
+      operation: "passive data transfer",
+      path: path2,
+      providerId: control.providerId
+    });
+    for await (const chunk of dataConnection.socket) {
+      request.throwIfAborted();
+      const buffer = import_node_buffer6.Buffer.from(chunk);
+      if (range.length === void 0) {
+        bytesEmitted += buffer.byteLength;
+        yield new Uint8Array(buffer);
+        continue;
+      }
+      const remaining = range.length - bytesEmitted;
+      if (remaining <= 0) {
+        continue;
+      }
+      const output = buffer.subarray(0, Math.min(remaining, buffer.byteLength));
+      bytesEmitted += output.byteLength;
+      if (output.byteLength > 0) {
+        yield new Uint8Array(output);
+      }
+    }
+    const finalResponse = await control.readFinalResponse({
+      command,
+      operation: "data command completion",
+      path: path2
+    });
+    assertPathCommandSucceeded(finalResponse, command, path2, control.providerId);
+    completed = true;
+  } finally {
+    clearIdleTimeout();
+    request.signal?.removeEventListener("abort", closeOnAbort);
+    if (!completed) {
+      dataConnection.close();
+    }
+  }
+}
+function writeSocketChunk(socket, chunk, timeoutMs, context) {
+  if (chunk.byteLength === 0) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve, reject) => {
+    const clearIdleTimeout = setSocketTimeout(socket, timeoutMs, context);
+    const handleError = (error) => {
+      clearIdleTimeout();
+      socket.off("error", handleError);
+      reject(error);
+    };
+    socket.once("error", handleError);
+    socket.write(chunk, (error) => {
+      clearIdleTimeout();
+      socket.off("error", handleError);
+      if (error != null) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+function endSocket(socket, timeoutMs, context) {
+  return new Promise((resolve, reject) => {
+    const clearIdleTimeout = setSocketTimeout(socket, timeoutMs, context);
+    const handleError = (error) => {
+      clearIdleTimeout();
+      socket.off("error", handleError);
+      reject(error);
+    };
+    socket.once("error", handleError);
+    socket.end(() => {
+      clearIdleTimeout();
+      socket.off("error", handleError);
+      resolve();
+    });
+  });
+}
+function resolveReadRange2(range) {
+  if (range === void 0) {
+    return { offset: 0 };
+  }
+  const resolved = {
+    offset: normalizeByteCount3(range.offset, "offset", "/")
+  };
+  if (range.length !== void 0) {
+    resolved.length = normalizeByteCount3(range.length, "length", "/");
+  }
+  return resolved;
+}
+function normalizeOptionalByteCount3(value, field, path2) {
+  return value === void 0 ? void 0 : normalizeByteCount3(value, field, path2);
+}
+function normalizeByteCount3(value, field, path2) {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new ConfigurationError({
+      details: { field, provider: FTP_PROVIDER_ID },
+      message: `FTP provider ${field} must be a non-negative number`,
+      path: path2,
+      protocol: FTP_PROVIDER_ID,
+      retryable: false
+    });
+  }
+  return Math.floor(value);
+}
+function cloneVerification4(verification) {
+  const clone = { verified: verification.verified };
+  if (verification.method !== void 0) clone.method = verification.method;
+  if (verification.checksum !== void 0) clone.checksum = verification.checksum;
+  if (verification.expectedChecksum !== void 0) {
+    clone.expectedChecksum = verification.expectedChecksum;
+  }
+  if (verification.actualChecksum !== void 0) clone.actualChecksum = verification.actualChecksum;
+  if (verification.details !== void 0) clone.details = { ...verification.details };
+  return clone;
+}
+function parsePassiveEndpoint(response, controlHost, hostStrategy, providerId) {
+  const endpointMatch = /(\d+),(\d+),(\d+),(\d+),(\d+),(\d+)/.exec(response.message);
+  if (endpointMatch === null) {
+    throw createProtocolError(
+      "PASV",
+      `${providerId.toUpperCase()} PASV response did not include a host and port`,
+      response,
+      providerId
+    );
+  }
+  const [, first2, second, third, fourth, highByte, lowByte] = endpointMatch;
+  const parts = [first2, second, third, fourth, highByte, lowByte].map((part) => Number(part));
+  if (parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+    throw createProtocolError(
+      "PASV",
+      `${providerId.toUpperCase()} PASV response included an invalid host or port`,
+      response,
+      providerId
+    );
+  }
+  const advertisedHost = `${parts[0]}.${parts[1]}.${parts[2]}.${parts[3]}`;
+  return {
+    host: hostStrategy === "advertised" ? advertisedHost : controlHost,
+    port: parts[4] * 256 + parts[5]
+  };
+}
+function parseExtendedPassiveEndpoint(response, host, providerId) {
+  const endpointMatch = /\((.+)\)/.exec(response.message);
+  if (endpointMatch === null) {
+    throw createProtocolError(
+      "EPSV",
+      `${providerId.toUpperCase()} EPSV response did not include a port`,
+      response,
+      providerId
+    );
+  }
+  const endpointText = endpointMatch[1] ?? "";
+  const delimiter = endpointText[0];
+  if (delimiter === void 0) {
+    throw createProtocolError(
+      "EPSV",
+      `${providerId.toUpperCase()} EPSV response did not include a delimiter`,
+      response,
+      providerId
+    );
+  }
+  const parts = endpointText.split(delimiter);
+  const port = Number(parts[3]);
+  if (!Number.isInteger(port) || port <= 0 || port > 65535) {
+    throw createProtocolError(
+      "EPSV",
+      `${providerId.toUpperCase()} EPSV response included an invalid port`,
+      response,
+      providerId
+    );
+  }
+  return { host, port };
+}
+function isExtendedPassiveUnsupported(response) {
+  return response.code === 500 || response.code === 501 || response.code === 502 || response.code === 504 || response.code === 522;
+}
+function isUnsupportedFtpCommandError(error, commandName) {
+  return error instanceof ProtocolError && error.command?.startsWith(commandName) === true && isUnsupportedFtpCommandCode(error.ftpCode);
+}
+function isUnsupportedFtpCommandCode(code) {
+  return code === 500 || code === 501 || code === 502 || code === 504;
+}
+function createControlSocket(options) {
+  if (options.security?.mode === "implicit") {
+    return (0, import_node_tls.connect)({
+      ...options.security.tlsOptions,
+      host: options.host,
+      port: options.port
+    });
+  }
+  return (0, import_node_net.createConnection)({ host: options.host, port: options.port });
+}
+async function negotiateExplicitFtps(control, security) {
+  const authResponse = await control.sendCommand("AUTH TLS");
+  if (!authResponse.completion) {
+    throw createProtocolError(
+      "AUTH TLS",
+      "FTPS AUTH TLS negotiation failed",
+      authResponse,
+      control.providerId
+    );
+  }
+  await control.upgradeToTls(security);
+  await configureFtpsProtection(control, security);
+}
+async function configureFtpsProtection(control, security) {
+  await expectCompletion(control, "PBSZ 0", "/");
+  await expectCompletion(control, security.dataProtection === "private" ? "PROT P" : "PROT C", "/");
+}
+function createTlsConnectionOptions(profile) {
+  const tlsProfile = profile.tls;
+  const options = {
+    rejectUnauthorized: tlsProfile?.rejectUnauthorized ?? true
+  };
+  const servername = tlsProfile?.servername ?? ((0, import_node_net.isIP)(profile.host) === 0 ? profile.host : void 0);
+  if (servername !== void 0) {
+    options.servername = servername;
+  }
+  if (tlsProfile === void 0) {
+    return options;
+  }
+  if (tlsProfile.ca !== void 0) options.ca = normalizeTlsSecretValue(tlsProfile.ca);
+  if (tlsProfile.cert !== void 0) options.cert = normalizeTlsSecretValue(tlsProfile.cert);
+  if (tlsProfile.key !== void 0) options.key = normalizeTlsSecretValue(tlsProfile.key);
+  if (tlsProfile.pfx !== void 0) options.pfx = normalizeTlsSecretValue(tlsProfile.pfx);
+  if (tlsProfile.passphrase !== void 0)
+    options.passphrase = secretToString(tlsProfile.passphrase);
+  if (tlsProfile.minVersion !== void 0) options.minVersion = tlsProfile.minVersion;
+  if (tlsProfile.maxVersion !== void 0) options.maxVersion = tlsProfile.maxVersion;
+  if (tlsProfile.checkServerIdentity !== void 0) {
+    options.checkServerIdentity = tlsProfile.checkServerIdentity;
+  }
+  return options;
+}
+function createTlsPinnedFingerprints(profile) {
+  const pinnedFingerprint256 = profile.tls?.pinnedFingerprint256;
+  if (pinnedFingerprint256 === void 0) {
+    return void 0;
+  }
+  const fingerprints = Array.isArray(pinnedFingerprint256) ? pinnedFingerprint256 : [pinnedFingerprint256];
+  if (fingerprints.length === 0) {
+    throw new ConfigurationError({
+      details: { pinnedFingerprint256 },
+      message: "FTPS tls.pinnedFingerprint256 must include at least one SHA-256 fingerprint",
+      protocol: FTPS_PROVIDER_ID,
+      retryable: false
+    });
+  }
+  return fingerprints.map(normalizePinnedFingerprint256);
+}
+function normalizePinnedFingerprint256(fingerprint) {
+  const normalized = fingerprint.trim().replace(/:/g, "").toLowerCase();
+  if (!/^[a-f0-9]{64}$/.test(normalized)) {
+    throw new ConfigurationError({
+      details: { pinnedFingerprint256: fingerprint },
+      message: "FTPS tls.pinnedFingerprint256 must be a SHA-256 hex fingerprint",
+      protocol: FTPS_PROVIDER_ID,
+      retryable: false
+    });
+  }
+  return normalized;
+}
+function assertPinnedTlsCertificate(socket, security, host, providerId) {
+  const pinnedFingerprint256 = security.pinnedFingerprint256;
+  if (pinnedFingerprint256 === void 0) {
+    return;
+  }
+  if (!isTlsSocket(socket)) {
+    throw createConnectionError(
+      host,
+      new Error("FTPS certificate pinning requires a TLS socket"),
+      providerId
+    );
+  }
+  const certificate = socket.getPeerCertificate();
+  const actualFingerprint = normalizeCertificateFingerprint256(certificate);
+  if (pinnedFingerprint256.includes(actualFingerprint)) {
+    return;
+  }
+  throw createConnectionError(
+    host,
+    new Error("FTPS server certificate SHA-256 fingerprint did not match tls.pinnedFingerprint256"),
+    providerId
+  );
+}
+function isTlsSocket(socket) {
+  return typeof socket.getPeerCertificate === "function";
+}
+function normalizeCertificateFingerprint256(certificate) {
+  return certificate.fingerprint256.replace(/:/g, "").toLowerCase();
+}
+function normalizeTlsSecretValue(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => import_node_buffer6.Buffer.isBuffer(item) ? import_node_buffer6.Buffer.from(item) : item);
+  }
+  return import_node_buffer6.Buffer.isBuffer(value) ? import_node_buffer6.Buffer.from(value) : value;
+}
+async function authenticateFtpSession(control, username, password, host) {
+  const safeUsername = assertSafeFtpArgument(username, "username");
+  const safePassword = assertSafeFtpArgument(password, "password");
+  const userResponse = await control.sendCommand(`USER ${safeUsername}`);
+  if (userResponse.completion) {
+    return;
+  }
+  if (!userResponse.intermediate) {
+    throw createAuthenticationError(host, "USER", userResponse, control.providerId);
+  }
+  const passwordResponse = await control.sendCommand(`PASS ${safePassword}`);
+  if (!passwordResponse.completion) {
+    throw createAuthenticationError(host, "PASS", passwordResponse, control.providerId);
+  }
+}
+function assertPathCommandSucceeded(response, command, path2, providerId) {
+  if (response.completion) {
+    return;
+  }
+  if (response.code === 550) {
+    throw new PathNotFoundError({
+      command,
+      ftpCode: response.code,
+      message: `${providerId.toUpperCase()} path not found: ${path2}`,
+      path: path2,
+      protocol: providerId,
+      retryable: false
+    });
+  }
+  throw createProtocolError(
+    command,
+    `${providerId.toUpperCase()} command failed: ${command}`,
+    response,
+    providerId
+  );
+}
+function waitForSocketConnect(socket, options, readyEvent = "connect", operation = "connection") {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    let timeout;
+    const cleanup = () => {
+      socket.off("connect", handleConnect);
+      socket.off(readyEvent, handleConnect);
+      socket.off("error", handleError);
+      options.signal?.removeEventListener("abort", handleAbort);
+      if (timeout !== void 0) {
+        clearTimeout(timeout);
+      }
+    };
+    const rejectOnce = (error) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      socket.destroy();
+      reject(error);
+    };
+    const handleConnect = () => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      cleanup();
+      resolve();
+    };
+    const handleError = (error) => rejectOnce(createConnectionError(options.host, error, options.providerId));
+    const handleAbort = () => rejectOnce(
+      new AbortError({
+        details: { operation },
+        host: options.host,
+        message: `${options.providerId.toUpperCase()} ${operation} aborted`,
+        protocol: options.providerId,
+        retryable: false
+      })
+    );
+    socket.once(readyEvent, handleConnect);
+    socket.once("error", handleError);
+    if (options.signal?.aborted === true) {
+      handleAbort();
+      return;
+    }
+    options.signal?.addEventListener("abort", handleAbort, { once: true });
+    const timeoutMs = options.timeoutMs;
+    if (timeoutMs !== void 0) {
+      timeout = setTimeout(
+        () => rejectOnce(
+          createFtpTimeoutError({
+            host: options.host,
+            operation,
+            providerId: options.providerId,
+            timeoutMs
+          })
+        ),
+        timeoutMs
+      );
+    }
+  });
+}
+function createFtpTimeoutError(input) {
+  const details = {
+    operation: input.operation,
+    timeoutMs: input.timeoutMs
+  };
+  return new TimeoutError({
+    details,
+    host: input.host,
+    message: `${input.providerId.toUpperCase()} ${input.operation} timed out after ${input.timeoutMs}ms`,
+    protocol: input.providerId,
+    retryable: true,
+    ...input.command === void 0 ? {} : { command: input.command },
+    ...input.path === void 0 ? {} : { path: input.path }
+  });
+}
+function setSocketTimeout(socket, timeoutMs, context) {
+  if (timeoutMs === void 0) {
+    return () => void 0;
+  }
+  const handleTimeout = () => {
+    socket.destroy(createFtpTimeoutError({ ...context, timeoutMs }));
+  };
+  socket.setTimeout(timeoutMs);
+  socket.once("timeout", handleTimeout);
+  return () => {
+    socket.off("timeout", handleTimeout);
+    socket.setTimeout(0);
+  };
+}
+function createAuthenticationError(host, command, response, providerId) {
+  return new AuthenticationError({
+    command,
+    ftpCode: response.code,
+    host,
+    message: `${providerId.toUpperCase()} authentication failed during ${command}`,
+    protocol: providerId,
+    retryable: false
+  });
+}
+function createConnectionError(host, cause, providerId) {
+  return new ConnectionError({
+    cause,
+    host,
+    message: `${providerId.toUpperCase()} connection failed`,
+    protocol: providerId,
+    retryable: true
+  });
+}
+function createProtocolError(command, message, response, providerId) {
+  return new ProtocolError({
+    command,
+    ftpCode: response.code,
+    message,
+    protocol: providerId,
+    retryable: response.transientFailure
+  });
+}
+function normalizeFtpPath(path2) {
+  const normalized = normalizeRemotePath(path2);
+  if (normalized === "." || normalized === "/") {
+    return "/";
+  }
+  return normalized.startsWith("/") ? normalized : `/${normalized}`;
+}
+function getParentPath2(path2) {
+  if (path2 === "/") {
+    return void 0;
+  }
+  const parentEnd = path2.lastIndexOf("/");
+  return parentEnd <= 0 ? "/" : path2.slice(0, parentEnd);
+}
+function isFtpFactLine(line) {
+  return line.includes(";") && line.includes(" ");
+}
+function compareEntries5(left, right) {
+  return left.path.localeCompare(right.path);
+}
+function secretToString(value) {
+  return import_node_buffer6.Buffer.isBuffer(value) ? value.toString("utf8") : value;
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AbortError,
@@ -10963,8 +6357,6 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   emitLog,
   errorFromFtpReply,
   filterRemoteEntries,
-  formatCapabilityMatrixMarkdown,
-  getBuiltinCapabilityMatrix,
   importFileZillaSites,
   importOpenSshConfig,
   importWinScpSessions,
