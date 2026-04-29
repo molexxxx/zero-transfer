@@ -24,7 +24,6 @@ import type {
   RemotePermissions,
   RemoteStat,
   RemoveOptions,
-  RenameOptions,
   RmdirOptions,
 } from "../../types/public";
 import { basenameRemotePath, normalizeRemotePath } from "../../utils/path";
@@ -172,7 +171,7 @@ class MemoryFileSystem implements RemoteFileSystem {
     });
   }
 
-  rename(from: string, to: string, _options: RenameOptions = {}): Promise<void> {
+  rename(from: string, to: string): Promise<void> {
     return Promise.resolve().then(() => {
       const fromPath = normalizeMemoryPath(from);
       const toPath = normalizeMemoryPath(to);

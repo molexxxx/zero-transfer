@@ -23,7 +23,6 @@ import type {
   RemoteEntryType,
   RemoteStat,
   RemoveOptions,
-  RenameOptions,
   RmdirOptions,
 } from "../../types/public";
 import { basenameRemotePath, joinRemotePath, normalizeRemotePath } from "../../utils/path";
@@ -222,7 +221,7 @@ class LocalFileSystem implements RemoteFileSystem {
     }
   }
 
-  async rename(from: string, to: string, _options: RenameOptions = {}): Promise<void> {
+  async rename(from: string, to: string): Promise<void> {
     const fromRemote = normalizeLocalProviderPath(from);
     const toRemote = normalizeLocalProviderPath(to);
     const fromLocal = resolveLocalPath(this.rootPath, fromRemote);

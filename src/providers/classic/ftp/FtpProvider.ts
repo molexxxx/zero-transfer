@@ -44,7 +44,6 @@ import type {
   RemoteEntry,
   RemoteStat,
   RemoveOptions,
-  RenameOptions,
   RmdirOptions,
 } from "../../../types/public";
 import {
@@ -485,7 +484,7 @@ class FtpFileSystem implements RemoteFileSystem {
     assertPathCommandSucceeded(response, "DELE", remotePath, this.control.providerId);
   }
 
-  async rename(from: string, to: string, _options: RenameOptions = {}): Promise<void> {
+  async rename(from: string, to: string): Promise<void> {
     const fromPath = normalizeFtpPath(from);
     const toPath = normalizeFtpPath(to);
     const rnfr = await this.control.sendCommand(`RNFR ${fromPath}`);
