@@ -7,7 +7,12 @@
  *
  * Run after `npm run docs:md` so the typedoc-plugin-markdown output exists,
  * because the API-reference table links into docs/api-md/.
+ *
+ * After writing, every generated file is reformatted via Prettier so that the
+ * `prettier --check` step of `npm run ci` always passes against generated
+ * output (no manual reformat after `docs:scopes`).
  */
+import { execSync } from "node:child_process";
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, posix, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -267,5 +272,18 @@ writeFileSync(
   join(scopesDir, "README.md"),
   frontmatterless("ZeroTransfer scoped packages", indexBody),
 );
+
+// Reformat every generated file via Prettier so `npm run format:check`
+// (run as part of `npm run ci` and the release pipeline) stays green.
+const prettierTargets = [
+  "docs/scopes/README.md",
+  ...scopes.map((s) => `docs/scopes/${s.name}.md`),
+  ...scopes.map((s) => `packages/${s.name}/README.md`),
+];
+const quoted = prettierTargets.map((p) => `"${p}"`).join(" ");
+execSync(`npx --no-install prettier --log-level warn --write ${quoted}`, {
+  cwd: repoRoot,
+  stdio: "inherit",
+});
 
 console.log(`Generated docs/scopes/{${scopes.length} pages} and refreshed packages/*/README.md.`);

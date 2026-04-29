@@ -22,10 +22,10 @@ import { createDropboxProviderFactory } from "@zero-transfer/dropbox";
 
 This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **2** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createDropboxProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createDropboxProviderFactory.md) | Function | See API reference. |
-| [`DropboxProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/DropboxProviderOptions.md) | Interface | See API reference. |
+| Symbol                                                                                                                                        | Kind      | Notes              |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createDropboxProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createDropboxProviderFactory.md) | Function  | See API reference. |
+| [`DropboxProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/DropboxProviderOptions.md)            | Interface | See API reference. |
 
 ## Examples
 

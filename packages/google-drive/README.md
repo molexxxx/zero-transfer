@@ -22,15 +22,15 @@ import { createGoogleDriveProviderFactory } from "@zero-transfer/google-drive";
 
 This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **2** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createGoogleDriveProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createGoogleDriveProviderFactory.md) | Function | See API reference. |
-| [`GoogleDriveProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/GoogleDriveProviderOptions.md) | Interface | See API reference. |
+| Symbol                                                                                                                                                | Kind      | Notes              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createGoogleDriveProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createGoogleDriveProviderFactory.md) | Function  | See API reference. |
+| [`GoogleDriveProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/GoogleDriveProviderOptions.md)            | Interface | See API reference. |
 
 ## Examples
 
-| Example | What it shows |
-| --- | --- |
+| Example                                                                                                                                | What it shows                       |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
 | [`examples/multi-cloud-orchestration.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase. |
 
 ## Documentation

@@ -22,16 +22,16 @@ import { createHttpProviderFactory } from "@zero-transfer/http";
 
 This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **3** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createHttpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createHttpProviderFactory.md) | Function | See API reference. |
-| [`HttpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/HttpProviderOptions.md) | Interface | See API reference. |
-| [`HttpFetch`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/HttpFetch.md) | Type | See API reference. |
+| Symbol                                                                                                                                  | Kind      | Notes              |
+| --------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createHttpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createHttpProviderFactory.md) | Function  | See API reference. |
+| [`HttpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/HttpProviderOptions.md)            | Interface | See API reference. |
+| [`HttpFetch`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/HttpFetch.md)                              | Type      | See API reference. |
 
 ## Examples
 
-| Example | What it shows |
-| --- | --- |
+| Example                                                                                                                    | What it shows                     |
+| -------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
 | [`examples/signed-url-download.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/signed-url-download.ts) | Signed-URL HTTP download example. |
 
 ## Documentation

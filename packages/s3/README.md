@@ -22,23 +22,23 @@ import { createS3ProviderFactory } from "@zero-transfer/s3";
 
 This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **8** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createS3ProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createS3ProviderFactory.md) | Function | See API reference. |
-| [`createMemoryS3MultipartResumeStore`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createMemoryS3MultipartResumeStore.md) | Function | See API reference. |
-| [`S3ProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3ProviderOptions.md) | Interface | See API reference. |
-| [`S3MultipartOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3MultipartOptions.md) | Interface | See API reference. |
-| [`S3MultipartResumeStore`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3MultipartResumeStore.md) | Interface | See API reference. |
-| [`S3MultipartResumeKey`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3MultipartResumeKey.md) | Interface | See API reference. |
-| [`S3MultipartCheckpoint`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3MultipartCheckpoint.md) | Interface | See API reference. |
-| [`S3MultipartPart`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3MultipartPart.md) | Interface | See API reference. |
+| Symbol                                                                                                                                                    | Kind      | Notes              |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createS3ProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createS3ProviderFactory.md)                       | Function  | See API reference. |
+| [`createMemoryS3MultipartResumeStore`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createMemoryS3MultipartResumeStore.md) | Function  | See API reference. |
+| [`S3ProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3ProviderOptions.md)                                  | Interface | See API reference. |
+| [`S3MultipartOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3MultipartOptions.md)                                | Interface | See API reference. |
+| [`S3MultipartResumeStore`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3MultipartResumeStore.md)                        | Interface | See API reference. |
+| [`S3MultipartResumeKey`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3MultipartResumeKey.md)                            | Interface | See API reference. |
+| [`S3MultipartCheckpoint`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3MultipartCheckpoint.md)                          | Interface | See API reference. |
+| [`S3MultipartPart`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/S3MultipartPart.md)                                      | Interface | See API reference. |
 
 ## Examples
 
-| Example | What it shows |
-| --- | --- |
-| [`examples/s3-compatible-upload.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/s3-compatible-upload.ts) | S3-compatible multipart upload example. |
-| [`examples/multi-cloud-orchestration.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase. |
+| Example                                                                                                                                | What it shows                           |
+| -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| [`examples/s3-compatible-upload.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/s3-compatible-upload.ts)           | S3-compatible multipart upload example. |
+| [`examples/multi-cloud-orchestration.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase.     |
 
 ## Documentation
 

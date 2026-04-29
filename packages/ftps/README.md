@@ -22,17 +22,17 @@ import { createFtpsProviderFactory } from "@zero-transfer/ftps";
 
 This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **4** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createFtpsProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createFtpsProviderFactory.md) | Function | See API reference. |
-| [`FtpsProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpsProviderOptions.md) | Interface | See API reference. |
-| [`FtpsMode`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/FtpsMode.md) | Type | See API reference. |
-| [`FtpsDataProtection`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/FtpsDataProtection.md) | Type | See API reference. |
+| Symbol                                                                                                                                  | Kind      | Notes              |
+| --------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createFtpsProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createFtpsProviderFactory.md) | Function  | See API reference. |
+| [`FtpsProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpsProviderOptions.md)            | Interface | See API reference. |
+| [`FtpsMode`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/FtpsMode.md)                                | Type      | See API reference. |
+| [`FtpsDataProtection`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/FtpsDataProtection.md)            | Type      | See API reference. |
 
 ## Examples
 
-| Example | What it shows |
-| --- | --- |
+| Example                                                                                                                            | What it shows                                                          |
+| ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | [`examples/ftps-client-certificate.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftps-client-certificate.ts) | FTPS client-certificate (mutual TLS) example with certificate pinning. |
 
 ## Documentation

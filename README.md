@@ -23,11 +23,7 @@
 ZeroTransfer is a unified, TypeScript-first file transfer SDK for Node.js. One typed API speaks to every backend you actually deploy against — classic protocols, web endpoints, object storage, cloud drives, and local disks — with streaming, resume, verification, dry-run plans, MFT-style scheduling, audit logs, and webhook delivery built in.
 
 ```ts
-import {
-  createS3ProviderFactory,
-  createTransferClient,
-  uploadFile,
-} from "@zero-transfer/sdk";
+import { createS3ProviderFactory, createTransferClient, uploadFile } from "@zero-transfer/sdk";
 
 const client = createTransferClient({
   providers: [createS3ProviderFactory({ region: "us-east-1" })],

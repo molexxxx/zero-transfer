@@ -22,23 +22,23 @@ import { createSftpProviderFactory } from "@zero-transfer/sftp";
 
 This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **10** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createSftpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createSftpProviderFactory.md) | Function | See API reference. |
-| [`createSftpJumpHostSocketFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createSftpJumpHostSocketFactory.md) | Function | See API reference. |
-| [`SftpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpProviderOptions.md) | Interface | See API reference. |
-| [`SftpJumpHostOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpJumpHostOptions.md) | Interface | See API reference. |
-| [`SftpRawSession`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpRawSession.md) | Interface | See API reference. |
-| [`matchKnownHosts`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/matchKnownHosts.md) | Function | See API reference. |
-| [`matchKnownHostsEntry`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/matchKnownHostsEntry.md) | Function | See API reference. |
-| [`parseKnownHosts`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseKnownHosts.md) | Function | See API reference. |
-| [`KnownHostsEntry`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/KnownHostsEntry.md) | Interface | See API reference. |
-| [`KnownHostsMarker`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/KnownHostsMarker.md) | Type | See API reference. |
+| Symbol                                                                                                                                              | Kind      | Notes              |
+| --------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createSftpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createSftpProviderFactory.md)             | Function  | See API reference. |
+| [`createSftpJumpHostSocketFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createSftpJumpHostSocketFactory.md) | Function  | See API reference. |
+| [`SftpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpProviderOptions.md)                        | Interface | See API reference. |
+| [`SftpJumpHostOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpJumpHostOptions.md)                        | Interface | See API reference. |
+| [`SftpRawSession`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpRawSession.md)                                  | Interface | See API reference. |
+| [`matchKnownHosts`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/matchKnownHosts.md)                                 | Function  | See API reference. |
+| [`matchKnownHostsEntry`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/matchKnownHostsEntry.md)                       | Function  | See API reference. |
+| [`parseKnownHosts`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseKnownHosts.md)                                 | Function  | See API reference. |
+| [`KnownHostsEntry`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/KnownHostsEntry.md)                                | Interface | See API reference. |
+| [`KnownHostsMarker`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/KnownHostsMarker.md)                            | Type      | See API reference. |
 
 ## Examples
 
-| Example | What it shows |
-| --- | --- |
+| Example                                                                                                              | What it shows                                                  |
+| -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | [`examples/sftp-private-key.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/sftp-private-key.ts) | SFTP private-key authentication example with host-key pinning. |
 
 ## Documentation

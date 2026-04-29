@@ -22,28 +22,28 @@ import { createFtpProviderFactory } from "@zero-transfer/ftp";
 
 This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **14** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createFtpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createFtpProviderFactory.md) | Function | See API reference. |
-| [`FtpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpProviderOptions.md) | Interface | See API reference. |
-| [`FtpPassiveHostStrategy`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/FtpPassiveHostStrategy.md) | Type | See API reference. |
-| [`FtpResponse`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpResponse.md) | Interface | See API reference. |
-| [`FtpResponseStatus`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/FtpResponseStatus.md) | Type | See API reference. |
-| [`FtpFeatures`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpFeatures.md) | Interface | See API reference. |
-| [`FtpResponseParser`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/classes/FtpResponseParser.md) | Class | See API reference. |
-| [`parseFtpFeatures`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseFtpFeatures.md) | Function | See API reference. |
-| [`parseFtpResponseLines`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseFtpResponseLines.md) | Function | See API reference. |
-| [`parseMlsdLine`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseMlsdLine.md) | Function | See API reference. |
-| [`parseMlsdList`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseMlsdList.md) | Function | See API reference. |
-| [`parseMlstTimestamp`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseMlstTimestamp.md) | Function | See API reference. |
-| [`parseUnixList`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseUnixList.md) | Function | See API reference. |
-| [`parseUnixListLine`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseUnixListLine.md) | Function | See API reference. |
+| Symbol                                                                                                                                | Kind      | Notes              |
+| ------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createFtpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createFtpProviderFactory.md) | Function  | See API reference. |
+| [`FtpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpProviderOptions.md)            | Interface | See API reference. |
+| [`FtpPassiveHostStrategy`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/FtpPassiveHostStrategy.md)  | Type      | See API reference. |
+| [`FtpResponse`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpResponse.md)                          | Interface | See API reference. |
+| [`FtpResponseStatus`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/FtpResponseStatus.md)            | Type      | See API reference. |
+| [`FtpFeatures`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpFeatures.md)                          | Interface | See API reference. |
+| [`FtpResponseParser`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/classes/FtpResponseParser.md)                 | Class     | See API reference. |
+| [`parseFtpFeatures`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseFtpFeatures.md)                 | Function  | See API reference. |
+| [`parseFtpResponseLines`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseFtpResponseLines.md)       | Function  | See API reference. |
+| [`parseMlsdLine`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseMlsdLine.md)                       | Function  | See API reference. |
+| [`parseMlsdList`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseMlsdList.md)                       | Function  | See API reference. |
+| [`parseMlstTimestamp`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseMlstTimestamp.md)             | Function  | See API reference. |
+| [`parseUnixList`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseUnixList.md)                       | Function  | See API reference. |
+| [`parseUnixListLine`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseUnixListLine.md)               | Function  | See API reference. |
 
 ## Examples
 
-| Example | What it shows |
-| --- | --- |
-| [`examples/ftp-basic.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftp-basic.ts) | Basic FTP upload + download example. |
+| Example                                                                                                          | What it shows                                                    |
+| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [`examples/ftp-basic.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftp-basic.ts)           | Basic FTP upload + download example.                             |
 | [`examples/transfer-queue.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/transfer-queue.ts) | Transfer queue with concurrency, progress, and per-job receipts. |
 
 ## Documentation

@@ -22,15 +22,15 @@ import { createWebDavProviderFactory } from "@zero-transfer/webdav";
 
 This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **2** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createWebDavProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createWebDavProviderFactory.md) | Function | See API reference. |
-| [`WebDavProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/WebDavProviderOptions.md) | Interface | See API reference. |
+| Symbol                                                                                                                                      | Kind      | Notes              |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createWebDavProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createWebDavProviderFactory.md) | Function  | See API reference. |
+| [`WebDavProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/WebDavProviderOptions.md)            | Interface | See API reference. |
 
 ## Examples
 
-| Example | What it shows |
-| --- | --- |
+| Example                                                                                                    | What it shows                      |
+| ---------------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | [`examples/webdav-sync.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/webdav-sync.ts) | WebDAV bidirectional sync example. |
 
 ## Documentation

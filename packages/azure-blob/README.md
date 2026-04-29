@@ -22,15 +22,15 @@ import { createAzureBlobProviderFactory } from "@zero-transfer/azure-blob";
 
 This package narrows [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) to **2** exports. Every symbol is re-exported from the SDK; the table below links into the full API reference:
 
-| Symbol | Kind | Notes |
-| --- | --- | --- |
-| [`createAzureBlobProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createAzureBlobProviderFactory.md) | Function | See API reference. |
-| [`AzureBlobProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/AzureBlobProviderOptions.md) | Interface | See API reference. |
+| Symbol                                                                                                                                            | Kind      | Notes              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createAzureBlobProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createAzureBlobProviderFactory.md) | Function  | See API reference. |
+| [`AzureBlobProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/AzureBlobProviderOptions.md)            | Interface | See API reference. |
 
 ## Examples
 
-| Example | What it shows |
-| --- | --- |
+| Example                                                                                                                                | What it shows                       |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
 | [`examples/multi-cloud-orchestration.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase. |
 
 ## Documentation
