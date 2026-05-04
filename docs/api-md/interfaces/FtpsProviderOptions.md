@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.6**](../README.md)
+[**ZeroTransfer SDK v0.2.0**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: FtpsProviderOptions
 
-Defined in: [src/providers/classic/ftp/FtpProvider.ts:160](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/classic/ftp/FtpProvider.ts#L160)
+Defined in: [src/providers/classic/ftp/FtpProvider.ts:160](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/providers/classic/ftp/FtpProvider.ts#L160)
 
 Options used to create the FTPS provider factory.
 
@@ -18,7 +18,7 @@ Options used to create the FTPS provider factory.
 
 | Property | Type | Description | Inherited from | Defined in |
 | ------ | ------ | ------ | ------ | ------ |
-| <a id="dataprotection"></a> `dataProtection?` | [`FtpsDataProtection`](../type-aliases/FtpsDataProtection.md) | Data channel protection requested through PROT. Defaults to private/encrypted data. | - | [src/providers/classic/ftp/FtpProvider.ts:164](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/classic/ftp/FtpProvider.ts#L164) |
-| <a id="defaultport"></a> `defaultPort?` | `number` | Default control port used when a connection profile omits `port`. | [`FtpProviderOptions`](FtpProviderOptions.md).[`defaultPort`](FtpProviderOptions.md#defaultport) | [src/providers/classic/ftp/FtpProvider.ts:154](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/classic/ftp/FtpProvider.ts#L154) |
-| <a id="mode"></a> `mode?` | [`FtpsMode`](../type-aliases/FtpsMode.md) | TLS mode used for the control connection. Defaults to explicit FTPS on port 21. | - | [src/providers/classic/ftp/FtpProvider.ts:162](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/classic/ftp/FtpProvider.ts#L162) |
-| <a id="passivehoststrategy"></a> `passiveHostStrategy?` | [`FtpPassiveHostStrategy`](../type-aliases/FtpPassiveHostStrategy.md) | PASV host selection strategy. Defaults to `control` for NAT-friendly compatibility. | [`FtpProviderOptions`](FtpProviderOptions.md).[`passiveHostStrategy`](FtpProviderOptions.md#passivehoststrategy) | [src/providers/classic/ftp/FtpProvider.ts:156](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/providers/classic/ftp/FtpProvider.ts#L156) |
+| <a id="dataprotection"></a> `dataProtection?` | [`FtpsDataProtection`](../type-aliases/FtpsDataProtection.md) | Data channel protection requested through PROT. Defaults to private/encrypted data. | - | [src/providers/classic/ftp/FtpProvider.ts:164](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/providers/classic/ftp/FtpProvider.ts#L164) |
+| <a id="defaultport"></a> `defaultPort?` | `number` | Default control port used when a connection profile omits `port`. | [`FtpProviderOptions`](FtpProviderOptions.md).[`defaultPort`](FtpProviderOptions.md#defaultport) | [src/providers/classic/ftp/FtpProvider.ts:154](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/providers/classic/ftp/FtpProvider.ts#L154) |
+| <a id="mode"></a> `mode?` | [`FtpsMode`](../type-aliases/FtpsMode.md) | TLS mode used for the control connection. Defaults to explicit FTPS on port 21. | - | [src/providers/classic/ftp/FtpProvider.ts:162](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/providers/classic/ftp/FtpProvider.ts#L162) |
+| <a id="passivehoststrategy"></a> `passiveHostStrategy?` | [`FtpPassiveHostStrategy`](../type-aliases/FtpPassiveHostStrategy.md) | PASV host selection strategy. Defaults to `control` for NAT-friendly compatibility. | [`FtpProviderOptions`](FtpProviderOptions.md).[`passiveHostStrategy`](FtpProviderOptions.md#passivehoststrategy) | [src/providers/classic/ftp/FtpProvider.ts:156](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/providers/classic/ftp/FtpProvider.ts#L156) |

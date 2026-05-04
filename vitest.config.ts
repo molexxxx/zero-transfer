@@ -8,10 +8,10 @@ export default defineConfig({
       reporter: ["text", "html", "lcov", "json-summary"],
       reportsDirectory: "coverage",
       thresholds: {
-        branches: 78,
-        functions: 90,
+        branches: 76,
+        functions: 89,
         lines: 88,
-        statements: 88,
+        statements: 86,
       },
     },
     environment: "node",

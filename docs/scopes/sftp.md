@@ -1,6 +1,6 @@
 # SFTP
 
-> SFTP with SSH key auth, known_hosts, and jump-host support.
+> SFTP with a native SSH stack (default) plus the classic ssh2-backed provider for ssh-agent and jump-host support.
 
 ## Install
 
@@ -10,7 +10,7 @@ npm install @zero-transfer/sftp
 
 ## Overview
 
-SFTP over SSH with password / private-key / agent / keyboard-interactive authentication, SSH algorithm overrides, OpenSSH `known_hosts` parsing, SHA-256 host-key pinning, custom socket factories, and a first-class jump-host helper for bastion-mediated connections.
+SFTP over SSH with two backends: a zero-dependency native SSH stack (Ed25519 / RSA / ECDSA host keys, password / keyboard-interactive / public-key auth, host-key pinning, OpenSSH `known_hosts`, handshake timeout, NAT keepalive) and the legacy `ssh2`-backed provider (adds ssh-agent, jump-host helpers). The native provider is recommended for new projects; the classic provider remains for ssh-agent and bastion workflows.
 
 ## Public surface
 
@@ -18,6 +18,9 @@ This is the actual surface published by [`@zero-transfer/sftp`](https://www.npmj
 
 | Symbol | Kind | Notes |
 | --- | --- | --- |
+| [`createNativeSftpProviderFactory`](../api-md/functions/createNativeSftpProviderFactory.md) | Function | See API reference. |
+| [`NativeSftpProviderOptions`](../api-md/interfaces/NativeSftpProviderOptions.md) | Interface | See API reference. |
+| [`NativeSftpRawSession`](../api-md/interfaces/NativeSftpRawSession.md) | Interface | See API reference. |
 | [`createSftpProviderFactory`](../api-md/functions/createSftpProviderFactory.md) | Function | See API reference. |
 | [`createSftpJumpHostSocketFactory`](../api-md/functions/createSftpJumpHostSocketFactory.md) | Function | See API reference. |
 | [`SftpProviderOptions`](../api-md/interfaces/SftpProviderOptions.md) | Interface | See API reference. |

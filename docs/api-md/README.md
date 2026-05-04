@@ -1,8 +1,8 @@
-**ZeroTransfer SDK v0.1.6**
+**ZeroTransfer SDK v0.2.0**
 
 ***
 
-# ZeroTransfer SDK v0.1.6
+# ZeroTransfer SDK v0.2.0
 
 ZeroTransfer public API surface.
 
@@ -35,6 +35,7 @@ path safety utilities used by future protocol adapters.
 | [createLocalProviderFactory](functions/createLocalProviderFactory.md) | Creates a provider factory backed by the local filesystem. |
 | [createMemoryProviderFactory](functions/createMemoryProviderFactory.md) | Creates a provider factory backed by deterministic in-memory fixture entries. |
 | [createMemoryS3MultipartResumeStore](functions/createMemoryS3MultipartResumeStore.md) | Creates an in-memory [S3MultipartResumeStore](interfaces/S3MultipartResumeStore.md). |
+| [createNativeSftpProviderFactory](functions/createNativeSftpProviderFactory.md) | Creates a [ProviderFactory](interfaces/ProviderFactory.md) backed by the native SSH/SFTP protocol stack — no `ssh2` dependency required. |
 | [createOAuthTokenSecretSource](functions/createOAuthTokenSecretSource.md) | Builds a [SecretProvider](type-aliases/SecretProvider.md) that exchanges a refresh callback for cached, auto-renewing access tokens. |
 | [createOneDriveProviderFactory](functions/createOneDriveProviderFactory.md) | Creates a OneDrive/SharePoint provider factory backed by Microsoft Graph. |
 | [createOutboxRoute](functions/createOutboxRoute.md) | Creates a route that drops files from a source endpoint into an outbox directory. |
@@ -215,6 +216,8 @@ path safety utilities used by future protocol adapters.
 | [MftSchedule](interfaces/MftSchedule.md) | Declarative schedule binding a route id to a trigger. |
 | [MftSchedulerOptions](interfaces/MftSchedulerOptions.md) | Construction options for [MftScheduler](classes/MftScheduler.md). |
 | [MkdirOptions](interfaces/MkdirOptions.md) | Options for creating a remote directory. |
+| [NativeSftpProviderOptions](interfaces/NativeSftpProviderOptions.md) | Options for [createNativeSftpProviderFactory](functions/createNativeSftpProviderFactory.md). |
+| [NativeSftpRawSession](interfaces/NativeSftpRawSession.md) | Low-level handles exposed by a native SFTP session for diagnostics and advanced extension. Most applications should use the [TransferSession](interfaces/TransferSession.md) returned from `client.connect()` instead. |
 | [OAuthAccessToken](interfaces/OAuthAccessToken.md) | Token material returned by [OAuthRefreshCallback](type-aliases/OAuthRefreshCallback.md). |
 | [OAuthTokenSecretSourceOptions](interfaces/OAuthTokenSecretSourceOptions.md) | Options accepted by [createOAuthTokenSecretSource](functions/createOAuthTokenSecretSource.md). |
 | [OneDriveProviderOptions](interfaces/OneDriveProviderOptions.md) | Options accepted by [createOneDriveProviderFactory](functions/createOneDriveProviderFactory.md). |

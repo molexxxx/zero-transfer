@@ -555,7 +555,7 @@ function createPinnedHostKeyError(value) {
 function createSshAlgorithmsError(value) {
   return new ConfigurationError({
     details: { algorithms: value },
-    message: "Connection profile ssh.algorithms must use ssh2-compatible non-empty algorithm lists",
+    message: "Connection profile ssh.algorithms must use SSH-compatible non-empty algorithm lists",
     retryable: false
   });
 }

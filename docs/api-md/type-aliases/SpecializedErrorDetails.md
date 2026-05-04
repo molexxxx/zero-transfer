@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.6**](../README.md)
+[**ZeroTransfer SDK v0.2.0**](../README.md)
 
 ***
 
@@ -12,7 +12,7 @@ type SpecializedErrorDetails = Omit<ZeroTransferErrorDetails, "code"> & {
 };
 ```
 
-Defined in: [src/errors/ZeroTransferError.ts:43](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/errors/ZeroTransferError.ts#L43)
+Defined in: [src/errors/ZeroTransferError.ts:43](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/errors/ZeroTransferError.ts#L43)
 
 Error construction input for subclasses that provide default codes.
 
@@ -20,4 +20,4 @@ Error construction input for subclasses that provide default codes.
 
 | Name | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| `code?` | `string` | Optional override for the subclass default code. | [src/errors/ZeroTransferError.ts:45](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/errors/ZeroTransferError.ts#L45) |
+| `code?` | `string` | Optional override for the subclass default code. | [src/errors/ZeroTransferError.ts:45](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/errors/ZeroTransferError.ts#L45) |

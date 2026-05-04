@@ -215,6 +215,11 @@ export {
   type SftpRawSession,
 } from "./providers/classic/sftp";
 export {
+  createNativeSftpProviderFactory,
+  type NativeSftpProviderOptions,
+  type NativeSftpRawSession,
+} from "./providers/native/sftp";
+export {
   createProgressEvent,
   createTransferResult,
   type ProgressEventInput,

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.6**](../README.md)
+[**ZeroTransfer SDK v0.2.0**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function freezeReceipt(receipt): Readonly<TransferReceipt>;
 ```
 
-Defined in: [src/mft/audit.ts:127](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/audit.ts#L127)
+Defined in: [src/mft/audit.ts:127](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/mft/audit.ts#L127)
 
 Returns a deeply frozen copy of a transfer receipt.
 

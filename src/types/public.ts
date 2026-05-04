@@ -8,7 +8,6 @@
  */
 import type { PeerCertificate, SecureVersion } from "node:tls";
 import type { Readable } from "node:stream";
-import type { Algorithms, BaseAgent } from "ssh2";
 import type { ZeroTransferLogger } from "../logging/Logger";
 import type { ClassicProviderId, ProviderId } from "../core/ProviderId";
 import type { SecretSource } from "../profiles/SecretSource";
@@ -84,10 +83,30 @@ export type TlsSecretSource = SecretSource | SecretSource[];
 /** Known-hosts material source accepted by SSH connection profiles. */
 export type SshKnownHostsSource = SecretSource | SecretSource[];
 
+/** Minimal SSH agent contract used by profile validation and SSH adapters. */
+export interface SshAgentLike {
+  /** Returns public identities exposed by the agent implementation. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getIdentities: (...args: any[]) => unknown;
+  /** Signs payloads using a selected identity. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sign: (...args: any[]) => unknown;
+}
+
+/** Ordered algorithm list mutation operations used by SSH adapters. */
+export interface SshAlgorithmMutations {
+  append?: string | readonly string[];
+  prepend?: string | readonly string[];
+  remove?: string | readonly string[];
+}
+
+/** Single SSH algorithm override value accepted by connection profiles. */
+export type SshAlgorithmOverride = readonly string[] | SshAlgorithmMutations;
+
 /** SSH agent source accepted by SFTP providers. */
-export type SshAgentSource = string | BaseAgent;
+export type SshAgentSource = string | SshAgentLike;
 /** SSH transport algorithm overrides accepted by SFTP providers. */
-export type SshAlgorithms = Algorithms;
+export type SshAlgorithms = Record<string, SshAlgorithmOverride | undefined>;
 
 /** Context passed to SSH socket factories before opening an SSH session. */
 export interface SshSocketFactoryContext {
@@ -107,7 +126,7 @@ export interface SshSocketFactoryContext {
  * Use this hook for HTTP CONNECT, SOCKS, bastion, or custom tunnel integrations.
  *
  * @param context - Resolved SSH target information for the socket being opened.
- * @returns Preconnected readable stream, or a promise for one, passed to ssh2's `sock` option.
+ * @returns Preconnected readable stream, or a promise for one, passed to the SSH adapter socket option.
  */
 export type SshSocketFactory = (context: SshSocketFactoryContext) => Readable | Promise<Readable>;
 

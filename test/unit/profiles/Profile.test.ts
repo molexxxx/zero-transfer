@@ -152,7 +152,7 @@ describe("profile validation", () => {
       validateConnectionProfile({
         host: "memory.local",
         provider: "memory",
-        ssh: { algorithms: { cipher: { append: [] } } as never },
+        ssh: { algorithms: { cipher: { append: [] } } },
       }),
     ).toThrow(ConfigurationError);
   });

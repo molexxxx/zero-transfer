@@ -233,7 +233,7 @@ function emitLog(logger, level, record) {
 }
 
 // src/profiles/ProfileValidator.ts
-import { Buffer } from "buffer";
+import { Buffer as Buffer2 } from "buffer";
 
 // src/core/ProviderId.ts
 var CLASSIC_PROVIDER_IDS = ["ftp", "ftps", "sftp"];
@@ -413,7 +413,7 @@ function isSshHostKeySha256Fingerprint(value) {
     return false;
   }
   try {
-    return Buffer.from(padded, "base64").byteLength === SHA256_DIGEST_BYTE_LENGTH;
+    return Buffer2.from(padded, "base64").byteLength === SHA256_DIGEST_BYTE_LENGTH;
   } catch {
     return false;
   }
@@ -439,7 +439,7 @@ function createPinnedHostKeyError(value) {
 function createSshAlgorithmsError(value) {
   return new ConfigurationError({
     details: { algorithms: value },
-    message: "Connection profile ssh.algorithms must use ssh2-compatible non-empty algorithm lists",
+    message: "Connection profile ssh.algorithms must use SSH-compatible non-empty algorithm lists",
     retryable: false
   });
 }
@@ -1583,7 +1583,7 @@ function redactObject(input) {
 }
 
 // src/profiles/SecretSource.ts
-import { Buffer as Buffer2 } from "buffer";
+import { Buffer as Buffer3 } from "buffer";
 import { readFile } from "fs/promises";
 async function resolveSecret(source, options = {}) {
   if (isSecretValue(source)) {
@@ -1615,13 +1615,13 @@ async function resolveSecret(source, options = {}) {
         source.base64Env
       );
     }
-    return Buffer2.from(value, "base64");
+    return Buffer3.from(value, "base64");
   }
   if (isFileSecretSource(source)) {
     const fileReader = options.readFile ?? readFile;
     const value = await fileReader(source.path);
     if (source.encoding === "buffer") {
-      return Buffer2.from(value);
+      return Buffer3.from(value);
     }
     return value.toString(source.encoding ?? "utf8");
   }
@@ -1638,7 +1638,7 @@ function redactSecretSource(source) {
   return REDACTED;
 }
 function isSecretValue(value) {
-  return typeof value === "string" || Buffer2.isBuffer(value);
+  return typeof value === "string" || Buffer3.isBuffer(value);
 }
 function isValueSecretSource(value) {
   return isRecord(value) && "value" in value && isSecretValue(value.value);
@@ -1656,7 +1656,7 @@ function isRecord(value) {
   return typeof value === "object" && value !== null;
 }
 function cloneSecretValue(value) {
-  return Buffer2.isBuffer(value) ? Buffer2.from(value) : value;
+  return Buffer3.isBuffer(value) ? Buffer3.from(value) : value;
 }
 function createSecretConfigurationError(message, sourceType, sourceName) {
   return new ConfigurationError({
@@ -2239,7 +2239,7 @@ function getErrorCode(error) {
 }
 
 // src/providers/memory/MemoryProvider.ts
-import { Buffer as Buffer3 } from "buffer";
+import { Buffer as Buffer4 } from "buffer";
 var MEMORY_PROVIDER_ID = "memory";
 var MEMORY_PROVIDER_CAPABILITIES = {
   provider: MEMORY_PROVIDER_ID,
@@ -2530,7 +2530,7 @@ function normalizeMemoryContent(content) {
   if (content === void 0) {
     return void 0;
   }
-  return typeof content === "string" ? Buffer3.from(content) : new Uint8Array(content);
+  return typeof content === "string" ? Buffer4.from(content) : new Uint8Array(content);
 }
 function createWrittenFileEntry(path2, size) {
   return {
@@ -2826,7 +2826,7 @@ function isFresh(token, skewMs, now) {
 }
 
 // src/profiles/importers/KnownHostsParser.ts
-import { Buffer as Buffer4 } from "buffer";
+import { Buffer as Buffer5 } from "buffer";
 import { createHmac } from "crypto";
 function parseKnownHosts(text) {
   const entries = [];
@@ -2916,7 +2916,7 @@ function globMatch(pattern, value) {
   return regex.test(value);
 }
 function matchesHashedEntry(salt, hash, host, port) {
-  const saltBuffer = Buffer4.from(salt, "base64");
+  const saltBuffer = Buffer5.from(salt, "base64");
   if (saltBuffer.length === 0) return false;
   const candidates = port === DEFAULT_SSH_PORT ? [host] : [`[${host}]:${String(port)}`, host];
   for (const candidate of candidates) {
@@ -3089,7 +3089,7 @@ function expandAlgorithms(values) {
 }
 
 // src/profiles/importers/FileZillaImporter.ts
-import { Buffer as Buffer5 } from "buffer";
+import { Buffer as Buffer6 } from "buffer";
 function importFileZillaSites(xml) {
   const events = tokenizeXml(xml);
   if (events.length === 0) {
@@ -3194,7 +3194,7 @@ function buildSiteFromFields(fields, passwordEncoding) {
   const rawPass = fields["Pass"];
   if (rawPass !== void 0 && rawPass !== "") {
     if (passwordEncoding === "base64") {
-      password = Buffer5.from(rawPass, "base64").toString("utf8");
+      password = Buffer6.from(rawPass, "base64").toString("utf8");
     } else {
       password = rawPass;
     }
@@ -4605,9 +4605,4197 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   return Math.abs(sourceTime - destinationTime) > toleranceMs;
 }
 
+// src/providers/native/sftp/NativeSftpProvider.ts
+import { Buffer as Buffer21 } from "buffer";
+import { createHash as createHash3, createPrivateKey } from "crypto";
+import { createConnection } from "net";
+
+// src/protocols/ssh/binary/SshDataWriter.ts
+import { Buffer as Buffer7 } from "buffer";
+var MAX_UINT32 = 4294967295;
+var MAX_UINT64 = (1n << 64n) - 1n;
+var SshDataWriter = class {
+  chunks = [];
+  length = 0;
+  writeByte(value) {
+    this.assertByte(value, "byte");
+    const chunk = Buffer7.allocUnsafe(1);
+    chunk.writeUInt8(value, 0);
+    return this.push(chunk);
+  }
+  writeBoolean(value) {
+    return this.writeByte(value ? 1 : 0);
+  }
+  writeBytes(value) {
+    return this.push(Buffer7.from(value));
+  }
+  writeUint32(value) {
+    if (!Number.isInteger(value) || value < 0 || value > MAX_UINT32) {
+      throw new ConfigurationError({
+        details: { value },
+        message: "SSH uint32 values must be integers in the range 0..2^32-1",
+        retryable: false
+      });
+    }
+    const chunk = Buffer7.allocUnsafe(4);
+    chunk.writeUInt32BE(value, 0);
+    return this.push(chunk);
+  }
+  writeUint64(value) {
+    if (value < 0n || value > MAX_UINT64) {
+      throw new ConfigurationError({
+        details: { value: value.toString() },
+        message: "SSH uint64 values must be in the range 0..2^64-1",
+        retryable: false
+      });
+    }
+    const chunk = Buffer7.allocUnsafe(8);
+    chunk.writeBigUInt64BE(value, 0);
+    return this.push(chunk);
+  }
+  writeString(value, encoding = "utf8") {
+    const payload = typeof value === "string" ? Buffer7.from(value, encoding) : Buffer7.from(value);
+    this.writeUint32(payload.length);
+    return this.push(payload);
+  }
+  writeMpint(value) {
+    const normalized = normalizePositiveMpint(value);
+    this.writeUint32(normalized.length);
+    return this.push(normalized);
+  }
+  writeNameList(values) {
+    for (const name of values) {
+      if (name.includes(",")) {
+        throw new ConfigurationError({
+          details: { name },
+          message: "SSH name-list entries cannot contain commas",
+          retryable: false
+        });
+      }
+    }
+    return this.writeString(values.join(","), "ascii");
+  }
+  toBuffer() {
+    return Buffer7.concat(this.chunks, this.length);
+  }
+  push(chunk) {
+    this.chunks.push(chunk);
+    this.length += chunk.length;
+    return this;
+  }
+  assertByte(value, label) {
+    if (!Number.isInteger(value) || value < 0 || value > 255) {
+      throw new ConfigurationError({
+        details: { value },
+        message: `SSH ${label} values must be integers in the range 0..255`,
+        retryable: false
+      });
+    }
+  }
+};
+function normalizePositiveMpint(value) {
+  const input = Buffer7.from(value);
+  let offset = 0;
+  while (offset < input.length && input[offset] === 0) {
+    offset += 1;
+  }
+  if (offset >= input.length) {
+    return Buffer7.alloc(0);
+  }
+  const stripped = input.subarray(offset);
+  if ((stripped[0] & 128) === 128) {
+    return Buffer7.concat([Buffer7.from([0]), stripped]);
+  }
+  return stripped;
+}
+
+// src/protocols/ssh/binary/SshDataReader.ts
+import { Buffer as Buffer8 } from "buffer";
+var SshDataReader = class {
+  constructor(source) {
+    this.source = source;
+  }
+  source;
+  offset = 0;
+  get remaining() {
+    return this.source.length - this.offset;
+  }
+  hasMore() {
+    return this.remaining > 0;
+  }
+  readByte() {
+    this.ensureAvailable(1, "byte");
+    const value = this.source[this.offset];
+    this.offset += 1;
+    return value;
+  }
+  readBoolean() {
+    return this.readByte() !== 0;
+  }
+  readBytes(length) {
+    this.ensureAvailable(length, "bytes");
+    const data = this.source.subarray(this.offset, this.offset + length);
+    this.offset += length;
+    return Buffer8.from(data);
+  }
+  readUint32() {
+    this.ensureAvailable(4, "uint32");
+    const buffer = Buffer8.from(this.source);
+    const value = buffer.readUInt32BE(this.offset);
+    this.offset += 4;
+    return value;
+  }
+  readUint64() {
+    this.ensureAvailable(8, "uint64");
+    const buffer = Buffer8.from(this.source);
+    const value = buffer.readBigUInt64BE(this.offset);
+    this.offset += 8;
+    return value;
+  }
+  readString() {
+    const length = this.readUint32();
+    this.ensureAvailable(length, "string");
+    const data = this.source.subarray(this.offset, this.offset + length);
+    this.offset += length;
+    return Buffer8.from(data);
+  }
+  readUtf8String() {
+    return this.readString().toString("utf8");
+  }
+  readNameList() {
+    const value = this.readString().toString("ascii");
+    if (value.length === 0) {
+      return [];
+    }
+    return value.split(",").filter((item) => item.length > 0);
+  }
+  /**
+   * Reads an SSH `mpint` value (RFC 4251 §5): a length-prefixed two's-complement
+   * big-endian integer. Returns the raw magnitude bytes (non-negative integers
+   * may have a leading 0x00 byte preserved by the caller as needed).
+   */
+  readMpint() {
+    return this.readString();
+  }
+  assertFinished() {
+    if (this.remaining !== 0) {
+      throw new ParseError({
+        details: { remaining: this.remaining },
+        message: "Unexpected trailing SSH packet bytes",
+        retryable: false
+      });
+    }
+  }
+  ensureAvailable(bytes, type) {
+    if (this.remaining >= bytes) {
+      return;
+    }
+    throw new ParseError({
+      details: {
+        available: this.remaining,
+        needed: bytes
+      },
+      message: `Unexpected end of SSH packet while reading ${type}`,
+      retryable: false
+    });
+  }
+};
+
+// src/protocols/ssh/auth/SshAuthMessages.ts
+var SSH_MSG_SERVICE_REQUEST = 5;
+var SSH_MSG_SERVICE_ACCEPT = 6;
+var SSH_MSG_USERAUTH_REQUEST = 50;
+var SSH_MSG_USERAUTH_FAILURE = 51;
+var SSH_MSG_USERAUTH_SUCCESS = 52;
+var SSH_MSG_USERAUTH_BANNER = 53;
+var SSH_MSG_USERAUTH_PK_OK = 60;
+var SSH_MSG_USERAUTH_INFO_REQUEST = 60;
+var SSH_MSG_USERAUTH_INFO_RESPONSE = 61;
+function encodeSshServiceRequest(serviceName) {
+  return new SshDataWriter().writeByte(SSH_MSG_SERVICE_REQUEST).writeString(serviceName, "utf8").toBuffer();
+}
+function decodeSshServiceAccept(payload) {
+  const reader = new SshDataReader(payload);
+  const msgType = reader.readByte();
+  if (msgType !== SSH_MSG_SERVICE_ACCEPT) {
+    throw new ParseError({
+      details: { msgType },
+      message: "Expected SSH_MSG_SERVICE_ACCEPT",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return { serviceName: reader.readString().toString("utf8") };
+}
+function encodeUserauthRequestPassword(args) {
+  return new SshDataWriter().writeByte(SSH_MSG_USERAUTH_REQUEST).writeString(args.username, "utf8").writeString(args.serviceName, "utf8").writeString("password", "ascii").writeBoolean(false).writeString(args.password, "utf8").toBuffer();
+}
+function encodeUserauthRequestPublickeyQuery(args) {
+  return new SshDataWriter().writeByte(SSH_MSG_USERAUTH_REQUEST).writeString(args.username, "utf8").writeString(args.serviceName, "utf8").writeString("publickey", "ascii").writeBoolean(false).writeString(args.algorithmName, "ascii").writeString(args.publicKeyBlob).toBuffer();
+}
+function encodeUserauthRequestPublickeySign(args) {
+  return new SshDataWriter().writeByte(SSH_MSG_USERAUTH_REQUEST).writeString(args.username, "utf8").writeString(args.serviceName, "utf8").writeString("publickey", "ascii").writeBoolean(true).writeString(args.algorithmName, "ascii").writeString(args.publicKeyBlob).writeString(args.signature).toBuffer();
+}
+function buildPublickeySignData(args) {
+  return new SshDataWriter().writeString(args.sessionId).writeByte(SSH_MSG_USERAUTH_REQUEST).writeString(args.username, "utf8").writeString(args.serviceName, "utf8").writeString("publickey", "ascii").writeBoolean(true).writeString(args.algorithmName, "ascii").writeString(args.publicKeyBlob).toBuffer();
+}
+function decodeSshUserauthFailure(payload) {
+  const reader = new SshDataReader(payload);
+  const msgType = reader.readByte();
+  if (msgType !== SSH_MSG_USERAUTH_FAILURE) {
+    throw new ParseError({
+      details: { msgType },
+      message: "Expected SSH_MSG_USERAUTH_FAILURE",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const nameList = reader.readString().toString("ascii");
+  const allowedAuthentications = nameList.length === 0 ? [] : nameList.split(",");
+  const partialSuccess = reader.readBoolean();
+  return { allowedAuthentications, partialSuccess };
+}
+function decodeSshUserauthBanner(payload) {
+  const reader = new SshDataReader(payload);
+  const msgType = reader.readByte();
+  if (msgType !== SSH_MSG_USERAUTH_BANNER) {
+    throw new ParseError({
+      details: { msgType },
+      message: "Expected SSH_MSG_USERAUTH_BANNER",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const message = reader.readString().toString("utf8");
+  const languageTag = reader.readString().toString("ascii");
+  return { languageTag, message };
+}
+function decodeSshUserauthPkOk(payload) {
+  const reader = new SshDataReader(payload);
+  const msgType = reader.readByte();
+  if (msgType !== SSH_MSG_USERAUTH_PK_OK) {
+    throw new ParseError({
+      details: { msgType },
+      message: "Expected SSH_MSG_USERAUTH_PK_OK",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return {
+    algorithmName: reader.readString().toString("ascii"),
+    publicKeyBlob: reader.readString()
+  };
+}
+function decodeSshUserauthInfoRequest(payload) {
+  const reader = new SshDataReader(payload);
+  const msgType = reader.readByte();
+  if (msgType !== SSH_MSG_USERAUTH_INFO_REQUEST) {
+    throw new ParseError({
+      details: { msgType },
+      message: "Expected SSH_MSG_USERAUTH_INFO_REQUEST",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const name = reader.readString().toString("utf8");
+  const instruction = reader.readString().toString("utf8");
+  const languageTag = reader.readString().toString("ascii");
+  const count = reader.readUint32();
+  const prompts = [];
+  for (let i = 0; i < count; i++) {
+    const prompt = reader.readString().toString("utf8");
+    const echo = reader.readBoolean();
+    prompts.push({ echo, prompt });
+  }
+  return { instruction, languageTag, name, prompts };
+}
+function encodeSshUserauthInfoResponse(responses) {
+  const writer = new SshDataWriter().writeByte(SSH_MSG_USERAUTH_INFO_RESPONSE).writeUint32(responses.length);
+  for (const r of responses) {
+    writer.writeString(r, "utf8");
+  }
+  return writer.toBuffer();
+}
+
+// src/protocols/ssh/auth/SshAuthSession.ts
+var SSH_USERAUTH_SERVICE = "ssh-userauth";
+var SSH_CONNECTION_SERVICE = "ssh-connection";
+var SshAuthSession = class {
+  constructor(transport) {
+    this.transport = transport;
+  }
+  transport;
+  async authenticate(options) {
+    const { credential, sessionId, maxAttempts = 4 } = options;
+    const bannerLines = [];
+    this.transport.sendPayload(encodeSshServiceRequest(SSH_USERAUTH_SERVICE));
+    const serviceAcceptPayload = await this.nextPayload();
+    decodeSshServiceAccept(serviceAcceptPayload);
+    let attempts = 0;
+    while (attempts < maxAttempts) {
+      attempts += 1;
+      const method = credential.type;
+      switch (credential.type) {
+        case "password": {
+          this.transport.sendPayload(
+            encodeUserauthRequestPassword({
+              password: credential.password,
+              serviceName: SSH_CONNECTION_SERVICE,
+              username: credential.username
+            })
+          );
+          break;
+        }
+        case "publickey": {
+          this.transport.sendPayload(
+            encodeUserauthRequestPublickeyQuery({
+              algorithmName: credential.algorithmName,
+              publicKeyBlob: credential.publicKeyBlob,
+              serviceName: SSH_CONNECTION_SERVICE,
+              username: credential.username
+            })
+          );
+          const queryResponse = await this.nextPayloadSkippingBanners(bannerLines);
+          const queryMsgType = queryResponse[0];
+          if (queryMsgType === SSH_MSG_USERAUTH_FAILURE) {
+            const failure = decodeSshUserauthFailure(queryResponse);
+            throw new AuthenticationError({
+              details: { allowed: failure.allowedAuthentications },
+              message: `SSH server does not accept public key for user "${credential.username}"`,
+              protocol: "sftp",
+              retryable: false
+            });
+          }
+          if (queryMsgType !== SSH_MSG_USERAUTH_PK_OK) {
+            throw new AuthenticationError({
+              details: { msgType: queryMsgType },
+              message: "Unexpected server response to publickey query",
+              protocol: "sftp",
+              retryable: false
+            });
+          }
+          decodeSshUserauthPkOk(queryResponse);
+          const signData = buildPublickeySignData({
+            algorithmName: credential.algorithmName,
+            publicKeyBlob: credential.publicKeyBlob,
+            serviceName: SSH_CONNECTION_SERVICE,
+            sessionId,
+            username: credential.username
+          });
+          const rawSignature = await credential.sign(signData);
+          const signatureBlob = buildSignatureBlob(credential.algorithmName, rawSignature);
+          this.transport.sendPayload(
+            encodeUserauthRequestPublickeySign({
+              algorithmName: credential.algorithmName,
+              publicKeyBlob: credential.publicKeyBlob,
+              serviceName: SSH_CONNECTION_SERVICE,
+              signature: signatureBlob,
+              username: credential.username
+            })
+          );
+          break;
+        }
+        case "keyboard-interactive": {
+          await this.runKeyboardInteractiveRounds(credential, bannerLines);
+          const kiResult = await this.nextPayloadSkippingBanners(bannerLines);
+          if (kiResult[0] === SSH_MSG_USERAUTH_SUCCESS) {
+            return { bannerLines, method: "keyboard-interactive" };
+          }
+          if (kiResult[0] === SSH_MSG_USERAUTH_FAILURE) {
+            throw new AuthenticationError({
+              details: { allowed: decodeSshUserauthFailure(kiResult).allowedAuthentications },
+              message: `SSH keyboard-interactive authentication failed for user "${credential.username}"`,
+              protocol: "sftp",
+              retryable: false
+            });
+          }
+          throw new AuthenticationError({
+            details: { msgType: kiResult[0] },
+            message: "Unexpected message type after keyboard-interactive exchange",
+            protocol: "sftp",
+            retryable: false
+          });
+        }
+      }
+      const response = await this.nextPayloadSkippingBanners(bannerLines);
+      const responseMsgType = response[0];
+      if (responseMsgType === SSH_MSG_USERAUTH_SUCCESS) {
+        return { bannerLines, method };
+      }
+      if (responseMsgType === SSH_MSG_USERAUTH_FAILURE) {
+        const failure = decodeSshUserauthFailure(response);
+        if (attempts >= maxAttempts || !failure.allowedAuthentications.includes(credential.type)) {
+          throw new AuthenticationError({
+            details: { allowed: failure.allowedAuthentications, attempts },
+            message: `SSH authentication failed for user "${credential.username}" after ${attempts} attempt(s)`,
+            protocol: "sftp",
+            retryable: false
+          });
+        }
+        continue;
+      }
+      throw new AuthenticationError({
+        details: { msgType: responseMsgType },
+        message: "Unexpected message type during SSH authentication",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    throw new AuthenticationError({
+      details: { maxAttempts },
+      message: `SSH authentication exceeded maximum attempts (${maxAttempts})`,
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  // -- Private helpers ------------------------------------------------------
+  async runKeyboardInteractiveRounds(credential, bannerLines) {
+    this.transport.sendPayload(
+      buildKiRequest({ serviceName: SSH_CONNECTION_SERVICE, username: credential.username })
+    );
+    while (true) {
+      const payload = await this.nextPayloadSkippingBanners(bannerLines);
+      const msgType = payload[0];
+      if (msgType === SSH_MSG_USERAUTH_INFO_REQUEST) {
+        const infoReq = decodeSshUserauthInfoRequest(payload);
+        const responses = await credential.respond(
+          infoReq.name,
+          infoReq.instruction,
+          infoReq.prompts
+        );
+        this.transport.sendPayload(encodeSshUserauthInfoResponse(responses));
+        continue;
+      }
+      this.pendingPayload = payload;
+      return;
+    }
+  }
+  pendingPayload;
+  async nextPayload() {
+    if (this.pendingPayload !== void 0) {
+      const p = this.pendingPayload;
+      this.pendingPayload = void 0;
+      return p;
+    }
+    const result = await this.transport.receivePayloads().next();
+    if (result.done === true) {
+      throw new AuthenticationError({
+        message: "SSH connection closed during authentication",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    return result.value;
+  }
+  async nextPayloadSkippingBanners(bannerLines) {
+    while (true) {
+      const payload = await this.nextPayload();
+      if (payload[0] === SSH_MSG_USERAUTH_BANNER) {
+        bannerLines.push(decodeSshUserauthBanner(payload).message);
+        continue;
+      }
+      return payload;
+    }
+  }
+};
+function buildSignatureBlob(algorithmName, rawSignature) {
+  return new SshDataWriter().writeString(algorithmName, "ascii").writeString(rawSignature).toBuffer();
+}
+function buildKiRequest(args) {
+  return new SshDataWriter().writeByte(50).writeString(args.username, "utf8").writeString(args.serviceName, "utf8").writeString("keyboard-interactive", "ascii").writeString("", "utf8").writeString("", "utf8").toBuffer();
+}
+
+// src/protocols/ssh/auth/SshPublickeyCredentialBuilder.ts
+import { Buffer as Buffer9 } from "buffer";
+import { createPublicKey, sign as cryptoSign } from "crypto";
+var ED25519_RAW_KEY_LENGTH = 32;
+var ED25519_SPKI_PREFIX_LENGTH = 12;
+function buildPublickeyCredential(options) {
+  const { privateKey, username } = options;
+  const publicKey = createPublicKey(privateKey);
+  switch (privateKey.asymmetricKeyType) {
+    case "ed25519": {
+      const spki = publicKey.export({ format: "der", type: "spki" });
+      if (spki.length !== ED25519_SPKI_PREFIX_LENGTH + ED25519_RAW_KEY_LENGTH) {
+        throw createInvalidKeyError("Ed25519 SPKI export has unexpected length");
+      }
+      const raw = spki.subarray(ED25519_SPKI_PREFIX_LENGTH);
+      const publicKeyBlob = new SshDataWriter().writeString("ssh-ed25519", "ascii").writeString(raw).toBuffer();
+      return {
+        algorithmName: "ssh-ed25519",
+        publicKeyBlob,
+        sign: (data) => cryptoSign(null, Buffer9.from(data), privateKey),
+        type: "publickey",
+        username
+      };
+    }
+    case "rsa": {
+      const algorithmName = options.rsaSignatureAlgorithm ?? "rsa-sha2-512";
+      const hash = algorithmName === "rsa-sha2-256" ? "sha256" : "sha512";
+      const jwk = publicKey.export({ format: "jwk" });
+      if (jwk.n === void 0 || jwk.e === void 0) {
+        throw createInvalidKeyError("RSA public key is missing modulus or exponent");
+      }
+      const n = base64UrlToMpint(jwk.n);
+      const e = base64UrlToMpint(jwk.e);
+      const publicKeyBlob = new SshDataWriter().writeString("ssh-rsa", "ascii").writeMpint(e).writeMpint(n).toBuffer();
+      return {
+        algorithmName,
+        publicKeyBlob,
+        sign: (data) => cryptoSign(hash, Buffer9.from(data), privateKey),
+        type: "publickey",
+        username
+      };
+    }
+    default:
+      throw createInvalidKeyError(
+        `Unsupported SSH private key type: ${privateKey.asymmetricKeyType ?? "unknown"}`
+      );
+  }
+}
+function base64UrlToMpint(value) {
+  const padded = value.replace(/-/g, "+").replace(/_/g, "/");
+  const buffer = Buffer9.from(padded, "base64");
+  return buffer;
+}
+function createInvalidKeyError(message) {
+  return new ConfigurationError({
+    message,
+    protocol: "sftp",
+    retryable: false
+  });
+}
+
+// src/protocols/ssh/connection/SshConnectionMessages.ts
+var SSH_MSG_CHANNEL_OPEN = 90;
+var SSH_MSG_CHANNEL_OPEN_CONFIRMATION = 91;
+var SSH_MSG_CHANNEL_OPEN_FAILURE = 92;
+var SSH_MSG_CHANNEL_WINDOW_ADJUST = 93;
+var SSH_MSG_CHANNEL_DATA = 94;
+var SSH_MSG_CHANNEL_EXTENDED_DATA = 95;
+var SSH_MSG_CHANNEL_EOF = 96;
+var SSH_MSG_CHANNEL_CLOSE = 97;
+var SSH_MSG_CHANNEL_REQUEST = 98;
+var SSH_MSG_CHANNEL_SUCCESS = 99;
+var SSH_MSG_CHANNEL_FAILURE = 100;
+function encodeSshChannelOpen(args) {
+  return new SshDataWriter().writeByte(SSH_MSG_CHANNEL_OPEN).writeString(args.channelType, "ascii").writeUint32(args.senderChannel).writeUint32(args.initialWindowSize).writeUint32(args.maxPacketSize).toBuffer();
+}
+function decodeSshChannelOpenConfirmation(payload) {
+  const reader = new SshDataReader(payload);
+  const msgType = reader.readByte();
+  if (msgType !== SSH_MSG_CHANNEL_OPEN_CONFIRMATION) {
+    throw new ParseError({
+      details: { msgType },
+      message: "Expected SSH_MSG_CHANNEL_OPEN_CONFIRMATION",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const recipientChannel = reader.readUint32();
+  const senderChannel = reader.readUint32();
+  const initialWindowSize = reader.readUint32();
+  const maxPacketSize = reader.readUint32();
+  return { initialWindowSize, maxPacketSize, recipientChannel, senderChannel };
+}
+function decodeSshChannelOpenFailure(payload) {
+  const reader = new SshDataReader(payload);
+  const msgType = reader.readByte();
+  if (msgType !== SSH_MSG_CHANNEL_OPEN_FAILURE) {
+    throw new ParseError({
+      details: { msgType },
+      message: "Expected SSH_MSG_CHANNEL_OPEN_FAILURE",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const recipientChannel = reader.readUint32();
+  const reasonCode = reader.readUint32();
+  const description = reader.readString().toString("utf8");
+  const languageTag = reader.readString().toString("ascii");
+  return { description, languageTag, reasonCode, recipientChannel };
+}
+function encodeSshChannelRequestSubsystem(args) {
+  return new SshDataWriter().writeByte(SSH_MSG_CHANNEL_REQUEST).writeUint32(args.recipientChannel).writeString("subsystem", "ascii").writeBoolean(args.wantReply).writeString(args.subsystemName, "ascii").toBuffer();
+}
+function encodeSshChannelRequestExec(args) {
+  return new SshDataWriter().writeByte(SSH_MSG_CHANNEL_REQUEST).writeUint32(args.recipientChannel).writeString("exec", "ascii").writeBoolean(args.wantReply).writeString(args.command, "utf8").toBuffer();
+}
+function encodeSshChannelData(args) {
+  return new SshDataWriter().writeByte(SSH_MSG_CHANNEL_DATA).writeUint32(args.recipientChannel).writeString(args.data).toBuffer();
+}
+function decodeSshChannelData(payload) {
+  const reader = new SshDataReader(payload);
+  const msgType = reader.readByte();
+  if (msgType !== SSH_MSG_CHANNEL_DATA) {
+    throw new ParseError({
+      details: { msgType },
+      message: "Expected SSH_MSG_CHANNEL_DATA",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const recipientChannel = reader.readUint32();
+  const data = reader.readString();
+  return { data, recipientChannel };
+}
+function decodeSshChannelExtendedData(payload) {
+  const reader = new SshDataReader(payload);
+  const msgType = reader.readByte();
+  if (msgType !== SSH_MSG_CHANNEL_EXTENDED_DATA) {
+    throw new ParseError({
+      details: { msgType },
+      message: "Expected SSH_MSG_CHANNEL_EXTENDED_DATA",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const recipientChannel = reader.readUint32();
+  const dataTypeCode = reader.readUint32();
+  const data = reader.readString();
+  return { data, dataTypeCode, recipientChannel };
+}
+function encodeSshChannelWindowAdjust(args) {
+  return new SshDataWriter().writeByte(SSH_MSG_CHANNEL_WINDOW_ADJUST).writeUint32(args.recipientChannel).writeUint32(args.bytesToAdd).toBuffer();
+}
+function decodeSshChannelWindowAdjust(payload) {
+  const reader = new SshDataReader(payload);
+  const msgType = reader.readByte();
+  if (msgType !== SSH_MSG_CHANNEL_WINDOW_ADJUST) {
+    throw new ParseError({
+      details: { msgType },
+      message: "Expected SSH_MSG_CHANNEL_WINDOW_ADJUST",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const recipientChannel = reader.readUint32();
+  const bytesToAdd = reader.readUint32();
+  return { bytesToAdd, recipientChannel };
+}
+function encodeSshChannelEof(recipientChannel) {
+  return new SshDataWriter().writeByte(SSH_MSG_CHANNEL_EOF).writeUint32(recipientChannel).toBuffer();
+}
+function encodeSshChannelClose(recipientChannel) {
+  return new SshDataWriter().writeByte(SSH_MSG_CHANNEL_CLOSE).writeUint32(recipientChannel).toBuffer();
+}
+
+// src/protocols/ssh/connection/SshSessionChannel.ts
+import { Buffer as Buffer10 } from "buffer";
+var INITIAL_WINDOW_SIZE = 256 * 1024;
+var MAX_PACKET_SIZE = 32 * 1024;
+var WINDOW_REFILL_THRESHOLD = 64 * 1024;
+var SshSessionChannel = class {
+  constructor(transport, options = {}) {
+    this.transport = transport;
+    this.localChannelId = options.localChannelId ?? 0;
+  }
+  transport;
+  phase = "opening";
+  /** Remote channel id assigned by the server in OPEN_CONFIRMATION. */
+  remoteChannelId = 0;
+  /** Bytes the remote side can still receive before we must stop sending. */
+  remoteWindowRemaining = 0;
+  /** Maximum packet data size the remote accepts. */
+  remoteMaxPacketSize = MAX_PACKET_SIZE;
+  /** Local window: bytes we can still accept from remote. */
+  localWindowConsumed = 0;
+  localWindowSize = INITIAL_WINDOW_SIZE;
+  /** Queue of inbound data for the `receiveData()` generator. */
+  inboundQueue = [];
+  waitingConsumer;
+  /** Queue of outbound data waiting for remote window space. */
+  outboundQueue = [];
+  /**
+   * FIFO of waiters blocked on remote window credit. Each WINDOW_ADJUST wakes
+   * exactly one waiter; concurrent senders must not lose wakeups.
+   */
+  outboundDrainedWaiters = [];
+  /** Serializes sendData() calls so byte order on the wire matches call order. */
+  sendChain = Promise.resolve();
+  localChannelId;
+  // -- Lifecycle ---------------------------------------------------------------
+  /**
+   * Opens the channel and requests a subsystem.
+   * Resolves once the server confirms both CHANNEL_OPEN and the subsystem request.
+   */
+  async openSubsystem(subsystemName) {
+    await this.openChannel();
+    await this.requestSubsystem(subsystemName);
+  }
+  /**
+   * Opens the channel and executes a command.
+   */
+  async openExec(command) {
+    await this.openChannel();
+    await this.requestExec(command);
+  }
+  async openChannel() {
+    this.transport.sendPayload(
+      encodeSshChannelOpen({
+        channelType: "session",
+        initialWindowSize: INITIAL_WINDOW_SIZE,
+        maxPacketSize: MAX_PACKET_SIZE,
+        senderChannel: this.localChannelId
+      })
+    );
+    const payload = await this.nextPayload();
+    const msgType = payload[0];
+    if (msgType === SSH_MSG_CHANNEL_OPEN_FAILURE) {
+      const failure = decodeSshChannelOpenFailure(payload);
+      throw new ConnectionError({
+        details: { reason: failure.reasonCode, description: failure.description },
+        message: `SSH channel open failed: ${failure.description}`,
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    if (msgType !== SSH_MSG_CHANNEL_OPEN_CONFIRMATION) {
+      throw new ProtocolError({
+        details: { msgType },
+        message: "Expected SSH_MSG_CHANNEL_OPEN_CONFIRMATION",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    const confirmation = decodeSshChannelOpenConfirmation(payload);
+    this.remoteChannelId = confirmation.senderChannel;
+    this.remoteWindowRemaining = confirmation.initialWindowSize;
+    this.remoteMaxPacketSize = confirmation.maxPacketSize;
+    this.phase = "requesting";
+  }
+  async requestSubsystem(subsystemName) {
+    this.transport.sendPayload(
+      encodeSshChannelRequestSubsystem({
+        recipientChannel: this.remoteChannelId,
+        subsystemName,
+        wantReply: true
+      })
+    );
+    await this.awaitChannelRequestReply("subsystem");
+  }
+  async requestExec(command) {
+    this.transport.sendPayload(
+      encodeSshChannelRequestExec({
+        command,
+        recipientChannel: this.remoteChannelId,
+        wantReply: true
+      })
+    );
+    await this.awaitChannelRequestReply("exec");
+  }
+  async awaitChannelRequestReply(requestType) {
+    const payload = await this.nextPayload();
+    const msgType = payload[0];
+    if (msgType === SSH_MSG_CHANNEL_SUCCESS) {
+      this.phase = "open";
+      return;
+    }
+    if (msgType === SSH_MSG_CHANNEL_FAILURE) {
+      throw new ConnectionError({
+        details: { requestType },
+        message: `SSH channel request "${requestType}" was rejected by the server`,
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    throw new ProtocolError({
+      details: { msgType },
+      message: `Unexpected response to channel request "${requestType}"`,
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  // -- Send --------------------------------------------------------------------
+  /**
+   * Sends data on the channel. Respects the remote window; if there is no space,
+   * splits the data and queues the remainder for when WINDOW_ADJUST arrives.
+   *
+   * Concurrent calls are serialized so wire byte order matches call order.
+   */
+  sendData(data) {
+    const next = this.sendChain.then(() => this.sendDataLocked(data));
+    this.sendChain = next.catch(() => void 0);
+    return next;
+  }
+  async sendDataLocked(data) {
+    if (this.phase !== "open") {
+      throw new ProtocolError({
+        message: "Cannot send data on a channel that is not open",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    let offset = 0;
+    while (offset < data.length) {
+      if (this.remoteWindowRemaining <= 0) {
+        await new Promise((resolve) => {
+          this.outboundDrainedWaiters.push(resolve);
+        });
+        continue;
+      }
+      const chunkSize = Math.min(
+        data.length - offset,
+        this.remoteWindowRemaining,
+        this.remoteMaxPacketSize
+      );
+      const chunk = Buffer10.from(data.subarray(offset, offset + chunkSize));
+      this.transport.sendPayload(
+        encodeSshChannelData({ data: chunk, recipientChannel: this.remoteChannelId })
+      );
+      this.remoteWindowRemaining -= chunkSize;
+      offset += chunkSize;
+    }
+  }
+  // -- Receive -----------------------------------------------------------------
+  /**
+   * Async generator that yields raw data buffers from the channel.
+   * Returns (done) when the channel receives EOF or CLOSE.
+   */
+  async *receiveData() {
+    while (true) {
+      const entry = await this.dequeueInbound();
+      if (entry.type === "error") throw entry.error;
+      if (entry.type === "eof" || entry.type === "close") return;
+      yield entry.data;
+    }
+  }
+  // -- Close -------------------------------------------------------------------
+  /**
+   * Sends EOF and CLOSE.  Should be called when the client is done sending.
+   */
+  close() {
+    if (this.phase === "closed" || this.phase === "closing") return;
+    this.phase = "closing";
+    this.transport.sendPayload(encodeSshChannelEof(this.remoteChannelId));
+    this.transport.sendPayload(encodeSshChannelClose(this.remoteChannelId));
+  }
+  // -- Dispatch (called by SshConnectionManager) -----------------------------
+  /**
+   * Feed an inbound transport payload to this channel.
+   * Called by the channel multiplexer (`SshConnectionManager`).
+   */
+  dispatch(payload) {
+    const msgType = payload[0];
+    switch (msgType) {
+      case SSH_MSG_CHANNEL_DATA: {
+        const msg = decodeSshChannelData(payload);
+        this.consumeLocalWindow(msg.data.length);
+        this.enqueueInbound({ type: "data", data: msg.data });
+        break;
+      }
+      case SSH_MSG_CHANNEL_EXTENDED_DATA: {
+        const msg = decodeSshChannelExtendedData(payload);
+        this.consumeLocalWindow(msg.data.length);
+        break;
+      }
+      case SSH_MSG_CHANNEL_WINDOW_ADJUST: {
+        const msg = decodeSshChannelWindowAdjust(payload);
+        this.remoteWindowRemaining += msg.bytesToAdd;
+        const waiters = this.outboundDrainedWaiters.splice(0);
+        for (const cb of waiters) cb();
+        break;
+      }
+      case SSH_MSG_CHANNEL_EOF: {
+        this.enqueueInbound({ type: "eof" });
+        break;
+      }
+      case SSH_MSG_CHANNEL_CLOSE: {
+        this.phase = "closed";
+        this.enqueueInbound({ type: "close" });
+        const waiters = this.outboundDrainedWaiters.splice(0);
+        for (const cb of waiters) cb();
+        break;
+      }
+      default:
+        break;
+    }
+  }
+  dispatchError(error) {
+    this.enqueueInbound({ type: "error", error });
+    const waiters = this.outboundDrainedWaiters.splice(0);
+    for (const cb of waiters) cb();
+  }
+  // -- Private helpers ------------------------------------------------------
+  consumeLocalWindow(bytes) {
+    this.localWindowConsumed += bytes;
+    if (this.localWindowConsumed >= WINDOW_REFILL_THRESHOLD) {
+      const bytesToAdd = this.localWindowConsumed;
+      this.localWindowConsumed = 0;
+      this.transport.sendPayload(
+        encodeSshChannelWindowAdjust({
+          bytesToAdd,
+          recipientChannel: this.remoteChannelId
+        })
+      );
+    }
+  }
+  enqueueInbound(entry) {
+    this.inboundQueue.push(entry);
+    if (this.waitingConsumer !== void 0) {
+      const cb = this.waitingConsumer;
+      this.waitingConsumer = void 0;
+      cb();
+    }
+  }
+  dequeueInbound() {
+    if (this.inboundQueue.length > 0) {
+      return Promise.resolve(this.inboundQueue.shift());
+    }
+    return new Promise((resolve) => {
+      this.waitingConsumer = () => {
+        resolve(this.inboundQueue.shift());
+      };
+    });
+  }
+  /** Pull the next payload from the transport (used during channel setup only). */
+  async nextPayload() {
+    const result = await this.transport.receivePayloads().next();
+    if (result.done === true) {
+      throw new ConnectionError({
+        message: "SSH connection closed during channel setup",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    return result.value;
+  }
+};
+
+// src/protocols/ssh/connection/SshConnectionManager.ts
+var CHANNEL_MSG_TYPES = /* @__PURE__ */ new Set([
+  SSH_MSG_CHANNEL_OPEN_CONFIRMATION,
+  SSH_MSG_CHANNEL_OPEN_FAILURE,
+  SSH_MSG_CHANNEL_WINDOW_ADJUST,
+  SSH_MSG_CHANNEL_DATA,
+  SSH_MSG_CHANNEL_EXTENDED_DATA,
+  SSH_MSG_CHANNEL_EOF,
+  SSH_MSG_CHANNEL_CLOSE,
+  SSH_MSG_CHANNEL_REQUEST,
+  SSH_MSG_CHANNEL_SUCCESS,
+  SSH_MSG_CHANNEL_FAILURE
+]);
+var SshConnectionManager = class {
+  constructor(transport) {
+    this.transport = transport;
+  }
+  transport;
+  channels = /* @__PURE__ */ new Map();
+  nextLocalId = 0;
+  pumpPromise;
+  pumpResolve;
+  pumpReject;
+  /** Payloads that arrived before any channel registered (buffered for the first channel). */
+  pendingSetupPayloads = [];
+  setupPayloadConsumer;
+  // -- Setup-phase payload delivery (for channel open/request handshakes) -----
+  /**
+   * Delivers the next connection-layer payload to callers during channel setup.
+   * Called by `SshSessionChannel` during `openChannel()` / `requestSubsystem()`.
+   *
+   * Channel setup happens sequentially before `start()` begins pumping, so we
+   * pull directly from the transport iterator here.
+   */
+  async nextSetupPayload() {
+    if (this.pendingSetupPayloads.length > 0) {
+      return this.pendingSetupPayloads.shift();
+    }
+    const result = await this.transport.receivePayloads().next();
+    if (result.done === true) {
+      throw new ConnectionError({
+        message: "SSH connection closed during channel setup",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    return result.value;
+  }
+  // -- Channel factory -------------------------------------------------------
+  /**
+   * Opens a session channel and starts the SFTP subsystem on it.
+   * Must be called before `start()`.
+   */
+  async openSubsystemChannel(subsystemName) {
+    const localId = this.nextLocalId++;
+    const channel = new SshSessionChannel(this.transport, { localChannelId: localId });
+    this.channels.set(localId, channel);
+    await this.runChannelSetup(channel, () => channel.openSubsystem(subsystemName));
+    return channel;
+  }
+  /**
+   * Opens a session channel and runs the given command on it.
+   * Must be called before `start()`.
+   */
+  async openExecChannel(command) {
+    const localId = this.nextLocalId++;
+    const channel = new SshSessionChannel(this.transport, { localChannelId: localId });
+    this.channels.set(localId, channel);
+    await this.runChannelSetup(channel, () => channel.openExec(command));
+    return channel;
+  }
+  // -- Pump --------------------------------------------------------------------
+  /**
+   * Starts the main dispatch loop.  Returns a Promise that resolves when the
+   * connection closes cleanly, or rejects on a fatal transport error.
+   *
+   * Call this after all channels have been opened and the application is ready
+   * to receive data.
+   */
+  start() {
+    if (this.pumpPromise !== void 0) return this.pumpPromise;
+    this.pumpPromise = new Promise((resolve, reject) => {
+      this.pumpResolve = resolve;
+      this.pumpReject = reject;
+      void this.pump();
+    });
+    return this.pumpPromise;
+  }
+  // -- Private --------------------------------------------------------------
+  /**
+   * Runs channel setup (open + request) with a dedicated payload pump that
+   * pulls from the transport iterator and dispatches non-channel-setup messages
+   * to `pendingSetupPayloads` for later processing.
+   */
+  async runChannelSetup(channel, setup) {
+    await setup();
+  }
+  async pump() {
+    try {
+      for await (const payload of this.transport.receivePayloads()) {
+        this.dispatch(payload);
+      }
+      this.terminateChannels(
+        new ConnectionError({
+          message: "SSH connection closed",
+          protocol: "sftp",
+          retryable: false
+        })
+      );
+      this.pumpResolve?.();
+    } catch (err) {
+      const error = err instanceof Error ? err : new ConnectionError({
+        message: String(err),
+        protocol: "sftp",
+        retryable: false
+      });
+      this.terminateChannels(error);
+      this.pumpReject?.(error);
+    }
+  }
+  dispatch(payload) {
+    const msgType = payload[0];
+    if (msgType === void 0) return;
+    if (CHANNEL_MSG_TYPES.has(msgType)) {
+      const recipientChannel = payload.readUInt32BE(1);
+      const channel = this.channels.get(recipientChannel);
+      if (channel !== void 0) {
+        channel.dispatch(payload);
+      }
+    }
+  }
+  terminateChannels(error) {
+    for (const channel of this.channels.values()) {
+      channel.dispatchError(error);
+    }
+  }
+};
+
+// src/protocols/ssh/transport/SshTransportConnection.ts
+import { Buffer as Buffer18 } from "buffer";
+
+// src/protocols/ssh/transport/SshTransportHandshake.ts
+import { Buffer as Buffer16 } from "buffer";
+
+// src/protocols/ssh/transport/SshAlgorithmNegotiation.ts
+var DEFAULT_SSH_ALGORITHM_PREFERENCES = {
+  compressionClientToServer: ["none"],
+  compressionServerToClient: ["none"],
+  encryptionClientToServer: [
+    "chacha20-poly1305@openssh.com",
+    "aes256-gcm@openssh.com",
+    "aes128-gcm@openssh.com",
+    "aes256-ctr",
+    "aes128-ctr"
+  ],
+  encryptionServerToClient: [
+    "chacha20-poly1305@openssh.com",
+    "aes256-gcm@openssh.com",
+    "aes128-gcm@openssh.com",
+    "aes256-ctr",
+    "aes128-ctr"
+  ],
+  kexAlgorithms: ["curve25519-sha256", "curve25519-sha256@libssh.org"],
+  languagesClientToServer: [],
+  languagesServerToClient: [],
+  macClientToServer: ["hmac-sha2-512", "hmac-sha2-256"],
+  macServerToClient: ["hmac-sha2-512", "hmac-sha2-256"],
+  serverHostKeyAlgorithms: [
+    "ssh-ed25519",
+    "ecdsa-sha2-nistp256",
+    "ecdsa-sha2-nistp384",
+    "ecdsa-sha2-nistp521",
+    "rsa-sha2-512",
+    "rsa-sha2-256"
+  ]
+};
+function negotiateSshAlgorithms(client, server) {
+  const languageClientToServer = chooseLanguage(
+    "languages client->server",
+    client.languagesClientToServer,
+    server.languagesClientToServer
+  );
+  const languageServerToClient = chooseLanguage(
+    "languages server->client",
+    client.languagesServerToClient,
+    server.languagesServerToClient
+  );
+  return {
+    compressionClientToServer: chooseRequired(
+      "compression client->server",
+      client.compressionClientToServer,
+      server.compressionClientToServer
+    ),
+    compressionServerToClient: chooseRequired(
+      "compression server->client",
+      client.compressionServerToClient,
+      server.compressionServerToClient
+    ),
+    encryptionClientToServer: chooseRequired(
+      "encryption client->server",
+      client.encryptionClientToServer,
+      server.encryptionClientToServer
+    ),
+    encryptionServerToClient: chooseRequired(
+      "encryption server->client",
+      client.encryptionServerToClient,
+      server.encryptionServerToClient
+    ),
+    kexAlgorithm: chooseRequired("kex", client.kexAlgorithms, server.kexAlgorithms),
+    ...languageClientToServer === void 0 ? {} : { languageClientToServer },
+    ...languageServerToClient === void 0 ? {} : { languageServerToClient },
+    macClientToServer: chooseRequired(
+      "mac client->server",
+      client.macClientToServer,
+      server.macClientToServer
+    ),
+    macServerToClient: chooseRequired(
+      "mac server->client",
+      client.macServerToClient,
+      server.macServerToClient
+    ),
+    serverHostKeyAlgorithm: chooseRequired(
+      "server host key",
+      client.serverHostKeyAlgorithms,
+      server.serverHostKeyAlgorithms
+    )
+  };
+}
+function chooseRequired(label, preferred, supported) {
+  const selected = preferred.find((candidate) => supported.includes(candidate));
+  if (selected !== void 0) {
+    return selected;
+  }
+  throw new UnsupportedFeatureError({
+    details: {
+      preferred,
+      supported
+    },
+    message: `Unable to negotiate SSH ${label} algorithm`,
+    protocol: "sftp",
+    retryable: false
+  });
+}
+function chooseLanguage(label, preferred, supported) {
+  if (preferred.length === 0 || supported.length === 0) {
+    return void 0;
+  }
+  return chooseRequired(label, preferred, supported);
+}
+
+// src/protocols/ssh/transport/SshIdentification.ts
+var SSH_IDENT_PREFIX = "SSH-";
+var SSH_PROTOCOL_VERSION = "2.0";
+function buildSshIdentificationLine(options) {
+  const protocolVersion = options.protocolVersion ?? SSH_PROTOCOL_VERSION;
+  if (protocolVersion.trim().length === 0 || options.softwareVersion.trim().length === 0) {
+    throw new ParseError({
+      message: "SSH identification protocol and software versions must be non-empty",
+      retryable: false
+    });
+  }
+  const base = `${SSH_IDENT_PREFIX}${protocolVersion}-${options.softwareVersion}`;
+  if (options.comments === void 0 || options.comments.length === 0) {
+    return base;
+  }
+  return `${base} ${options.comments}`;
+}
+function parseSshIdentificationLine(line) {
+  if (!line.startsWith(SSH_IDENT_PREFIX)) {
+    throw new ParseError({
+      details: { line },
+      message: "SSH identification line must start with 'SSH-'",
+      retryable: false
+    });
+  }
+  const firstSpace = line.indexOf(" ");
+  const header = firstSpace === -1 ? line : line.slice(0, firstSpace);
+  const comments = firstSpace === -1 ? void 0 : line.slice(firstSpace + 1);
+  const headerParts = header.split("-");
+  if (headerParts.length < 3) {
+    throw new ParseError({
+      details: { line },
+      message: "SSH identification line is malformed",
+      retryable: false
+    });
+  }
+  const protocolVersion = headerParts[1] ?? "";
+  const softwareVersion = headerParts.slice(2).join("-");
+  if (protocolVersion.length === 0 || softwareVersion.length === 0) {
+    throw new ParseError({
+      details: { line },
+      message: "SSH identification line must include protocol and software versions",
+      retryable: false
+    });
+  }
+  return {
+    protocolVersion,
+    softwareVersion,
+    raw: line,
+    ...comments === void 0 || comments.length === 0 ? {} : { comments }
+  };
+}
+
+// src/protocols/ssh/transport/SshKexInit.ts
+import { Buffer as Buffer11 } from "buffer";
+import { randomBytes } from "crypto";
+var SSH_MSG_KEXINIT = 20;
+var KEXINIT_COOKIE_LENGTH = 16;
+function encodeSshKexInitMessage(options) {
+  const cookie = options.cookie === void 0 ? randomBytes(KEXINIT_COOKIE_LENGTH) : Buffer11.from(options.cookie);
+  if (cookie.length !== KEXINIT_COOKIE_LENGTH) {
+    throw new ConfigurationError({
+      details: { actualLength: cookie.length, expectedLength: KEXINIT_COOKIE_LENGTH },
+      message: "SSH KEXINIT cookie must be 16 bytes",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const writer = new SshDataWriter();
+  writer.writeByte(SSH_MSG_KEXINIT);
+  writer.writeBytes(cookie);
+  writer.writeNameList(options.algorithms.kexAlgorithms);
+  writer.writeNameList(options.algorithms.serverHostKeyAlgorithms);
+  writer.writeNameList(options.algorithms.encryptionClientToServer);
+  writer.writeNameList(options.algorithms.encryptionServerToClient);
+  writer.writeNameList(options.algorithms.macClientToServer);
+  writer.writeNameList(options.algorithms.macServerToClient);
+  writer.writeNameList(options.algorithms.compressionClientToServer);
+  writer.writeNameList(options.algorithms.compressionServerToClient);
+  writer.writeNameList(options.algorithms.languagesClientToServer);
+  writer.writeNameList(options.algorithms.languagesServerToClient);
+  writer.writeBoolean(options.firstKexPacketFollows ?? false);
+  writer.writeUint32(0);
+  return writer.toBuffer();
+}
+function decodeSshKexInitMessage(payload) {
+  const reader = new SshDataReader(payload);
+  const messageType = reader.readByte();
+  if (messageType !== SSH_MSG_KEXINIT) {
+    throw new ParseError({
+      details: { messageType },
+      message: "Expected SSH_MSG_KEXINIT payload",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const cookie = reader.readBytes(KEXINIT_COOKIE_LENGTH);
+  const kexAlgorithms = reader.readNameList();
+  const serverHostKeyAlgorithms = reader.readNameList();
+  const encryptionClientToServer = reader.readNameList();
+  const encryptionServerToClient = reader.readNameList();
+  const macClientToServer = reader.readNameList();
+  const macServerToClient = reader.readNameList();
+  const compressionClientToServer = reader.readNameList();
+  const compressionServerToClient = reader.readNameList();
+  const languagesClientToServer = reader.readNameList();
+  const languagesServerToClient = reader.readNameList();
+  const firstKexPacketFollows = reader.readBoolean();
+  const reserved = reader.readUint32();
+  reader.assertFinished();
+  return {
+    compressionClientToServer,
+    compressionServerToClient,
+    cookie,
+    encryptionClientToServer,
+    encryptionServerToClient,
+    firstKexPacketFollows,
+    kexAlgorithms,
+    languagesClientToServer,
+    languagesServerToClient,
+    macClientToServer,
+    macServerToClient,
+    messageType,
+    reserved,
+    serverHostKeyAlgorithms
+  };
+}
+
+// src/protocols/ssh/transport/SshKexCurve25519.ts
+import { Buffer as Buffer12 } from "buffer";
+import { createPublicKey as createPublicKey2, diffieHellman, generateKeyPairSync } from "crypto";
+var SSH_MSG_KEX_ECDH_INIT = 30;
+var SSH_MSG_KEX_ECDH_REPLY = 31;
+var X25519_PUBLIC_KEY_LENGTH = 32;
+var X25519_SPKI_PREFIX = Buffer12.from("302a300506032b656e032100", "hex");
+function createCurve25519Ephemeral() {
+  const { privateKey, publicKey } = generateKeyPairSync("x25519");
+  const encodedPublicKey = exportX25519PublicKeyRaw(publicKey);
+  return {
+    deriveSharedSecret: (serverPublicKey) => {
+      const peer = importX25519PublicKeyRaw(serverPublicKey);
+      return diffieHellman({ privateKey, publicKey: peer });
+    },
+    publicKey: encodedPublicKey
+  };
+}
+function encodeSshKexEcdhInitMessage(publicKey) {
+  const normalized = normalizeX25519PublicKey(publicKey, "client");
+  return new SshDataWriter().writeByte(SSH_MSG_KEX_ECDH_INIT).writeString(normalized).toBuffer();
+}
+function decodeSshKexEcdhReplyMessage(payload) {
+  const reader = new SshDataReader(payload);
+  const messageType = reader.readByte();
+  if (messageType !== SSH_MSG_KEX_ECDH_REPLY) {
+    throw new ParseError({
+      details: { messageType },
+      message: "Expected SSH_MSG_KEX_ECDH_REPLY payload",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const hostKey = reader.readString();
+  const serverPublicKey = normalizeX25519PublicKey(reader.readString(), "server");
+  const signature = reader.readString();
+  reader.assertFinished();
+  return {
+    hostKey,
+    messageType,
+    serverPublicKey,
+    signature
+  };
+}
+function exportX25519PublicKeyRaw(publicKey) {
+  const der = publicKey.export({ format: "der", type: "spki" });
+  const raw = der.subarray(der.length - X25519_PUBLIC_KEY_LENGTH);
+  return normalizeX25519PublicKey(raw, "client");
+}
+function importX25519PublicKeyRaw(raw) {
+  const normalized = normalizeX25519PublicKey(raw, "server");
+  const der = Buffer12.concat([X25519_SPKI_PREFIX, normalized]);
+  return createPublicKey2({
+    format: "der",
+    key: der,
+    type: "spki"
+  });
+}
+function normalizeX25519PublicKey(value, label) {
+  const key = Buffer12.from(value);
+  if (key.length !== X25519_PUBLIC_KEY_LENGTH) {
+    throw new ConfigurationError({
+      details: { keyLength: key.length, label },
+      message: `SSH ${label} Curve25519 public key must be 32 bytes`,
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return key;
+}
+
+// src/protocols/ssh/transport/SshKeyDerivation.ts
+import { Buffer as Buffer13 } from "buffer";
+import { createHash } from "crypto";
+function deriveSshSessionKeys(input) {
+  const hashAlgorithm = resolveKexHashAlgorithm(input.kexAlgorithm);
+  const exchangeHash = computeCurve25519ExchangeHash(input, hashAlgorithm);
+  const sessionId = exchangeHash;
+  const c2sEncryptionLength = resolveEncryptionKeyLength(
+    input.negotiatedAlgorithms.encryptionClientToServer
+  );
+  const s2cEncryptionLength = resolveEncryptionKeyLength(
+    input.negotiatedAlgorithms.encryptionServerToClient
+  );
+  const c2sIvLength = resolveIvLength(input.negotiatedAlgorithms.encryptionClientToServer);
+  const s2cIvLength = resolveIvLength(input.negotiatedAlgorithms.encryptionServerToClient);
+  const c2sMacLength = resolveMacKeyLength(
+    input.negotiatedAlgorithms.encryptionClientToServer,
+    input.negotiatedAlgorithms.macClientToServer
+  );
+  const s2cMacLength = resolveMacKeyLength(
+    input.negotiatedAlgorithms.encryptionServerToClient,
+    input.negotiatedAlgorithms.macServerToClient
+  );
+  const sharedSecret = Buffer13.from(input.sharedSecret);
+  return {
+    clientToServer: {
+      encryptionKey: deriveMaterial(
+        sharedSecret,
+        exchangeHash,
+        sessionId,
+        "C",
+        c2sEncryptionLength,
+        hashAlgorithm
+      ),
+      iv: deriveMaterial(sharedSecret, exchangeHash, sessionId, "A", c2sIvLength, hashAlgorithm),
+      macKey: deriveMaterial(
+        sharedSecret,
+        exchangeHash,
+        sessionId,
+        "E",
+        c2sMacLength,
+        hashAlgorithm
+      )
+    },
+    exchangeHash,
+    serverToClient: {
+      encryptionKey: deriveMaterial(
+        sharedSecret,
+        exchangeHash,
+        sessionId,
+        "D",
+        s2cEncryptionLength,
+        hashAlgorithm
+      ),
+      iv: deriveMaterial(sharedSecret, exchangeHash, sessionId, "B", s2cIvLength, hashAlgorithm),
+      macKey: deriveMaterial(
+        sharedSecret,
+        exchangeHash,
+        sessionId,
+        "F",
+        s2cMacLength,
+        hashAlgorithm
+      )
+    },
+    sessionId
+  };
+}
+function computeCurve25519ExchangeHash(input, hashAlgorithm) {
+  const transcript = new SshDataWriter().writeString(input.clientIdentification, "ascii").writeString(input.serverIdentification, "ascii").writeString(input.clientKexInitPayload).writeString(input.serverKexInitPayload).writeString(input.serverHostKey).writeString(input.clientPublicKey).writeString(input.serverPublicKey).writeMpint(input.sharedSecret).toBuffer();
+  return createHash(hashAlgorithm).update(transcript).digest();
+}
+function deriveMaterial(sharedSecret, exchangeHash, sessionId, letter, length, hashAlgorithm) {
+  if (length <= 0) {
+    return Buffer13.alloc(0);
+  }
+  const result = [];
+  const first2 = createHash(hashAlgorithm).update(
+    new SshDataWriter().writeMpint(sharedSecret).writeBytes(exchangeHash).writeByte(letter.charCodeAt(0)).writeBytes(sessionId).toBuffer()
+  ).digest();
+  result.push(first2);
+  while (Buffer13.concat(result).length < length) {
+    const previous = Buffer13.concat(result);
+    const next = createHash(hashAlgorithm).update(
+      new SshDataWriter().writeMpint(sharedSecret).writeBytes(exchangeHash).writeBytes(previous).toBuffer()
+    ).digest();
+    result.push(next);
+  }
+  return Buffer13.concat(result).subarray(0, length);
+}
+function resolveKexHashAlgorithm(kexAlgorithm) {
+  if (kexAlgorithm === "curve25519-sha256" || kexAlgorithm === "curve25519-sha256@libssh.org") {
+    return "sha256";
+  }
+  throw new ProtocolError({
+    details: { kexAlgorithm },
+    message: "Unsupported key exchange hash algorithm",
+    protocol: "sftp",
+    retryable: false
+  });
+}
+function resolveEncryptionKeyLength(algorithm) {
+  switch (algorithm) {
+    case "chacha20-poly1305@openssh.com":
+      return 64;
+    case "aes128-gcm@openssh.com":
+    case "aes128-ctr":
+      return 16;
+    case "aes256-gcm@openssh.com":
+    case "aes256-ctr":
+      return 32;
+    default:
+      throw new ProtocolError({
+        details: { algorithm },
+        message: "Unsupported SSH encryption algorithm for key derivation",
+        protocol: "sftp",
+        retryable: false
+      });
+  }
+}
+function resolveIvLength(algorithm) {
+  switch (algorithm) {
+    case "chacha20-poly1305@openssh.com":
+      return 0;
+    case "aes128-gcm@openssh.com":
+    case "aes256-gcm@openssh.com":
+      return 12;
+    case "aes128-ctr":
+    case "aes256-ctr":
+      return 16;
+    default:
+      throw new ProtocolError({
+        details: { algorithm },
+        message: "Unsupported SSH encryption algorithm for IV derivation",
+        protocol: "sftp",
+        retryable: false
+      });
+  }
+}
+function resolveMacKeyLength(encryptionAlgorithm, macAlgorithm) {
+  if (encryptionAlgorithm.endsWith("-gcm@openssh.com") || encryptionAlgorithm === "chacha20-poly1305@openssh.com") {
+    return 0;
+  }
+  switch (macAlgorithm) {
+    case "hmac-sha2-256":
+      return 32;
+    case "hmac-sha2-512":
+      return 64;
+    default:
+      throw new ProtocolError({
+        details: { macAlgorithm },
+        message: "Unsupported SSH MAC algorithm for key derivation",
+        protocol: "sftp",
+        retryable: false
+      });
+  }
+}
+
+// src/protocols/ssh/transport/SshNewKeys.ts
+var SSH_MSG_NEWKEYS = 21;
+function encodeSshNewKeysMessage() {
+  return Buffer.from([SSH_MSG_NEWKEYS]);
+}
+function decodeSshNewKeysMessage(payload) {
+  if (payload.length !== 1 || payload[0] !== SSH_MSG_NEWKEYS) {
+    throw new ParseError({
+      details: { length: payload.length, messageType: payload[0] },
+      message: "Expected SSH_MSG_NEWKEYS payload",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return { messageType: SSH_MSG_NEWKEYS };
+}
+
+// src/protocols/ssh/transport/SshTransportPacket.ts
+import { Buffer as Buffer14 } from "buffer";
+import { randomBytes as randomBytes2 } from "crypto";
+var MIN_PADDING_LENGTH = 4;
+var MIN_PACKET_LENGTH = 1 + MIN_PADDING_LENGTH;
+function encodeSshTransportPacket(payload, options = {}) {
+  const body = Buffer14.from(payload);
+  const blockSize = normalizeBlockSize(options.blockSize ?? 8);
+  let paddingLength = MIN_PADDING_LENGTH;
+  while ((1 + body.length + paddingLength + 4) % blockSize !== 0) {
+    paddingLength += 1;
+  }
+  const padding = options.randomPadding === false ? Buffer14.alloc(paddingLength) : randomBytes2(paddingLength);
+  const packetLength = 1 + body.length + paddingLength;
+  const frame = Buffer14.allocUnsafe(4 + packetLength);
+  frame.writeUInt32BE(packetLength, 0);
+  frame.writeUInt8(paddingLength, 4);
+  body.copy(frame, 5);
+  padding.copy(frame, 5 + body.length);
+  return frame;
+}
+function decodeSshTransportPacket(frame) {
+  const bytes = Buffer14.from(frame);
+  if (bytes.length < 4 + MIN_PACKET_LENGTH) {
+    throw new ParseError({
+      details: { length: bytes.length },
+      message: "SSH transport frame is too short",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const packetLength = bytes.readUInt32BE(0);
+  if (packetLength < MIN_PACKET_LENGTH) {
+    throw new ParseError({
+      details: { packetLength },
+      message: "SSH transport packet length is invalid",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const totalLength = 4 + packetLength;
+  if (bytes.length !== totalLength) {
+    throw new ParseError({
+      details: { actualLength: bytes.length, expectedLength: totalLength },
+      message: "SSH transport packet length prefix does not match frame size",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const paddingLength = bytes.readUInt8(4);
+  if (paddingLength < MIN_PADDING_LENGTH) {
+    throw new ParseError({
+      details: { paddingLength },
+      message: "SSH transport packet padding length is invalid",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const payloadLength = packetLength - 1 - paddingLength;
+  if (payloadLength < 0) {
+    throw new ParseError({
+      details: { packetLength, paddingLength },
+      message: "SSH transport packet payload length is negative",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const payloadStart = 5;
+  const payloadEnd = payloadStart + payloadLength;
+  return {
+    padding: bytes.subarray(payloadEnd, payloadEnd + paddingLength),
+    paddingLength,
+    payload: bytes.subarray(payloadStart, payloadEnd)
+  };
+}
+var SshTransportPacketFramer = class {
+  pending = Buffer14.alloc(0);
+  push(chunk) {
+    this.pending = Buffer14.concat([this.pending, Buffer14.from(chunk)]);
+    const packets = [];
+    while (this.pending.length >= 4) {
+      const packetLength = this.pending.readUInt32BE(0);
+      const frameLength = 4 + packetLength;
+      if (this.pending.length < frameLength) {
+        break;
+      }
+      const frame = this.pending.subarray(0, frameLength);
+      packets.push(decodeSshTransportPacket(frame));
+      this.pending = this.pending.subarray(frameLength);
+    }
+    return packets;
+  }
+  getBufferedByteLength() {
+    return this.pending.length;
+  }
+  /** Returns and clears any bytes buffered but not yet part of a complete packet. */
+  takeRemainingBytes() {
+    const remaining = Buffer14.from(this.pending);
+    this.pending = Buffer14.alloc(0);
+    return remaining;
+  }
+};
+function normalizeBlockSize(blockSize) {
+  if (!Number.isInteger(blockSize) || blockSize < 8 || blockSize > 255) {
+    throw new ConfigurationError({
+      details: { blockSize },
+      message: "SSH transport block size must be an integer between 8 and 255",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return blockSize;
+}
+
+// src/protocols/ssh/transport/SshHostKeyVerification.ts
+import { Buffer as Buffer15 } from "buffer";
+import { createHash as createHash2, createPublicKey as createPublicKey3, verify as cryptoVerify } from "crypto";
+var ED25519_RAW_KEY_LENGTH2 = 32;
+var ED25519_SPKI_PREFIX = Buffer15.from("302a300506032b6570032100", "hex");
+function verifySshHostKeySignature(input) {
+  const { algorithmName, publicKey } = parseHostKey(input.hostKeyBlob);
+  const { signatureAlgorithm, signatureBytes } = parseSignatureBlob(input.signatureBlob);
+  if (!isCompatibleSignatureAlgorithm(algorithmName, signatureAlgorithm)) {
+    throw new ProtocolError({
+      details: { hostKeyAlgorithm: algorithmName, signatureAlgorithm },
+      message: "SSH host key signature algorithm does not match host key type",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const verified = verifySignature({
+    data: Buffer15.from(input.exchangeHash),
+    publicKey,
+    signature: Buffer15.from(signatureBytes),
+    signatureAlgorithm
+  });
+  if (!verified) {
+    throw new ProtocolError({
+      details: { signatureAlgorithm },
+      message: "SSH host key signature verification failed",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const hostKeySha256 = createHash2("sha256").update(input.hostKeyBlob).digest();
+  return { algorithmName, hostKeySha256 };
+}
+function parseHostKey(blob) {
+  const reader = new SshDataReader(blob);
+  const algorithmName = reader.readString().toString("ascii");
+  switch (algorithmName) {
+    case "ssh-ed25519": {
+      const raw = reader.readString();
+      reader.assertFinished();
+      if (raw.length !== ED25519_RAW_KEY_LENGTH2) {
+        throw new ProtocolError({
+          details: { actualLength: raw.length, expectedLength: ED25519_RAW_KEY_LENGTH2 },
+          message: "Ed25519 host key has invalid length",
+          protocol: "sftp",
+          retryable: false
+        });
+      }
+      const spki = Buffer15.concat([ED25519_SPKI_PREFIX, raw]);
+      return {
+        algorithmName,
+        publicKey: createPublicKey3({ format: "der", key: spki, type: "spki" })
+      };
+    }
+    case "rsa-sha2-256":
+    case "rsa-sha2-512":
+    case "ssh-rsa": {
+      const e = reader.readMpint();
+      const n = reader.readMpint();
+      reader.assertFinished();
+      return {
+        algorithmName,
+        publicKey: rsaPublicKeyFromComponents(e, n)
+      };
+    }
+    case "ecdsa-sha2-nistp256":
+    case "ecdsa-sha2-nistp384":
+    case "ecdsa-sha2-nistp521": {
+      const curveIdentifier = reader.readString().toString("ascii");
+      const expectedIdentifier = algorithmName.slice("ecdsa-sha2-".length);
+      if (curveIdentifier !== expectedIdentifier) {
+        throw new ProtocolError({
+          details: { algorithmName, curveIdentifier },
+          message: "ECDSA host key curve identifier does not match algorithm",
+          protocol: "sftp",
+          retryable: false
+        });
+      }
+      const point = reader.readString();
+      reader.assertFinished();
+      return {
+        algorithmName,
+        publicKey: ecdsaPublicKeyFromPoint(curveIdentifier, point)
+      };
+    }
+    default:
+      throw new ProtocolError({
+        details: { algorithmName },
+        message: "Unsupported SSH host key algorithm",
+        protocol: "sftp",
+        retryable: false
+      });
+  }
+}
+function parseSignatureBlob(blob) {
+  const reader = new SshDataReader(blob);
+  const signatureAlgorithm = reader.readString().toString("ascii");
+  const signatureBytes = reader.readString();
+  return { signatureAlgorithm, signatureBytes };
+}
+function isCompatibleSignatureAlgorithm(hostKeyAlgorithm, signatureAlgorithm) {
+  if (hostKeyAlgorithm === signatureAlgorithm) return true;
+  if (hostKeyAlgorithm === "ssh-rsa") {
+    return signatureAlgorithm === "rsa-sha2-256" || signatureAlgorithm === "rsa-sha2-512";
+  }
+  return false;
+}
+function verifySignature(input) {
+  switch (input.signatureAlgorithm) {
+    case "ssh-ed25519":
+      return cryptoVerify(null, input.data, input.publicKey, input.signature);
+    case "rsa-sha2-256":
+      return cryptoVerify("sha256", input.data, input.publicKey, input.signature);
+    case "rsa-sha2-512":
+      return cryptoVerify("sha512", input.data, input.publicKey, input.signature);
+    case "ecdsa-sha2-nistp256":
+      return cryptoVerify(
+        "sha256",
+        input.data,
+        input.publicKey,
+        sshEcdsaSignatureToDer(input.signature)
+      );
+    case "ecdsa-sha2-nistp384":
+      return cryptoVerify(
+        "sha384",
+        input.data,
+        input.publicKey,
+        sshEcdsaSignatureToDer(input.signature)
+      );
+    case "ecdsa-sha2-nistp521":
+      return cryptoVerify(
+        "sha512",
+        input.data,
+        input.publicKey,
+        sshEcdsaSignatureToDer(input.signature)
+      );
+    case "ssh-rsa":
+      throw new ProtocolError({
+        message: "Legacy ssh-rsa (SHA-1) host key signatures are not accepted",
+        protocol: "sftp",
+        retryable: false
+      });
+    default:
+      throw new ProtocolError({
+        details: { signatureAlgorithm: input.signatureAlgorithm },
+        message: "Unsupported SSH host key signature algorithm",
+        protocol: "sftp",
+        retryable: false
+      });
+  }
+}
+function rsaPublicKeyFromComponents(e, n) {
+  const eDer = encodeAsn1Integer(e);
+  const nDer = encodeAsn1Integer(n);
+  const rsaPublicKeyDer = encodeAsn1Sequence(Buffer15.concat([nDer, eDer]));
+  const bitStringContent = Buffer15.concat([Buffer15.from([0]), rsaPublicKeyDer]);
+  const bitString = Buffer15.concat([
+    Buffer15.from([3]),
+    encodeAsn1Length(bitStringContent.length),
+    bitStringContent
+  ]);
+  const algoId = Buffer15.from("300d06092a864886f70d010101 0500".replace(/\s+/g, ""), "hex");
+  const spki = encodeAsn1Sequence(Buffer15.concat([algoId, bitString]));
+  return createPublicKey3({ format: "der", key: spki, type: "spki" });
+}
+function encodeAsn1Integer(value) {
+  let body = value;
+  while (body.length > 1 && body[0] === 0) body = body.subarray(1);
+  if (body.length > 0 && (body[0] & 128) !== 0) {
+    body = Buffer15.concat([Buffer15.from([0]), body]);
+  }
+  return Buffer15.concat([Buffer15.from([2]), encodeAsn1Length(body.length), body]);
+}
+function encodeAsn1Sequence(content) {
+  return Buffer15.concat([Buffer15.from([48]), encodeAsn1Length(content.length), content]);
+}
+function encodeAsn1Length(length) {
+  if (length < 128) return Buffer15.from([length]);
+  const bytes = [];
+  let n = length;
+  while (n > 0) {
+    bytes.unshift(n & 255);
+    n >>>= 8;
+  }
+  return Buffer15.from([128 | bytes.length, ...bytes]);
+}
+var ECDSA_OID_BY_CURVE = {
+  nistp256: "06082a8648ce3d030107",
+  // secp256r1 / prime256v1
+  nistp384: "06052b81040022",
+  // secp384r1
+  nistp521: "06052b81040023"
+  // secp521r1
+};
+var ECDSA_ALGORITHM_OID_HEX = "06072a8648ce3d0201";
+function ecdsaPublicKeyFromPoint(curveIdentifier, point) {
+  const oidHex = ECDSA_OID_BY_CURVE[curveIdentifier];
+  if (oidHex === void 0) {
+    throw new ProtocolError({
+      details: { curveIdentifier },
+      message: "Unsupported ECDSA curve",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const algoIdContent = Buffer15.from(ECDSA_ALGORITHM_OID_HEX + oidHex, "hex");
+  const algoId = encodeAsn1Sequence(algoIdContent);
+  const bitStringContent = Buffer15.concat([Buffer15.from([0]), point]);
+  const bitString = Buffer15.concat([
+    Buffer15.from([3]),
+    encodeAsn1Length(bitStringContent.length),
+    bitStringContent
+  ]);
+  const spki = encodeAsn1Sequence(Buffer15.concat([algoId, bitString]));
+  return createPublicKey3({ format: "der", key: spki, type: "spki" });
+}
+function sshEcdsaSignatureToDer(sshSignature) {
+  const reader = new SshDataReader(sshSignature);
+  const r = reader.readMpint();
+  const s = reader.readMpint();
+  const rDer = encodeAsn1Integer(r);
+  const sDer = encodeAsn1Integer(s);
+  return encodeAsn1Sequence(Buffer15.concat([rDer, sDer]));
+}
+
+// src/protocols/ssh/transport/SshTransportHandshake.ts
+var SshTransportHandshake = class {
+  constructor(options = {}) {
+    this.options = options;
+    this.clientAlgorithms = options.algorithms ?? DEFAULT_SSH_ALGORITHM_PREFERENCES;
+    this.clientIdentificationLine = buildSshIdentificationLine({
+      ...options.clientComments === void 0 ? {} : { comments: options.clientComments },
+      softwareVersion: options.clientSoftwareVersion ?? "ZeroTransfer_Dev"
+    });
+    this.clientKexInitPayload = encodeSshKexInitMessage({
+      algorithms: this.clientAlgorithms,
+      ...options.kexCookie === void 0 ? {} : { cookie: options.kexCookie }
+    });
+  }
+  options;
+  clientAlgorithms;
+  clientIdentificationLine;
+  clientKexInitPayload;
+  identificationLines = [];
+  packetFramer = new SshTransportPacketFramer();
+  pendingIdentification = new SshIdentificationAccumulator();
+  phase = "awaiting-server-identification";
+  inboundPacketCount = 0;
+  outboundPacketCount = 0;
+  pendingCurve25519;
+  pendingKeyExchange;
+  serverIdentification;
+  /** Creates the first outbound bytes (client identification line). */
+  createInitialClientBytes() {
+    return Buffer16.from(`${this.clientIdentificationLine}\r
+`, "ascii");
+  }
+  /**
+   * Feeds raw server bytes into the handshake state machine.
+   */
+  pushServerBytes(chunk) {
+    const outbound = [];
+    if (this.phase === "awaiting-server-identification") {
+      const scan = this.pendingIdentification.push(chunk);
+      for (const banner of scan.bannerLines) {
+        this.identificationLines.push(banner);
+      }
+      if (scan.identLine !== void 0) {
+        this.serverIdentification = parseSshIdentificationLine(scan.identLine);
+        this.phase = "awaiting-server-kexinit";
+        outbound.push(encodeSshTransportPacket(this.clientKexInitPayload));
+        this.outboundPacketCount += 1;
+        if (scan.remainder.length > 0) {
+          return this.pushServerBytesWithPhase(outbound, scan.remainder);
+        }
+      }
+      return { outbound };
+    }
+    return this.pushServerBytesWithPhase(outbound, Buffer16.from(chunk));
+  }
+  getServerBannerLines() {
+    return this.identificationLines;
+  }
+  isComplete() {
+    return this.phase === "complete";
+  }
+  /**
+   * Returns any bytes received after the last complete handshake packet and clears the buffer.
+   * Call this once after `pushServerBytes` returns a result to drain bytes that belong to the
+   * post-NEWKEYS encrypted phase but arrived in the same TCP segment as NEWKEYS.
+   */
+  takeRemainingBytes() {
+    return this.packetFramer.takeRemainingBytes();
+  }
+  pushServerBytesWithPhase(outbound, chunk) {
+    if (this.phase === "awaiting-server-identification") {
+      return { outbound };
+    }
+    for (const packet of this.packetFramer.push(chunk)) {
+      const messageType = packet.payload[0];
+      this.inboundPacketCount += 1;
+      if (this.phase === "awaiting-server-kexinit") {
+        if (messageType !== 20) {
+          throw new ProtocolError({
+            details: { messageType },
+            message: "Expected SSH_MSG_KEXINIT from server during initial handshake",
+            protocol: "sftp",
+            retryable: false
+          });
+        }
+        const serverKexInit = decodeSshKexInitMessage(packet.payload);
+        const negotiatedAlgorithms = negotiateSshAlgorithms(this.clientAlgorithms, serverKexInit);
+        if (negotiatedAlgorithms.kexAlgorithm !== "curve25519-sha256" && negotiatedAlgorithms.kexAlgorithm !== "curve25519-sha256@libssh.org") {
+          throw new ProtocolError({
+            details: { kexAlgorithm: negotiatedAlgorithms.kexAlgorithm },
+            message: "Native SSH transport currently supports only Curve25519 key exchange",
+            protocol: "sftp",
+            retryable: false
+          });
+        }
+        this.pendingCurve25519 = createCurve25519Ephemeral();
+        this.phase = "awaiting-server-kexreply";
+        outbound.push(
+          encodeSshTransportPacket(encodeSshKexEcdhInitMessage(this.pendingCurve25519.publicKey))
+        );
+        this.outboundPacketCount += 1;
+        this.pendingKeyExchange = {
+          clientIdentification: this.clientIdentificationLine,
+          algorithm: negotiatedAlgorithms.kexAlgorithm,
+          clientKexInitPayload: this.clientKexInitPayload,
+          clientPublicKey: this.pendingCurve25519.publicKey,
+          negotiatedAlgorithms,
+          serverHostKey: Buffer16.alloc(0),
+          serverIdentification: (this.serverIdentification ?? missingServerIdentificationError()).raw,
+          serverKexInitPayload: Buffer16.from(packet.payload),
+          serverPublicKey: Buffer16.alloc(0),
+          serverSignature: Buffer16.alloc(0),
+          sharedSecret: Buffer16.alloc(0)
+        };
+        continue;
+      }
+      if (this.phase === "awaiting-server-kexreply") {
+        if (messageType !== 31) {
+          throw new ProtocolError({
+            details: { messageType },
+            message: "Expected SSH_MSG_KEX_ECDH_REPLY from server",
+            protocol: "sftp",
+            retryable: false
+          });
+        }
+        if (this.pendingCurve25519 === void 0 || this.pendingKeyExchange === void 0) {
+          throw new ProtocolError({
+            message: "Curve25519 client key state missing while processing server key exchange reply",
+            protocol: "sftp",
+            retryable: false
+          });
+        }
+        const reply = decodeSshKexEcdhReplyMessage(packet.payload);
+        const sharedSecret = this.pendingCurve25519.deriveSharedSecret(reply.serverPublicKey);
+        this.pendingKeyExchange = {
+          ...this.pendingKeyExchange,
+          serverHostKey: reply.hostKey,
+          serverPublicKey: reply.serverPublicKey,
+          serverSignature: reply.signature,
+          sharedSecret
+        };
+        this.phase = "awaiting-server-newkeys";
+        outbound.push(encodeSshTransportPacket(encodeSshNewKeysMessage()));
+        this.outboundPacketCount += 1;
+        continue;
+      }
+      if (this.phase === "awaiting-server-newkeys") {
+        decodeSshNewKeysMessage(packet.payload);
+        const keyExchange = this.pendingKeyExchange ?? missingPendingKeyExchangeError();
+        const derivedKeys = deriveSshSessionKeys({
+          clientIdentification: keyExchange.clientIdentification,
+          clientKexInitPayload: keyExchange.clientKexInitPayload,
+          clientPublicKey: keyExchange.clientPublicKey,
+          kexAlgorithm: keyExchange.algorithm,
+          negotiatedAlgorithms: keyExchange.negotiatedAlgorithms,
+          serverHostKey: keyExchange.serverHostKey,
+          serverIdentification: keyExchange.serverIdentification,
+          serverKexInitPayload: keyExchange.serverKexInitPayload,
+          serverPublicKey: keyExchange.serverPublicKey,
+          sharedSecret: keyExchange.sharedSecret
+        });
+        const hostKeyVerification = verifySshHostKeySignature({
+          exchangeHash: derivedKeys.exchangeHash,
+          hostKeyBlob: keyExchange.serverHostKey,
+          signatureBlob: keyExchange.serverSignature
+        });
+        const verifyHook = this.options.verifyHostKey;
+        if (verifyHook !== void 0) {
+          const maybe = verifyHook({
+            algorithmName: hostKeyVerification.algorithmName,
+            hostKeyBlob: keyExchange.serverHostKey,
+            hostKeySha256: hostKeyVerification.hostKeySha256
+          });
+          if (maybe instanceof Promise) {
+            throw new ProtocolError({
+              message: "verifyHostKey must be synchronous; perform any async lookups before calling connect()",
+              protocol: "sftp",
+              retryable: false
+            });
+          }
+        }
+        const serverKexInit = decodeSshKexInitMessage(keyExchange.serverKexInitPayload);
+        const result = {
+          keyExchange: {
+            algorithm: keyExchange.algorithm,
+            clientKexInitPayload: keyExchange.clientKexInitPayload,
+            clientPublicKey: keyExchange.clientPublicKey,
+            exchangeHash: derivedKeys.exchangeHash,
+            serverHostKey: keyExchange.serverHostKey,
+            serverKexInitPayload: keyExchange.serverKexInitPayload,
+            serverPublicKey: keyExchange.serverPublicKey,
+            serverSignature: keyExchange.serverSignature,
+            sessionId: derivedKeys.sessionId,
+            sharedSecret: keyExchange.sharedSecret,
+            transportKeys: {
+              clientToServer: derivedKeys.clientToServer,
+              serverToClient: derivedKeys.serverToClient
+            }
+          },
+          negotiatedAlgorithms: keyExchange.negotiatedAlgorithms,
+          serverIdentification: this.serverIdentification ?? missingServerIdentificationError(),
+          serverKexInit,
+          inboundPacketCount: this.inboundPacketCount,
+          outboundPacketCount: this.outboundPacketCount
+        };
+        this.phase = "complete";
+        this.pendingCurve25519 = void 0;
+        this.pendingKeyExchange = void 0;
+        return { outbound, result };
+      }
+      throw new ProtocolError({
+        details: { phase: this.phase },
+        message: "SSH transport handshake received unexpected packets after completion",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    return { outbound };
+  }
+};
+var SshIdentificationAccumulator = class {
+  pending = Buffer16.alloc(0);
+  push(chunk) {
+    this.pending = Buffer16.concat([this.pending, Buffer16.from(chunk)]);
+    const bannerLines = [];
+    while (true) {
+      const lfIndex = this.pending.indexOf(10);
+      if (lfIndex < 0) break;
+      const lineText = trimLineEndings(this.pending.subarray(0, lfIndex + 1).toString("ascii"));
+      const remainder = Buffer16.from(this.pending.subarray(lfIndex + 1));
+      this.pending = remainder;
+      if (lineText.startsWith("SSH-")) {
+        this.pending = Buffer16.alloc(0);
+        return { bannerLines, identLine: lineText, remainder };
+      }
+      bannerLines.push(lineText);
+    }
+    return { bannerLines, remainder: Buffer16.alloc(0) };
+  }
+};
+function trimLineEndings(value) {
+  if (value.endsWith("\r\n")) {
+    return value.slice(0, -2);
+  }
+  if (value.endsWith("\n")) {
+    return value.slice(0, -1);
+  }
+  return value;
+}
+function missingServerIdentificationError() {
+  throw new ParseError({
+    message: "Missing server SSH identification while negotiating KEXINIT",
+    protocol: "sftp",
+    retryable: false
+  });
+}
+function missingPendingKeyExchangeError() {
+  throw new ProtocolError({
+    message: "SSH transport key exchange state was not initialized",
+    protocol: "sftp",
+    retryable: false
+  });
+}
+
+// src/protocols/ssh/transport/SshTransportProtection.ts
+import { Buffer as Buffer17 } from "buffer";
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHmac as createHmac2,
+  timingSafeEqual
+} from "crypto";
+function createSshTransportProtectionContext(input) {
+  return {
+    inbound: new SshTransportPacketUnprotector({
+      encryptionAlgorithm: input.negotiatedAlgorithms.encryptionServerToClient,
+      initialSequence: input.initialInboundSequence ?? 0,
+      macAlgorithm: input.negotiatedAlgorithms.macServerToClient,
+      keys: input.keys.serverToClient
+    }),
+    outbound: new SshTransportPacketProtector({
+      deterministicPadding: input.deterministicPadding ?? false,
+      encryptionAlgorithm: input.negotiatedAlgorithms.encryptionClientToServer,
+      initialSequence: input.initialOutboundSequence ?? 0,
+      macAlgorithm: input.negotiatedAlgorithms.macClientToServer,
+      keys: input.keys.clientToServer
+    })
+  };
+}
+var SshTransportPacketProtector = class {
+  constructor(options) {
+    this.options = options;
+    this.encryptionAlgorithm = options.encryptionAlgorithm;
+    this.macAlgorithm = options.macAlgorithm;
+    this.sequenceNumber = options.initialSequence >>> 0;
+    this.blockLength = resolveBlockLength(options.encryptionAlgorithm);
+    this.macLength = resolveMacLength(options.encryptionAlgorithm, options.macAlgorithm);
+    this.cipher = createCipher(
+      options.encryptionAlgorithm,
+      options.keys.encryptionKey,
+      options.keys.iv
+    );
+  }
+  options;
+  blockLength;
+  cipher;
+  encryptionAlgorithm;
+  macAlgorithm;
+  macLength;
+  sequenceNumber;
+  getSequenceNumber() {
+    return this.sequenceNumber;
+  }
+  protectPayload(payload) {
+    const clearPacket = encodeSshTransportPacket(payload, {
+      blockSize: this.blockLength,
+      randomPadding: !this.options.deterministicPadding
+    });
+    const mac = computeMac(
+      this.macAlgorithm,
+      this.options.keys.macKey,
+      this.sequenceNumber,
+      clearPacket,
+      this.macLength
+    );
+    const encrypted = this.cipher === void 0 ? clearPacket : this.cipher.update(clearPacket);
+    this.sequenceNumber = this.sequenceNumber + 1 >>> 0;
+    return Buffer17.concat([encrypted, mac]);
+  }
+};
+var SshTransportPacketUnprotector = class {
+  constructor(options) {
+    this.options = options;
+    this.encryptionAlgorithm = options.encryptionAlgorithm;
+    this.macAlgorithm = options.macAlgorithm;
+    this.sequenceNumber = options.initialSequence >>> 0;
+    this.blockLength = resolveBlockLength(options.encryptionAlgorithm);
+    this.macLength = resolveMacLength(options.encryptionAlgorithm, options.macAlgorithm);
+    this.decipher = createDecipher(
+      options.encryptionAlgorithm,
+      options.keys.encryptionKey,
+      options.keys.iv
+    );
+  }
+  options;
+  blockLength;
+  decipher;
+  encryptionAlgorithm;
+  macAlgorithm;
+  macLength;
+  sequenceNumber;
+  // Streaming framing state for pushBytes()
+  framePartialDecrypted;
+  framePendingRaw = Buffer17.alloc(0);
+  frameRemainingNeeded;
+  getSequenceNumber() {
+    return this.sequenceNumber;
+  }
+  /**
+   * Feeds raw encrypted bytes from the socket and returns any fully decoded payloads.
+   * Maintains internal framing state across calls — pass each `data` event chunk directly.
+   */
+  pushBytes(chunk) {
+    this.framePendingRaw = Buffer17.concat([this.framePendingRaw, chunk]);
+    const results = [];
+    while (true) {
+      if (this.framePartialDecrypted === void 0) {
+        if (this.framePendingRaw.length < this.blockLength) break;
+        const firstBlock = this.framePendingRaw.subarray(0, this.blockLength);
+        this.framePendingRaw = Buffer17.from(this.framePendingRaw.subarray(this.blockLength));
+        this.framePartialDecrypted = this.decipher ? Buffer17.from(this.decipher.update(firstBlock)) : Buffer17.from(firstBlock);
+        const packetLength = this.framePartialDecrypted.readUInt32BE(0);
+        const remaining = 4 + packetLength - this.blockLength + this.macLength;
+        if (remaining < 0) {
+          throw new ProtocolError({
+            details: { blockLength: this.blockLength, packetLength },
+            message: "SSH encrypted packet_length is smaller than one cipher block",
+            protocol: "sftp",
+            retryable: false
+          });
+        }
+        this.frameRemainingNeeded = remaining;
+      }
+      const needed = this.frameRemainingNeeded;
+      if (this.framePendingRaw.length < needed) break;
+      const encryptedRest = this.framePendingRaw.subarray(0, needed - this.macLength);
+      const receivedMac = this.framePendingRaw.subarray(needed - this.macLength, needed);
+      this.framePendingRaw = Buffer17.from(this.framePendingRaw.subarray(needed));
+      const decryptedRest = encryptedRest.length > 0 ? this.decipher ? Buffer17.from(this.decipher.update(encryptedRest)) : Buffer17.from(encryptedRest) : Buffer17.alloc(0);
+      const clearPacket = Buffer17.concat([this.framePartialDecrypted, decryptedRest]);
+      const expectedMac = computeMac(
+        this.macAlgorithm,
+        this.options.keys.macKey,
+        this.sequenceNumber,
+        clearPacket,
+        this.macLength
+      );
+      if (!timingSafeEqual(receivedMac, expectedMac)) {
+        throw new ProtocolError({
+          message: "SSH packet MAC verification failed",
+          protocol: "sftp",
+          retryable: false
+        });
+      }
+      this.sequenceNumber = this.sequenceNumber + 1 >>> 0;
+      results.push(decodeSshTransportPacket(clearPacket).payload);
+      this.framePartialDecrypted = void 0;
+      this.frameRemainingNeeded = void 0;
+    }
+    return results;
+  }
+  unprotectPayload(packet) {
+    const frame = Buffer17.from(packet);
+    if (frame.length < this.macLength) {
+      throw new ProtocolError({
+        details: { length: frame.length, macLength: this.macLength },
+        message: "SSH packet is shorter than its expected MAC length",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    const macOffset = frame.length - this.macLength;
+    const encryptedPacket = frame.subarray(0, macOffset);
+    const receivedMac = frame.subarray(macOffset);
+    const clearPacket = this.decipher === void 0 ? encryptedPacket : this.decipher.update(encryptedPacket);
+    const expectedMac = computeMac(
+      this.macAlgorithm,
+      this.options.keys.macKey,
+      this.sequenceNumber,
+      clearPacket,
+      this.macLength
+    );
+    if (!timingSafeEqual(receivedMac, expectedMac)) {
+      throw new ProtocolError({
+        message: "SSH packet MAC verification failed",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    this.sequenceNumber = this.sequenceNumber + 1 >>> 0;
+    return decodeSshTransportPacket(clearPacket).payload;
+  }
+};
+function createCipher(algorithm, key, iv) {
+  if (algorithm === "none") {
+    return void 0;
+  }
+  validateCipherMaterial(algorithm, key, iv);
+  const cipher = createCipheriv(toOpenSslCipherName(algorithm), key, iv);
+  cipher.setAutoPadding(false);
+  return cipher;
+}
+function createDecipher(algorithm, key, iv) {
+  if (algorithm === "none") {
+    return void 0;
+  }
+  validateCipherMaterial(algorithm, key, iv);
+  const decipher = createDecipheriv(toOpenSslCipherName(algorithm), key, iv);
+  decipher.setAutoPadding(false);
+  return decipher;
+}
+function toOpenSslCipherName(algorithm) {
+  switch (algorithm) {
+    case "aes128-ctr":
+      return "aes-128-ctr";
+    case "aes256-ctr":
+      return "aes-256-ctr";
+    default:
+      return algorithm;
+  }
+}
+function validateCipherMaterial(algorithm, key, iv) {
+  const expectedKeyLength = resolveCipherKeyLength(algorithm);
+  const expectedIvLength = resolveCipherIvLength(algorithm);
+  if (key.length !== expectedKeyLength || iv.length !== expectedIvLength) {
+    throw new ProtocolError({
+      details: {
+        algorithm,
+        ivLength: iv.length,
+        keyLength: key.length
+      },
+      message: "SSH cipher key material does not match algorithm requirements",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+}
+function resolveCipherKeyLength(algorithm) {
+  switch (algorithm) {
+    case "aes128-ctr":
+      return 16;
+    case "aes256-ctr":
+      return 32;
+    default:
+      throw new ProtocolError({
+        details: { algorithm },
+        message: "Unsupported SSH cipher algorithm for transport protection",
+        protocol: "sftp",
+        retryable: false
+      });
+  }
+}
+function resolveCipherIvLength(algorithm) {
+  switch (algorithm) {
+    case "aes128-ctr":
+    case "aes256-ctr":
+      return 16;
+    default:
+      throw new ProtocolError({
+        details: { algorithm },
+        message: "Unsupported SSH cipher IV length for transport protection",
+        protocol: "sftp",
+        retryable: false
+      });
+  }
+}
+function resolveBlockLength(algorithm) {
+  switch (algorithm) {
+    case "aes128-ctr":
+    case "aes256-ctr":
+      return 16;
+    case "none":
+      return 8;
+    // RFC 4253 §6.1: minimum block size for framing with no cipher
+    default:
+      throw new ProtocolError({
+        details: { algorithm },
+        message: "Unsupported SSH cipher block length for transport protection",
+        protocol: "sftp",
+        retryable: false
+      });
+  }
+}
+function resolveMacLength(encryptionAlgorithm, macAlgorithm) {
+  if (encryptionAlgorithm === "none") {
+    return 0;
+  }
+  switch (macAlgorithm) {
+    case "hmac-sha2-256":
+      return 32;
+    case "hmac-sha2-512":
+      return 64;
+    default:
+      throw new ProtocolError({
+        details: { macAlgorithm },
+        message: "Unsupported SSH MAC algorithm for transport protection",
+        protocol: "sftp",
+        retryable: false
+      });
+  }
+}
+function computeMac(macAlgorithm, macKey, sequence, packet, macLength) {
+  if (macLength === 0) {
+    return Buffer17.alloc(0);
+  }
+  const hashName = macAlgorithm === "hmac-sha2-512" ? "sha512" : "sha256";
+  const sequenceBuffer = Buffer17.allocUnsafe(4);
+  sequenceBuffer.writeUInt32BE(sequence >>> 0, 0);
+  return createHmac2(hashName, macKey).update(sequenceBuffer).update(packet).digest().subarray(0, macLength);
+}
+
+// src/protocols/ssh/transport/SshTransportConnection.ts
+var SshDisconnectReason = {
+  HOST_NOT_ALLOWED_TO_CONNECT: 1,
+  PROTOCOL_ERROR: 2,
+  KEY_EXCHANGE_FAILED: 3,
+  MAC_ERROR: 5,
+  COMPRESSION_ERROR: 6,
+  SERVICE_NOT_AVAILABLE: 7,
+  PROTOCOL_VERSION_NOT_SUPPORTED: 8,
+  HOST_KEY_NOT_VERIFIABLE: 9,
+  CONNECTION_LOST: 10,
+  BY_APPLICATION: 11,
+  TOO_MANY_CONNECTIONS: 12,
+  AUTH_CANCELLED_BY_USER: 13,
+  NO_MORE_AUTH_METHODS: 14,
+  ILLEGAL_USER_NAME: 15
+};
+var MSG_DISCONNECT = 1;
+var MSG_IGNORE = 2;
+var MSG_DEBUG = 4;
+var SshTransportConnection = class {
+  constructor(options = {}) {
+    this.options = options;
+  }
+  options;
+  connected = false;
+  disposed = false;
+  protector;
+  unprotector;
+  socket;
+  keepaliveTimer;
+  inboundQueue = [];
+  /**
+   * FIFO of waiters when the queue is empty. Multiple iterators may suspend on
+   * the same transport (auth session, channel setup, connection-manager pump);
+   * each receives exactly one entry in arrival order. A single-slot field would
+   * lose wakeups when a second consumer suspends before the first is resolved.
+   */
+  waitingConsumers = [];
+  /**
+   * Runs the SSH handshake on a TCP-connected socket.
+   * Resolves when NEWKEYS completes and the transport is ready for encrypted messages.
+   * Rejects on socket error, abort, or protocol failure.
+   */
+  connect(socket) {
+    if (this.connected || this.socket !== void 0) {
+      throw new ProtocolError({
+        message: "SshTransportConnection.connect() called more than once",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    this.socket = socket;
+    const handshake = new SshTransportHandshake({
+      ...this.options.algorithms === void 0 ? {} : { algorithms: this.options.algorithms },
+      ...this.options.clientSoftwareVersion === void 0 ? {} : { clientSoftwareVersion: this.options.clientSoftwareVersion },
+      ...this.options.verifyHostKey === void 0 ? {} : { verifyHostKey: this.options.verifyHostKey }
+    });
+    return new Promise((resolve, reject) => {
+      const { abortSignal, handshakeTimeoutMs } = this.options;
+      let timeoutHandle;
+      const onError = (err) => {
+        cleanup();
+        reject(
+          new ConnectionError({
+            message: `SSH socket error during handshake: ${err.message}`,
+            protocol: "sftp",
+            retryable: false
+          })
+        );
+      };
+      const onClose = () => {
+        cleanup();
+        reject(
+          new ConnectionError({
+            message: "SSH socket closed before handshake completed",
+            protocol: "sftp",
+            retryable: false
+          })
+        );
+      };
+      const onAbort = () => {
+        cleanup();
+        socket.destroy();
+        reject(
+          new ConnectionError({
+            message: "SSH connection aborted before handshake completed",
+            protocol: "sftp",
+            retryable: false
+          })
+        );
+      };
+      const onTimeout = () => {
+        cleanup();
+        socket.destroy();
+        reject(
+          new TimeoutError({
+            details: { handshakeTimeoutMs },
+            message: `SSH handshake did not complete within ${handshakeTimeoutMs}ms`,
+            protocol: "sftp",
+            retryable: true
+          })
+        );
+      };
+      function cleanup() {
+        if (timeoutHandle !== void 0) {
+          clearTimeout(timeoutHandle);
+          timeoutHandle = void 0;
+        }
+        abortSignal?.removeEventListener("abort", onAbort);
+        socket.off("error", onError);
+        socket.off("close", onClose);
+      }
+      if (abortSignal?.aborted) {
+        socket.destroy();
+        reject(
+          new ConnectionError({
+            message: "SSH connection aborted before handshake completed",
+            protocol: "sftp",
+            retryable: false
+          })
+        );
+        return;
+      }
+      abortSignal?.addEventListener("abort", onAbort, { once: true });
+      socket.on("error", onError);
+      socket.on("close", onClose);
+      if (handshakeTimeoutMs !== void 0 && handshakeTimeoutMs > 0) {
+        timeoutHandle = setTimeout(onTimeout, handshakeTimeoutMs);
+      }
+      const handshakeDataHandler = (chunk) => {
+        let handshakeResult;
+        try {
+          const { outbound, result } = handshake.pushServerBytes(chunk);
+          for (const outbuf of outbound) {
+            socket.write(outbuf);
+          }
+          handshakeResult = result;
+        } catch (err) {
+          cleanup();
+          socket.off("data", handshakeDataHandler);
+          socket.destroy();
+          reject(
+            err instanceof Error ? err : new ProtocolError({
+              message: "SSH handshake failed",
+              protocol: "sftp",
+              retryable: false
+            })
+          );
+          return;
+        }
+        if (handshakeResult !== void 0) {
+          cleanup();
+          socket.off("data", handshakeDataHandler);
+          let protection;
+          try {
+            protection = createSshTransportProtectionContext({
+              keys: {
+                clientToServer: handshakeResult.keyExchange.transportKeys.clientToServer,
+                serverToClient: handshakeResult.keyExchange.transportKeys.serverToClient
+              },
+              negotiatedAlgorithms: handshakeResult.negotiatedAlgorithms,
+              // RFC 4253 §6.4: sequence numbers are never reset across NEWKEYS;
+              // they continue counting from the unencrypted handshake packets.
+              initialInboundSequence: handshakeResult.inboundPacketCount,
+              initialOutboundSequence: handshakeResult.outboundPacketCount
+            });
+          } catch (err) {
+            socket.destroy();
+            reject(
+              err instanceof Error ? err : new ProtocolError({
+                message: "SSH transport protection context creation failed",
+                protocol: "sftp",
+                retryable: false
+              })
+            );
+            return;
+          }
+          this.protector = protection.outbound;
+          this.unprotector = protection.inbound;
+          this.connected = true;
+          socket.on("data", this.onEncryptedData.bind(this));
+          socket.on("error", this.onSocketError.bind(this));
+          socket.on("close", this.onSocketClose.bind(this));
+          this.startKeepalive();
+          const leftover = handshake.takeRemainingBytes();
+          if (leftover.length > 0) {
+            this.onEncryptedData(leftover);
+          }
+          resolve(handshakeResult);
+        }
+      };
+      socket.write(handshake.createInitialClientBytes());
+      socket.on("data", handshakeDataHandler);
+    });
+  }
+  /**
+   * Sends an SSH payload over the encrypted transport.
+   * The payload must start with the SSH message type byte.
+   */
+  sendPayload(payload) {
+    this.assertConnected();
+    const frame = this.protector.protectPayload(Buffer18.from(payload));
+    this.socket.write(frame);
+    this.resetKeepaliveTimer();
+  }
+  /**
+   * Async generator that yields inbound SSH payloads (post-NEWKEYS).
+   *
+   * Transparent handling:
+   * - SSH_MSG_IGNORE (2) and SSH_MSG_DEBUG (4) are silently dropped.
+   * - SSH_MSG_DISCONNECT (1) from the server throws a `ConnectionError`.
+   * - Socket error or close terminates the generator.
+   */
+  async *receivePayloads() {
+    this.assertConnected();
+    while (true) {
+      const entry = await this.dequeuePayload();
+      if (entry.type === "end") return;
+      if (entry.type === "error") throw entry.error;
+      yield entry.payload;
+    }
+  }
+  /**
+   * Sends SSH_MSG_DISCONNECT and ends the socket.
+   * Safe to call multiple times; subsequent calls are no-ops.
+   */
+  disconnect(reason = SshDisconnectReason.BY_APPLICATION, description = "") {
+    if (this.disposed || this.socket === void 0) return;
+    this.disposed = true;
+    this.stopKeepalive();
+    if (this.connected && this.protector !== void 0) {
+      try {
+        const payload = new SshDataWriter().writeByte(MSG_DISCONNECT).writeUint32(reason).writeString(description, "utf8").writeString("", "utf8").toBuffer();
+        this.socket.write(this.protector.protectPayload(payload));
+      } catch {
+      }
+    }
+    this.socket.end();
+    this.enqueueEntry({ type: "end" });
+  }
+  isConnected() {
+    return this.connected && !this.disposed;
+  }
+  onEncryptedData(chunk) {
+    try {
+      const payloads = this.unprotector.pushBytes(chunk);
+      for (const payload of payloads) {
+        const msgType = payload[0];
+        if (msgType === MSG_IGNORE || msgType === MSG_DEBUG) continue;
+        if (msgType === MSG_DISCONNECT) {
+          this.enqueueEntry({ type: "error", error: parseDisconnectPayload(payload) });
+          this.socket?.destroy();
+          return;
+        }
+        this.enqueueEntry({ type: "payload", payload });
+      }
+    } catch (err) {
+      this.enqueueEntry({
+        type: "error",
+        error: err instanceof Error ? err : new ProtocolError({
+          message: "SSH encrypted data processing error",
+          protocol: "sftp",
+          retryable: false
+        })
+      });
+      this.socket?.destroy();
+    }
+  }
+  onSocketError(err) {
+    this.stopKeepalive();
+    if (!this.disposed) {
+      this.enqueueEntry({
+        type: "error",
+        error: new ConnectionError({
+          message: `SSH socket error: ${err.message}`,
+          protocol: "sftp",
+          retryable: false
+        })
+      });
+    }
+  }
+  onSocketClose() {
+    this.stopKeepalive();
+    if (!this.disposed) {
+      this.enqueueEntry({ type: "end" });
+    }
+  }
+  enqueueEntry(entry) {
+    if (this.waitingConsumers.length > 0) {
+      const resolve = this.waitingConsumers.shift();
+      resolve(entry);
+    } else {
+      this.inboundQueue.push(entry);
+    }
+  }
+  dequeuePayload() {
+    if (this.inboundQueue.length > 0) {
+      return Promise.resolve(this.inboundQueue.shift());
+    }
+    return new Promise((resolve) => {
+      this.waitingConsumers.push(resolve);
+    });
+  }
+  assertConnected() {
+    if (!this.connected) {
+      throw new ProtocolError({
+        message: "SshTransportConnection is not yet connected \u2014 call connect() first",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+  }
+  startKeepalive() {
+    const intervalMs = this.options.keepaliveIntervalMs;
+    if (intervalMs === void 0 || intervalMs <= 0) return;
+    this.keepaliveTimer = setInterval(() => this.sendKeepalivePing(), intervalMs);
+    this.keepaliveTimer.unref?.();
+  }
+  stopKeepalive() {
+    if (this.keepaliveTimer !== void 0) {
+      clearInterval(this.keepaliveTimer);
+      this.keepaliveTimer = void 0;
+    }
+  }
+  resetKeepaliveTimer() {
+    if (this.keepaliveTimer === void 0) return;
+    this.stopKeepalive();
+    this.startKeepalive();
+  }
+  sendKeepalivePing() {
+    if (!this.connected || this.disposed || this.protector === void 0) return;
+    try {
+      const payload = new SshDataWriter().writeByte(MSG_IGNORE).writeString("", "utf8").toBuffer();
+      this.socket.write(this.protector.protectPayload(payload));
+    } catch {
+    }
+  }
+};
+function parseDisconnectPayload(payload) {
+  try {
+    const reader = new SshDataReader(payload.subarray(1));
+    const reasonCode = reader.readUint32();
+    const description = reader.readString().toString("utf8");
+    return new ConnectionError({
+      details: { reasonCode },
+      message: `SSH_MSG_DISCONNECT: ${description.length > 0 ? description : "connection closed by server"} (code ${reasonCode})`,
+      protocol: "sftp",
+      retryable: false
+    });
+  } catch {
+    return new ConnectionError({
+      message: "SSH_MSG_DISCONNECT received from server",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+}
+
+// src/protocols/sftp/v3/SftpSession.ts
+import { Buffer as Buffer20 } from "buffer";
+
+// src/protocols/sftp/v3/SftpAttributes.ts
+var SFTP_ATTR_FLAG = {
+  SIZE: 1,
+  UIDGID: 2,
+  PERMISSIONS: 4,
+  ACMODTIME: 8,
+  EXTENDED: 2147483648
+};
+function encodeSftpAttributes(attrs) {
+  let flags = 0;
+  if (attrs.size !== void 0) flags |= SFTP_ATTR_FLAG.SIZE;
+  if (attrs.uid !== void 0 || attrs.gid !== void 0) flags |= SFTP_ATTR_FLAG.UIDGID;
+  if (attrs.permissions !== void 0) flags |= SFTP_ATTR_FLAG.PERMISSIONS;
+  if (attrs.atime !== void 0 || attrs.mtime !== void 0) flags |= SFTP_ATTR_FLAG.ACMODTIME;
+  if (attrs.extended !== void 0 && attrs.extended.length > 0) flags |= SFTP_ATTR_FLAG.EXTENDED;
+  const writer = new SshDataWriter().writeUint32(flags >>> 0);
+  if (flags & SFTP_ATTR_FLAG.SIZE) {
+    writer.writeUint64(attrs.size);
+  }
+  if (flags & SFTP_ATTR_FLAG.UIDGID) {
+    writer.writeUint32(attrs.uid ?? 0);
+    writer.writeUint32(attrs.gid ?? 0);
+  }
+  if (flags & SFTP_ATTR_FLAG.PERMISSIONS) {
+    writer.writeUint32(attrs.permissions);
+  }
+  if (flags & SFTP_ATTR_FLAG.ACMODTIME) {
+    writer.writeUint32(attrs.atime ?? 0);
+    writer.writeUint32(attrs.mtime ?? 0);
+  }
+  if (flags & SFTP_ATTR_FLAG.EXTENDED) {
+    const ext = attrs.extended;
+    writer.writeUint32(ext.length);
+    for (const { type, data } of ext) {
+      writer.writeString(type, "utf8");
+      writer.writeString(data);
+    }
+  }
+  return writer.toBuffer();
+}
+function decodeSftpAttributesFromReader(reader) {
+  const flags = reader.readUint32();
+  const attrs = {};
+  if (flags & SFTP_ATTR_FLAG.SIZE) {
+    attrs.size = reader.readUint64();
+  }
+  if (flags & SFTP_ATTR_FLAG.UIDGID) {
+    attrs.uid = reader.readUint32();
+    attrs.gid = reader.readUint32();
+  }
+  if (flags & SFTP_ATTR_FLAG.PERMISSIONS) {
+    attrs.permissions = reader.readUint32();
+  }
+  if (flags & SFTP_ATTR_FLAG.ACMODTIME) {
+    attrs.atime = reader.readUint32();
+    attrs.mtime = reader.readUint32();
+  }
+  if (flags & SFTP_ATTR_FLAG.EXTENDED) {
+    const count = reader.readUint32();
+    const extended = [];
+    for (let i = 0; i < count; i++) {
+      const type = reader.readString().toString("utf8");
+      const data = reader.readString();
+      extended.push({ data, type });
+    }
+    attrs.extended = extended;
+  }
+  return attrs;
+}
+
+// src/protocols/sftp/v3/SftpPacket.ts
+import { Buffer as Buffer19 } from "buffer";
+var SFTP_PACKET_TYPE = {
+  ATTRS: 105,
+  CLOSE: 4,
+  DATA: 103,
+  EXTENDED: 200,
+  EXTENDED_REPLY: 201,
+  FSETSTAT: 10,
+  FSTAT: 8,
+  HANDLE: 102,
+  INIT: 1,
+  LSTAT: 7,
+  MKDIR: 14,
+  NAME: 104,
+  OPEN: 3,
+  OPENDIR: 11,
+  READ: 5,
+  READDIR: 12,
+  READLINK: 19,
+  REALPATH: 16,
+  REMOVE: 13,
+  RENAME: 18,
+  RMDIR: 15,
+  SETSTAT: 9,
+  STAT: 17,
+  STATUS: 101,
+  SYMLINK: 20,
+  VERSION: 2,
+  WRITE: 6
+};
+function decodeSftpPacket(frame) {
+  const bytes = Buffer19.from(frame);
+  if (bytes.length < 5) {
+    throw new ParseError({
+      details: { length: bytes.length },
+      message: "SFTP frame must be at least 5 bytes",
+      retryable: false
+    });
+  }
+  const expectedLength = bytes.readUInt32BE(0);
+  const actualLength = bytes.length - 4;
+  if (expectedLength !== actualLength) {
+    throw new ParseError({
+      details: { actualLength, expectedLength },
+      message: "SFTP frame length prefix does not match packet size",
+      retryable: false
+    });
+  }
+  return {
+    payload: bytes.subarray(5),
+    type: bytes.readUInt8(4)
+  };
+}
+var SftpPacketFramer = class {
+  pending = Buffer19.alloc(0);
+  push(chunk) {
+    this.pending = Buffer19.concat([this.pending, Buffer19.from(chunk)]);
+    const packets = [];
+    while (this.pending.length >= 4) {
+      const bodyLength = this.pending.readUInt32BE(0);
+      const frameLength = 4 + bodyLength;
+      if (this.pending.length < frameLength) {
+        break;
+      }
+      const frame = this.pending.subarray(0, frameLength);
+      packets.push(decodeSftpPacket(frame));
+      this.pending = this.pending.subarray(frameLength);
+    }
+    return packets;
+  }
+  getBufferedByteLength() {
+    return this.pending.length;
+  }
+};
+
+// src/protocols/sftp/v3/SftpMessages.ts
+var SFTP_OPEN_FLAG = {
+  READ: 1,
+  WRITE: 2,
+  APPEND: 4,
+  CREAT: 8,
+  TRUNC: 16,
+  EXCL: 32
+};
+function encodeSftpInit(version) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.INIT).writeUint32(version).toBuffer();
+}
+function decodeSftpVersion(payload) {
+  const reader = new SshDataReader(payload);
+  const version = reader.readUint32();
+  const extensions = [];
+  while (reader.hasMore()) {
+    const name = reader.readString().toString("utf8");
+    const data = reader.readString().toString("utf8");
+    extensions.push({ data, name });
+  }
+  return { extensions, version };
+}
+function encodeSftpOpen(args) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.OPEN).writeUint32(args.requestId).writeString(args.path, "utf8").writeUint32(args.pflags).writeBytes(encodeSftpAttributes(args.attrs)).toBuffer();
+}
+function encodeSftpClose(requestId, handle) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.CLOSE).writeUint32(requestId).writeString(handle).toBuffer();
+}
+function encodeSftpRead(args) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.READ).writeUint32(args.requestId).writeString(args.handle).writeUint64(args.offset).writeUint32(args.length).toBuffer();
+}
+function encodeSftpWrite(args) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.WRITE).writeUint32(args.requestId).writeString(args.handle).writeUint64(args.offset).writeString(args.data).toBuffer();
+}
+function encodeSftpStat(requestId, path2) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.STAT).writeUint32(requestId).writeString(path2, "utf8").toBuffer();
+}
+function encodeSftpLstat(requestId, path2) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.LSTAT).writeUint32(requestId).writeString(path2, "utf8").toBuffer();
+}
+function encodeSftpFstat(requestId, handle) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.FSTAT).writeUint32(requestId).writeString(handle).toBuffer();
+}
+function encodeSftpSetstat(requestId, path2, attrs) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.SETSTAT).writeUint32(requestId).writeString(path2, "utf8").writeBytes(encodeSftpAttributes(attrs)).toBuffer();
+}
+function encodeSftpFsetstat(requestId, handle, attrs) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.FSETSTAT).writeUint32(requestId).writeString(handle).writeBytes(encodeSftpAttributes(attrs)).toBuffer();
+}
+function encodeSftpOpendir(requestId, path2) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.OPENDIR).writeUint32(requestId).writeString(path2, "utf8").toBuffer();
+}
+function encodeSftpReaddir(requestId, handle) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.READDIR).writeUint32(requestId).writeString(handle).toBuffer();
+}
+function encodeSftpRemove(requestId, path2) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.REMOVE).writeUint32(requestId).writeString(path2, "utf8").toBuffer();
+}
+function encodeSftpMkdir(requestId, path2, attrs) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.MKDIR).writeUint32(requestId).writeString(path2, "utf8").writeBytes(encodeSftpAttributes(attrs)).toBuffer();
+}
+function encodeSftpRmdir(requestId, path2) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.RMDIR).writeUint32(requestId).writeString(path2, "utf8").toBuffer();
+}
+function encodeSftpRealpath(requestId, path2) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.REALPATH).writeUint32(requestId).writeString(path2, "utf8").toBuffer();
+}
+function encodeSftpRename(requestId, oldPath, newPath) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.RENAME).writeUint32(requestId).writeString(oldPath, "utf8").writeString(newPath, "utf8").toBuffer();
+}
+function encodeSftpReadlink(requestId, path2) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.READLINK).writeUint32(requestId).writeString(path2, "utf8").toBuffer();
+}
+function encodeSftpSymlink(requestId, linkPath, targetPath) {
+  return new SshDataWriter().writeByte(SFTP_PACKET_TYPE.SYMLINK).writeUint32(requestId).writeString(linkPath, "utf8").writeString(targetPath, "utf8").toBuffer();
+}
+function decodeSftpHandlePayload(payload) {
+  const reader = new SshDataReader(payload);
+  const requestId = reader.readUint32();
+  const handle = reader.readString();
+  return { handle, requestId };
+}
+function decodeSftpDataPayload(payload) {
+  const reader = new SshDataReader(payload);
+  const requestId = reader.readUint32();
+  const data = reader.readString();
+  return { data, requestId };
+}
+function decodeSftpNamePayload(payload) {
+  const reader = new SshDataReader(payload);
+  const requestId = reader.readUint32();
+  const count = reader.readUint32();
+  const entries = [];
+  for (let i = 0; i < count; i++) {
+    const filename = reader.readString().toString("utf8");
+    const longname = reader.readString().toString("utf8");
+    const attrs = decodeSftpAttributesFromReader(reader);
+    entries.push({ attrs, filename, longname });
+  }
+  return { entries, requestId };
+}
+function decodeSftpAttrsPayload(payload) {
+  const reader = new SshDataReader(payload);
+  const requestId = reader.readUint32();
+  const attrs = decodeSftpAttributesFromReader(reader);
+  return { attrs, requestId };
+}
+
+// src/protocols/sftp/v3/SftpStatus.ts
+var SFTP_STATUS = {
+  OK: 0,
+  EOF: 1,
+  NO_SUCH_FILE: 2,
+  PERMISSION_DENIED: 3,
+  FAILURE: 4,
+  BAD_MESSAGE: 5,
+  NO_CONNECTION: 6,
+  CONNECTION_LOST: 7,
+  OP_UNSUPPORTED: 8
+};
+function decodeSftpStatusPayload(payload) {
+  const reader = new SshDataReader(payload);
+  const requestId = reader.readUint32();
+  const statusCode = reader.readUint32();
+  const errorMessage = reader.hasMore() ? reader.readString().toString("utf8") : "";
+  const languageTag = reader.hasMore() ? reader.readString().toString("ascii") : "";
+  return { errorMessage, languageTag, requestId, statusCode };
+}
+function sftpStatusToError(status, path2) {
+  switch (status.statusCode) {
+    case SFTP_STATUS.OK:
+      return null;
+    case SFTP_STATUS.EOF:
+      return null;
+    // not an error: caller checks for EOF explicitly
+    case SFTP_STATUS.NO_SUCH_FILE:
+      return new PathNotFoundError({
+        details: { path: path2, sftpMessage: status.errorMessage },
+        message: `SFTP: no such file or directory${path2 !== void 0 ? ` \u2014 ${path2}` : ""}`,
+        protocol: "sftp",
+        retryable: false
+      });
+    case SFTP_STATUS.PERMISSION_DENIED:
+      return new PermissionDeniedError({
+        details: { path: path2, sftpMessage: status.errorMessage },
+        message: `SFTP: permission denied${path2 !== void 0 ? ` \u2014 ${path2}` : ""}`,
+        protocol: "sftp",
+        retryable: false
+      });
+    case SFTP_STATUS.NO_CONNECTION:
+    case SFTP_STATUS.CONNECTION_LOST:
+      return new ConnectionError({
+        details: { sftpMessage: status.errorMessage, statusCode: status.statusCode },
+        message: `SFTP: connection error \u2014 ${status.errorMessage}`,
+        protocol: "sftp",
+        retryable: true
+      });
+    case SFTP_STATUS.OP_UNSUPPORTED:
+      return new UnsupportedFeatureError({
+        details: { sftpMessage: status.errorMessage },
+        message: `SFTP: operation unsupported \u2014 ${status.errorMessage}`,
+        protocol: "sftp",
+        retryable: false
+      });
+    case SFTP_STATUS.BAD_MESSAGE:
+      return new ProtocolError({
+        details: { sftpMessage: status.errorMessage },
+        message: `SFTP: bad message \u2014 ${status.errorMessage}`,
+        protocol: "sftp",
+        retryable: false
+      });
+    default:
+      return new ZeroTransferError({
+        code: "SFTP_FAILURE",
+        details: { sftpMessage: status.errorMessage, statusCode: status.statusCode },
+        message: `SFTP: operation failed (status ${status.statusCode}) \u2014 ${status.errorMessage}`,
+        protocol: "sftp",
+        retryable: false
+      });
+  }
+}
+function throwIfSftpError(status, path2) {
+  if (status.statusCode === SFTP_STATUS.OK) return;
+  const err = sftpStatusToError(status, path2);
+  if (err !== null) throw err;
+  throw new ProtocolError({
+    message: "SFTP: unexpected SSH_FX_EOF in non-data response",
+    protocol: "sftp",
+    retryable: false
+  });
+}
+
+// src/protocols/sftp/v3/SftpSession.ts
+var SFTP_PROTOCOL_VERSION = 3;
+var SftpSession = class {
+  constructor(channel) {
+    this.channel = channel;
+  }
+  channel;
+  nextRequestId = 1;
+  pending = /* @__PURE__ */ new Map();
+  framer = new SftpPacketFramer();
+  /** Resolves on the first packet (VERSION) during init(). */
+  versionWaiter;
+  serverVersion = 0;
+  // -- Lifecycle -------------------------------------------------------------
+  /**
+   * Sends SSH_FXP_INIT and awaits SSH_FXP_VERSION.
+   * Must be called once before any other operation.
+   */
+  async init() {
+    void this.pump();
+    const versionPromise = new Promise((resolve, reject) => {
+      this.versionWaiter = { reject, resolve };
+    });
+    this.sendRaw(encodeSftpInit(SFTP_PROTOCOL_VERSION));
+    const resp = await versionPromise;
+    if (resp.type !== SFTP_PACKET_TYPE.VERSION) {
+      throw new ProtocolError({
+        details: { got: resp.type },
+        message: "SFTP: expected SSH_FXP_VERSION as first server packet",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    const result = decodeSftpVersion(resp.payload);
+    this.serverVersion = result.version;
+    return result;
+  }
+  get negotiatedVersion() {
+    return this.serverVersion;
+  }
+  // -- File operations -------------------------------------------------------
+  /**
+   * Opens a remote file. Returns an opaque handle buffer.
+   */
+  async open(path2, pflags, attrs = {}) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpOpen({ attrs, path: path2, pflags, requestId: id }), id);
+    const resp = await this.awaitResponse(id);
+    return decodeSftpHandlePayload(resp.payload).handle;
+  }
+  /**
+   * Closes a file or directory handle.
+   */
+  async close(handle) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpClose(id, handle), id);
+    const resp = await this.awaitResponse(id);
+    throwIfSftpError(decodeSftpStatusPayload(resp.payload));
+  }
+  /**
+   * Reads up to `length` bytes from `handle` at `offset`.
+   * Returns `null` on EOF.
+   */
+  async read(handle, offset, length) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpRead({ handle, length, offset, requestId: id }), id);
+    const resp = await this.awaitResponse(id);
+    if (resp.type === SFTP_PACKET_TYPE.STATUS) {
+      const status = decodeSftpStatusPayload(resp.payload);
+      if (status.statusCode === SFTP_STATUS.EOF) return null;
+      throwIfSftpError(status);
+      return null;
+    }
+    return decodeSftpDataPayload(resp.payload).data;
+  }
+  /**
+   * Writes `data` to `handle` at `offset`.
+   */
+  async write(handle, offset, data) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpWrite({ data, handle, offset, requestId: id }), id);
+    const resp = await this.awaitResponse(id);
+    throwIfSftpError(decodeSftpStatusPayload(resp.payload));
+  }
+  // -- Stat operations -------------------------------------------------------
+  async stat(path2) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpStat(id, path2), id);
+    const resp = await this.awaitResponse(id);
+    return decodeSftpAttrsPayload(resp.payload).attrs;
+  }
+  async lstat(path2) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpLstat(id, path2), id);
+    const resp = await this.awaitResponse(id);
+    return decodeSftpAttrsPayload(resp.payload).attrs;
+  }
+  async fstat(handle) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpFstat(id, handle), id);
+    const resp = await this.awaitResponse(id);
+    return decodeSftpAttrsPayload(resp.payload).attrs;
+  }
+  async setstat(path2, attrs) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpSetstat(id, path2, attrs), id);
+    const resp = await this.awaitResponse(id);
+    throwIfSftpError(decodeSftpStatusPayload(resp.payload), path2);
+  }
+  async fsetstat(handle, attrs) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpFsetstat(id, handle, attrs), id);
+    const resp = await this.awaitResponse(id);
+    throwIfSftpError(decodeSftpStatusPayload(resp.payload));
+  }
+  // -- Directory operations --------------------------------------------------
+  async opendir(path2) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpOpendir(id, path2), id);
+    const resp = await this.awaitResponse(id);
+    return decodeSftpHandlePayload(resp.payload).handle;
+  }
+  /**
+   * Reads one batch of directory entries.
+   * Returns an empty array when the server sends SSH_FX_EOF.
+   */
+  async readdir(handle) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpReaddir(id, handle), id);
+    const resp = await this.awaitResponse(id);
+    if (resp.type === SFTP_PACKET_TYPE.STATUS) {
+      const status = decodeSftpStatusPayload(resp.payload);
+      if (status.statusCode === SFTP_STATUS.EOF) return [];
+      throwIfSftpError(status);
+      return [];
+    }
+    return decodeSftpNamePayload(resp.payload).entries;
+  }
+  /**
+   * Convenience: opens a directory, reads all entries, and closes the handle.
+   */
+  async readdirAll(path2) {
+    const handle = await this.opendir(path2);
+    const entries = [];
+    try {
+      while (true) {
+        const batch = await this.readdir(handle);
+        if (batch.length === 0) break;
+        entries.push(...batch);
+      }
+    } finally {
+      await this.close(handle);
+    }
+    return entries;
+  }
+  async remove(path2) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpRemove(id, path2), id);
+    const resp = await this.awaitResponse(id);
+    throwIfSftpError(decodeSftpStatusPayload(resp.payload), path2);
+  }
+  async mkdir(path2, attrs = {}) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpMkdir(id, path2, attrs), id);
+    const resp = await this.awaitResponse(id);
+    throwIfSftpError(decodeSftpStatusPayload(resp.payload), path2);
+  }
+  async rmdir(path2) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpRmdir(id, path2), id);
+    const resp = await this.awaitResponse(id);
+    throwIfSftpError(decodeSftpStatusPayload(resp.payload), path2);
+  }
+  async realpath(path2) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpRealpath(id, path2), id);
+    const resp = await this.awaitResponse(id);
+    const result = decodeSftpNamePayload(resp.payload);
+    const first2 = result.entries[0];
+    if (first2 === void 0) {
+      throw new ProtocolError({
+        message: "SFTP: SSH_FXP_NAME for REALPATH returned zero entries",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    return first2.filename;
+  }
+  async rename(oldPath, newPath) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpRename(id, oldPath, newPath), id);
+    const resp = await this.awaitResponse(id);
+    throwIfSftpError(decodeSftpStatusPayload(resp.payload), oldPath);
+  }
+  async readlink(path2) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpReadlink(id, path2), id);
+    const resp = await this.awaitResponse(id);
+    const result = decodeSftpNamePayload(resp.payload);
+    const first2 = result.entries[0];
+    if (first2 === void 0) {
+      throw new ProtocolError({
+        message: "SFTP: SSH_FXP_NAME for READLINK returned zero entries",
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    return first2.filename;
+  }
+  async symlink(linkPath, targetPath) {
+    const id = this.allocRequestId();
+    this.sendRaw(encodeSftpSymlink(id, linkPath, targetPath), id);
+    const resp = await this.awaitResponse(id);
+    throwIfSftpError(decodeSftpStatusPayload(resp.payload), linkPath);
+  }
+  // -- Private: request plumbing ---------------------------------------------
+  allocRequestId() {
+    const id = this.nextRequestId;
+    this.nextRequestId = id % 4294967295 + 1;
+    return id;
+  }
+  /**
+   * Sends raw SFTP message bytes over the channel.
+   * The message encoders embed the type byte at position 0, followed by the body.
+   * We prefix with a uint32 length so the remote SFTP framer can parse the frame.
+   *
+   * Send is asynchronous because the underlying SSH channel may apply
+   * backpressure when the remote window is exhausted; the channel itself
+   * serializes concurrent calls so byte ordering is preserved.
+   */
+  sendRaw(encodedMessage, requestId) {
+    const frame = Buffer20.allocUnsafe(4 + encodedMessage.length);
+    frame.writeUInt32BE(encodedMessage.length, 0);
+    encodedMessage.copy(frame, 4);
+    this.channel.sendData(frame).catch((err) => {
+      const error = err instanceof Error ? err : new ConnectionError({
+        message: "SFTP channel send failed",
+        protocol: "sftp",
+        retryable: false
+      });
+      if (requestId !== void 0) {
+        const entry = this.pending.get(requestId);
+        if (entry !== void 0) {
+          this.pending.delete(requestId);
+          entry.reject(error);
+          return;
+        }
+      }
+      if (this.versionWaiter !== void 0) {
+        const waiter = this.versionWaiter;
+        this.versionWaiter = void 0;
+        waiter.reject(error);
+      }
+    });
+  }
+  async pump() {
+    const failAll = (error) => {
+      if (this.versionWaiter !== void 0) {
+        this.versionWaiter.reject(error);
+        this.versionWaiter = void 0;
+      }
+      for (const { reject } of this.pending.values()) {
+        reject(error);
+      }
+      this.pending.clear();
+    };
+    try {
+      for await (const chunk of this.channel.receiveData()) {
+        const packets = this.framer.push(chunk);
+        for (const pkt of packets) {
+          this.dispatchPacket(pkt.type, pkt.payload);
+        }
+      }
+      failAll(
+        new ConnectionError({
+          message: "SFTP: channel closed with pending requests",
+          protocol: "sftp",
+          retryable: false
+        })
+      );
+    } catch (err) {
+      failAll(
+        err instanceof Error ? err : new ConnectionError({
+          message: "SFTP channel error",
+          protocol: "sftp",
+          retryable: false
+        })
+      );
+    }
+  }
+  dispatchPacket(packetType, payload) {
+    if (packetType === SFTP_PACKET_TYPE.VERSION) {
+      if (this.versionWaiter !== void 0) {
+        const waiter = this.versionWaiter;
+        this.versionWaiter = void 0;
+        waiter.resolve({ payload, type: packetType });
+      }
+      return;
+    }
+    if (this.versionWaiter !== void 0) {
+      const waiter = this.versionWaiter;
+      this.versionWaiter = void 0;
+      waiter.reject(
+        new ProtocolError({
+          details: { got: packetType },
+          message: "SFTP: expected SSH_FXP_VERSION as first server packet",
+          protocol: "sftp",
+          retryable: false
+        })
+      );
+      return;
+    }
+    if (payload.length < 4) return;
+    const requestId = payload.readUInt32BE(0);
+    const entry = this.pending.get(requestId);
+    if (entry === void 0) return;
+    this.pending.delete(requestId);
+    entry.resolve({ payload, type: packetType });
+  }
+  awaitResponse(requestId) {
+    return new Promise((resolve, reject) => {
+      this.pending.set(requestId, { reject, resolve });
+    });
+  }
+};
+
+// src/providers/native/sftp/NativeSftpProvider.ts
+var NATIVE_SFTP_PROVIDER_ID = "sftp-native";
+var NATIVE_SFTP_DEFAULT_PORT = 22;
+var SFTP_READ_CHUNK_BYTES = 32768;
+var NATIVE_SFTP_ALGORITHM_PREFERENCES = {
+  compressionClientToServer: ["none"],
+  compressionServerToClient: ["none"],
+  encryptionClientToServer: ["aes256-ctr", "aes128-ctr"],
+  encryptionServerToClient: ["aes256-ctr", "aes128-ctr"],
+  kexAlgorithms: ["curve25519-sha256", "curve25519-sha256@libssh.org"],
+  languagesClientToServer: [],
+  languagesServerToClient: [],
+  macClientToServer: ["hmac-sha2-256", "hmac-sha2-512"],
+  macServerToClient: ["hmac-sha2-256", "hmac-sha2-512"],
+  serverHostKeyAlgorithms: [
+    "ssh-ed25519",
+    "ecdsa-sha2-nistp256",
+    "ecdsa-sha2-nistp384",
+    "ecdsa-sha2-nistp521",
+    "rsa-sha2-512",
+    "rsa-sha2-256"
+  ]
+};
+var NATIVE_SFTP_PROVIDER_CAPABILITIES = {
+  provider: NATIVE_SFTP_PROVIDER_ID,
+  authentication: ["password", "keyboard-interactive", "publickey"],
+  list: true,
+  stat: true,
+  readStream: true,
+  writeStream: true,
+  serverSideCopy: false,
+  serverSideMove: false,
+  resumeDownload: true,
+  resumeUpload: true,
+  checksum: [],
+  atomicRename: false,
+  chmod: false,
+  chown: false,
+  symlink: true,
+  metadata: ["accessedAt", "group", "modifiedAt", "owner", "permissions"],
+  maxConcurrency: 8,
+  notes: [
+    "Native SSH/SFTP provider using the project's own protocol stack (Waves 1\u20133).",
+    "Supports password and keyboard-interactive authentication."
+  ]
+};
+function createNativeSftpProviderFactory(options = {}) {
+  validateNativeSftpOptions(options);
+  return {
+    capabilities: NATIVE_SFTP_PROVIDER_CAPABILITIES,
+    create: () => new NativeSftpProvider(options),
+    id: NATIVE_SFTP_PROVIDER_ID
+  };
+}
+var NativeSftpProvider = class {
+  constructor(options) {
+    this.options = options;
+  }
+  options;
+  id = NATIVE_SFTP_PROVIDER_ID;
+  capabilities = NATIVE_SFTP_PROVIDER_CAPABILITIES;
+  async connect(profile) {
+    const resolved = await resolveConnectionProfileSecrets(profile);
+    const username = requireNativeSftpUsername(resolved);
+    const credential = buildNativeSftpCredential(resolved, username);
+    let socket;
+    const hostKeyPins = normalizeNativeHostKeyPins(resolved.ssh?.pinnedHostKeySha256);
+    const knownHostsEntries = parseNativeKnownHosts(resolved.ssh?.knownHosts);
+    const verifyHostKeyHook = buildNativeHostKeyVerifier({
+      host: resolved.host,
+      port: resolved.port ?? NATIVE_SFTP_DEFAULT_PORT,
+      pins: hostKeyPins,
+      knownHosts: knownHostsEntries
+    });
+    const handshakeTimeoutMs = resolved.timeoutMs ?? this.options.readyTimeoutMs;
+    const keepaliveIntervalMs = this.options.keepaliveIntervalMs;
+    const baseTransportOptions = {
+      algorithms: NATIVE_SFTP_ALGORITHM_PREFERENCES,
+      ...verifyHostKeyHook === void 0 ? {} : { verifyHostKey: verifyHostKeyHook },
+      ...handshakeTimeoutMs === void 0 ? {} : { handshakeTimeoutMs },
+      ...keepaliveIntervalMs === void 0 ? {} : { keepaliveIntervalMs }
+    };
+    const transportOptions = resolved.signal !== void 0 ? { abortSignal: resolved.signal, ...baseTransportOptions } : baseTransportOptions;
+    const transport = new SshTransportConnection(transportOptions);
+    try {
+      socket = await openNativeSftpSocket(resolved, this.options);
+      const handshakeResult = await transport.connect(socket);
+      const authSession = new SshAuthSession(transport);
+      await authSession.authenticate({
+        credential,
+        sessionId: handshakeResult.keyExchange.sessionId
+      });
+      const connectionManager = new SshConnectionManager(transport);
+      const channel = await connectionManager.openSubsystemChannel("sftp");
+      connectionManager.start().catch(() => {
+      });
+      const sftp = new SftpSession(channel);
+      await sftp.init();
+      return new NativeSftpSession(transport, sftp);
+    } catch (error) {
+      if (socket !== void 0 && !socket.destroyed) {
+        socket.destroy();
+      }
+      throw mapNativeSftpConnectError(error, resolved.host);
+    }
+  }
+};
+var NativeSftpSession = class {
+  constructor(transport, sftp) {
+    this.transport = transport;
+    this.sftp = sftp;
+    this.fs = new NativeSftpFileSystem(sftp);
+    this.transfers = new NativeSftpTransferOperations(sftp);
+  }
+  transport;
+  sftp;
+  provider = NATIVE_SFTP_PROVIDER_ID;
+  capabilities = NATIVE_SFTP_PROVIDER_CAPABILITIES;
+  fs;
+  transfers;
+  disconnect() {
+    this.transport.disconnect();
+    return Promise.resolve();
+  }
+  raw() {
+    return { sftp: this.sftp, transport: this.transport };
+  }
+};
+var NativeSftpFileSystem = class {
+  constructor(sftp) {
+    this.sftp = sftp;
+  }
+  sftp;
+  async list(path2, options = {}) {
+    nativeSftpThrowIfAborted(options.signal, path2, "list");
+    const remotePath = normalizeRemotePath(path2);
+    const entries = await this.sftp.readdirAll(remotePath);
+    return entries.filter((e) => e.filename !== "." && e.filename !== "..").map((e) => mapNativeSftpEntry(joinRemotePath(remotePath, e.filename), e.filename, e.attrs)).sort(compareNativeSftpEntries);
+  }
+  async stat(path2, options = {}) {
+    nativeSftpThrowIfAborted(options.signal, path2, "stat");
+    const remotePath = normalizeRemotePath(path2);
+    const attrs = await this.sftp.lstat(remotePath);
+    return {
+      ...mapNativeSftpEntry(remotePath, basenameRemotePath(remotePath), attrs),
+      exists: true
+    };
+  }
+  async remove(path2, options = {}) {
+    nativeSftpThrowIfAborted(options.signal, path2, "remove");
+    const remotePath = normalizeRemotePath(path2);
+    try {
+      await this.sftp.remove(remotePath);
+    } catch (error) {
+      if (options.ignoreMissing === true && error instanceof ZeroTransferError && error.code === "ZERO_TRANSFER_PATH_NOT_FOUND") {
+        return;
+      }
+      throw error;
+    }
+  }
+  async rename(from, to, options = {}) {
+    nativeSftpThrowIfAborted(options.signal, from, "rename");
+    const fromPath = normalizeRemotePath(from);
+    const toPath = normalizeRemotePath(to);
+    await this.sftp.rename(fromPath, toPath);
+  }
+  async mkdir(path2, options = {}) {
+    nativeSftpThrowIfAborted(options.signal, path2, "mkdir");
+    const remotePath = normalizeRemotePath(path2);
+    if (options.recursive !== true) {
+      await this.sftp.mkdir(remotePath);
+      return;
+    }
+    const segments = remotePath.split("/").filter((s) => s.length > 0);
+    let current = "";
+    for (const segment of segments) {
+      current = `${current}/${segment}`;
+      try {
+        await this.sftp.mkdir(current);
+      } catch (error) {
+        if (error instanceof ZeroTransferError && error.code === "ZERO_TRANSFER_PATH_NOT_FOUND") {
+          throw error;
+        }
+        try {
+          const attrs = await this.sftp.lstat(current);
+          const mode = attrs.permissions ?? 0;
+          if (nativeSftpEntryTypeFromMode(mode) !== "directory") {
+            throw error;
+          }
+        } catch {
+          throw error;
+        }
+      }
+    }
+  }
+  async rmdir(path2, options = {}) {
+    nativeSftpThrowIfAborted(options.signal, path2, "rmdir");
+    const remotePath = normalizeRemotePath(path2);
+    if (options.recursive === true) {
+      await this.removeDirRecursive(remotePath, options);
+      return;
+    }
+    try {
+      await this.sftp.rmdir(remotePath);
+    } catch (error) {
+      if (options.ignoreMissing === true && error instanceof ZeroTransferError && error.code === "ZERO_TRANSFER_PATH_NOT_FOUND") {
+        return;
+      }
+      throw error;
+    }
+  }
+  async removeDirRecursive(remotePath, options) {
+    let entries;
+    try {
+      entries = await this.sftp.readdirAll(remotePath);
+    } catch (error) {
+      if (options.ignoreMissing === true && error instanceof ZeroTransferError && error.code === "ZERO_TRANSFER_PATH_NOT_FOUND") {
+        return;
+      }
+      throw error;
+    }
+    for (const entry of entries) {
+      if (entry.filename === "." || entry.filename === "..") continue;
+      const childPath = joinRemotePath(remotePath, entry.filename);
+      const mode = entry.attrs.permissions ?? 0;
+      const isDir = nativeSftpEntryTypeFromMode(mode) === "directory";
+      if (isDir) {
+        await this.removeDirRecursive(childPath, {});
+      } else {
+        await this.sftp.remove(childPath);
+      }
+    }
+    await this.sftp.rmdir(remotePath);
+  }
+};
+var NativeSftpTransferOperations = class {
+  constructor(sftp) {
+    this.sftp = sftp;
+  }
+  sftp;
+  async read(request) {
+    request.throwIfAborted();
+    const remotePath = normalizeRemotePath(request.endpoint.path);
+    const statAttrs = await this.sftp.lstat(remotePath);
+    const mode = statAttrs.permissions ?? 0;
+    if (nativeSftpEntryTypeFromMode(mode) !== "file") {
+      throw new ConfigurationError({
+        details: { path: remotePath, provider: NATIVE_SFTP_PROVIDER_ID },
+        message: `Native SFTP path is not a file: ${remotePath}`,
+        protocol: "sftp",
+        retryable: false
+      });
+    }
+    const totalSize = statAttrs.size !== void 0 ? Number(statAttrs.size) : 0;
+    const range = resolveNativeSftpReadRange(totalSize, request.range);
+    return {
+      content: this.createReadSource(remotePath, range, request),
+      totalBytes: range.length,
+      ...range.offset > 0 ? { bytesRead: range.offset } : {}
+    };
+  }
+  async *createReadSource(path2, range, request) {
+    if (range.length <= 0) return;
+    request.throwIfAborted();
+    const handle = await this.sftp.open(path2, SFTP_OPEN_FLAG.READ);
+    try {
+      let remaining = range.length;
+      let offset = range.offset;
+      while (remaining > 0) {
+        request.throwIfAborted();
+        const chunkLen = Math.min(SFTP_READ_CHUNK_BYTES, remaining);
+        const data = await this.sftp.read(handle, BigInt(offset), chunkLen);
+        if (data === null) break;
+        yield new Uint8Array(data);
+        offset += data.length;
+        remaining -= data.length;
+      }
+    } finally {
+      await this.sftp.close(handle).catch(() => {
+      });
+    }
+  }
+  async write(request) {
+    request.throwIfAborted();
+    const remotePath = normalizeRemotePath(request.endpoint.path);
+    const startOffset = normalizeNativeSftpOffset(request.offset, remotePath);
+    const pflags = startOffset !== void 0 && startOffset > 0 ? SFTP_OPEN_FLAG.WRITE : SFTP_OPEN_FLAG.WRITE | SFTP_OPEN_FLAG.CREAT | SFTP_OPEN_FLAG.TRUNC;
+    request.throwIfAborted();
+    const handle = await this.sftp.open(remotePath, pflags);
+    let bytesTransferred = 0;
+    try {
+      let writeOffset = startOffset ?? 0;
+      for await (const chunk of request.content) {
+        request.throwIfAborted();
+        if (chunk.byteLength === 0) continue;
+        await this.sftp.write(handle, BigInt(writeOffset), chunk);
+        writeOffset += chunk.byteLength;
+        bytesTransferred += chunk.byteLength;
+        request.reportProgress(bytesTransferred, request.totalBytes);
+      }
+    } finally {
+      await this.sftp.close(handle).catch(() => {
+      });
+    }
+    const result = {
+      bytesTransferred,
+      resumed: (startOffset ?? 0) > 0,
+      totalBytes: request.totalBytes ?? (startOffset ?? 0) + bytesTransferred,
+      verified: request.verification?.verified ?? false
+    };
+    if (request.verification !== void 0) {
+      result.verification = cloneNativeSftpVerification(request.verification);
+    }
+    return result;
+  }
+};
+function openNativeSftpSocket(profile, options) {
+  return new Promise((resolve, reject) => {
+    const port = profile.port ?? NATIVE_SFTP_DEFAULT_PORT;
+    const host = profile.host;
+    const timeoutMs = profile.timeoutMs ?? options.readyTimeoutMs;
+    if (profile.signal?.aborted === true) {
+      reject(
+        new AbortError({
+          details: { operation: "connect" },
+          host,
+          message: "Native SFTP connection was aborted before socket open",
+          protocol: "sftp",
+          retryable: false
+        })
+      );
+      return;
+    }
+    const socket = createConnection({ host, port });
+    if (timeoutMs !== void 0) {
+      socket.setTimeout(timeoutMs);
+    }
+    const cleanup = () => {
+      socket.off("connect", handleConnect);
+      socket.off("error", handleError);
+      socket.off("timeout", handleTimeout);
+      profile.signal?.removeEventListener("abort", handleAbort);
+    };
+    const handleConnect = () => {
+      socket.setTimeout(0);
+      cleanup();
+      resolve(socket);
+    };
+    const handleError = (err) => {
+      cleanup();
+      socket.destroy();
+      reject(err);
+    };
+    const handleTimeout = () => {
+      cleanup();
+      socket.destroy();
+      reject(
+        new TimeoutError({
+          details: { operation: "connect" },
+          host,
+          message: `Native SFTP socket connection timed out after ${timeoutMs ?? "?"}ms`,
+          protocol: "sftp",
+          retryable: true
+        })
+      );
+    };
+    const handleAbort = () => {
+      cleanup();
+      socket.destroy();
+      reject(
+        new AbortError({
+          details: { operation: "connect" },
+          host,
+          message: "Native SFTP connection was aborted",
+          protocol: "sftp",
+          retryable: false
+        })
+      );
+    };
+    socket.once("connect", handleConnect);
+    socket.once("error", handleError);
+    socket.once("timeout", handleTimeout);
+    profile.signal?.addEventListener("abort", handleAbort, { once: true });
+  });
+}
+function buildNativeSftpCredential(profile, username) {
+  const password = resolveNativeSftpTextSecret(profile.password);
+  const keyboardInteractive = profile.ssh?.keyboardInteractive;
+  const privateKey = profile.ssh?.privateKey;
+  if (privateKey !== void 0) {
+    return buildNativePublickeyCredential(profile, username);
+  }
+  if (password !== void 0) {
+    return {
+      password,
+      type: "password",
+      username
+    };
+  }
+  if (keyboardInteractive !== void 0) {
+    return {
+      respond: async (name, instruction, prompts) => {
+        const challenge = {
+          instructions: instruction,
+          language: "",
+          name,
+          prompts: prompts.map((p) => ({
+            echo: p.echo,
+            prompt: p.prompt
+          }))
+        };
+        const result = await keyboardInteractive(challenge);
+        return Array.from(result);
+      },
+      type: "keyboard-interactive",
+      username
+    };
+  }
+  throw new ConfigurationError({
+    details: { provider: NATIVE_SFTP_PROVIDER_ID },
+    message: "Native SFTP profiles require ssh.privateKey, password, or ssh.keyboardInteractive",
+    protocol: "sftp",
+    retryable: false
+  });
+}
+function buildNativePublickeyCredential(profile, username) {
+  const keyMaterial = profile.ssh?.privateKey;
+  if (keyMaterial === void 0) {
+    throw new ConfigurationError({
+      details: { provider: NATIVE_SFTP_PROVIDER_ID },
+      message: "ssh.privateKey is required for public-key authentication",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  const passphrase = profile.ssh?.passphrase;
+  try {
+    const privateKey = createPrivateKey({
+      key: Buffer21.isBuffer(keyMaterial) ? keyMaterial : keyMaterial,
+      ...passphrase === void 0 ? {} : {
+        passphrase: Buffer21.isBuffer(passphrase) ? passphrase : passphrase
+      }
+    });
+    return buildPublickeyCredential({ privateKey, username });
+  } catch (error) {
+    throw new ConfigurationError({
+      cause: error,
+      details: {
+        originalMessage: error instanceof Error ? error.message : String(error),
+        provider: NATIVE_SFTP_PROVIDER_ID
+      },
+      message: "Failed to parse ssh.privateKey: ensure the key is in OpenSSH or PKCS#8 PEM format and the passphrase (if any) is correct",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+}
+function mapNativeSftpConnectError(error, host) {
+  if (error instanceof ZeroTransferError) {
+    return error;
+  }
+  if (isNativeSftpAuthFailure(error)) {
+    return new AuthenticationError({
+      cause: error,
+      host,
+      message: "Native SFTP authentication failed",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return new ConnectionError({
+    cause: error,
+    details: { originalMessage: getNativeSftpErrorMessage(error) },
+    host,
+    message: `Native SFTP connection failed: ${getNativeSftpErrorMessage(error)}`,
+    protocol: "sftp",
+    retryable: true
+  });
+}
+function isNativeSftpAuthFailure(error) {
+  if (error instanceof AuthenticationError) return true;
+  const msg = getNativeSftpErrorMessage(error).toLowerCase();
+  return msg.includes("auth") || msg.includes("permission denied");
+}
+function mapNativeSftpEntry(path2, name, attrs) {
+  const mode = attrs.permissions ?? 0;
+  const entry = {
+    name,
+    path: path2,
+    ...attrs.gid !== void 0 ? { group: String(attrs.gid) } : {},
+    ...attrs.uid !== void 0 ? { owner: String(attrs.uid) } : {},
+    permissions: { raw: formatNativeSftpMode(mode) },
+    raw: {
+      attrs: {
+        atime: attrs.atime ?? 0,
+        gid: attrs.gid ?? 0,
+        mode,
+        mtime: attrs.mtime ?? 0,
+        size: attrs.size !== void 0 ? Number(attrs.size) : 0,
+        uid: attrs.uid ?? 0
+      }
+    },
+    type: nativeSftpEntryTypeFromMode(mode)
+  };
+  if (attrs.size !== void 0) {
+    entry.size = Number(attrs.size);
+  }
+  if (attrs.mtime !== void 0) {
+    entry.modifiedAt = new Date(attrs.mtime * 1e3);
+  }
+  if (attrs.atime !== void 0) {
+    entry.accessedAt = new Date(attrs.atime * 1e3);
+  }
+  return entry;
+}
+function nativeSftpEntryTypeFromMode(mode) {
+  const fileTypeBits = mode & 61440;
+  if (fileTypeBits === 32768) return "file";
+  if (fileTypeBits === 16384) return "directory";
+  if (fileTypeBits === 40960) return "symlink";
+  return "unknown";
+}
+function formatNativeSftpMode(mode) {
+  return mode.toString(8).padStart(6, "0");
+}
+function compareNativeSftpEntries(left, right) {
+  return left.path.localeCompare(right.path);
+}
+function resolveNativeSftpReadRange(size, range) {
+  if (range === void 0) {
+    return { length: size, offset: 0 };
+  }
+  const offset = Math.min(Math.max(0, Math.floor(range.offset)), size);
+  const requestedLength = range.length === void 0 ? size - offset : Math.max(0, Math.floor(range.length));
+  const length = Math.min(requestedLength, size - offset);
+  return { length, offset };
+}
+function normalizeNativeSftpOffset(value, path2) {
+  if (value === void 0) return void 0;
+  if (!Number.isFinite(value) || value < 0) {
+    throw new ConfigurationError({
+      details: { field: "offset", path: path2, provider: NATIVE_SFTP_PROVIDER_ID },
+      message: "Native SFTP write offset must be a non-negative finite number",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return Math.floor(value);
+}
+function cloneNativeSftpVerification(v) {
+  const clone = { verified: v.verified };
+  if (v.method !== void 0) clone.method = v.method;
+  if (v.checksum !== void 0) clone.checksum = v.checksum;
+  if (v.expectedChecksum !== void 0) clone.expectedChecksum = v.expectedChecksum;
+  if (v.actualChecksum !== void 0) clone.actualChecksum = v.actualChecksum;
+  if (v.details !== void 0) clone.details = { ...v.details };
+  return clone;
+}
+function normalizeNativeHostKeyPins(value) {
+  if (value === void 0) return void 0;
+  const pins = typeof value === "string" ? [value] : value;
+  if (pins.length === 0) return void 0;
+  const normalized = /* @__PURE__ */ new Set();
+  for (const pin of pins) {
+    const trimmed = pin.trim();
+    const hex = trimmed.replace(/:/g, "");
+    if (hex.length === 64 && /^[a-f0-9]+$/i.test(hex)) {
+      normalized.add(Buffer21.from(hex, "hex").toString("base64").replace(/=+$/g, ""));
+      continue;
+    }
+    const bare = trimmed.startsWith("SHA256:") ? trimmed.slice("SHA256:".length) : trimmed;
+    const padded = bare.length % 4 === 0 ? bare : `${bare}${"=".repeat(4 - bare.length % 4)}`;
+    normalized.add(Buffer21.from(padded, "base64").toString("base64").replace(/=+$/g, ""));
+  }
+  return normalized;
+}
+function parseNativeKnownHosts(source) {
+  if (source === void 0) return void 0;
+  const sources = Array.isArray(source) ? source : [source];
+  const entries = [];
+  for (const value of sources) {
+    const text = Buffer21.isBuffer(value) ? value.toString("utf8") : String(value);
+    if (text.length === 0) continue;
+    entries.push(...parseKnownHosts(text));
+  }
+  return entries.length === 0 ? void 0 : entries;
+}
+function buildNativeHostKeyVerifier(input) {
+  const { host, knownHosts, pins, port } = input;
+  if (pins === void 0 && knownHosts === void 0) return void 0;
+  return ({ hostKeyBlob }) => {
+    if (pins !== void 0) {
+      const fingerprint = createHash3("sha256").update(hostKeyBlob).digest("base64").replace(/=+$/g, "");
+      if (!pins.has(fingerprint)) {
+        throw new AuthenticationError({
+          details: { fingerprint, host },
+          message: "SSH server host key does not match any pinned fingerprint",
+          protocol: "sftp",
+          retryable: false
+        });
+      }
+    }
+    if (knownHosts !== void 0) {
+      const keyBase64 = hostKeyBlob.toString("base64");
+      let matched = false;
+      for (const entry of knownHosts) {
+        if (!matchKnownHostsEntry(entry, host, port)) continue;
+        if (entry.keyBase64 !== keyBase64) continue;
+        if (entry.marker === "revoked") {
+          throw new AuthenticationError({
+            details: { host, marker: entry.marker },
+            message: "SSH server host key is marked @revoked in known_hosts",
+            protocol: "sftp",
+            retryable: false
+          });
+        }
+        if (entry.marker === void 0) {
+          matched = true;
+        }
+      }
+      if (!matched) {
+        throw new AuthenticationError({
+          details: { host, port },
+          message: "SSH server host key is not present in known_hosts for this host",
+          protocol: "sftp",
+          retryable: false
+        });
+      }
+    }
+  };
+}
+function requireNativeSftpUsername(profile) {
+  const text = resolveNativeSftpTextSecret(profile.username);
+  if (text === void 0) {
+    throw new ConfigurationError({
+      details: { field: "username", provider: NATIVE_SFTP_PROVIDER_ID },
+      message: "Native SFTP profiles require a username",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  return text;
+}
+function resolveNativeSftpTextSecret(value) {
+  if (value === void 0) return void 0;
+  const text = Buffer21.isBuffer(value) ? value.toString("utf8") : value;
+  if (text.length === 0) return void 0;
+  return text;
+}
+function nativeSftpThrowIfAborted(signal, path2, operation) {
+  if (signal?.aborted !== true) return;
+  throw new AbortError({
+    details: { operation },
+    message: `Native SFTP ${operation} was aborted`,
+    path: path2,
+    protocol: "sftp",
+    retryable: false
+  });
+}
+function getNativeSftpErrorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+function validateNativeSftpOptions(options) {
+  if (options.readyTimeoutMs !== void 0 && (!Number.isFinite(options.readyTimeoutMs) || options.readyTimeoutMs <= 0)) {
+    throw new ConfigurationError({
+      details: { readyTimeoutMs: options.readyTimeoutMs },
+      message: "Native SFTP provider readyTimeoutMs must be a positive finite number",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+  if (options.keepaliveIntervalMs !== void 0 && (!Number.isFinite(options.keepaliveIntervalMs) || options.keepaliveIntervalMs < 0)) {
+    throw new ConfigurationError({
+      details: { keepaliveIntervalMs: options.keepaliveIntervalMs },
+      message: "Native SFTP provider keepaliveIntervalMs must be a non-negative finite number",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
+}
+
 // src/providers/classic/sftp/SftpProvider.ts
-import { Buffer as Buffer6 } from "buffer";
-import { createHash, createHmac as createHmac2, timingSafeEqual } from "crypto";
+import { Buffer as Buffer22 } from "buffer";
+import { createHash as createHash4, createHmac as createHmac3, timingSafeEqual as timingSafeEqual2 } from "crypto";
 import ssh2 from "ssh2";
 var { Client: SshClientCtor, utils } = ssh2;
 var SFTP_PROVIDER_ID = "sftp";
@@ -5032,7 +9220,7 @@ function parseKnownHosts2(source) {
   const values = Array.isArray(source) ? source : [source];
   const entries = [];
   for (const value of values) {
-    const text = Buffer6.isBuffer(value) ? value.toString("utf8") : value;
+    const text = Buffer22.isBuffer(value) ? value.toString("utf8") : value;
     const lines = text.split(/\r?\n/);
     lines.forEach((line, index) => {
       const entry = parseKnownHostsLine2(line, index + 1);
@@ -5117,10 +9305,10 @@ function hashedKnownHostPatternMatches(pattern, candidate) {
   if (version !== "1" || saltText === void 0 || hashText === void 0) {
     return false;
   }
-  const salt = Buffer6.from(saltText, "base64");
-  const expected = Buffer6.from(hashText, "base64");
-  const actual = createHmac2("sha1", salt).update(candidate).digest();
-  return expected.byteLength === actual.byteLength && timingSafeEqual(expected, actual);
+  const salt = Buffer22.from(saltText, "base64");
+  const expected = Buffer22.from(hashText, "base64");
+  const actual = createHmac3("sha1", salt).update(candidate).digest();
+  return expected.byteLength === actual.byteLength && timingSafeEqual2(expected, actual);
 }
 function normalizeHostKeyPins(value) {
   if (value === void 0) {
@@ -5133,13 +9321,13 @@ function normalizeHostKeyPin(value) {
   const trimmed = value.trim();
   const hex = trimmed.replace(/:/g, "");
   if (hex.length === 64 && /^[a-f0-9]+$/i.test(hex)) {
-    return Buffer6.from(hex, "hex").toString("base64").replace(/=+$/g, "");
+    return Buffer22.from(hex, "hex").toString("base64").replace(/=+$/g, "");
   }
   const bare = trimmed.startsWith("SHA256:") ? trimmed.slice("SHA256:".length) : trimmed;
-  return Buffer6.from(padBase642(bare), "base64").toString("base64").replace(/=+$/g, "");
+  return Buffer22.from(padBase642(bare), "base64").toString("base64").replace(/=+$/g, "");
 }
 function hashHostKey(key) {
-  return createHash("sha256").update(key).digest("base64").replace(/=+$/g, "");
+  return createHash4("sha256").update(key).digest("base64").replace(/=+$/g, "");
 }
 function padBase642(value) {
   const remainder = value.length % 4;
@@ -5310,7 +9498,7 @@ async function* createSftpReadSource(sftp, path2, range, request) {
   try {
     for await (const chunk of stream) {
       request.throwIfAborted();
-      yield new Uint8Array(Buffer6.from(chunk));
+      yield new Uint8Array(Buffer22.from(chunk));
     }
   } catch (error) {
     throw mapSftpError(error, { command: "READ", path: path2 });
@@ -5358,7 +9546,7 @@ function writeSftpChunk(stream, chunk) {
       reject(error);
     };
     stream.once("error", handleError);
-    stream.write(Buffer6.from(chunk), (error) => {
+    stream.write(Buffer22.from(chunk), (error) => {
       cleanup();
       if (error != null) {
         reject(error);
@@ -5492,7 +9680,7 @@ function resolveOptionalTextCredential(value, field) {
   if (value === void 0) {
     return void 0;
   }
-  const text = Buffer6.isBuffer(value) ? value.toString("utf8") : value;
+  const text = Buffer22.isBuffer(value) ? value.toString("utf8") : value;
   if (text.length === 0) {
     throw new ConfigurationError({
       details: { field, provider: SFTP_PROVIDER_ID },
@@ -5623,7 +9811,7 @@ function noop() {
 }
 
 // src/providers/classic/sftp/jumpHost.ts
-import { Buffer as Buffer7 } from "buffer";
+import { Buffer as Buffer23 } from "buffer";
 import ssh22 from "ssh2";
 var { Client: SshClientCtor2 } = ssh22;
 function createSftpJumpHostSocketFactory(options) {
@@ -5741,7 +9929,7 @@ function openJumpHostChannel(options) {
 function normalizeBastionConfig(config) {
   const cloned = { ...config };
   if (typeof cloned.privateKey === "string") {
-    cloned.privateKey = Buffer7.from(cloned.privateKey);
+    cloned.privateKey = Buffer23.from(cloned.privateKey);
   }
   return cloned;
 }
@@ -5778,6 +9966,7 @@ export {
   createBandwidthThrottle,
   createLocalProviderFactory,
   createMemoryProviderFactory,
+  createNativeSftpProviderFactory,
   createOAuthTokenSecretSource,
   createProgressEvent,
   createProviderTransferExecutor,

@@ -188,9 +188,12 @@ export const scopes = [
   },
   {
     description:
-      "SFTP over SSH with password / private-key / agent / keyboard-interactive authentication, SSH algorithm overrides, OpenSSH `known_hosts` parsing, SHA-256 host-key pinning, custom socket factories, and a first-class jump-host helper for bastion-mediated connections.",
+      "SFTP over SSH with two backends: a zero-dependency native SSH stack (Ed25519 / RSA / ECDSA host keys, password / keyboard-interactive / public-key auth, host-key pinning, OpenSSH `known_hosts`, handshake timeout, NAT keepalive) and the legacy `ssh2`-backed provider (adds ssh-agent, jump-host helpers). The native provider is recommended for new projects; the classic provider remains for ssh-agent and bastion workflows.",
     examples: ["sftp-private-key.ts"],
     exports: [
+      "createNativeSftpProviderFactory",
+      "NativeSftpProviderOptions",
+      "NativeSftpRawSession",
       "createSftpProviderFactory",
       "createSftpJumpHostSocketFactory",
       "SftpProviderOptions",
@@ -204,7 +207,8 @@ export const scopes = [
     ],
     deps: { ssh2: "^1.17.0" },
     name: "sftp",
-    summary: "SFTP with SSH key auth, known_hosts, and jump-host support.",
+    summary:
+      "SFTP with a native SSH stack (default) plus the classic ssh2-backed provider for ssh-agent and jump-host support.",
     title: "SFTP",
   },
   {

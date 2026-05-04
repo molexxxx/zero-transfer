@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.6**](../README.md)
+[**ZeroTransfer SDK v0.2.0**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: CronScheduleTrigger
 
-Defined in: [src/mft/MftSchedule.ts:27](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/MftSchedule.ts#L27)
+Defined in: [src/mft/MftSchedule.ts:27](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/mft/MftSchedule.ts#L27)
 
 Fires at times matching a 5-field cron expression (minute hour dom month dow).
 
@@ -14,6 +14,6 @@ Fires at times matching a 5-field cron expression (minute hour dom month dow).
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="expression"></a> `expression` | `string` | 5-field cron expression: `minute hour day-of-month month day-of-week`. | [src/mft/MftSchedule.ts:31](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/MftSchedule.ts#L31) |
-| <a id="kind"></a> `kind` | `"cron"` | Discriminator. | [src/mft/MftSchedule.ts:29](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/MftSchedule.ts#L29) |
-| <a id="timezone"></a> `timezone?` | `"local"` \| `"utc"` | Timezone interpretation. Defaults to `"utc"`. | [src/mft/MftSchedule.ts:33](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/mft/MftSchedule.ts#L33) |
+| <a id="expression"></a> `expression` | `string` | 5-field cron expression: `minute hour day-of-month month day-of-week`. | [src/mft/MftSchedule.ts:31](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/mft/MftSchedule.ts#L31) |
+| <a id="kind"></a> `kind` | `"cron"` | Discriminator. | [src/mft/MftSchedule.ts:29](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/mft/MftSchedule.ts#L29) |
+| <a id="timezone"></a> `timezone?` | `"local"` \| `"utc"` | Timezone interpretation. Defaults to `"utc"`. | [src/mft/MftSchedule.ts:33](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/mft/MftSchedule.ts#L33) |

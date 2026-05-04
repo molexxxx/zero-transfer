@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.1.6**](../README.md)
+[**ZeroTransfer SDK v0.2.0**](../README.md)
 
 ***
 
@@ -10,6 +10,6 @@
 type ClassicProviderId = typeof CLASSIC_PROVIDER_IDS[number];
 ```
 
-Defined in: [src/core/ProviderId.ts:11](https://github.com/tonywied17/zero-transfer/blob/1030db99db8d8b0f4fe046d8130f1cb5e50dd102/src/core/ProviderId.ts#L11)
+Defined in: [src/core/ProviderId.ts:11](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/core/ProviderId.ts#L11)
 
 Provider ids that map directly to the original protocol-focused alpha facade.

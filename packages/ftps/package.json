@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/ftps",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "Explicit and implicit FTPS with full TLS profile support.",
   "keywords": [
     "zero-transfer",

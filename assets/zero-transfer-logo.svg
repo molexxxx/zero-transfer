@@ -1,15 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 200" width="880" height="200" role="img" aria-label="Zero Transfer">
   <defs>
-    <!--
-      The 3D ring illusion works by COMBINING two animations on each ring:
-        1. animateTransform rotate on the GROUP  → the ring's plane tilts/gyrates in 2D
-        2. animate ry on the ELLIPSE            → ry oscillates 22→56→22→5→22
-           This approximates the projection of a 3D ring rotating through one full turn:
-           56≈face-on (near), 22≈tilted, 5≈edge-on (far). The human visual system reads
-           the compound motion as genuine 3D rotation.
-    -->
-
-    <!-- Color-shifting accent – the stop-colors drift between cyan/indigo/violet -->
     <linearGradient id="gAccent" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#22d3ee">
         <animate attributeName="stop-color"
@@ -21,36 +11,27 @@
       </stop>
     </linearGradient>
 
-    <!-- Nucleus glow -->
     <filter id="nucGlow" x="-100%" y="-100%" width="300%" height="300%">
       <feGaussianBlur stdDeviation="4" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
 
-    <!-- Sweep bar glow -->
     <filter id="sweepGlow" x="-50%" y="-300%" width="200%" height="700%">
       <feGaussianBlur stdDeviation="2.5" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-
-    <!-- Clips the sweep highlight so it never exits the track bounds -->
     <clipPath id="barClip">
       <rect x="0" y="145" width="600" height="12"/>
     </clipPath>
   </defs>
 
-  <!-- ╔══════════════════════════════════════════════╗ -->
-  <!-- ║  ATOM MARK  (centred at 106,100)             ║ -->
-  <!-- ╚══════════════════════════════════════════════╝ -->
   <g transform="translate(106,100)">
 
-    <!-- Soft breathing halo — gives the mark a "live energy" feel -->
     <circle r="70" fill="none" stroke="url(#gAccent)" stroke-width="1" opacity="0.06">
       <animate attributeName="r" values="66;76;66" dur="5.5s" repeatCount="indefinite"/>
       <animate attributeName="opacity" values="0.03;0.11;0.03" dur="5.5s" repeatCount="indefinite"/>
     </circle>
 
-    <!-- Ambient particles around the mark (twinkle, no motion to keep it clean) -->
     <circle cx="-67" cy="-20" r="1.8" fill="#22d3ee">
       <animate attributeName="opacity" values="0.12;0.65;0.12" dur="2.4s" repeatCount="indefinite"/>
     </circle>
@@ -67,13 +48,10 @@
       <animate attributeName="opacity" values="0.08;0.4;0.08" dur="2.1s" begin="1.2s" repeatCount="indefinite"/>
     </circle>
 
-    <!-- ─── RING A  (cyan, plane gyrates CW 18 s, ry starts phase 0) ─── -->
     <g>
       <animateTransform attributeName="transform" type="rotate"
         from="0" to="360" dur="18s" repeatCount="indefinite"/>
-      <!-- ghost track -->
       <ellipse rx="62" ry="22" fill="none" stroke="#22d3ee" stroke-width="0.75" opacity="0.1"/>
-      <!-- 3D-tipping ring -->
       <ellipse rx="62" ry="22" fill="none" stroke="#22d3ee" stroke-linecap="round">
         <animate attributeName="ry"
           values="22;56;22;5;22" keyTimes="0;0.25;0.5;0.75;1"
@@ -85,14 +63,12 @@
         <animate attributeName="stroke-opacity"
           values="0.28;0.95;0.28;0.5;0.28" keyTimes="0;0.25;0.5;0.75;1" dur="7s" repeatCount="indefinite"/>
       </ellipse>
-      <!-- comet dash -->
       <ellipse rx="62" ry="22" fill="none" stroke="#22d3ee"
                stroke-width="3" stroke-dasharray="68 232" stroke-linecap="round" opacity="0.85">
         <animate attributeName="stroke-dashoffset" values="0;-300" dur="2.2s" repeatCount="indefinite"/>
       </ellipse>
     </g>
 
-    <!-- ─── RING B  (indigo, plane gyrates CCW 24 s, ry phase +2.33 s) ─── -->
     <g>
       <animateTransform attributeName="transform" type="rotate"
         from="60" to="-300" dur="24s" repeatCount="indefinite"/>
@@ -114,7 +90,6 @@
       </ellipse>
     </g>
 
-    <!-- ─── RING C  (violet, plane gyrates CW 21 s, ry phase +4.67 s) ─── -->
     <g>
       <animateTransform attributeName="transform" type="rotate"
         from="120" to="480" dur="21s" repeatCount="indefinite"/>
@@ -136,13 +111,11 @@
       </ellipse>
     </g>
 
-    <!-- Nucleus — sits on top of all rings, dark fill masks ring backs for z-depth -->
     <circle r="14" fill="#08111e"/>
     <circle r="14" fill="none" stroke="url(#gAccent)" stroke-width="2" filter="url(#nucGlow)">
       <animate attributeName="r"             values="13;15;13"  dur="4s" repeatCount="indefinite"/>
       <animate attributeName="stroke-opacity" values="0.5;1;0.5" dur="4s" repeatCount="indefinite"/>
     </circle>
-    <!-- Z glyph — no fill, no stroke beyond the gradient line -->
     <path d="M -7,-5 L 7,-5 L -7,5 L 7,5"
           fill="none" stroke="url(#gAccent)"
           stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
@@ -150,27 +123,21 @@
     </path>
   </g>
 
-  <!-- ╔══════════════════════════════════════════════╗ -->
-  <!-- ║  WORDMARK                                    ║ -->
-  <!-- ╚══════════════════════════════════════════════╝ -->
   <g transform="translate(220,0)"
      font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, system-ui, sans-serif">
 
-    <!-- "zero" — clean off-white, gentle breath (no stroke, no shadow) -->
     <g>
       <animate attributeName="opacity" values="0.82;1;0.82" dur="5.5s" repeatCount="indefinite"/>
       <text x="0" y="108" font-size="62" font-weight="800"
             fill="#f1f5f9" letter-spacing="-2">zero</text>
     </g>
 
-    <!-- "transfer" — animated gradient, out-of-phase with "zero" -->
     <g>
       <animate attributeName="opacity" values="1;0.86;1" dur="5.5s" repeatCount="indefinite"/>
       <text x="153" y="108" font-size="62" font-weight="800"
             fill="url(#gAccent)" letter-spacing="-2">transfer</text>
     </g>
 
-    <!-- Tagline -->
     <g>
       <animate attributeName="opacity" values="0.55;0.85;0.55" dur="8s" repeatCount="indefinite"/>
       <text x="3" y="138" font-size="11.5" font-weight="600" letter-spacing="2.5">
@@ -183,10 +150,8 @@
       </text>
     </g>
 
-    <!-- Static track -->
     <rect x="0" y="153" width="600" height="1.5" rx="1" fill="#1c2a3a"/>
 
-    <!-- Sweep highlight — clipped so it never exits the track -->
     <g clip-path="url(#barClip)">
       <rect x="-130" y="152.5" width="130" height="2" rx="1"
             fill="url(#gAccent)" filter="url(#sweepGlow)">

@@ -8,7 +8,7 @@ Per-scope documentation for every package in the [`@zero-transfer/*`](../../pack
 | [`@zero-transfer/classic`](./classic.md) | FTP, FTPS, and SFTP providers in one install. |
 | [`@zero-transfer/ftp`](./ftp.md) | Classic FTP provider with EPSV/PASV streaming and REST resume. |
 | [`@zero-transfer/ftps`](./ftps.md) | Explicit and implicit FTPS with full TLS profile support. |
-| [`@zero-transfer/sftp`](./sftp.md) | SFTP with SSH key auth, known_hosts, and jump-host support. |
+| [`@zero-transfer/sftp`](./sftp.md) | SFTP with a native SSH stack (default) plus the classic ssh2-backed provider for ssh-agent and jump-host support. |
 | [`@zero-transfer/http`](./http.md) | HTTP(S) and signed-URL provider with ranged downloads. |
 | [`@zero-transfer/webdav`](./webdav.md) | WebDAV provider with PROPFIND listings and ranged downloads. |
 | [`@zero-transfer/s3`](./s3.md) | S3-compatible storage with SigV4, multipart upload, and resume. |
