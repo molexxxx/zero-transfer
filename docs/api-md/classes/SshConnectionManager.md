@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: SshConnectionManager
 
-Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:44](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshConnectionManager.ts#L44)
+Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:44](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshConnectionManager.ts#L44)
 
 ## Constructors
 
@@ -16,7 +16,7 @@ Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:44](https://gi
 new SshConnectionManager(transport): SshConnectionManager;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:55](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshConnectionManager.ts#L55)
+Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:55](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshConnectionManager.ts#L55)
 
 #### Parameters
 
@@ -36,7 +36,7 @@ Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:55](https://gi
 nextSetupPayload(): Promise<Buffer<ArrayBufferLike>>;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:66](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshConnectionManager.ts#L66)
+Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:66](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshConnectionManager.ts#L66)
 
 Delivers the next connection-layer payload to callers during channel setup.
 Called by `SshSessionChannel` during `openChannel()` / `requestSubsystem()`.
@@ -56,7 +56,7 @@ pull directly from the transport iterator here.
 openExecChannel(command): Promise<SshSessionChannel>;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:103](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshConnectionManager.ts#L103)
+Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:103](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshConnectionManager.ts#L103)
 
 Opens a session channel and runs the given command on it.
 Must be called before `start()`.
@@ -79,7 +79,7 @@ Must be called before `start()`.
 openSubsystemChannel(subsystemName): Promise<SshSessionChannel>;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:89](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshConnectionManager.ts#L89)
+Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:89](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshConnectionManager.ts#L89)
 
 Opens a session channel and starts the SFTP subsystem on it.
 Must be called before `start()`.
@@ -102,7 +102,7 @@ Must be called before `start()`.
 start(): Promise<void>;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:120](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshConnectionManager.ts#L120)
+Defined in: [src/protocols/ssh/connection/SshConnectionManager.ts:120](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshConnectionManager.ts#L120)
 
 Starts the main dispatch loop.  Returns a Promise that resolves when the
 connection closes cleanly, or rejects on a fatal transport error.

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -10,6 +10,6 @@
 const DEFAULT_PROCESSED_SUBDIR: "processed" = "processed";
 ```
 
-Defined in: [src/mft/conventions.ts:18](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/conventions.ts#L18)
+Defined in: [src/mft/conventions.ts:18](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/conventions.ts#L18)
 
 Default subdirectory used to archive successfully processed inbox files.

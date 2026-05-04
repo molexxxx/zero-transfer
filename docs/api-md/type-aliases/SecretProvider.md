@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -12,7 +12,7 @@ type SecretProvider = () =>
 | Promise<SecretValue>;
 ```
 
-Defined in: [src/profiles/SecretSource.ts:15](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/profiles/SecretSource.ts#L15)
+Defined in: [src/profiles/SecretSource.ts:15](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/profiles/SecretSource.ts#L15)
 
 Callback source used by applications to integrate vaults or credential brokers.
 

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function parseMlstTimestamp(input): Date | undefined;
 ```
 
-Defined in: [src/providers/classic/ftp/FtpListParser.ts:154](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/classic/ftp/FtpListParser.ts#L154)
+Defined in: [src/providers/classic/ftp/FtpListParser.ts:154](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/classic/ftp/FtpListParser.ts#L154)
 
 Parses the UTC timestamp format used by MLST/MLSD `modify` facts.
 

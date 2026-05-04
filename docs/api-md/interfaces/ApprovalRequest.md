@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ApprovalRequest
 
-Defined in: [src/mft/approvals.ts:20](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/approvals.ts#L20)
+Defined in: [src/mft/approvals.ts:20](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/approvals.ts#L20)
 
 Approval request record.
 
@@ -14,11 +14,11 @@ Approval request record.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="id"></a> `id` | `string` | Stable approval id. | [src/mft/approvals.ts:22](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/approvals.ts#L22) |
-| <a id="metadata"></a> `metadata?` | `Record`\<`string`, `unknown`\> | Caller-defined metadata retained for diagnostics. | [src/mft/approvals.ts:36](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/approvals.ts#L36) |
-| <a id="reason"></a> `reason?` | `string` | Caller-defined reason recorded with the resolution. | [src/mft/approvals.ts:34](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/approvals.ts#L34) |
-| <a id="requestedat"></a> `requestedAt` | `Date` | Wall-clock time at which the request was created. | [src/mft/approvals.ts:26](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/approvals.ts#L26) |
-| <a id="resolvedat"></a> `resolvedAt?` | `Date` | Wall-clock time at which the status changed. | [src/mft/approvals.ts:30](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/approvals.ts#L30) |
-| <a id="resolvedby"></a> `resolvedBy?` | `string` | Identifier of the principal that resolved the request. | [src/mft/approvals.ts:32](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/approvals.ts#L32) |
-| <a id="routeid"></a> `routeId` | `string` | Route id awaiting approval. | [src/mft/approvals.ts:24](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/approvals.ts#L24) |
-| <a id="status"></a> `status` | [`ApprovalStatus`](../type-aliases/ApprovalStatus.md) | Current status. | [src/mft/approvals.ts:28](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/approvals.ts#L28) |
+| <a id="id"></a> `id` | `string` | Stable approval id. | [src/mft/approvals.ts:22](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/approvals.ts#L22) |
+| <a id="metadata"></a> `metadata?` | `Record`\<`string`, `unknown`\> | Caller-defined metadata retained for diagnostics. | [src/mft/approvals.ts:36](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/approvals.ts#L36) |
+| <a id="reason"></a> `reason?` | `string` | Caller-defined reason recorded with the resolution. | [src/mft/approvals.ts:34](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/approvals.ts#L34) |
+| <a id="requestedat"></a> `requestedAt` | `Date` | Wall-clock time at which the request was created. | [src/mft/approvals.ts:26](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/approvals.ts#L26) |
+| <a id="resolvedat"></a> `resolvedAt?` | `Date` | Wall-clock time at which the status changed. | [src/mft/approvals.ts:30](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/approvals.ts#L30) |
+| <a id="resolvedby"></a> `resolvedBy?` | `string` | Identifier of the principal that resolved the request. | [src/mft/approvals.ts:32](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/approvals.ts#L32) |
+| <a id="routeid"></a> `routeId` | `string` | Route id awaiting approval. | [src/mft/approvals.ts:24](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/approvals.ts#L24) |
+| <a id="status"></a> `status` | [`ApprovalStatus`](../type-aliases/ApprovalStatus.md) | Current status. | [src/mft/approvals.ts:28](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/approvals.ts#L28) |

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: RemoteFileAdapter
 
-Defined in: [src/protocols/RemoteFileAdapter.ts:20](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/RemoteFileAdapter.ts#L20)
+Defined in: [src/protocols/RemoteFileAdapter.ts:20](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/RemoteFileAdapter.ts#L20)
 
 Minimal remote-file adapter required by the current alpha facade.
 
@@ -18,7 +18,7 @@ Minimal remote-file adapter required by the current alpha facade.
 connect(profile): Promise<void>;
 ```
 
-Defined in: [src/protocols/RemoteFileAdapter.ts:27](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/RemoteFileAdapter.ts#L27)
+Defined in: [src/protocols/RemoteFileAdapter.ts:27](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/RemoteFileAdapter.ts#L27)
 
 Opens a remote connection.
 
@@ -42,7 +42,7 @@ A promise that resolves when the remote session is ready for operations.
 disconnect(): Promise<void>;
 ```
 
-Defined in: [src/protocols/RemoteFileAdapter.ts:34](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/RemoteFileAdapter.ts#L34)
+Defined in: [src/protocols/RemoteFileAdapter.ts:34](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/RemoteFileAdapter.ts#L34)
 
 Closes the remote connection and releases protocol resources.
 
@@ -60,7 +60,7 @@ A promise that resolves when the remote session is fully closed.
 list(path, options?): Promise<RemoteEntry[]>;
 ```
 
-Defined in: [src/protocols/RemoteFileAdapter.ts:43](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/RemoteFileAdapter.ts#L43)
+Defined in: [src/protocols/RemoteFileAdapter.ts:43](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/RemoteFileAdapter.ts#L43)
 
 Lists entries for a remote directory.
 
@@ -85,7 +85,7 @@ Normalized remote entries contained by the requested path.
 stat(path, options?): Promise<RemoteStat>;
 ```
 
-Defined in: [src/protocols/RemoteFileAdapter.ts:52](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/RemoteFileAdapter.ts#L52)
+Defined in: [src/protocols/RemoteFileAdapter.ts:52](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/RemoteFileAdapter.ts#L52)
 
 Reads metadata for a remote entry.
 

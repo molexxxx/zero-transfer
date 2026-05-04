@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function redactConnectionProfile(profile): Record<string, unknown>;
 ```
 
-Defined in: [src/profiles/ProfileRedactor.ts:16](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/profiles/ProfileRedactor.ts#L16)
+Defined in: [src/profiles/ProfileRedactor.ts:16](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/profiles/ProfileRedactor.ts#L16)
 
 Produces a diagnostics-safe profile copy with credentials and runtime hooks redacted.
 

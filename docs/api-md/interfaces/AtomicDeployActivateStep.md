@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: AtomicDeployActivateStep
 
-Defined in: [src/sync/createAtomicDeployPlan.ts:31](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createAtomicDeployPlan.ts#L31)
+Defined in: [src/sync/createAtomicDeployPlan.ts:31](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createAtomicDeployPlan.ts#L31)
 
 Kind of activation step described by the plan.
 
@@ -14,10 +14,10 @@ Kind of activation step described by the plan.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="destructive"></a> `destructive?` | `boolean` | Whether the step replaces or removes data. | [src/sync/createAtomicDeployPlan.ts:43](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createAtomicDeployPlan.ts#L43) |
-| <a id="frompath"></a> `fromPath?` | `string` | Source path the operation reads or moves from. | [src/sync/createAtomicDeployPlan.ts:37](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createAtomicDeployPlan.ts#L37) |
-| <a id="id"></a> `id` | `string` | Stable identifier within the activation list. | [src/sync/createAtomicDeployPlan.ts:33](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createAtomicDeployPlan.ts#L33) |
-| <a id="operation"></a> `operation` | [`AtomicDeployActivateOperation`](../type-aliases/AtomicDeployActivateOperation.md) | Operation the step would perform. | [src/sync/createAtomicDeployPlan.ts:35](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createAtomicDeployPlan.ts#L35) |
-| <a id="provider"></a> `provider?` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider identifier that owns the affected paths when known. | [src/sync/createAtomicDeployPlan.ts:41](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createAtomicDeployPlan.ts#L41) |
-| <a id="reason"></a> `reason` | `string` | Human-readable description for previews and logs. | [src/sync/createAtomicDeployPlan.ts:45](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createAtomicDeployPlan.ts#L45) |
-| <a id="topath"></a> `toPath` | `string` | Destination path the operation writes to. | [src/sync/createAtomicDeployPlan.ts:39](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createAtomicDeployPlan.ts#L39) |
+| <a id="destructive"></a> `destructive?` | `boolean` | Whether the step replaces or removes data. | [src/sync/createAtomicDeployPlan.ts:43](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createAtomicDeployPlan.ts#L43) |
+| <a id="frompath"></a> `fromPath?` | `string` | Source path the operation reads or moves from. | [src/sync/createAtomicDeployPlan.ts:37](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createAtomicDeployPlan.ts#L37) |
+| <a id="id"></a> `id` | `string` | Stable identifier within the activation list. | [src/sync/createAtomicDeployPlan.ts:33](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createAtomicDeployPlan.ts#L33) |
+| <a id="operation"></a> `operation` | [`AtomicDeployActivateOperation`](../type-aliases/AtomicDeployActivateOperation.md) | Operation the step would perform. | [src/sync/createAtomicDeployPlan.ts:35](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createAtomicDeployPlan.ts#L35) |
+| <a id="provider"></a> `provider?` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider identifier that owns the affected paths when known. | [src/sync/createAtomicDeployPlan.ts:41](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createAtomicDeployPlan.ts#L41) |
+| <a id="reason"></a> `reason` | `string` | Human-readable description for previews and logs. | [src/sync/createAtomicDeployPlan.ts:45](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createAtomicDeployPlan.ts#L45) |
+| <a id="topath"></a> `toPath` | `string` | Destination path the operation writes to. | [src/sync/createAtomicDeployPlan.ts:39](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createAtomicDeployPlan.ts#L39) |

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: TransferExecutionResult
 
-Defined in: [src/transfers/TransferJob.ts:77](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferJob.ts#L77)
+Defined in: [src/transfers/TransferJob.ts:77](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L77)
 
 Result returned by a transfer operation implementation.
 
@@ -14,10 +14,10 @@ Result returned by a transfer operation implementation.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="bytestransferred"></a> `bytesTransferred` | `number` | Bytes transferred by the completed operation. | [src/transfers/TransferJob.ts:79](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferJob.ts#L79) |
-| <a id="checksum"></a> `checksum?` | `string` | Optional checksum value produced or verified by the operation. | [src/transfers/TransferJob.ts:89](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferJob.ts#L89) |
-| <a id="resumed"></a> `resumed?` | `boolean` | Whether the operation resumed prior partial work. | [src/transfers/TransferJob.ts:83](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferJob.ts#L83) |
-| <a id="totalbytes"></a> `totalBytes?` | `number` | Total expected bytes when discovered during execution. | [src/transfers/TransferJob.ts:81](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferJob.ts#L81) |
-| <a id="verification"></a> `verification?` | [`TransferVerificationResult`](TransferVerificationResult.md) | Normalized post-transfer verification details. | [src/transfers/TransferJob.ts:87](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferJob.ts#L87) |
-| <a id="verified"></a> `verified?` | `boolean` | Whether post-transfer verification completed successfully. | [src/transfers/TransferJob.ts:85](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferJob.ts#L85) |
-| <a id="warnings"></a> `warnings?` | `string`[] | Non-fatal warnings produced during execution. | [src/transfers/TransferJob.ts:91](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferJob.ts#L91) |
+| <a id="bytestransferred"></a> `bytesTransferred` | `number` | Bytes transferred by the completed operation. | [src/transfers/TransferJob.ts:79](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L79) |
+| <a id="checksum"></a> `checksum?` | `string` | Optional checksum value produced or verified by the operation. | [src/transfers/TransferJob.ts:89](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L89) |
+| <a id="resumed"></a> `resumed?` | `boolean` | Whether the operation resumed prior partial work. | [src/transfers/TransferJob.ts:83](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L83) |
+| <a id="totalbytes"></a> `totalBytes?` | `number` | Total expected bytes when discovered during execution. | [src/transfers/TransferJob.ts:81](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L81) |
+| <a id="verification"></a> `verification?` | [`TransferVerificationResult`](TransferVerificationResult.md) | Normalized post-transfer verification details. | [src/transfers/TransferJob.ts:87](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L87) |
+| <a id="verified"></a> `verified?` | `boolean` | Whether post-transfer verification completed successfully. | [src/transfers/TransferJob.ts:85](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L85) |
+| <a id="warnings"></a> `warnings?` | `string`[] | Non-fatal warnings produced during execution. | [src/transfers/TransferJob.ts:91](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L91) |

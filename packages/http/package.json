@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/http",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "description": "HTTP(S) and signed-URL provider with ranged downloads.",
   "keywords": [
     "zero-transfer",

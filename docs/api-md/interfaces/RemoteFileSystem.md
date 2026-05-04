@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: RemoteFileSystem
 
-Defined in: [src/providers/RemoteFileSystem.ts:18](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/RemoteFileSystem.ts#L18)
+Defined in: [src/providers/RemoteFileSystem.ts:18](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/RemoteFileSystem.ts#L18)
 
 Minimal file-system surface shared by provider sessions.
 
@@ -18,7 +18,7 @@ Minimal file-system surface shared by provider sessions.
 list(path, options?): Promise<RemoteEntry[]>;
 ```
 
-Defined in: [src/providers/RemoteFileSystem.ts:20](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/RemoteFileSystem.ts#L20)
+Defined in: [src/providers/RemoteFileSystem.ts:20](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/RemoteFileSystem.ts#L20)
 
 Lists entries for a provider path.
 
@@ -41,7 +41,7 @@ Lists entries for a provider path.
 optional mkdir(path, options?): Promise<void>;
 ```
 
-Defined in: [src/providers/RemoteFileSystem.ts:28](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/RemoteFileSystem.ts#L28)
+Defined in: [src/providers/RemoteFileSystem.ts:28](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/RemoteFileSystem.ts#L28)
 
 Creates a directory when supported by the provider.
 
@@ -64,7 +64,7 @@ Creates a directory when supported by the provider.
 optional remove(path, options?): Promise<void>;
 ```
 
-Defined in: [src/providers/RemoteFileSystem.ts:24](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/RemoteFileSystem.ts#L24)
+Defined in: [src/providers/RemoteFileSystem.ts:24](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/RemoteFileSystem.ts#L24)
 
 Removes a file entry when supported by the provider.
 
@@ -90,7 +90,7 @@ optional rename(
 options?): Promise<void>;
 ```
 
-Defined in: [src/providers/RemoteFileSystem.ts:26](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/RemoteFileSystem.ts#L26)
+Defined in: [src/providers/RemoteFileSystem.ts:26](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/RemoteFileSystem.ts#L26)
 
 Renames or moves an entry when supported by the provider.
 
@@ -114,7 +114,7 @@ Renames or moves an entry when supported by the provider.
 optional rmdir(path, options?): Promise<void>;
 ```
 
-Defined in: [src/providers/RemoteFileSystem.ts:30](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/RemoteFileSystem.ts#L30)
+Defined in: [src/providers/RemoteFileSystem.ts:30](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/RemoteFileSystem.ts#L30)
 
 Removes a directory when supported by the provider.
 
@@ -137,7 +137,7 @@ Removes a directory when supported by the provider.
 stat(path, options?): Promise<RemoteStat>;
 ```
 
-Defined in: [src/providers/RemoteFileSystem.ts:22](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/RemoteFileSystem.ts#L22)
+Defined in: [src/providers/RemoteFileSystem.ts:22](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/RemoteFileSystem.ts#L22)
 
 Reads metadata for a provider path.
 

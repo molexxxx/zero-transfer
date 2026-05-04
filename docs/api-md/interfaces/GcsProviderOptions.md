@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: GcsProviderOptions
 
-Defined in: [src/providers/cloud/GcsProvider.ts:51](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/cloud/GcsProvider.ts#L51)
+Defined in: [src/providers/cloud/GcsProvider.ts:51](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/cloud/GcsProvider.ts#L51)
 
 Options accepted by [createGcsProviderFactory](../functions/createGcsProviderFactory.md).
 
@@ -14,9 +14,9 @@ Options accepted by [createGcsProviderFactory](../functions/createGcsProviderFac
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="apibaseurl"></a> `apiBaseUrl?` | `string` | Override the JSON API base URL. | [src/providers/cloud/GcsProvider.ts:57](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/cloud/GcsProvider.ts#L57) |
-| <a id="bucket"></a> `bucket` | `string` | Bucket name. Required. | [src/providers/cloud/GcsProvider.ts:55](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/cloud/GcsProvider.ts#L55) |
-| <a id="defaultheaders"></a> `defaultHeaders?` | `Record`\<`string`, `string`\> | Default headers applied before bearer auth on every request. | [src/providers/cloud/GcsProvider.ts:63](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/cloud/GcsProvider.ts#L63) |
-| <a id="fetch"></a> `fetch?` | [`HttpFetch`](../type-aliases/HttpFetch.md) | Custom fetch implementation. Defaults to global `fetch`. | [src/providers/cloud/GcsProvider.ts:61](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/cloud/GcsProvider.ts#L61) |
-| <a id="id"></a> `id?` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id to register. Defaults to `"gcs"`. | [src/providers/cloud/GcsProvider.ts:53](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/cloud/GcsProvider.ts#L53) |
-| <a id="uploadbaseurl"></a> `uploadBaseUrl?` | `string` | Override the upload API base URL. | [src/providers/cloud/GcsProvider.ts:59](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/cloud/GcsProvider.ts#L59) |
+| <a id="apibaseurl"></a> `apiBaseUrl?` | `string` | Override the JSON API base URL. | [src/providers/cloud/GcsProvider.ts:57](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/cloud/GcsProvider.ts#L57) |
+| <a id="bucket"></a> `bucket` | `string` | Bucket name. Required. | [src/providers/cloud/GcsProvider.ts:55](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/cloud/GcsProvider.ts#L55) |
+| <a id="defaultheaders"></a> `defaultHeaders?` | `Record`\<`string`, `string`\> | Default headers applied before bearer auth on every request. | [src/providers/cloud/GcsProvider.ts:63](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/cloud/GcsProvider.ts#L63) |
+| <a id="fetch"></a> `fetch?` | [`HttpFetch`](../type-aliases/HttpFetch.md) | Custom fetch implementation. Defaults to global `fetch`. | [src/providers/cloud/GcsProvider.ts:61](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/cloud/GcsProvider.ts#L61) |
+| <a id="id"></a> `id?` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id to register. Defaults to `"gcs"`. | [src/providers/cloud/GcsProvider.ts:53](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/cloud/GcsProvider.ts#L53) |
+| <a id="uploadbaseurl"></a> `uploadBaseUrl?` | `string` | Override the upload API base URL. | [src/providers/cloud/GcsProvider.ts:59](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/cloud/GcsProvider.ts#L59) |

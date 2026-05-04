@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/sftp",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "description": "Zero-dependency SFTP over SSH with a first-party SSH transport stack.",
   "keywords": [
     "zero-transfer",

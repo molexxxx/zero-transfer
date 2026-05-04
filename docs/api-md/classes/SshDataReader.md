@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: SshDataReader
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:7](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L7)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:7](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L7)
 
 Stateful SSH primitive decoder that reads sequential values from a packet payload.
 
@@ -20,7 +20,7 @@ Stateful SSH primitive decoder that reads sequential values from a packet payloa
 get remaining(): number;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:12](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L12)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:12](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L12)
 
 ##### Returns
 
@@ -34,7 +34,7 @@ Defined in: [src/protocols/ssh/binary/SshDataReader.ts:12](https://github.com/to
 new SshDataReader(source): SshDataReader;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:10](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L10)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:10](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L10)
 
 #### Parameters
 
@@ -54,7 +54,7 @@ Defined in: [src/protocols/ssh/binary/SshDataReader.ts:10](https://github.com/to
 assertFinished(): void;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:85](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L85)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:85](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L85)
 
 #### Returns
 
@@ -68,7 +68,7 @@ Defined in: [src/protocols/ssh/binary/SshDataReader.ts:85](https://github.com/to
 hasMore(): boolean;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:16](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L16)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:16](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L16)
 
 #### Returns
 
@@ -82,7 +82,7 @@ Defined in: [src/protocols/ssh/binary/SshDataReader.ts:16](https://github.com/to
 readBoolean(): boolean;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:27](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L27)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:27](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L27)
 
 #### Returns
 
@@ -96,7 +96,7 @@ Defined in: [src/protocols/ssh/binary/SshDataReader.ts:27](https://github.com/to
 readByte(): number;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:20](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L20)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:20](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L20)
 
 #### Returns
 
@@ -110,7 +110,7 @@ Defined in: [src/protocols/ssh/binary/SshDataReader.ts:20](https://github.com/to
 readBytes(length): Buffer;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:31](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L31)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:31](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L31)
 
 #### Parameters
 
@@ -130,7 +130,7 @@ Defined in: [src/protocols/ssh/binary/SshDataReader.ts:31](https://github.com/to
 readMpint(): Buffer;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:81](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L81)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:81](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L81)
 
 Reads an SSH `mpint` value (RFC 4251 §5): a length-prefixed two's-complement
 big-endian integer. Returns the raw magnitude bytes (non-negative integers
@@ -148,7 +148,7 @@ may have a leading 0x00 byte preserved by the caller as needed).
 readNameList(): string[];
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:66](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L66)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:66](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L66)
 
 #### Returns
 
@@ -162,7 +162,7 @@ Defined in: [src/protocols/ssh/binary/SshDataReader.ts:66](https://github.com/to
 readString(): Buffer;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:54](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L54)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:54](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L54)
 
 #### Returns
 
@@ -176,7 +176,7 @@ Defined in: [src/protocols/ssh/binary/SshDataReader.ts:54](https://github.com/to
 readUint32(): number;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:38](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L38)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:38](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L38)
 
 #### Returns
 
@@ -190,7 +190,7 @@ Defined in: [src/protocols/ssh/binary/SshDataReader.ts:38](https://github.com/to
 readUint64(): bigint;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:46](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L46)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:46](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L46)
 
 #### Returns
 
@@ -204,7 +204,7 @@ Defined in: [src/protocols/ssh/binary/SshDataReader.ts:46](https://github.com/to
 readUtf8String(): string;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataReader.ts:62](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/binary/SshDataReader.ts#L62)
+Defined in: [src/protocols/ssh/binary/SshDataReader.ts:62](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/binary/SshDataReader.ts#L62)
 
 #### Returns
 

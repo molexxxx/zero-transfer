@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: RemoteTreeDiffEntry
 
-Defined in: [src/sync/diffRemoteTrees.ts:22](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/diffRemoteTrees.ts#L22)
+Defined in: [src/sync/diffRemoteTrees.ts:22](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L22)
 
 Single diff record produced by [diffRemoteTrees](../functions/diffRemoteTrees.md).
 
@@ -14,8 +14,8 @@ Single diff record produced by [diffRemoteTrees](../functions/diffRemoteTrees.md
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="destination"></a> `destination?` | [`RemoteEntry`](RemoteEntry.md) | Destination-side entry, when present. | [src/sync/diffRemoteTrees.ts:32](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/diffRemoteTrees.ts#L32) |
-| <a id="path"></a> `path` | `string` | Path relative to the traversal root, beginning with `/`. | [src/sync/diffRemoteTrees.ts:24](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/diffRemoteTrees.ts#L24) |
-| <a id="reasons"></a> `reasons` | [`RemoteTreeDiffReason`](../type-aliases/RemoteTreeDiffReason.md)[] | Reasons the entry is considered modified. Empty for unchanged/added/removed records. | [src/sync/diffRemoteTrees.ts:28](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/diffRemoteTrees.ts#L28) |
-| <a id="source"></a> `source?` | [`RemoteEntry`](RemoteEntry.md) | Source-side entry, when present. | [src/sync/diffRemoteTrees.ts:30](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/diffRemoteTrees.ts#L30) |
-| <a id="status"></a> `status` | [`RemoteTreeDiffStatus`](../type-aliases/RemoteTreeDiffStatus.md) | Outcome category for this entry. | [src/sync/diffRemoteTrees.ts:26](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/diffRemoteTrees.ts#L26) |
+| <a id="destination"></a> `destination?` | [`RemoteEntry`](RemoteEntry.md) | Destination-side entry, when present. | [src/sync/diffRemoteTrees.ts:32](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L32) |
+| <a id="path"></a> `path` | `string` | Path relative to the traversal root, beginning with `/`. | [src/sync/diffRemoteTrees.ts:24](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L24) |
+| <a id="reasons"></a> `reasons` | [`RemoteTreeDiffReason`](../type-aliases/RemoteTreeDiffReason.md)[] | Reasons the entry is considered modified. Empty for unchanged/added/removed records. | [src/sync/diffRemoteTrees.ts:28](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L28) |
+| <a id="source"></a> `source?` | [`RemoteEntry`](RemoteEntry.md) | Source-side entry, when present. | [src/sync/diffRemoteTrees.ts:30](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L30) |
+| <a id="status"></a> `status` | [`RemoteTreeDiffStatus`](../type-aliases/RemoteTreeDiffStatus.md) | Outcome category for this entry. | [src/sync/diffRemoteTrees.ts:26](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L26) |

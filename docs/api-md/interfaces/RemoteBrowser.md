@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: RemoteBrowser
 
-Defined in: [src/sync/createRemoteBrowser.ts:58](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createRemoteBrowser.ts#L58)
+Defined in: [src/sync/createRemoteBrowser.ts:58](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createRemoteBrowser.ts#L58)
 
 Stateful directory browser returned by [createRemoteBrowser](../functions/createRemoteBrowser.md).
 
@@ -18,7 +18,7 @@ Stateful directory browser returned by [createRemoteBrowser](../functions/create
 breadcrumbs(): RemoteBreadcrumb[];
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:72](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createRemoteBrowser.ts#L72)
+Defined in: [src/sync/createRemoteBrowser.ts:72](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createRemoteBrowser.ts#L72)
 
 Compute breadcrumbs for the current path without re-listing.
 
@@ -34,7 +34,7 @@ Compute breadcrumbs for the current path without re-listing.
 navigate(target): Promise<RemoteBrowserSnapshot>;
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:66](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createRemoteBrowser.ts#L66)
+Defined in: [src/sync/createRemoteBrowser.ts:66](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createRemoteBrowser.ts#L66)
 
 Navigate to the supplied absolute or relative path.
 
@@ -56,7 +56,7 @@ Navigate to the supplied absolute or relative path.
 open(entry): Promise<RemoteBrowserSnapshot>;
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:68](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createRemoteBrowser.ts#L68)
+Defined in: [src/sync/createRemoteBrowser.ts:68](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createRemoteBrowser.ts#L68)
 
 Descend into the supplied directory entry. Throws when the entry is not a directory.
 
@@ -78,7 +78,7 @@ Descend into the supplied directory entry. Throws when the entry is not a direct
 refresh(): Promise<RemoteBrowserSnapshot>;
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:64](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createRemoteBrowser.ts#L64)
+Defined in: [src/sync/createRemoteBrowser.ts:64](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createRemoteBrowser.ts#L64)
 
 Reload the current directory and return the latest snapshot.
 
@@ -94,7 +94,7 @@ Reload the current directory and return the latest snapshot.
 setShowHidden(showHidden): void;
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:76](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createRemoteBrowser.ts#L76)
+Defined in: [src/sync/createRemoteBrowser.ts:76](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createRemoteBrowser.ts#L76)
 
 Toggle hidden-entry visibility. The next refresh re-applies the filter.
 
@@ -116,7 +116,7 @@ Toggle hidden-entry visibility. The next refresh re-applies the filter.
 setSort(key, order?): void;
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:74](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createRemoteBrowser.ts#L74)
+Defined in: [src/sync/createRemoteBrowser.ts:74](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createRemoteBrowser.ts#L74)
 
 Update the sort key. The next refresh re-sorts the cached entries.
 
@@ -139,7 +139,7 @@ Update the sort key. The next refresh re-sorts the cached entries.
 up(): Promise<RemoteBrowserSnapshot>;
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:70](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createRemoteBrowser.ts#L70)
+Defined in: [src/sync/createRemoteBrowser.ts:70](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createRemoteBrowser.ts#L70)
 
 Move to the parent directory; no-op when already at the root.
 
@@ -151,5 +151,5 @@ Move to the parent directory; no-op when already at the root.
 
 | Property | Modifier | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ | ------ |
-| <a id="entries"></a> `entries` | `readonly` | readonly [`RemoteEntry`](RemoteEntry.md)[] | Last loaded sorted/filtered entries. | [src/sync/createRemoteBrowser.ts:62](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createRemoteBrowser.ts#L62) |
-| <a id="path"></a> `path` | `readonly` | `string` | Current absolute path. | [src/sync/createRemoteBrowser.ts:60](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createRemoteBrowser.ts#L60) |
+| <a id="entries"></a> `entries` | `readonly` | readonly [`RemoteEntry`](RemoteEntry.md)[] | Last loaded sorted/filtered entries. | [src/sync/createRemoteBrowser.ts:62](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createRemoteBrowser.ts#L62) |
+| <a id="path"></a> `path` | `readonly` | `string` | Current absolute path. | [src/sync/createRemoteBrowser.ts:60](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/createRemoteBrowser.ts#L60) |

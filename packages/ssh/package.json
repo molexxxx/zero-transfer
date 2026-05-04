@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/ssh",
-  "version": "0.4.0",
+  "version": "0.4.2",
   "description": "Zero-dependency SSH 2.0 transport, auth, and channel primitives.",
   "keywords": [
     "zero-transfer",

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.0**](../README.md)
+[**ZeroTransfer SDK v0.4.2**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: SshSessionChannel
 
-Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:67](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshSessionChannel.ts#L67)
+Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:67](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshSessionChannel.ts#L67)
 
 A single SSH session channel.
 Not safe to share across concurrent callers; each SftpSession should own one.
@@ -19,7 +19,7 @@ Not safe to share across concurrent callers; each SftpSession should own one.
 new SshSessionChannel(transport, options?): SshSessionChannel;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:97](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshSessionChannel.ts#L97)
+Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:97](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshSessionChannel.ts#L97)
 
 #### Parameters
 
@@ -40,7 +40,7 @@ Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:97](https://githu
 close(): void;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:279](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshSessionChannel.ts#L279)
+Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:279](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshSessionChannel.ts#L279)
 
 Sends EOF and CLOSE.  Should be called when the client is done sending.
 
@@ -56,7 +56,7 @@ Sends EOF and CLOSE.  Should be called when the client is done sending.
 dispatch(payload): void;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:292](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshSessionChannel.ts#L292)
+Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:292](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshSessionChannel.ts#L292)
 
 Feed an inbound transport payload to this channel.
 Called by the channel multiplexer (`SshConnectionManager`).
@@ -79,7 +79,7 @@ Called by the channel multiplexer (`SshConnectionManager`).
 dispatchError(error): void;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:340](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshSessionChannel.ts#L340)
+Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:340](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshSessionChannel.ts#L340)
 
 #### Parameters
 
@@ -99,7 +99,7 @@ Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:340](https://gith
 openExec(command): Promise<void>;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:118](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshSessionChannel.ts#L118)
+Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:118](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshSessionChannel.ts#L118)
 
 Opens the channel and executes a command.
 
@@ -121,7 +121,7 @@ Opens the channel and executes a command.
 openSubsystem(subsystemName): Promise<void>;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:110](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshSessionChannel.ts#L110)
+Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:110](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshSessionChannel.ts#L110)
 
 Opens the channel and requests a subsystem.
 Resolves once the server confirms both CHANNEL_OPEN and the subsystem request.
@@ -144,7 +144,7 @@ Resolves once the server confirms both CHANNEL_OPEN and the subsystem request.
 receiveData(): AsyncGenerator<Buffer<ArrayBufferLike>, void, undefined>;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:265](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshSessionChannel.ts#L265)
+Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:265](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshSessionChannel.ts#L265)
 
 Async generator that yields raw data buffers from the channel.
 Returns (done) when the channel receives EOF or CLOSE.
@@ -161,7 +161,7 @@ Returns (done) when the channel receives EOF or CLOSE.
 sendData(data): Promise<void>;
 ```
 
-Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:218](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/connection/SshSessionChannel.ts#L218)
+Defined in: [src/protocols/ssh/connection/SshSessionChannel.ts:218](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/protocols/ssh/connection/SshSessionChannel.ts#L218)
 
 Sends data on the channel. Respects the remote window; if there is no space,
 splits the data and queues the remainder for when WINDOW_ADJUST arrives.

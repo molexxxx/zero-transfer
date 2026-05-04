@@ -833,7 +833,41 @@ interface TransferEngineOptions {
     /** Clock used for receipts and progress events. Defaults to `new Date()`. */
     now?: () => Date;
 }
-/** Executes transfer jobs and produces audit-friendly receipts. */
+/**
+ * Executes transfer jobs and produces audit-friendly receipts.
+ *
+ * The engine is the lowest-level entry point in the transfer stack: it owns
+ * retry policy, attempt history, abort propagation, progress event
+ * normalization, and receipt construction. Most callers reach the engine
+ * indirectly through {@link runRoute}, {@link uploadFile}, {@link downloadFile},
+ * {@link copyBetween}, or {@link TransferQueue}; instantiate it directly when
+ * you need full control over execution semantics.
+ *
+ * @example Execute a single job with a custom executor
+ * ```ts
+ * import { TransferEngine, type TransferExecutor, type TransferJob } from "@zero-transfer/sdk";
+ *
+ * const engine = new TransferEngine();
+ *
+ * const executor: TransferExecutor = async ({ job, signal, onProgress }) => {
+ *   onProgress?.({ jobId: job.id, bytesTransferred: 0 });
+ *   // … perform the bytes here, honoring `signal` …
+ *   return { jobId: job.id, bytesTransferred: 1234, completedAt: new Date() };
+ * };
+ *
+ * const job: TransferJob = {
+ *   id: "manual-1",
+ *   operation: "upload",
+ *   source: { profile: localProfile, path: "./data.bin" },
+ *   destination: { profile: s3Profile, path: "/data/data.bin" },
+ * };
+ *
+ * const receipt = await engine.execute(job, executor, {
+ *   retry: { maxAttempts: 3, baseDelayMs: 250 },
+ * });
+ * console.log(receipt.attempts.length); // 1 on success
+ * ```
+ */
 declare class TransferEngine {
     private readonly now;
     /**
@@ -1584,8 +1618,20 @@ interface ClientDiagnostics {
 /**
  * Returns a redaction-safe snapshot of the providers registered with a client.
  *
+ * Use this when rendering a setup screen, generating a support bundle, or
+ * asserting in tests that the expected provider factories were registered.
+ *
  * @param client - Transfer client to inspect.
  * @returns Provider id and capability snapshot tuples.
+ *
+ * @example List registered providers
+ * ```ts
+ * import { summarizeClientDiagnostics } from "@zero-transfer/sdk";
+ *
+ * for (const { id, capabilities } of summarizeClientDiagnostics(client).providers) {
+ *   console.log(`${id}: streaming=${capabilities.readStream} resume=${capabilities.resumeDownload}`);
+ * }
+ * ```
  */
 declare function summarizeClientDiagnostics(client: TransferClient): ClientDiagnostics;
 /** Per-step duration measurements collected by {@link runConnectionDiagnostics}. */
@@ -1638,8 +1684,36 @@ interface RunConnectionDiagnosticsOptions {
 /**
  * Connects to a profile, captures capability and listing samples, and returns a redaction-safe report.
  *
+ * Useful for connectivity "ping" pages, smoke tests, and bug reports. Secrets
+ * in the profile are redacted via {@link redactConnectionProfile} before being
+ * returned. The session is always disconnected before the function returns,
+ * including when probes throw.
+ *
  * @param options - Diagnostic probe options.
  * @returns Diagnostic report including timings and any captured error.
+ *
+ * @example Probe an SFTP connection
+ * ```ts
+ * import { runConnectionDiagnostics } from "@zero-transfer/sdk";
+ *
+ * const report = await runConnectionDiagnostics({
+ *   client,
+ *   profile: {
+ *     host: "sftp.example.com",
+ *     provider: "sftp",
+ *     username: "deploy",
+ *     ssh: { privateKey: { path: "./keys/id_ed25519" } },
+ *   },
+ *   listPath: "/uploads",
+ * });
+ *
+ * if (!report.ok) {
+ *   console.error("connection failed:", report.error);
+ * } else {
+ *   console.log(`connect=${report.timings.connectMs}ms list=${report.timings.listMs}ms`);
+ *   console.log(report.sample); // up to 5 entries from /uploads
+ * }
+ * ```
  */
 declare function runConnectionDiagnostics(options: RunConnectionDiagnosticsOptions): Promise<ConnectionDiagnosticsResult>;
 
@@ -1746,8 +1820,29 @@ interface MemoryProviderOptions {
 /**
  * Creates a provider factory backed by deterministic in-memory fixture entries.
  *
+ * Useful for tests and examples where you want a real `TransferSession` without
+ * touching disk or the network. Entries are pre-seeded; mutations made through
+ * the session are visible to subsequent operations on the same provider.
+ *
  * @param options - Optional fixture entries to expose through the memory provider.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example Seed entries and read them back
+ * ```ts
+ * import { createMemoryProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({
+ *   providers: [createMemoryProviderFactory({
+ *     entries: [
+ *       { path: "/fixtures/hello.txt", content: "hello world" },
+ *       { path: "/fixtures/data.bin", content: new Uint8Array([1, 2, 3]) },
+ *     ],
+ *   })],
+ * });
+ *
+ * const session = await client.connect({ host: "fixtures", provider: "memory" });
+ * console.log(await session.fs.list("/fixtures"));
+ * ```
  */
 declare function createMemoryProviderFactory(options?: MemoryProviderOptions): ProviderFactory;
 
@@ -2485,9 +2580,47 @@ interface TransferPlanSummary {
     /** Counts grouped by action. */
     actions: Record<string, number>;
 }
-/** Creates a transfer plan from dry-run planning input. */
+/**
+ * Creates a transfer plan from dry-run planning input.
+ *
+ * Plans are immutable, structured descriptions of intended work. Pair with
+ * {@link createSyncPlan} or {@link createAtomicDeployPlan} for end-to-end
+ * planning, or build steps by hand when you need full control. Pass the plan
+ * to {@link createTransferJobsFromPlan} to materialize executable jobs.
+ *
+ * @example Build a plan with two upload steps and inspect it
+ * ```ts
+ * import { createTransferPlan, summarizeTransferPlan } from "@zero-transfer/sdk";
+ *
+ * const plan = createTransferPlan({
+ *   id: "manual-batch",
+ *   steps: [
+ *     { action: "upload", source: "./a.bin", destination: "/lake/a.bin", expectedBytes: 1024 },
+ *     { action: "upload", source: "./b.bin", destination: "/lake/b.bin", expectedBytes: 2048 },
+ *   ],
+ * });
+ *
+ * console.table(summarizeTransferPlan(plan));
+ * ```
+ */
 declare function createTransferPlan(input: TransferPlanInput): TransferPlan;
-/** Summarizes a transfer plan for diagnostics, previews, and tests. */
+/**
+ * Summarizes a transfer plan for diagnostics, previews, and tests.
+ *
+ * Returns aggregate counts (total / executable / skipped / destructive),
+ * total expected bytes, and a per-action histogram. Useful for printing a
+ * one-line plan summary before executing or for asserting plan shape in
+ * tests.
+ *
+ * @example Print a plan preview
+ * ```ts
+ * import { summarizeTransferPlan } from "@zero-transfer/sdk";
+ *
+ * const summary = summarizeTransferPlan(plan);
+ * console.log(`${summary.executableSteps} steps, ${summary.totalExpectedBytes} bytes total`);
+ * console.log("Actions:", summary.actions);
+ * ```
+ */
 declare function summarizeTransferPlan(plan: TransferPlan): TransferPlanSummary;
 /** Converts executable plan steps into transfer jobs while preserving order. */
 declare function createTransferJobsFromPlan(plan: TransferPlan): TransferJob[];
@@ -2564,7 +2697,41 @@ interface TransferQueueSummary {
     /** Failed queue items in queue order. */
     failures: TransferQueueItem[];
 }
-/** Minimal transfer queue with concurrency, pause/resume, cancellation, and drain summaries. */
+/**
+ * Minimal transfer queue with concurrency, pause/resume, cancellation, and drain summaries.
+ *
+ * Wrap a {@link TransferEngine} with a queue when you need to run many transfers
+ * concurrently with bounded parallelism, observe per-job progress, or drive
+ * a UI from a single source of truth. Items are FIFO; failures and successes
+ * are surfaced via observers and in the final {@link TransferQueueSummary}.
+ *
+ * @example Run a batch of uploads with concurrency=4
+ * ```ts
+ * import {
+ *   TransferQueue,
+ *   createProviderTransferExecutor,
+ * } from "@zero-transfer/sdk";
+ *
+ * const queue = new TransferQueue({
+ *   concurrency: 4,
+ *   executor: createProviderTransferExecutor({ client }),
+ *   onProgress: (e) => console.log(`${e.jobId}: ${e.bytesTransferred}`),
+ *   onError: (item, err) => console.error(`${item.job.id} failed`, err),
+ * });
+ *
+ * for (const file of files) {
+ *   queue.enqueue({
+ *     id: file.name,
+ *     operation: "upload",
+ *     source: { profile: localProfile, path: file.path },
+ *     destination: { profile: s3Profile, path: `/lake/${file.name}` },
+ *   });
+ * }
+ *
+ * const summary = await queue.drain();
+ * console.log(`Completed ${summary.completed} / ${summary.total}`);
+ * ```
+ */
 declare class TransferQueue {
     private readonly engine;
     private readonly items;
@@ -2844,6 +3011,26 @@ interface DiffRemoteTreesOptions {
  * @param destinationPath - Destination-side root path being compared.
  * @param options - Optional comparison controls.
  * @returns Diff result containing entries and a summary.
+ *
+ * @example Diff two SFTP subtrees and feed the result into createSyncPlan
+ * ```ts
+ * import { createSyncPlan, diffRemoteTrees } from "@zero-transfer/sdk";
+ *
+ * const diff = await diffRemoteTrees(
+ *   srcSession.fs, "/exports",
+ *   dstSession.fs, "/exports",
+ *   { compareUniqueId: true },
+ * );
+ *
+ * console.log(diff.summary); // { added, removed, changed, unchanged }
+ *
+ * const plan = createSyncPlan({
+ *   id: "exports-sync",
+ *   diff,
+ *   source: { provider: "sftp", rootPath: "/exports" },
+ *   destination: { provider: "sftp", rootPath: "/exports" },
+ * });
+ * ```
  */
 declare function diffRemoteTrees(source: RemoteFileSystem, sourcePath: string, destination: RemoteFileSystem, destinationPath: string, options?: DiffRemoteTreesOptions): Promise<RemoteTreeDiff>;
 
@@ -2915,6 +3102,31 @@ interface CreateSyncPlanOptions {
  * @param options - Inputs and policies that shape the plan.
  * @returns Transfer plan ready for `createTransferJobsFromPlan` or queue execution.
  * @throws {@link ConfigurationError} When `conflictPolicy: "error"` encounters a conflict.
+ *
+ * @example Mirror SFTP → S3 with deletes
+ * ```ts
+ * import {
+ *   createSyncPlan,
+ *   diffRemoteTrees,
+ *   summarizeTransferPlan,
+ * } from "@zero-transfer/sdk";
+ *
+ * const diff = await diffRemoteTrees(
+ *   srcSession.fs, "/dist",
+ *   dstSession.fs, "/releases/current",
+ * );
+ *
+ * const plan = createSyncPlan({
+ *   id: "release-mirror",
+ *   diff,
+ *   source: { provider: "sftp", rootPath: "/dist" },
+ *   destination: { provider: "s3", rootPath: "/releases/current" },
+ *   deletePolicy: "mirror",
+ *   conflictPolicy: "overwrite",
+ * });
+ *
+ * console.table(summarizeTransferPlan(plan));
+ * ```
  */
 declare function createSyncPlan(options: CreateSyncPlanOptions): TransferPlan;
 
@@ -3030,9 +3242,39 @@ interface CreateAtomicDeployPlanOptions {
 /**
  * Builds an {@link AtomicDeployPlan} that stages a release, swaps it live, and prunes old releases.
  *
+ * The plan describes a blue/green-style deploy:
+ *  1. Upload to a timestamped staging directory under `<destination>/.releases/`.
+ *  2. Atomically swap the `current` symlink/rename to point at the new release.
+ *  3. Optionally prune old releases beyond `retain`.
+ *
+ * No I/O is performed — the host executes the plan steps. Pair with
+ * {@link createTransferPlan} or {@link createTransferJobsFromPlan} to execute.
+ *
  * @param options - Inputs and policies that shape the deploy.
  * @returns Structured deploy plan ready for execution by the calling host.
  * @throws {@link ConfigurationError} When `retain` is less than `1` or the destination root is empty.
+ *
+ * @example Plan a release with rollback path
+ * ```ts
+ * import { createAtomicDeployPlan } from "@zero-transfer/sdk";
+ *
+ * const plan = createAtomicDeployPlan({
+ *   id: "web-2026-04-28",
+ *   source: { rootPath: "./dist" },
+ *   destination: {
+ *     profile: { host: "web1.example.com", provider: "sftp", username: "deploy" },
+ *     rootPath: "/srv/www",
+ *   },
+ *   retain: 5,
+ *   existingReleases: [
+ *     "/srv/www/.releases/2026-04-21T00-00-00Z",
+ *     "/srv/www/.releases/2026-04-14T00-00-00Z",
+ *   ],
+ * });
+ *
+ * console.log(plan.swap);   // staging → current rename
+ * console.log(plan.prune);  // releases scheduled for removal
+ * ```
  */
 declare function createAtomicDeployPlan(options: CreateAtomicDeployPlanOptions): AtomicDeployPlan;
 
@@ -3251,7 +3493,48 @@ interface AzureBlobProviderOptions {
     /** Default headers applied before bearer auth on every request. */
     defaultHeaders?: Record<string, string>;
 }
-/** Creates an Azure Blob Storage provider factory. */
+/**
+ * Creates an Azure Blob Storage provider factory.
+ *
+ * The container is fixed at factory construction time. Authenticate per-connection
+ * with either a SAS token (configured at factory level via {@link AzureBlobProviderOptions.sasToken})
+ * or an AAD bearer token resolved from `profile.password`. Override `endpoint` for
+ * sovereign clouds or local Azurite testing.
+ *
+ * @param options - Container plus optional endpoint, SAS token, fetch override.
+ * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example AAD-bearer upload
+ * ```ts
+ * import { createAzureBlobProviderFactory, createTransferClient, uploadFile } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({
+ *   providers: [createAzureBlobProviderFactory({ container: "snapshots" })],
+ * });
+ *
+ * await uploadFile({
+ *   client,
+ *   localPath: "./snapshots/2026-04-28.tar.zst",
+ *   destination: {
+ *     path: "/2026/04/28/snapshot.tar.zst",
+ *     profile: {
+ *       host: "mystorageacct",
+ *       provider: "azure-blob",
+ *       password: { env: "AZURE_AAD_TOKEN" },
+ *     },
+ *   },
+ * });
+ * ```
+ *
+ * @example SAS-token + Azurite emulator
+ * ```ts
+ * createAzureBlobProviderFactory({
+ *   container: "devstoreaccount1",
+ *   endpoint: "http://127.0.0.1:10000/devstoreaccount1",
+ *   sasToken: "sv=2024-11-04&ss=b&srt=co&sp=rwdlac&se=...",
+ * });
+ * ```
+ */
 declare function createAzureBlobProviderFactory(options: AzureBlobProviderOptions): ProviderFactory;
 
 export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type AzureBlobProviderOptions, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionPoolOptions, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type PooledTransferClient, type ProgressEventInput, ProtocolError, type AuthenticationCapability as ProviderAuthenticationCapability, type CapabilitySet as ProviderCapabilities, type ChecksumCapability as ProviderChecksumCapability, type ProviderFactory, type ProviderId, type MetadataCapability as ProviderMetadataCapability, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type SecretProvider, type SecretSource, type SecretValue, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithms, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshProfile, type SshSocketFactory, type SshSocketFactoryContext, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createAzureBlobProviderFactory, createBandwidthThrottle, createLocalProviderFactory, createMemoryProviderFactory, createOAuthTokenSecretSource, createPooledTransferClient, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactObject, redactSecretSource, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };
