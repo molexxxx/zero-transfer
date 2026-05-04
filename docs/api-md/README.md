@@ -1,8 +1,8 @@
-**ZeroTransfer SDK v0.2.0**
+**ZeroTransfer SDK v0.3.0**
 
 ***
 
-# ZeroTransfer SDK v0.2.0
+# ZeroTransfer SDK v0.3.0
 
 ZeroTransfer public API surface.
 
@@ -35,7 +35,6 @@ path safety utilities used by future protocol adapters.
 | [createLocalProviderFactory](functions/createLocalProviderFactory.md) | Creates a provider factory backed by the local filesystem. |
 | [createMemoryProviderFactory](functions/createMemoryProviderFactory.md) | Creates a provider factory backed by deterministic in-memory fixture entries. |
 | [createMemoryS3MultipartResumeStore](functions/createMemoryS3MultipartResumeStore.md) | Creates an in-memory [S3MultipartResumeStore](interfaces/S3MultipartResumeStore.md). |
-| [createNativeSftpProviderFactory](functions/createNativeSftpProviderFactory.md) | Creates a [ProviderFactory](interfaces/ProviderFactory.md) backed by the native SSH/SFTP protocol stack — no `ssh2` dependency required. |
 | [createOAuthTokenSecretSource](functions/createOAuthTokenSecretSource.md) | Builds a [SecretProvider](type-aliases/SecretProvider.md) that exchanges a refresh callback for cached, auto-renewing access tokens. |
 | [createOneDriveProviderFactory](functions/createOneDriveProviderFactory.md) | Creates a OneDrive/SharePoint provider factory backed by Microsoft Graph. |
 | [createOutboxRoute](functions/createOutboxRoute.md) | Creates a route that drops files from a source endpoint into an outbox directory. |
@@ -44,8 +43,7 @@ path safety utilities used by future protocol adapters.
 | [createRemoteBrowser](functions/createRemoteBrowser.md) | Creates a stateful directory browser around a remote file system. |
 | [createRemoteManifest](functions/createRemoteManifest.md) | Walks a remote subtree and produces a serializable manifest snapshot. |
 | [createS3ProviderFactory](functions/createS3ProviderFactory.md) | Creates an S3-compatible provider factory. |
-| [createSftpJumpHostSocketFactory](functions/createSftpJumpHostSocketFactory.md) | Builds an [SshSocketFactory](type-aliases/SshSocketFactory.md) that tunnels SFTP connections through a bastion host. |
-| [createSftpProviderFactory](functions/createSftpProviderFactory.md) | Creates an SFTP provider factory backed by the mature `ssh2` implementation. |
+| [createSftpProviderFactory](functions/createSftpProviderFactory.md) | Creates a [ProviderFactory](interfaces/ProviderFactory.md) backed by the native SSH/SFTP protocol stack — no `ssh2` dependency required. |
 | [createSyncPlan](functions/createSyncPlan.md) | Builds a [TransferPlan](interfaces/TransferPlan.md) that reconciles two remote subtrees. |
 | [createTransferClient](functions/createTransferClient.md) | Creates a provider-neutral transfer client. |
 | [createTransferJobsFromPlan](functions/createTransferJobsFromPlan.md) | Converts executable plan steps into transfer jobs while preserving order. |
@@ -216,8 +214,6 @@ path safety utilities used by future protocol adapters.
 | [MftSchedule](interfaces/MftSchedule.md) | Declarative schedule binding a route id to a trigger. |
 | [MftSchedulerOptions](interfaces/MftSchedulerOptions.md) | Construction options for [MftScheduler](classes/MftScheduler.md). |
 | [MkdirOptions](interfaces/MkdirOptions.md) | Options for creating a remote directory. |
-| [NativeSftpProviderOptions](interfaces/NativeSftpProviderOptions.md) | Options for [createNativeSftpProviderFactory](functions/createNativeSftpProviderFactory.md). |
-| [NativeSftpRawSession](interfaces/NativeSftpRawSession.md) | Low-level handles exposed by a native SFTP session for diagnostics and advanced extension. Most applications should use the [TransferSession](interfaces/TransferSession.md) returned from `client.connect()` instead. |
 | [OAuthAccessToken](interfaces/OAuthAccessToken.md) | Token material returned by [OAuthRefreshCallback](type-aliases/OAuthRefreshCallback.md). |
 | [OAuthTokenSecretSourceOptions](interfaces/OAuthTokenSecretSourceOptions.md) | Options accepted by [createOAuthTokenSecretSource](functions/createOAuthTokenSecretSource.md). |
 | [OneDriveProviderOptions](interfaces/OneDriveProviderOptions.md) | Options accepted by [createOneDriveProviderFactory](functions/createOneDriveProviderFactory.md). |
@@ -265,9 +261,8 @@ path safety utilities used by future protocol adapters.
 | [S3MultipartResumeStore](interfaces/S3MultipartResumeStore.md) | Persistence contract for resuming partial multipart uploads across processes or retries. Implementations may be synchronous or asynchronous; `clear` is invoked once the multipart upload completes successfully (or is explicitly aborted). |
 | [S3ProviderOptions](interfaces/S3ProviderOptions.md) | Options accepted by [createS3ProviderFactory](functions/createS3ProviderFactory.md). |
 | [ScheduleTimerHooks](interfaces/ScheduleTimerHooks.md) | Timer hooks injected by tests so fake clocks stay deterministic. |
-| [SftpJumpHostOptions](interfaces/SftpJumpHostOptions.md) | Options for [createSftpJumpHostSocketFactory](functions/createSftpJumpHostSocketFactory.md). |
-| [SftpProviderOptions](interfaces/SftpProviderOptions.md) | Options used to create an SFTP provider factory. |
-| [SftpRawSession](interfaces/SftpRawSession.md) | Raw SFTP session handles exposed for advanced diagnostics. |
+| [SftpProviderOptions](interfaces/SftpProviderOptions.md) | Options for [createNativeSftpProviderFactory](functions/createSftpProviderFactory.md). |
+| [SftpRawSession](interfaces/SftpRawSession.md) | Low-level handles exposed by a native SFTP session for diagnostics and advanced extension. Most applications should use the [TransferSession](interfaces/TransferSession.md) returned from `client.connect()` instead. |
 | [SshKeyboardInteractiveChallenge](interfaces/SshKeyboardInteractiveChallenge.md) | Input passed to SSH keyboard-interactive answer providers. |
 | [SshKeyboardInteractivePrompt](interfaces/SshKeyboardInteractivePrompt.md) | Prompt metadata supplied by an SSH keyboard-interactive server challenge. |
 | [SshProfile](interfaces/SshProfile.md) | SSH authentication material for SFTP-style providers. |
@@ -392,6 +387,24 @@ path safety utilities used by future protocol adapters.
 | [REMOTE\_MANIFEST\_FORMAT\_VERSION](variables/REMOTE_MANIFEST_FORMAT_VERSION.md) | Schema version for the manifest payload. Bumped on incompatible format changes. |
 
 ## References
+
+### createNativeSftpProviderFactory
+
+Renames and re-exports [createSftpProviderFactory](functions/createSftpProviderFactory.md)
+
+***
+
+### NativeSftpProviderOptions
+
+Renames and re-exports [SftpProviderOptions](interfaces/SftpProviderOptions.md)
+
+***
+
+### NativeSftpRawSession
+
+Renames and re-exports [SftpRawSession](interfaces/SftpRawSession.md)
+
+***
 
 ### ProviderAuthenticationCapability
 

@@ -8,9 +8,9 @@
  *      includes the full core surface, so exact-match is not asserted).
  *   3. Does NOT expose provider-specific symbols from sibling scopes
  *      (e.g. `@zero-transfer/ftp` must not expose `createSftpProviderFactory`).
- *   4. Has a `package.json` with the metadata shape required for npm publication,
- *      including correct `dependencies` (ssh2 for sftp/classic, nothing for others)
- *      and no `peerDependencies` on `@zero-transfer/sdk`.
+ *   4. Has a `package.json` with the metadata shape required for npm publication.
+ *      No scope declares `ssh2` (the native SSH stack ships in-bundle), and no
+ *      scope has a `peerDependency` on `@zero-transfer/sdk`.
  */
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -112,13 +112,9 @@ describe("scripts/scope-manifest.mjs — manifest integrity", () => {
     expect(missing).toEqual([]);
   });
 
-  it("only sftp and classic declare ssh2 as a dependency", () => {
+  it("no scoped package declares ssh2 as a dependency", () => {
     for (const scope of scopeList) {
-      if (scope.name === "sftp" || scope.name === "classic") {
-        expect(scope.deps["ssh2"], `${scope.name}.deps.ssh2`).toBeTruthy();
-      } else {
-        expect(scope.deps["ssh2"], `${scope.name}.deps.ssh2`).toBeUndefined();
-      }
+      expect(scope.deps["ssh2"], `${scope.name}.deps.ssh2`).toBeUndefined();
     }
   });
 });
@@ -206,13 +202,9 @@ describe("packages/* — self-contained scoped packages", () => {
         const peer = pkg.peerDependencies as Record<string, string> | undefined;
         expect(peer?.["@zero-transfer/sdk"]).toBeUndefined();
 
-        // ssh2 must be a real dependency for sftp/classic, absent elsewhere.
+        // No scoped package depends on ssh2 — the native SSH stack ships in-bundle.
         const deps = pkg.dependencies as Record<string, string> | undefined;
-        if (scope.name === "sftp" || scope.name === "classic") {
-          expect(deps?.["ssh2"], `${scope.name} must declare ssh2 dependency`).toBeTruthy();
-        } else {
-          expect(deps?.["ssh2"], `${scope.name} must not declare ssh2`).toBeUndefined();
-        }
+        expect(deps?.["ssh2"], `${scope.name} must not declare ssh2`).toBeUndefined();
 
         const repo = pkg.repository as Record<string, string>;
         expect(repo.directory).toBe(`packages/${scope.name}`);

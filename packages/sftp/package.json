@@ -1,7 +1,7 @@
 {
   "name": "@zero-transfer/sftp",
-  "version": "0.2.0",
-  "description": "SFTP with a native SSH stack (default) plus the classic ssh2-backed provider for ssh-agent and jump-host support.",
+  "version": "0.3.0",
+  "description": "Zero-dependency SFTP over SSH with a first-party SSH transport stack.",
   "keywords": [
     "zero-transfer",
     "sftp",
@@ -43,8 +43,5 @@
     "provenance": true,
     "access": "public"
   },
-  "sideEffects": false,
-  "dependencies": {
-    "ssh2": "^1.17.0"
-  }
+  "sideEffects": false
 }

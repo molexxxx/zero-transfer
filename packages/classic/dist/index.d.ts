@@ -2,7 +2,7 @@ import { EventEmitter } from 'node:events';
 import { SecureVersion, PeerCertificate } from 'node:tls';
 import { Readable } from 'node:stream';
 import { Buffer as Buffer$1 } from 'node:buffer';
-import { ConnectConfig, Client, SFTPWrapper } from 'ssh2';
+import { Socket } from 'node:net';
 
 /**
  * Structured logging contracts and helpers for ZeroTransfer.
@@ -3421,70 +3421,541 @@ declare function parseMlsdLine(line: string, directory?: string): RemoteEntry;
  */
 declare function parseMlstTimestamp(input: string | undefined): Date | undefined;
 
-/** Options used to create an SFTP provider factory. */
-interface SftpProviderOptions {
-    /** Hash algorithm used before calling ssh2's host verifier, such as `sha256`. */
-    hostHash?: ConnectConfig["hostHash"];
-    /** Host-key verifier passed directly to ssh2 for advanced callers. */
-    hostVerifier?: ConnectConfig["hostVerifier"];
-    /** Default SSH handshake timeout in milliseconds when the profile does not provide `timeoutMs`. */
-    readyTimeoutMs?: number;
+/** Algorithm lists exchanged during SSH KEXINIT negotiation. */
+interface SshAlgorithmPreferences {
+    compressionClientToServer: readonly string[];
+    compressionServerToClient: readonly string[];
+    encryptionClientToServer: readonly string[];
+    encryptionServerToClient: readonly string[];
+    kexAlgorithms: readonly string[];
+    languagesClientToServer: readonly string[];
+    languagesServerToClient: readonly string[];
+    macClientToServer: readonly string[];
+    macServerToClient: readonly string[];
+    serverHostKeyAlgorithms: readonly string[];
 }
-/** Raw SFTP session handles exposed for advanced diagnostics. */
-interface SftpRawSession {
-    /** Underlying ssh2 client connection. */
-    client: Client;
-    /** Underlying ssh2 SFTP wrapper. */
-    sftp: SFTPWrapper;
+/** Selected algorithms after intersecting client preferences with server capabilities. */
+interface NegotiatedSshAlgorithms {
+    compressionClientToServer: string;
+    compressionServerToClient: string;
+    encryptionClientToServer: string;
+    encryptionServerToClient: string;
+    kexAlgorithm: string;
+    languageClientToServer?: string;
+    languageServerToClient?: string;
+    macClientToServer: string;
+    macServerToClient: string;
+    serverHostKeyAlgorithm: string;
+}
+
+/** Parsed SSH identification components from the RFC 4253 banner line. */
+interface SshIdentification {
+    protocolVersion: string;
+    softwareVersion: string;
+    comments?: string;
+    raw: string;
+}
+
+/** Parsed SSH_MSG_KEXINIT payload. */
+interface SshKexInitMessage extends SshAlgorithmPreferences {
+    cookie: Buffer$1;
+    firstKexPacketFollows: boolean;
+    messageType: number;
+    reserved: number;
+}
+
+/** Directional key material used after SSH NEWKEYS. */
+interface SshTransportDirectionKeys {
+    encryptionKey: Buffer$1;
+    iv: Buffer$1;
+    macKey: Buffer$1;
+}
+/** Session key bundle derived from K, H, and session id. */
+interface SshDerivedSessionKeys {
+    clientToServer: SshTransportDirectionKeys;
+    exchangeHash: Buffer$1;
+    serverToClient: SshTransportDirectionKeys;
+    sessionId: Buffer$1;
+}
+
+/** Initial client-side handshake state before key exchange math starts. */
+interface SshTransportHandshakeResult {
+    keyExchange: {
+        algorithm: string;
+        clientKexInitPayload: Buffer$1;
+        clientPublicKey: Buffer$1;
+        exchangeHash: Buffer$1;
+        serverHostKey: Buffer$1;
+        serverKexInitPayload: Buffer$1;
+        serverPublicKey: Buffer$1;
+        serverSignature: Buffer$1;
+        sessionId: Buffer$1;
+        sharedSecret: Buffer$1;
+        transportKeys: {
+            clientToServer: SshDerivedSessionKeys["clientToServer"];
+            serverToClient: SshDerivedSessionKeys["serverToClient"];
+        };
+    };
+    negotiatedAlgorithms: NegotiatedSshAlgorithms;
+    serverIdentification: SshIdentification;
+    serverKexInit: SshKexInitMessage;
+    /**
+     * Number of unencrypted packets the client sent during the handshake (KEXINIT,
+     * KEX_ECDH_INIT, NEWKEYS). Per RFC 4253 §6.4, packet sequence numbers are never
+     * reset across NEWKEYS, so this value seeds the outbound protector.
+     */
+    outboundPacketCount: number;
+    /**
+     * Number of unencrypted packets the client received from the server during the
+     * handshake (server KEXINIT, KEX_ECDH_REPLY, NEWKEYS). Seeds the inbound unprotector.
+     */
+    inboundPacketCount: number;
+}
+
+/** Standard SSH disconnect reason codes (RFC 4253 §11.1). */
+declare const SshDisconnectReason: {
+    readonly HOST_NOT_ALLOWED_TO_CONNECT: 1;
+    readonly PROTOCOL_ERROR: 2;
+    readonly KEY_EXCHANGE_FAILED: 3;
+    readonly MAC_ERROR: 5;
+    readonly COMPRESSION_ERROR: 6;
+    readonly SERVICE_NOT_AVAILABLE: 7;
+    readonly PROTOCOL_VERSION_NOT_SUPPORTED: 8;
+    readonly HOST_KEY_NOT_VERIFIABLE: 9;
+    readonly CONNECTION_LOST: 10;
+    readonly BY_APPLICATION: 11;
+    readonly TOO_MANY_CONNECTIONS: 12;
+    readonly AUTH_CANCELLED_BY_USER: 13;
+    readonly NO_MORE_AUTH_METHODS: 14;
+    readonly ILLEGAL_USER_NAME: 15;
+};
+type SshDisconnectReason = (typeof SshDisconnectReason)[keyof typeof SshDisconnectReason];
+interface SshTransportConnectionOptions {
+    /** AbortSignal that cancels the in-flight `connect()` call and tears down the socket. */
+    abortSignal?: AbortSignal;
+    /** Algorithm preference overrides. Defaults to the library defaults. */
+    algorithms?: SshAlgorithmPreferences;
+    /** SSH software version string embedded in the identification line. */
+    clientSoftwareVersion?: string;
+    /**
+     * Hard cap (milliseconds) on the SSH identification + key exchange + first
+     * NEWKEYS handshake. If exceeded the socket is destroyed and `connect()`
+     * rejects with a `TimeoutError`. Has no effect once `connect()` resolves.
+     */
+    handshakeTimeoutMs?: number;
+    /**
+     * If set, sends a `SSH_MSG_IGNORE` packet every `keepaliveIntervalMs`
+     * milliseconds while the transport is connected and idle. This prevents
+     * stateful NAT / firewall devices from dropping long-lived idle sessions
+     * (e.g. between batches in a transfer queue). The timer is reset on every
+     * outbound payload, so active transfers do not generate extra traffic.
+     */
+    keepaliveIntervalMs?: number;
+    /**
+     * Synchronous host-key policy hook invoked after the signature on the SSH
+     * exchange hash is verified. Throw to reject the server's identity.
+     */
+    verifyHostKey?: (input: {
+        hostKeyBlob: Buffer$1;
+        hostKeySha256: Buffer$1;
+        algorithmName: string;
+    }) => void;
 }
 /**
- * Creates an SFTP provider factory backed by the mature `ssh2` implementation.
+ * Live SSH transport connection over a TCP socket.
  *
- * @param options - Optional ssh2 host-key verifier and timeout defaults.
- * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ * Runs the SSH identification exchange and key exchange handshake on the supplied socket,
+ * then provides an encrypted packet send/receive interface for higher-level SSH layers
+ * (authentication, connection, SFTP subsystem).
  *
- * @example Register and use
+ * Usage:
  * ```ts
- * import { createSftpProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+ * const conn = new SshTransportConnection();
+ * const result = await conn.connect(socket);        // runs handshake
+ * conn.sendPayload(payload);                        // post-NEWKEYS send
+ * for await (const payload of conn.receivePayloads()) { ... }
+ * conn.disconnect();
+ * ```
+ */
+declare class SshTransportConnection {
+    private readonly options;
+    private connected;
+    private disposed;
+    private protector;
+    private unprotector;
+    private socket;
+    private keepaliveTimer;
+    private readonly inboundQueue;
+    /**
+     * FIFO of waiters when the queue is empty. Multiple iterators may suspend on
+     * the same transport (auth session, channel setup, connection-manager pump);
+     * each receives exactly one entry in arrival order. A single-slot field would
+     * lose wakeups when a second consumer suspends before the first is resolved.
+     */
+    private readonly waitingConsumers;
+    constructor(options?: SshTransportConnectionOptions);
+    /**
+     * Runs the SSH handshake on a TCP-connected socket.
+     * Resolves when NEWKEYS completes and the transport is ready for encrypted messages.
+     * Rejects on socket error, abort, or protocol failure.
+     */
+    connect(socket: Socket): Promise<SshTransportHandshakeResult>;
+    /**
+     * Sends an SSH payload over the encrypted transport.
+     * The payload must start with the SSH message type byte.
+     */
+    sendPayload(payload: Buffer$1 | Uint8Array): void;
+    /**
+     * Async generator that yields inbound SSH payloads (post-NEWKEYS).
+     *
+     * Transparent handling:
+     * - SSH_MSG_IGNORE (2) and SSH_MSG_DEBUG (4) are silently dropped.
+     * - SSH_MSG_DISCONNECT (1) from the server throws a `ConnectionError`.
+     * - Socket error or close terminates the generator.
+     */
+    receivePayloads(): AsyncGenerator<Buffer$1>;
+    /**
+     * Sends SSH_MSG_DISCONNECT and ends the socket.
+     * Safe to call multiple times; subsequent calls are no-ops.
+     */
+    disconnect(reason?: SshDisconnectReason, description?: string): void;
+    isConnected(): boolean;
+    private onEncryptedData;
+    private onSocketError;
+    private onSocketClose;
+    private enqueueEntry;
+    private dequeuePayload;
+    private assertConnected;
+    private startKeepalive;
+    private stopKeepalive;
+    private resetKeepaliveTimer;
+    private sendKeepalivePing;
+}
+
+/**
+ * SSH session channel (RFC 4254 §6).
  *
- * const client = createTransferClient({ providers: [createSftpProviderFactory()] });
+ * Manages a single "session" channel from the client side:
+ *   CHANNEL_OPEN → OPEN_CONFIRMATION → CHANNEL_REQUEST (subsystem/exec) →
+ *   bidirectional CHANNEL_DATA with window management → CHANNEL_EOF/CLOSE.
  *
+ * Window management strategy:
+ *   - Local window starts at INITIAL_WINDOW_SIZE.
+ *   - When consumed bytes exceed WINDOW_REFILL_THRESHOLD, a WINDOW_ADJUST is sent.
+ *   - Outbound data respects the remote window; excess is queued and flushed
+ *     as the remote issues WINDOW_ADJUST messages.
+ */
+
+interface SshSessionChannelOptions {
+    /**
+     * Local channel id allocated by the caller.
+     * If omitted, defaults to 0 (single-channel use case).
+     */
+    localChannelId?: number;
+}
+/**
+ * A single SSH session channel.
+ * Not safe to share across concurrent callers; each SftpSession should own one.
+ */
+declare class SshSessionChannel {
+    private readonly transport;
+    private phase;
+    /** Remote channel id assigned by the server in OPEN_CONFIRMATION. */
+    private remoteChannelId;
+    /** Bytes the remote side can still receive before we must stop sending. */
+    private remoteWindowRemaining;
+    /** Maximum packet data size the remote accepts. */
+    private remoteMaxPacketSize;
+    /** Local window: bytes we can still accept from remote. */
+    private localWindowConsumed;
+    private localWindowSize;
+    /** Queue of inbound data for the `receiveData()` generator. */
+    private readonly inboundQueue;
+    private waitingConsumer;
+    /** Queue of outbound data waiting for remote window space. */
+    private readonly outboundQueue;
+    /**
+     * FIFO of waiters blocked on remote window credit. Each WINDOW_ADJUST wakes
+     * exactly one waiter; concurrent senders must not lose wakeups.
+     */
+    private readonly outboundDrainedWaiters;
+    /** Serializes sendData() calls so byte order on the wire matches call order. */
+    private sendChain;
+    private readonly localChannelId;
+    constructor(transport: SshTransportConnection, options?: SshSessionChannelOptions);
+    /**
+     * Opens the channel and requests a subsystem.
+     * Resolves once the server confirms both CHANNEL_OPEN and the subsystem request.
+     */
+    openSubsystem(subsystemName: string): Promise<void>;
+    /**
+     * Opens the channel and executes a command.
+     */
+    openExec(command: string): Promise<void>;
+    private openChannel;
+    private requestSubsystem;
+    private requestExec;
+    private awaitChannelRequestReply;
+    /**
+     * Sends data on the channel. Respects the remote window; if there is no space,
+     * splits the data and queues the remainder for when WINDOW_ADJUST arrives.
+     *
+     * Concurrent calls are serialized so wire byte order matches call order.
+     */
+    sendData(data: Uint8Array): Promise<void>;
+    private sendDataLocked;
+    /**
+     * Async generator that yields raw data buffers from the channel.
+     * Returns (done) when the channel receives EOF or CLOSE.
+     */
+    receiveData(): AsyncGenerator<Buffer$1, void, undefined>;
+    /**
+     * Sends EOF and CLOSE.  Should be called when the client is done sending.
+     */
+    close(): void;
+    /**
+     * Feed an inbound transport payload to this channel.
+     * Called by the channel multiplexer (`SshConnectionManager`).
+     */
+    dispatch(payload: Buffer$1): void;
+    dispatchError(error: Error): void;
+    private consumeLocalWindow;
+    private enqueueInbound;
+    private dequeueInbound;
+    /** Pull the next payload from the transport (used during channel setup only). */
+    private nextPayload;
+}
+
+/**
+ * SFTP v3 file attribute encoding and decoding (draft-ietf-secsh-filexfer-02 §5).
+ *
+ * ATTRS flags:
+ *   SSH_FILEXFER_ATTR_SIZE        0x00000001
+ *   SSH_FILEXFER_ATTR_UIDGID      0x00000002
+ *   SSH_FILEXFER_ATTR_PERMISSIONS 0x00000004
+ *   SSH_FILEXFER_ATTR_ACMODTIME   0x00000008
+ *   SSH_FILEXFER_ATTR_EXTENDED    0x80000000
+ */
+
+interface SftpFileAttributes {
+    /** File size in bytes. Present when SFTP_ATTR_FLAG.SIZE is set. */
+    size?: bigint;
+    /** User id. Present when SFTP_ATTR_FLAG.UIDGID is set. */
+    uid?: number;
+    /** Group id. Present when SFTP_ATTR_FLAG.UIDGID is set. */
+    gid?: number;
+    /** POSIX file permissions (octal mode). Present when SFTP_ATTR_FLAG.PERMISSIONS is set. */
+    permissions?: number;
+    /** Access time (seconds since Unix epoch). Present when SFTP_ATTR_FLAG.ACMODTIME is set. */
+    atime?: number;
+    /** Modification time (seconds since Unix epoch). Present when SFTP_ATTR_FLAG.ACMODTIME is set. */
+    mtime?: number;
+    /**
+     * Extended attributes as key-value pairs.
+     * Present when SFTP_ATTR_FLAG.EXTENDED is set.
+     */
+    extended?: Array<{
+        type: string;
+        data: Buffer$1;
+    }>;
+}
+
+/**
+ * SFTP v3 request and response message codecs (draft-ietf-secsh-filexfer-02).
+ *
+ * Each encode function produces the payload bytes that go inside an
+ * SSH_FXP_* packet (the type byte and length prefix are added by the framer).
+ *
+ * Each decode function accepts the full framed packet payload (starting at the
+ * byte immediately after the type byte, i.e. at request-id).
+ */
+
+interface SftpVersionResponse {
+    version: number;
+    extensions: Array<{
+        name: string;
+        data: string;
+    }>;
+}
+/** A single entry returned by SSH_FXP_NAME. */
+interface SftpNameEntry {
+    filename: string;
+    longname: string;
+    attrs: SftpFileAttributes;
+}
+
+/**
+ * SFTP v3 client session (draft-ietf-secsh-filexfer-02).
+ *
+ * Provides a fully concurrent, typed API over an open SSH session channel.
+ * Multiple requests can be in flight simultaneously; each is tracked by its
+ * SFTP request id.  Responses are dispatched to the correct awaiter.
+ *
+ * Lifecycle:
+ *   const channel = await connectionManager.openSubsystemChannel("sftp");
+ *   const sftp = new SftpSession(channel);
+ *   await sftp.init();
+ *   const handle = await sftp.open("/path/to/file", SFTP_OPEN_FLAG.READ, {});
+ *   const data = await sftp.read(handle, 0n, 4096);
+ *   await sftp.close(handle);
+ */
+
+declare class SftpSession {
+    private readonly channel;
+    private nextRequestId;
+    private readonly pending;
+    private readonly framer;
+    /** Resolves on the first packet (VERSION) during init(). */
+    private versionWaiter;
+    private serverVersion;
+    constructor(channel: SshSessionChannel);
+    /**
+     * Sends SSH_FXP_INIT and awaits SSH_FXP_VERSION.
+     * Must be called once before any other operation.
+     */
+    init(): Promise<SftpVersionResponse>;
+    get negotiatedVersion(): number;
+    /**
+     * Opens a remote file. Returns an opaque handle buffer.
+     */
+    open(path: string, pflags: number, attrs?: SftpFileAttributes): Promise<Buffer$1>;
+    /**
+     * Closes a file or directory handle.
+     */
+    close(handle: Uint8Array): Promise<void>;
+    /**
+     * Reads up to `length` bytes from `handle` at `offset`.
+     * Returns `null` on EOF.
+     */
+    read(handle: Uint8Array, offset: bigint, length: number): Promise<Buffer$1 | null>;
+    /**
+     * Writes `data` to `handle` at `offset`.
+     */
+    write(handle: Uint8Array, offset: bigint, data: Uint8Array): Promise<void>;
+    stat(path: string): Promise<SftpFileAttributes>;
+    lstat(path: string): Promise<SftpFileAttributes>;
+    fstat(handle: Uint8Array): Promise<SftpFileAttributes>;
+    setstat(path: string, attrs: SftpFileAttributes): Promise<void>;
+    fsetstat(handle: Uint8Array, attrs: SftpFileAttributes): Promise<void>;
+    opendir(path: string): Promise<Buffer$1>;
+    /**
+     * Reads one batch of directory entries.
+     * Returns an empty array when the server sends SSH_FX_EOF.
+     */
+    readdir(handle: Uint8Array): Promise<SftpNameEntry[]>;
+    /**
+     * Convenience: opens a directory, reads all entries, and closes the handle.
+     */
+    readdirAll(path: string): Promise<SftpNameEntry[]>;
+    remove(path: string): Promise<void>;
+    mkdir(path: string, attrs?: SftpFileAttributes): Promise<void>;
+    rmdir(path: string): Promise<void>;
+    realpath(path: string): Promise<string>;
+    rename(oldPath: string, newPath: string): Promise<void>;
+    readlink(path: string): Promise<string>;
+    symlink(linkPath: string, targetPath: string): Promise<void>;
+    private allocRequestId;
+    /**
+     * Sends raw SFTP message bytes over the channel.
+     * The message encoders embed the type byte at position 0, followed by the body.
+     * We prefix with a uint32 length so the remote SFTP framer can parse the frame.
+     *
+     * Send is asynchronous because the underlying SSH channel may apply
+     * backpressure when the remote window is exhausted; the channel itself
+     * serializes concurrent calls so byte ordering is preserved.
+     */
+    private sendRaw;
+    private pump;
+    private dispatchPacket;
+    private awaitResponse;
+}
+
+/**
+ * Options for {@link createNativeSftpProviderFactory}.
+ *
+ * The native provider is a zero-dependency replacement for the legacy
+ * `ssh2`-backed provider. It implements RFC 4253 SSH transport, RFC 4252 user
+ * authentication (`password`, `keyboard-interactive`, `publickey` with
+ * Ed25519/RSA), RFC 5656 ECDSA host keys (`nistp256/384/521`), and the
+ * SFTP v3 client protocol multiplexed over a single channel.
+ */
+interface NativeSftpProviderOptions {
+    /**
+     * Default connection timeout in milliseconds when the profile omits
+     * `timeoutMs`. Bounds both the TCP connect *and* the SSH identification +
+     * key-exchange handshake, so a hung server cannot stall `connect()`
+     * indefinitely after the socket is accepted.
+     */
+    readyTimeoutMs?: number;
+    /**
+     * Default interval (milliseconds) between SSH-level keepalive pings sent
+     * once the transport is connected and idle. Prevents stateful firewalls /
+     * NAT devices from dropping long-lived sessions. The timer is reset on
+     * every outbound payload so active transfers do not generate extra
+     * traffic. Disabled when omitted or `0`.
+     */
+    keepaliveIntervalMs?: number;
+}
+/**
+ * Low-level handles exposed by a native SFTP session for diagnostics and
+ * advanced extension. Most applications should use the
+ * {@link TransferSession} returned from `client.connect()` instead.
+ */
+interface NativeSftpRawSession {
+    /** SFTP v3 client multiplexed over the SSH session channel. */
+    sftp: SftpSession;
+    /** Underlying SSH transport (key exchange, packet protection, channel mux). */
+    transport: SshTransportConnection;
+}
+/**
+ * Creates a {@link ProviderFactory} backed by the native SSH/SFTP protocol
+ * stack — no `ssh2` dependency required.
+ *
+ * **Supported algorithms**
+ * - Key exchange: `curve25519-sha256`, `curve25519-sha256@libssh.org`
+ * - Host keys: `ssh-ed25519`, `ecdsa-sha2-nistp256/384/521`, `rsa-sha2-256`,
+ *   `rsa-sha2-512` (legacy SHA-1 `ssh-rsa` is rejected)
+ * - Ciphers: `aes128-ctr`, `aes256-ctr`
+ * - MACs: `hmac-sha2-256`, `hmac-sha2-512`
+ *
+ * **Authentication**
+ * - `password`
+ * - `keyboard-interactive` (RFC 4256)
+ * - `publickey` for Ed25519 and RSA private keys (`rsa-sha2-512` preferred,
+ *   `rsa-sha2-256` fallback). Encrypted keys are unlocked via
+ *   `profile.ssh.passphrase`.
+ *
+ * **Host-key verification**
+ * - The server's signature over the exchange hash is always verified.
+ * - Optional pinning via `profile.ssh.pinnedHostKeySha256` (`SHA256:...`,
+ *   raw base64, or hex).
+ * - Optional `profile.ssh.knownHosts` (OpenSSH format, hashed and plain
+ *   patterns, `[host]:port`, negation, and `@revoked` markers).
+ *
+ * **Resilience**
+ * - `readyTimeoutMs` bounds TCP connect + SSH handshake.
+ * - `keepaliveIntervalMs` keeps idle sessions alive through stateful
+ *   firewalls / NAT.
+ *
+ * @example
+ * ```ts
+ * const client = createTransferClient({
+ *   providers: [createNativeSftpProviderFactory({
+ *     readyTimeoutMs: 10_000,
+ *     keepaliveIntervalMs: 30_000,
+ *   })],
+ * });
  * const session = await client.connect({
- *   host: "sftp.example.com",
  *   provider: "sftp",
+ *   host: "sftp.example.com",
  *   username: "deploy",
  *   ssh: {
- *     privateKey: { path: "./keys/id_ed25519" },
- *     // Optional but recommended for production:
- *     pinnedHostKeySha256: "SHA256:abc123basesixfourpinFromKnownHosts=",
+ *     privateKey: { kind: "literal", value: process.env.DEPLOY_KEY! },
+ *     pinnedHostKeySha256: "SHA256:abc...",
  *   },
  * });
  * ```
- *
- * Host-key verification (`ssh.knownHosts` and/or `ssh.pinnedHostKeySha256`) is
- * optional; without either, the client trusts whatever host key the server
- * presents. Use one for any non-lab deployment.
  */
-declare function createSftpProviderFactory(options?: SftpProviderOptions): ProviderFactory;
+declare function createNativeSftpProviderFactory(options?: NativeSftpProviderOptions): ProviderFactory;
 
-/** Options for {@link createSftpJumpHostSocketFactory}. */
-interface SftpJumpHostOptions {
-    /** Static ssh2 connect configuration for the bastion. Mutually exclusive with {@link buildBastion}. */
-    bastion?: ConnectConfig;
-    /** Per-connection builder used to refresh credentials before each tunnel attempt. */
-    buildBastion?: (context: SshSocketFactoryContext) => ConnectConfig | Promise<ConnectConfig>;
-    /** Optional logger used for tunnel diagnostics. */
-    logger?: ZeroTransferLogger;
-    /** Optional ssh2 client factory override used in tests. */
-    createClient?: () => Client;
-}
-/**
- * Builds an {@link SshSocketFactory} that tunnels SFTP connections through a bastion host.
- *
- * @param options - Bastion configuration and overrides.
- * @returns Factory that returns a forwarded ssh2 channel stream when invoked.
- * @throws {@link ConfigurationError} When neither {@link SftpJumpHostOptions.bastion} nor {@link SftpJumpHostOptions.buildBastion} is supplied.
- */
-declare function createSftpJumpHostSocketFactory(options: SftpJumpHostOptions): SshSocketFactory;
-
-export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileZillaSite, type FriendlyTransferOptions, type FtpFeatures, type FtpPassiveHostStrategy, type FtpProviderOptions, type FtpReplyErrorInput, type FtpResponse, FtpResponseParser, type FtpResponseStatus, type FtpsDataProtection, type FtpsMode, type FtpsProviderOptions, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type ProgressEventInput, ProtocolError, type AuthenticationCapability as ProviderAuthenticationCapability, type CapabilitySet as ProviderCapabilities, type ChecksumCapability as ProviderChecksumCapability, type ProviderFactory, type ProviderId, type MetadataCapability as ProviderMetadataCapability, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type SecretProvider, type SecretSource, type SecretValue, type SftpJumpHostOptions, type SftpProviderOptions, type SftpRawSession, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithms, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshProfile, type SshSocketFactory, type SshSocketFactoryContext, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createFtpProviderFactory, createFtpsProviderFactory, createLocalProviderFactory, createMemoryProviderFactory, createOAuthTokenSecretSource, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createSftpJumpHostSocketFactory, createSftpProviderFactory, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, noopLogger, normalizeRemotePath, parentRemotePath, parseFtpFeatures, parseFtpResponseLines, parseKnownHosts, parseMlsdLine, parseMlsdList, parseMlstTimestamp, parseOpenSshConfig, parseRemoteManifest, parseUnixList, parseUnixListLine, redactCommand, redactConnectionProfile, redactObject, redactSecretSource, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };
+export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileZillaSite, type FriendlyTransferOptions, type FtpFeatures, type FtpPassiveHostStrategy, type FtpProviderOptions, type FtpReplyErrorInput, type FtpResponse, FtpResponseParser, type FtpResponseStatus, type FtpsDataProtection, type FtpsMode, type FtpsProviderOptions, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type ProgressEventInput, ProtocolError, type AuthenticationCapability as ProviderAuthenticationCapability, type CapabilitySet as ProviderCapabilities, type ChecksumCapability as ProviderChecksumCapability, type ProviderFactory, type ProviderId, type MetadataCapability as ProviderMetadataCapability, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type SecretProvider, type SecretSource, type SecretValue, type NativeSftpProviderOptions as SftpProviderOptions, type NativeSftpRawSession as SftpRawSession, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithms, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshProfile, type SshSocketFactory, type SshSocketFactoryContext, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createFtpProviderFactory, createFtpsProviderFactory, createLocalProviderFactory, createMemoryProviderFactory, createOAuthTokenSecretSource, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createNativeSftpProviderFactory as createSftpProviderFactory, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, noopLogger, normalizeRemotePath, parentRemotePath, parseFtpFeatures, parseFtpResponseLines, parseKnownHosts, parseMlsdLine, parseMlsdList, parseMlstTimestamp, parseOpenSshConfig, parseRemoteManifest, parseUnixList, parseUnixListLine, redactCommand, redactConnectionProfile, redactObject, redactSecretSource, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };

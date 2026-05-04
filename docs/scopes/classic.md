@@ -10,7 +10,7 @@ npm install @zero-transfer/classic
 
 ## Overview
 
-Bundle of the three classic providers: FTP, FTPS, and SFTP. Wire `createFtpProviderFactory()`, `createFtpsProviderFactory()`, and `createSftpProviderFactory()` into a single `TransferClient` to talk to traditional file servers.
+Bundle of the three classic providers: FTP, FTPS, and SFTP. Wire `createFtpProviderFactory()`, `createFtpsProviderFactory()`, and `createSftpProviderFactory()` into a single `TransferClient` to talk to traditional file servers. Zero runtime dependencies — SFTP is implemented on top of the first-party native SSH stack.
 
 ## Public surface
 
@@ -21,11 +21,9 @@ This is the actual surface published by [`@zero-transfer/classic`](https://www.n
 | [`createFtpProviderFactory`](../api-md/functions/createFtpProviderFactory.md) | Function | See API reference. |
 | [`createFtpsProviderFactory`](../api-md/functions/createFtpsProviderFactory.md) | Function | See API reference. |
 | [`createSftpProviderFactory`](../api-md/functions/createSftpProviderFactory.md) | Function | See API reference. |
-| [`createSftpJumpHostSocketFactory`](../api-md/functions/createSftpJumpHostSocketFactory.md) | Function | See API reference. |
 | [`FtpProviderOptions`](../api-md/interfaces/FtpProviderOptions.md) | Interface | See API reference. |
 | [`FtpsProviderOptions`](../api-md/interfaces/FtpsProviderOptions.md) | Interface | See API reference. |
 | [`SftpProviderOptions`](../api-md/interfaces/SftpProviderOptions.md) | Interface | See API reference. |
-| [`SftpJumpHostOptions`](../api-md/interfaces/SftpJumpHostOptions.md) | Interface | See API reference. |
 
 ## Examples
 

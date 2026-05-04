@@ -119,6 +119,9 @@ export class SftpSession {
     const id = this.allocRequestId();
     this.sendRaw(encodeSftpOpen({ attrs, path, pflags, requestId: id }), id);
     const resp = await this.awaitResponse(id);
+    if (resp.type === SFTP_PACKET_TYPE.STATUS) {
+      throwIfSftpError(decodeSftpStatusPayload(resp.payload), path);
+    }
     return decodeSftpHandlePayload(resp.payload).handle;
   }
 
@@ -167,6 +170,9 @@ export class SftpSession {
     const id = this.allocRequestId();
     this.sendRaw(encodeSftpStat(id, path), id);
     const resp = await this.awaitResponse(id);
+    if (resp.type === SFTP_PACKET_TYPE.STATUS) {
+      throwIfSftpError(decodeSftpStatusPayload(resp.payload), path);
+    }
     return decodeSftpAttrsPayload(resp.payload).attrs;
   }
 
@@ -174,6 +180,9 @@ export class SftpSession {
     const id = this.allocRequestId();
     this.sendRaw(encodeSftpLstat(id, path), id);
     const resp = await this.awaitResponse(id);
+    if (resp.type === SFTP_PACKET_TYPE.STATUS) {
+      throwIfSftpError(decodeSftpStatusPayload(resp.payload), path);
+    }
     return decodeSftpAttrsPayload(resp.payload).attrs;
   }
 
@@ -181,6 +190,9 @@ export class SftpSession {
     const id = this.allocRequestId();
     this.sendRaw(encodeSftpFstat(id, handle), id);
     const resp = await this.awaitResponse(id);
+    if (resp.type === SFTP_PACKET_TYPE.STATUS) {
+      throwIfSftpError(decodeSftpStatusPayload(resp.payload));
+    }
     return decodeSftpAttrsPayload(resp.payload).attrs;
   }
 
@@ -204,6 +216,9 @@ export class SftpSession {
     const id = this.allocRequestId();
     this.sendRaw(encodeSftpOpendir(id, path), id);
     const resp = await this.awaitResponse(id);
+    if (resp.type === SFTP_PACKET_TYPE.STATUS) {
+      throwIfSftpError(decodeSftpStatusPayload(resp.payload), path);
+    }
     return decodeSftpHandlePayload(resp.payload).handle;
   }
 

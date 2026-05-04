@@ -59,6 +59,14 @@ for (const scope of scopes) {
     },
     sideEffects: false,
     ...(Object.keys(scope.deps).length > 0 ? { dependencies: scope.deps } : {}),
+    ...(scope.peerDeps && Object.keys(scope.peerDeps).length > 0
+      ? {
+          peerDependencies: scope.peerDeps,
+          peerDependenciesMeta: Object.fromEntries(
+            Object.keys(scope.peerDeps).map((name) => [name, { optional: true }]),
+          ),
+        }
+      : {}),
   };
 
   writeFileSync(join(dir, "package.json"), `${JSON.stringify(pkg, null, 2)}\n`);

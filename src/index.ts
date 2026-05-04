@@ -208,9 +208,7 @@ export {
   type FtpResponseStatus,
 } from "./providers/classic/ftp";
 export {
-  createSftpJumpHostSocketFactory,
   createSftpProviderFactory,
-  type SftpJumpHostOptions,
   type SftpProviderOptions,
   type SftpRawSession,
 } from "./providers/classic/sftp";

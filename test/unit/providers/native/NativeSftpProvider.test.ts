@@ -15,9 +15,9 @@ import { createTransferClient } from "../../../../src/core/createTransferClient"
 // -- Factory validation ---------------------------------------------------------
 
 describe("createNativeSftpProviderFactory", () => {
-  it("returns a factory with id 'sftp-native'", () => {
+  it("returns a factory with id 'sftp'", () => {
     const factory = createNativeSftpProviderFactory();
-    expect(factory.id).toBe("sftp-native");
+    expect(factory.id).toBe("sftp");
   });
 
   it("exposes expected capabilities", () => {
@@ -57,7 +57,7 @@ describe("NativeSftpProvider.connect() profile validation", () => {
         host: "127.0.0.1",
         password: "secret",
         port: 1,
-        provider: "sftp-native",
+        provider: "sftp",
         timeoutMs: 200,
       }),
     ).rejects.toThrowError(ConfigurationError);
@@ -68,7 +68,7 @@ describe("NativeSftpProvider.connect() profile validation", () => {
       client.connect({
         host: "127.0.0.1",
         port: 1,
-        provider: "sftp-native",
+        provider: "sftp",
         timeoutMs: 200,
         username: "bob",
       }),
@@ -81,7 +81,7 @@ describe("NativeSftpProvider.connect() profile validation", () => {
         host: "127.0.0.1",
         password: "secret",
         port: 1, // nothing listening here
-        provider: "sftp-native",
+        provider: "sftp",
         timeoutMs: 200,
         username: "tester",
       }),
@@ -97,7 +97,7 @@ describe("NativeSftpProvider.connect() profile validation", () => {
         host: "127.0.0.1",
         password: "secret",
         port: 22,
-        provider: "sftp-native",
+        provider: "sftp",
         signal: controller.signal,
         timeoutMs: 200,
         username: "tester",
@@ -119,7 +119,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
     host: "127.0.0.1",
     password: { value: "secret" },
     port,
-    provider: "sftp-native",
+    provider: "sftp",
     timeoutMs: 5_000,
     username: { value: "tester" },
   });
@@ -245,7 +245,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
     const session = await client.connect({
       host: "127.0.0.1",
       port,
-      provider: "sftp-native",
+      provider: "sftp",
       timeoutMs: 5_000,
       username: { value: "tester" },
       ssh: {
@@ -358,7 +358,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
     const session = await client.connect({
       host: "127.0.0.1",
       port,
-      provider: "sftp-native",
+      provider: "sftp",
       timeoutMs: 5_000,
       username: { value: "tester" },
       ssh: { privateKey: privatePem },
@@ -405,7 +405,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
     const session = await client.connect({
       host: "127.0.0.1",
       port,
-      provider: "sftp-native",
+      provider: "sftp",
       timeoutMs: 5_000,
       username: { value: "tester" },
       ssh: { privateKey: privatePem },

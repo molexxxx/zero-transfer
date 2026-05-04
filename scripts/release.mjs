@@ -19,8 +19,9 @@
  *   5. `npm run docs:all` to regenerate HTML, Markdown, and per-scope docs.
  *   6. Stage everything, commit `chore(release): v<version>`, push to origin/main.
  *
- * Each scoped package is a self-contained bundle (no peerDep on @zero-transfer/sdk).
- * Only sftp and classic declare an npm dependency (ssh2).
+ * Each scoped package is a self-contained bundle (no peerDep on @zero-transfer/sdk)
+ * with zero runtime npm dependencies — SFTP/classic ship the native SSH stack
+ * in-bundle.
  *
  * Pushing the bumped package.json triggers the `release-on-bump.yml` workflow,
  * which tags `v<version>` and creates a GitHub Release. That release event then

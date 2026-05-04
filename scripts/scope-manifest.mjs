@@ -134,19 +134,17 @@ export const scopes = [
   },
   {
     description:
-      "Bundle of the three classic providers: FTP, FTPS, and SFTP. Wire `createFtpProviderFactory()`, `createFtpsProviderFactory()`, and `createSftpProviderFactory()` into a single `TransferClient` to talk to traditional file servers.",
+      "Bundle of the three classic providers: FTP, FTPS, and SFTP. Wire `createFtpProviderFactory()`, `createFtpsProviderFactory()`, and `createSftpProviderFactory()` into a single `TransferClient` to talk to traditional file servers. Zero runtime dependencies — SFTP is implemented on top of the first-party native SSH stack.",
     examples: ["sftp-private-key.ts", "ftps-client-certificate.ts"],
     exports: [
       "createFtpProviderFactory",
       "createFtpsProviderFactory",
       "createSftpProviderFactory",
-      "createSftpJumpHostSocketFactory",
       "FtpProviderOptions",
       "FtpsProviderOptions",
       "SftpProviderOptions",
-      "SftpJumpHostOptions",
     ],
-    deps: { ssh2: "^1.17.0" },
+    deps: {},
     name: "classic",
     summary: "FTP, FTPS, and SFTP providers in one install.",
     title: "Classic — FTP / FTPS / SFTP",
@@ -188,16 +186,14 @@ export const scopes = [
   },
   {
     description:
-      "SFTP over SSH with two backends: a zero-dependency native SSH stack (Ed25519 / RSA / ECDSA host keys, password / keyboard-interactive / public-key auth, host-key pinning, OpenSSH `known_hosts`, handshake timeout, NAT keepalive) and the legacy `ssh2`-backed provider (adds ssh-agent, jump-host helpers). The native provider is recommended for new projects; the classic provider remains for ssh-agent and bastion workflows.",
+      "Zero-dependency SFTP over SSH built on a first-party SSH transport stack: Ed25519 / RSA-SHA2-256/512 / ECDSA P-256/384/521 host keys, password / keyboard-interactive / public-key (Ed25519 + RSA) auth, host-key pinning, OpenSSH `known_hosts` (hashed/plain, `[host]:port`, `@revoked`), handshake timeout, and idle NAT keepalive. `createSftpProviderFactory` is kept as an alias of `createNativeSftpProviderFactory` for backward compatibility.",
     examples: ["sftp-private-key.ts"],
     exports: [
       "createNativeSftpProviderFactory",
       "NativeSftpProviderOptions",
       "NativeSftpRawSession",
       "createSftpProviderFactory",
-      "createSftpJumpHostSocketFactory",
       "SftpProviderOptions",
-      "SftpJumpHostOptions",
       "SftpRawSession",
       "matchKnownHosts",
       "matchKnownHostsEntry",
@@ -205,10 +201,9 @@ export const scopes = [
       "KnownHostsEntry",
       "KnownHostsMarker",
     ],
-    deps: { ssh2: "^1.17.0" },
+    deps: {},
     name: "sftp",
-    summary:
-      "SFTP with a native SSH stack (default) plus the classic ssh2-backed provider for ssh-agent and jump-host support.",
+    summary: "Zero-dependency SFTP over SSH with a first-party SSH transport stack.",
     title: "SFTP",
   },
   {

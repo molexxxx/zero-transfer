@@ -12,9 +12,7 @@ const shared: Options = {
   },
 };
 
-/** Scopes that require ssh2 at runtime */
-const SSH2_SCOPES = new Set(["sftp", "classic"]);
-
+/** Scoped entry points; no third-party SSH/SFTP dependency — native stack ships in-bundle. */
 const scopedEntries: Options[] = [
   "core",
   "ftp",
@@ -32,7 +30,6 @@ const scopedEntries: Options[] = [
   ...shared,
   entry: { index: `src/entries/${scope}.ts` },
   outDir: `packages/${scope}/dist`,
-  ...(SSH2_SCOPES.has(scope) ? { external: ["ssh2"] } : {}),
 }));
 
 export default defineConfig([
@@ -42,7 +39,6 @@ export default defineConfig([
     clean: true,
     entry: ["src/index.ts"],
     outDir: "dist",
-    external: ["ssh2"],
   },
   // Per-scope self-contained bundles
   ...scopedEntries,

@@ -269,11 +269,17 @@ export class SshAuthSession {
 
       if (msgType === SSH_MSG_USERAUTH_INFO_REQUEST) {
         const infoReq = decodeSshUserauthInfoRequest(payload);
-        const responses = await credential.respond(
-          infoReq.name,
-          infoReq.instruction,
-          infoReq.prompts,
-        );
+        let responses: string[];
+        try {
+          responses = await credential.respond(infoReq.name, infoReq.instruction, infoReq.prompts);
+        } catch (cause) {
+          throw new AuthenticationError({
+            cause,
+            message: `SSH keyboard-interactive callback failed for user "${credential.username}"`,
+            protocol: "sftp",
+            retryable: false,
+          });
+        }
         this.transport.sendPayload(encodeSshUserauthInfoResponse(responses));
         continue;
       }

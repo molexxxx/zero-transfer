@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.2.0**](../README.md)
+[**ZeroTransfer SDK v0.3.0**](../README.md)
 
 ***
 
@@ -6,14 +6,19 @@
 
 # Interface: SftpProviderOptions
 
-Defined in: [src/providers/classic/sftp/SftpProvider.ts:96](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/providers/classic/sftp/SftpProvider.ts#L96)
+Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:145](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/native/sftp/NativeSftpProvider.ts#L145)
 
-Options used to create an SFTP provider factory.
+Options for [createNativeSftpProviderFactory](../functions/createSftpProviderFactory.md).
+
+The native provider is a zero-dependency replacement for the legacy
+`ssh2`-backed provider. It implements RFC 4253 SSH transport, RFC 4252 user
+authentication (`password`, `keyboard-interactive`, `publickey` with
+Ed25519/RSA), RFC 5656 ECDSA host keys (`nistp256/384/521`), and the
+SFTP v3 client protocol multiplexed over a single channel.
 
 ## Properties
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="hosthash"></a> `hostHash?` | `string` | Hash algorithm used before calling ssh2's host verifier, such as `sha256`. | [src/providers/classic/sftp/SftpProvider.ts:98](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/providers/classic/sftp/SftpProvider.ts#L98) |
-| <a id="hostverifier"></a> `hostVerifier?` | \| `HostVerifier` \| `SyncHostVerifier` \| `HostFingerprintVerifier` \| `SyncHostFingerprintVerifier` | Host-key verifier passed directly to ssh2 for advanced callers. | [src/providers/classic/sftp/SftpProvider.ts:100](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/providers/classic/sftp/SftpProvider.ts#L100) |
-| <a id="readytimeoutms"></a> `readyTimeoutMs?` | `number` | Default SSH handshake timeout in milliseconds when the profile does not provide `timeoutMs`. | [src/providers/classic/sftp/SftpProvider.ts:102](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/providers/classic/sftp/SftpProvider.ts#L102) |
+| <a id="keepaliveintervalms"></a> `keepaliveIntervalMs?` | `number` | Default interval (milliseconds) between SSH-level keepalive pings sent once the transport is connected and idle. Prevents stateful firewalls / NAT devices from dropping long-lived sessions. The timer is reset on every outbound payload so active transfers do not generate extra traffic. Disabled when omitted or `0`. | [src/providers/native/sftp/NativeSftpProvider.ts:160](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/native/sftp/NativeSftpProvider.ts#L160) |
+| <a id="readytimeoutms"></a> `readyTimeoutMs?` | `number` | Default connection timeout in milliseconds when the profile omits `timeoutMs`. Bounds both the TCP connect *and* the SSH identification + key-exchange handshake, so a hung server cannot stall `connect()` indefinitely after the socket is accepted. | [src/providers/native/sftp/NativeSftpProvider.ts:152](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/native/sftp/NativeSftpProvider.ts#L152) |

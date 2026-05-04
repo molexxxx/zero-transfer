@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.2.0**](../README.md)
+[**ZeroTransfer SDK v0.3.0**](../README.md)
 
 ***
 
@@ -10,41 +10,63 @@
 function createSftpProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/classic/sftp/SftpProvider.ts:141](https://github.com/tonywied17/zero-transfer/blob/129eeb6be5368d092aa8aa3e5e4bf73e00bf0ce1/src/providers/classic/sftp/SftpProvider.ts#L141)
+Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:226](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/native/sftp/NativeSftpProvider.ts#L226)
 
-Creates an SFTP provider factory backed by the mature `ssh2` implementation.
+Creates a [ProviderFactory](../interfaces/ProviderFactory.md) backed by the native SSH/SFTP protocol
+stack — no `ssh2` dependency required.
+
+**Supported algorithms**
+- Key exchange: `curve25519-sha256`, `curve25519-sha256@libssh.org`
+- Host keys: `ssh-ed25519`, `ecdsa-sha2-nistp256/384/521`, `rsa-sha2-256`,
+  `rsa-sha2-512` (legacy SHA-1 `ssh-rsa` is rejected)
+- Ciphers: `aes128-ctr`, `aes256-ctr`
+- MACs: `hmac-sha2-256`, `hmac-sha2-512`
+
+**Authentication**
+- `password`
+- `keyboard-interactive` (RFC 4256)
+- `publickey` for Ed25519 and RSA private keys (`rsa-sha2-512` preferred,
+  `rsa-sha2-256` fallback). Encrypted keys are unlocked via
+  `profile.ssh.passphrase`.
+
+**Host-key verification**
+- The server's signature over the exchange hash is always verified.
+- Optional pinning via `profile.ssh.pinnedHostKeySha256` (`SHA256:...`,
+  raw base64, or hex).
+- Optional `profile.ssh.knownHosts` (OpenSSH format, hashed and plain
+  patterns, `[host]:port`, negation, and `@revoked` markers).
+
+**Resilience**
+- `readyTimeoutMs` bounds TCP connect + SSH handshake.
+- `keepaliveIntervalMs` keeps idle sessions alive through stateful
+  firewalls / NAT.
 
 ## Parameters
 
-| Parameter | Type | Description |
-| ------ | ------ | ------ |
-| `options` | [`SftpProviderOptions`](../interfaces/SftpProviderOptions.md) | Optional ssh2 host-key verifier and timeout defaults. |
+| Parameter | Type |
+| ------ | ------ |
+| `options` | [`SftpProviderOptions`](../interfaces/SftpProviderOptions.md) |
 
 ## Returns
 
 [`ProviderFactory`](../interfaces/ProviderFactory.md)
 
-Provider factory suitable for `createTransferClient({ providers: [...] })`.
-
 ## Example
 
 ```ts
-import { createSftpProviderFactory, createTransferClient } from "@zero-transfer/sdk";
-
-const client = createTransferClient({ providers: [createSftpProviderFactory()] });
-
+const client = createTransferClient({
+  providers: [createNativeSftpProviderFactory({
+    readyTimeoutMs: 10_000,
+    keepaliveIntervalMs: 30_000,
+  })],
+});
 const session = await client.connect({
-  host: "sftp.example.com",
   provider: "sftp",
+  host: "sftp.example.com",
   username: "deploy",
   ssh: {
-    privateKey: { path: "./keys/id_ed25519" },
-    // Optional but recommended for production:
-    pinnedHostKeySha256: "SHA256:abc123basesixfourpinFromKnownHosts=",
+    privateKey: { kind: "literal", value: process.env.DEPLOY_KEY! },
+    pinnedHostKeySha256: "SHA256:abc...",
   },
 });
 ```
-
-Host-key verification (`ssh.knownHosts` and/or `ssh.pinnedHostKeySha256`) is
-optional; without either, the client trusts whatever host key the server
-presents. Use one for any non-lab deployment.

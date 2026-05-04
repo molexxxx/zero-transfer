@@ -1,6 +1,6 @@
 # SFTP
 
-> SFTP with a native SSH stack (default) plus the classic ssh2-backed provider for ssh-agent and jump-host support.
+> Zero-dependency SFTP over SSH with a first-party SSH transport stack.
 
 ## Install
 
@@ -10,7 +10,7 @@ npm install @zero-transfer/sftp
 
 ## Overview
 
-SFTP over SSH with two backends: a zero-dependency native SSH stack (Ed25519 / RSA / ECDSA host keys, password / keyboard-interactive / public-key auth, host-key pinning, OpenSSH `known_hosts`, handshake timeout, NAT keepalive) and the legacy `ssh2`-backed provider (adds ssh-agent, jump-host helpers). The native provider is recommended for new projects; the classic provider remains for ssh-agent and bastion workflows.
+Zero-dependency SFTP over SSH built on a first-party SSH transport stack: Ed25519 / RSA-SHA2-256/512 / ECDSA P-256/384/521 host keys, password / keyboard-interactive / public-key (Ed25519 + RSA) auth, host-key pinning, OpenSSH `known_hosts` (hashed/plain, `[host]:port`, `@revoked`), handshake timeout, and idle NAT keepalive. `createSftpProviderFactory` is kept as an alias of `createNativeSftpProviderFactory` for backward compatibility.
 
 ## Public surface
 
@@ -18,13 +18,11 @@ This is the actual surface published by [`@zero-transfer/sftp`](https://www.npmj
 
 | Symbol | Kind | Notes |
 | --- | --- | --- |
-| [`createNativeSftpProviderFactory`](../api-md/functions/createNativeSftpProviderFactory.md) | Function | See API reference. |
-| [`NativeSftpProviderOptions`](../api-md/interfaces/NativeSftpProviderOptions.md) | Interface | See API reference. |
-| [`NativeSftpRawSession`](../api-md/interfaces/NativeSftpRawSession.md) | Interface | See API reference. |
+| `createNativeSftpProviderFactory` | _unresolved_ | — |
+| `NativeSftpProviderOptions` | _unresolved_ | — |
+| `NativeSftpRawSession` | _unresolved_ | — |
 | [`createSftpProviderFactory`](../api-md/functions/createSftpProviderFactory.md) | Function | See API reference. |
-| [`createSftpJumpHostSocketFactory`](../api-md/functions/createSftpJumpHostSocketFactory.md) | Function | See API reference. |
 | [`SftpProviderOptions`](../api-md/interfaces/SftpProviderOptions.md) | Interface | See API reference. |
-| [`SftpJumpHostOptions`](../api-md/interfaces/SftpJumpHostOptions.md) | Interface | See API reference. |
 | [`SftpRawSession`](../api-md/interfaces/SftpRawSession.md) | Interface | See API reference. |
 | [`matchKnownHosts`](../api-md/functions/matchKnownHosts.md) | Function | See API reference. |
 | [`matchKnownHostsEntry`](../api-md/functions/matchKnownHostsEntry.md) | Function | See API reference. |

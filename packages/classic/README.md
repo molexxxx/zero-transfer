@@ -10,7 +10,7 @@ npm install @zero-transfer/classic
 
 ## Overview
 
-Bundle of the three classic providers: FTP, FTPS, and SFTP. Wire `createFtpProviderFactory()`, `createFtpsProviderFactory()`, and `createSftpProviderFactory()` into a single `TransferClient` to talk to traditional file servers.
+Bundle of the three classic providers: FTP, FTPS, and SFTP. Wire `createFtpProviderFactory()`, `createFtpsProviderFactory()`, and `createSftpProviderFactory()` into a single `TransferClient` to talk to traditional file servers. Zero runtime dependencies — SFTP is implemented on top of the first-party native SSH stack.
 
 ## Usage
 
@@ -20,18 +20,16 @@ import { createFtpProviderFactory } from "@zero-transfer/classic";
 
 ## Public surface
 
-This package publishes a narrowed surface of **8** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
+This package publishes a narrowed surface of **6** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
 
-| Symbol                                                                                                                                              | Kind      | Notes              |
-| --------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
-| [`createFtpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createFtpProviderFactory.md)               | Function  | See API reference. |
-| [`createFtpsProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createFtpsProviderFactory.md)             | Function  | See API reference. |
-| [`createSftpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createSftpProviderFactory.md)             | Function  | See API reference. |
-| [`createSftpJumpHostSocketFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createSftpJumpHostSocketFactory.md) | Function  | See API reference. |
-| [`FtpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpProviderOptions.md)                          | Interface | See API reference. |
-| [`FtpsProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpsProviderOptions.md)                        | Interface | See API reference. |
-| [`SftpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpProviderOptions.md)                        | Interface | See API reference. |
-| [`SftpJumpHostOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpJumpHostOptions.md)                        | Interface | See API reference. |
+| Symbol                                                                                                                                  | Kind      | Notes              |
+| --------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
+| [`createFtpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createFtpProviderFactory.md)   | Function  | See API reference. |
+| [`createFtpsProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createFtpsProviderFactory.md) | Function  | See API reference. |
+| [`createSftpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createSftpProviderFactory.md) | Function  | See API reference. |
+| [`FtpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpProviderOptions.md)              | Interface | See API reference. |
+| [`FtpsProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpsProviderOptions.md)            | Interface | See API reference. |
+| [`SftpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpProviderOptions.md)            | Interface | See API reference. |
 
 ## Examples
 

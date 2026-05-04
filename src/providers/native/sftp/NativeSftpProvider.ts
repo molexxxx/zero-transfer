@@ -17,6 +17,7 @@ import {
   AuthenticationError,
   ConfigurationError,
   ConnectionError,
+  PathNotFoundError,
   TimeoutError,
   ZeroTransferError,
 } from "../../../errors/ZeroTransferError";
@@ -75,7 +76,7 @@ import {
 
 // -- Constants -----------------------------------------------------------------
 
-const NATIVE_SFTP_PROVIDER_ID = "sftp-native";
+const NATIVE_SFTP_PROVIDER_ID = "sftp";
 const NATIVE_SFTP_DEFAULT_PORT = 22;
 
 /** SFTP read chunk size — stay within a single SSH channel max-packet. */
@@ -212,7 +213,7 @@ export interface NativeSftpRawSession {
  *   })],
  * });
  * const session = await client.connect({
- *   provider: "sftp-native",
+ *   provider: "sftp",
  *   host: "sftp.example.com",
  *   username: "deploy",
  *   ssh: {
@@ -489,7 +490,7 @@ class NativeSftpTransferOperations implements ProviderTransferOperations {
     const mode = statAttrs.permissions ?? 0;
 
     if (nativeSftpEntryTypeFromMode(mode) !== "file") {
-      throw new ConfigurationError({
+      throw new PathNotFoundError({
         details: { path: remotePath, provider: NATIVE_SFTP_PROVIDER_ID },
         message: `Native SFTP path is not a file: ${remotePath}`,
         protocol: "sftp",
@@ -923,10 +924,20 @@ function parseNativeKnownHosts(
   if (source === undefined) return undefined;
   const sources = Array.isArray(source) ? source : [source];
   const entries: KnownHostsEntry[] = [];
+  let sawNonEmpty = false;
   for (const value of sources) {
     const text = Buffer.isBuffer(value) ? value.toString("utf8") : String(value);
     if (text.length === 0) continue;
+    sawNonEmpty = true;
     entries.push(...parseKnownHosts(text));
+  }
+  if (sawNonEmpty && entries.length === 0) {
+    throw new ConfigurationError({
+      details: { provider: NATIVE_SFTP_PROVIDER_ID },
+      message: "Native SFTP knownHosts content did not contain any parseable entries",
+      protocol: "sftp",
+      retryable: false,
+    });
   }
   return entries.length === 0 ? undefined : entries;
 }

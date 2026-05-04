@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/classic",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "FTP, FTPS, and SFTP providers in one install.",
   "keywords": [
     "zero-transfer",
@@ -44,8 +44,5 @@
     "provenance": true,
     "access": "public"
   },
-  "sideEffects": false,
-  "dependencies": {
-    "ssh2": "^1.17.0"
-  }
+  "sideEffects": false
 }

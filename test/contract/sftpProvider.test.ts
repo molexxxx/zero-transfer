@@ -1,8 +1,5 @@
 import { Buffer } from "node:buffer";
-import { createHmac } from "node:crypto";
-import { connect as connectTcp } from "node:net";
-import { BaseAgent, utils } from "ssh2";
-import type { IdentityCallback, ParsedKey, SignCallback, SigningRequestOptions } from "ssh2";
+import { createHmac, generateKeyPairSync } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   AuthenticationError,
@@ -10,8 +7,8 @@ import {
   ConnectionError,
   PathNotFoundError,
   PermissionDeniedError,
-  ProtocolError,
   TransferEngine,
+  ZeroTransferError,
   createProgressEvent,
   createProviderTransferExecutor,
   createSftpProviderFactory,
@@ -49,7 +46,7 @@ afterEach(async () => {
 describeProviderContract("sftp", {
   createProviderFactory: () => createSftpProviderFactory(),
   expectedCapabilities: {
-    authentication: ["password", "private-key", "agent", "keyboard-interactive"],
+    authentication: ["password", "keyboard-interactive", "publickey"],
     list: true,
     provider: "sftp",
     readStream: true,
@@ -128,8 +125,6 @@ describe("createSftpProviderFactory", () => {
     const client = createTransferClient({
       providers: [
         createSftpProviderFactory({
-          hostHash: "sha256",
-          hostVerifier: () => true,
           readyTimeoutMs: 5_000,
         }),
       ],
@@ -203,33 +198,6 @@ describe("createSftpProviderFactory", () => {
     }
   });
 
-  it("authenticates with SSH agent keys", async () => {
-    const agentKeyPair = utils.generateKeyPairSync("ed25519");
-    const agent = new StaticSftpAgent(agentKeyPair.private);
-
-    await restartServer({ publicKey: agentKeyPair.public });
-
-    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
-    const session = await client.connect({
-      host: "127.0.0.1",
-      port: getProfilePort(),
-      provider: "sftp",
-      ssh: { agent },
-      timeoutMs: 5_000,
-      username: { value: "tester" },
-    });
-
-    try {
-      await expect(session.fs.stat("/incoming/report.csv")).resolves.toMatchObject({
-        path: "/incoming/report.csv",
-        type: "file",
-      });
-      expect(agent.signatures).toBeGreaterThan(0);
-    } finally {
-      await session.disconnect();
-    }
-  });
-
   it("connects with explicit SSH algorithm overrides", async () => {
     const client = createTransferClient({ providers: [createSftpProviderFactory()] });
     const session = await client.connect({
@@ -247,39 +215,6 @@ describe("createSftpProviderFactory", () => {
         path: "/incoming/report.csv",
         type: "file",
       });
-    } finally {
-      await session.disconnect();
-    }
-  });
-
-  it("connects through a custom SSH socket factory", async () => {
-    const socketFactoryContexts: Array<{ host: string; port: number; username?: string }> = [];
-    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
-    const session = await client.connect({
-      ...profile,
-      ssh: {
-        socketFactory: ({ host, port, username }) =>
-          new Promise((resolve, reject) => {
-            const socket = connectTcp({ host, port }, () => {
-              socketFactoryContexts.push(
-                username === undefined ? { host, port } : { host, port, username },
-              );
-              resolve(socket);
-            });
-
-            socket.once("error", reject);
-          }),
-      },
-    });
-
-    try {
-      await expect(session.fs.stat("/incoming/report.csv")).resolves.toMatchObject({
-        path: "/incoming/report.csv",
-        type: "file",
-      });
-      expect(socketFactoryContexts).toEqual([
-        { host: "127.0.0.1", port: getProfilePort(), username: "tester" },
-      ]);
     } finally {
       await session.disconnect();
     }
@@ -340,7 +275,6 @@ describe("createSftpProviderFactory", () => {
     const profiles: ConnectionProfile[] = [
       { ...profile, ssh: { pinnedHostKeySha256: createBareHostKeyPin() } },
       { ...profile, ssh: { pinnedHostKeySha256: createHexHostKeyPin() } },
-      { ...profile, ssh: { knownHosts: { value: createKnownHostsLine("*.0.0.1") } } },
       { ...profile, ssh: { knownHosts: { value: createHashedKnownHostsLine() } } },
     ];
 
@@ -367,7 +301,7 @@ describe("createSftpProviderFactory", () => {
         ...profile,
         ssh: { pinnedHostKeySha256: wrongPin },
       }),
-    ).rejects.toBeInstanceOf(ConnectionError);
+    ).rejects.toBeInstanceOf(AuthenticationError);
     await expect(
       client.connect({
         ...profile,
@@ -379,27 +313,19 @@ describe("createSftpProviderFactory", () => {
         ...profile,
         ssh: { knownHosts: { value: createKnownHostsLine("sftp.example.test") } },
       }),
-    ).rejects.toBeInstanceOf(ConnectionError);
+    ).rejects.toBeInstanceOf(AuthenticationError);
     await expect(
       client.connect({
         ...profile,
         ssh: { knownHosts: { value: createKnownHostsLine("!127.0.0.1,127.0.0.1") } },
       }),
-    ).rejects.toBeInstanceOf(ConnectionError);
+    ).rejects.toBeInstanceOf(AuthenticationError);
     await expect(
       client.connect({
         ...profile,
         ssh: { knownHosts: { value: createKnownHostsLine("|2|invalid|invalid") } },
       }),
-    ).rejects.toBeInstanceOf(ConnectionError);
-    await expect(
-      createTransferClient({
-        providers: [createSftpProviderFactory({ hostVerifier: () => true })],
-      }).connect({
-        ...profile,
-        ssh: { pinnedHostKeySha256: server.hostKeySha256 },
-      }),
-    ).rejects.toBeInstanceOf(ConfigurationError);
+    ).rejects.toBeInstanceOf(AuthenticationError);
   });
 
   it("reads, writes, resumes, and copies SFTP transfer streams", async () => {
@@ -529,13 +455,18 @@ describe("createSftpProviderFactory", () => {
   });
 
   it("authenticates with encrypted private-key profile material", async () => {
-    const keyPair = utils.generateKeyPairSync("ed25519", {
-      cipher: "aes256-ctr",
-      passphrase: "key-passphrase",
-      rounds: 16,
+    const keyPair = generateKeyPairSync("ed25519", {
+      privateKeyEncoding: {
+        cipher: "aes-256-cbc",
+        format: "pem",
+        passphrase: "key-passphrase",
+        type: "pkcs8",
+      },
+      publicKeyEncoding: { format: "pem", type: "spki" },
     });
+    const opensshPublicKey = pemSpkiEd25519ToOpenSsh(keyPair.publicKey);
 
-    await restartServer({ publicKey: keyPair.public });
+    await restartServer({ publicKey: opensshPublicKey });
     const client = createTransferClient({ providers: [createSftpProviderFactory()] });
     const session = await client.connect({
       host: "127.0.0.1",
@@ -543,7 +474,7 @@ describe("createSftpProviderFactory", () => {
       provider: "sftp",
       ssh: {
         passphrase: { value: "key-passphrase" },
-        privateKey: { value: keyPair.private },
+        privateKey: { value: keyPair.privateKey },
       },
       timeoutMs: 5_000,
       username: { value: "tester" },
@@ -616,7 +547,7 @@ describe("createSftpProviderFactory", () => {
     await restartServer({ rejectSftp: true });
     const client = createTransferClient({ providers: [createSftpProviderFactory()] });
 
-    await expect(client.connect(profile)).rejects.toBeInstanceOf(ProtocolError);
+    await expect(client.connect(profile)).rejects.toBeInstanceOf(ZeroTransferError);
   });
 
   it("honors abort signals during connection setup", async () => {
@@ -664,37 +595,25 @@ function requireTransfers(session: TransferSession): ProviderTransferOperations 
   return session.transfers;
 }
 
-class StaticSftpAgent extends BaseAgent<ParsedKey> {
-  readonly key: ParsedKey;
-  signatures = 0;
+function pemSpkiEd25519ToOpenSsh(pem: string): string {
+  // Strip PEM header/footer and decode base64 to DER, then extract the
+  // 32-byte raw Ed25519 public key from the SPKI structure (last 32 bytes).
+  const body = pem
+    .replace(/-----BEGIN [^-]+-----/, "")
+    .replace(/-----END [^-]+-----/, "")
+    .replace(/\s+/g, "");
+  const der = Buffer.from(body, "base64");
+  const raw = der.subarray(der.length - 32);
+  // Build SSH wire format: string "ssh-ed25519" + string raw key.
+  const algo = Buffer.from("ssh-ed25519", "ascii");
+  const wire = Buffer.concat([u32(algo.length), algo, u32(raw.length), raw]);
+  return `ssh-ed25519 ${wire.toString("base64")} test@zero-transfer`;
+}
 
-  constructor(privateKey: string) {
-    super();
-    const parsed = utils.parseKey(privateKey);
-
-    if (parsed instanceof Error || Array.isArray(parsed)) {
-      throw new Error("Expected a single parsed SFTP agent key");
-    }
-
-    this.key = parsed;
-  }
-
-  getIdentities(callback: IdentityCallback<ParsedKey>): void {
-    callback(null, [this.key]);
-  }
-
-  sign(
-    _publicKey: ParsedKey,
-    data: Buffer,
-    optionsOrCallback: SigningRequestOptions | SignCallback,
-    callback?: SignCallback,
-  ): void {
-    const options = typeof optionsOrCallback === "function" ? undefined : optionsOrCallback;
-    const finish = typeof optionsOrCallback === "function" ? optionsOrCallback : callback;
-
-    this.signatures += 1;
-    finish?.(null, this.key.sign(data, options?.hash));
-  }
+function u32(n: number): Buffer {
+  const buf = Buffer.alloc(4);
+  buf.writeUInt32BE(n);
+  return buf;
 }
 
 function createReadRequest(

@@ -3,7 +3,6 @@ import { SecureVersion, PeerCertificate } from 'node:tls';
 import { Readable } from 'node:stream';
 import { Buffer } from 'node:buffer';
 import { Socket } from 'node:net';
-import { ConnectConfig, Client, SFTPWrapper } from 'ssh2';
 
 /**
  * Structured logging contracts and helpers for ZeroTransfer.
@@ -3693,7 +3692,7 @@ interface NativeSftpRawSession {
  *   })],
  * });
  * const session = await client.connect({
- *   provider: "sftp-native",
+ *   provider: "sftp",
  *   host: "sftp.example.com",
  *   username: "deploy",
  *   ssh: {
@@ -3705,70 +3704,4 @@ interface NativeSftpRawSession {
  */
 declare function createNativeSftpProviderFactory(options?: NativeSftpProviderOptions): ProviderFactory;
 
-/** Options used to create an SFTP provider factory. */
-interface SftpProviderOptions {
-    /** Hash algorithm used before calling ssh2's host verifier, such as `sha256`. */
-    hostHash?: ConnectConfig["hostHash"];
-    /** Host-key verifier passed directly to ssh2 for advanced callers. */
-    hostVerifier?: ConnectConfig["hostVerifier"];
-    /** Default SSH handshake timeout in milliseconds when the profile does not provide `timeoutMs`. */
-    readyTimeoutMs?: number;
-}
-/** Raw SFTP session handles exposed for advanced diagnostics. */
-interface SftpRawSession {
-    /** Underlying ssh2 client connection. */
-    client: Client;
-    /** Underlying ssh2 SFTP wrapper. */
-    sftp: SFTPWrapper;
-}
-/**
- * Creates an SFTP provider factory backed by the mature `ssh2` implementation.
- *
- * @param options - Optional ssh2 host-key verifier and timeout defaults.
- * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
- *
- * @example Register and use
- * ```ts
- * import { createSftpProviderFactory, createTransferClient } from "@zero-transfer/sdk";
- *
- * const client = createTransferClient({ providers: [createSftpProviderFactory()] });
- *
- * const session = await client.connect({
- *   host: "sftp.example.com",
- *   provider: "sftp",
- *   username: "deploy",
- *   ssh: {
- *     privateKey: { path: "./keys/id_ed25519" },
- *     // Optional but recommended for production:
- *     pinnedHostKeySha256: "SHA256:abc123basesixfourpinFromKnownHosts=",
- *   },
- * });
- * ```
- *
- * Host-key verification (`ssh.knownHosts` and/or `ssh.pinnedHostKeySha256`) is
- * optional; without either, the client trusts whatever host key the server
- * presents. Use one for any non-lab deployment.
- */
-declare function createSftpProviderFactory(options?: SftpProviderOptions): ProviderFactory;
-
-/** Options for {@link createSftpJumpHostSocketFactory}. */
-interface SftpJumpHostOptions {
-    /** Static ssh2 connect configuration for the bastion. Mutually exclusive with {@link buildBastion}. */
-    bastion?: ConnectConfig;
-    /** Per-connection builder used to refresh credentials before each tunnel attempt. */
-    buildBastion?: (context: SshSocketFactoryContext) => ConnectConfig | Promise<ConnectConfig>;
-    /** Optional logger used for tunnel diagnostics. */
-    logger?: ZeroTransferLogger;
-    /** Optional ssh2 client factory override used in tests. */
-    createClient?: () => Client;
-}
-/**
- * Builds an {@link SshSocketFactory} that tunnels SFTP connections through a bastion host.
- *
- * @param options - Bastion configuration and overrides.
- * @returns Factory that returns a forwarded ssh2 channel stream when invoked.
- * @throws {@link ConfigurationError} When neither {@link SftpJumpHostOptions.bastion} nor {@link SftpJumpHostOptions.buildBastion} is supplied.
- */
-declare function createSftpJumpHostSocketFactory(options: SftpJumpHostOptions): SshSocketFactory;
-
-export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type NativeSftpProviderOptions, type NativeSftpRawSession, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type ProgressEventInput, ProtocolError, type AuthenticationCapability as ProviderAuthenticationCapability, type CapabilitySet as ProviderCapabilities, type ChecksumCapability as ProviderChecksumCapability, type ProviderFactory, type ProviderId, type MetadataCapability as ProviderMetadataCapability, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type SecretProvider, type SecretSource, type SecretValue, type SftpJumpHostOptions, type SftpProviderOptions, type SftpRawSession, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithms, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshProfile, type SshSocketFactory, type SshSocketFactoryContext, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createLocalProviderFactory, createMemoryProviderFactory, createNativeSftpProviderFactory, createOAuthTokenSecretSource, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createSftpJumpHostSocketFactory, createSftpProviderFactory, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactObject, redactSecretSource, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };
+export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type NativeSftpProviderOptions, type NativeSftpRawSession, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type ProgressEventInput, ProtocolError, type AuthenticationCapability as ProviderAuthenticationCapability, type CapabilitySet as ProviderCapabilities, type ChecksumCapability as ProviderChecksumCapability, type ProviderFactory, type ProviderId, type MetadataCapability as ProviderMetadataCapability, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type SecretProvider, type SecretSource, type SecretValue, type NativeSftpProviderOptions as SftpProviderOptions, type NativeSftpRawSession as SftpRawSession, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithms, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshProfile, type SshSocketFactory, type SshSocketFactoryContext, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createLocalProviderFactory, createMemoryProviderFactory, createNativeSftpProviderFactory, createOAuthTokenSecretSource, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createNativeSftpProviderFactory as createSftpProviderFactory, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactObject, redactSecretSource, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };

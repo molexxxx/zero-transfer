@@ -3,7 +3,7 @@
  *
  * FTP, FTPS, and SFTP providers in one install.
  * Includes the complete @zero-transfer/core surface.
- * Runtime dependency: ssh2
+ * Zero runtime dependencies (SFTP uses the native SSH stack).
  *
  * @module @zero-transfer/classic
  */
@@ -30,8 +30,6 @@ export {
 } from "../providers/classic/ftp";
 export {
   createSftpProviderFactory,
-  createSftpJumpHostSocketFactory,
-  type SftpJumpHostOptions,
   type SftpProviderOptions,
   type SftpRawSession,
 } from "../providers/classic/sftp";
