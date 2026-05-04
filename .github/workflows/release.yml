@@ -1,9 +1,10 @@
-name: Release
+name: Release (manual)
+
+# Note: Automated publishing happens in release-on-bump.yml after the version
+# in package.json changes on `main`. This workflow is a manual escape hatch
+# for republishing or pushing pre-release tags without bumping package.json.
 
 on:
-  release:
-    types:
-      - published
   workflow_dispatch:
     inputs:
       tag:
@@ -42,17 +43,7 @@ jobs:
 
       - name: Resolve dist-tag
         id: tag
-        run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            VER="${{ github.event.release.tag_name }}"
-            if echo "$VER" | grep -qE 'alpha|beta|rc|next|dev|pre'; then
-              echo "tag=alpha" >> "$GITHUB_OUTPUT"
-            else
-              echo "tag=latest" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
-          fi
+        run: echo "tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
 
       - name: Regenerate workspace stubs at SDK version
         run: npm run packages:generate

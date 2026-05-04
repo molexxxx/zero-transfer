@@ -68,3 +68,70 @@ jobs:
             --title "v$VERSION" \
             --generate-notes \
             $PRERELEASE
+
+  publish:
+    name: Publish @zero-transfer/* to npmjs
+    needs: [detect, tag]
+    if: needs.detect.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Validate package
+        run: npm run ci
+
+      - name: Resolve dist-tag
+        id: tag
+        env:
+          VERSION: ${{ needs.detect.outputs.version }}
+        run: |
+          if echo "$VERSION" | grep -qE 'alpha|beta|rc|next|dev|pre'; then
+            echo "tag=alpha" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Regenerate workspace stubs at SDK version
+        run: npm run packages:generate
+
+      - name: Regenerate documentation (HTML + Markdown + per-scope)
+        run: npm run docs:all
+
+      - name: Publish @zero-transfer/sdk
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public --tag "${{ steps.tag.outputs.tag }}"
+
+      - name: Publish @zero-transfer/* workspace stubs
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for dir in packages/*/; do
+            name=$(node -p "require('./$dir/package.json').name")
+            version=$(node -p "require('./$dir/package.json').version")
+            echo "Publishing $name@$version with tag ${{ steps.tag.outputs.tag }}"
+            ( cd "$dir" && npm publish --access public --tag "${{ steps.tag.outputs.tag }}" )
+          done
+
+      - name: Summary
+        run: |
+          {
+            echo "## Released ${{ needs.detect.outputs.version }} (${{ steps.tag.outputs.tag }})"
+            echo ""
+            echo "- @zero-transfer/sdk"
+            for dir in packages/*/; do
+              name=$(node -p "require('./$dir/package.json').name")
+              echo "- $name"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
