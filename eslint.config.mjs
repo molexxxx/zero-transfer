@@ -15,6 +15,7 @@ export default [
       "node_modules/**",
       "packages/**",
       "scripts/**",
+      "website/**",
     ],
   },
   js.configs.recommended,
