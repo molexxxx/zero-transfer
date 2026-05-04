@@ -1643,6 +1643,65 @@ interface RunConnectionDiagnosticsOptions {
  */
 declare function runConnectionDiagnostics(options: RunConnectionDiagnosticsOptions): Promise<ConnectionDiagnosticsResult>;
 
+/** Options for {@link createPooledTransferClient}. */
+interface ConnectionPoolOptions {
+    /**
+     * Maximum number of *idle* sessions retained per pool key.
+     *
+     * Active leases are not counted against this limit — the cap only applies
+     * to sessions waiting in the pool. When more than `maxIdlePerKey` sessions
+     * become idle simultaneously, the oldest ones are disconnected. Defaults
+     * to `4`.
+     */
+    maxIdlePerKey?: number;
+    /**
+     * How long an idle session may sit unused before it is automatically
+     * disconnected. Defaults to `60_000` ms. Set to `0` to disable the timer
+     * (idle sessions persist until `drainPool()` is called).
+     */
+    idleTimeoutMs?: number;
+    /**
+     * Custom pool key derivation. Receives the resolved
+     * {@link ConnectionProfile} (after TransferClient validation) and must
+     * return a string. Sessions with matching keys are pooled together; never
+     * include secrets in the key.
+     *
+     * The default derives the key from `provider`, `host`, `port`, and
+     * `username`.
+     */
+    keyOf?: (profile: ConnectionProfile) => string;
+}
+/**
+ * Pool-aware {@link TransferClient} returned by
+ * {@link createPooledTransferClient}.
+ */
+interface PooledTransferClient {
+    /** Opens (or leases) a pooled provider session. */
+    connect(profile: ConnectionProfile): Promise<TransferSession>;
+    /** Inspects the registered providers (delegated to the underlying client). */
+    hasProvider(providerId: ProviderId): boolean;
+    /** Returns the registered capability snapshots (delegated). */
+    getCapabilities(): CapabilitySet[];
+    /** Returns a specific capability snapshot (delegated). */
+    getCapabilities(providerId: ProviderId): CapabilitySet;
+    /**
+     * Disconnects every idle session and prevents further pooling. After
+     * `drainPool()` resolves, subsequent `connect()` calls still work but
+     * always create fresh sessions (and never return them to the pool).
+     */
+    drainPool(): Promise<void>;
+    /** Returns the number of idle sessions currently held in the pool. */
+    poolSize(): number;
+}
+/**
+ * Wraps a {@link TransferClient} with connection pooling.
+ *
+ * @param inner - Underlying client used to create real provider sessions.
+ * @param options - Pool sizing, eviction, and key-derivation overrides.
+ * @returns A {@link PooledTransferClient} that reuses idle sessions.
+ */
+declare function createPooledTransferClient(inner: TransferClient, options?: ConnectionPoolOptions): PooledTransferClient;
+
 /** Options used to create a local file-system provider factory. */
 interface LocalProviderOptions {
     /** Root directory exposed as `/`. When omitted, `profile.host` is treated as the root path. */
@@ -3194,7 +3253,14 @@ interface S3ProviderOptions {
 }
 /** Multipart upload tuning for the S3 provider. */
 interface S3MultipartOptions {
-    /** Enable multipart upload. Defaults to `false`. */
+    /**
+     * Enable multipart upload. **Defaults to `true`** so large objects stream
+     * in fixed-size parts instead of being buffered in memory before a single
+     * `PUT`. Payloads at or below {@link S3MultipartOptions.thresholdBytes}
+     * still fall back to a single-shot `PUT` automatically. Set to `false` to
+     * force the legacy single-shot behaviour (e.g. when targeting an
+     * S3-compatible endpoint that does not support `CreateMultipartUpload`).
+     */
     enabled?: boolean;
     /** Object size threshold in bytes above which multipart is used. Defaults to 8 MiB. */
     thresholdBytes?: number;
@@ -3240,6 +3306,41 @@ interface S3MultipartResumeStore {
 }
 /** Creates an in-memory {@link S3MultipartResumeStore}. */
 declare function createMemoryS3MultipartResumeStore(): S3MultipartResumeStore;
+/** Options for {@link createFileSystemS3MultipartResumeStore}. */
+interface FileSystemS3MultipartResumeStoreOptions {
+    /**
+     * Directory under which checkpoint JSON files are written. Created
+     * recursively if it does not exist. Each upload occupies a single file
+     * named after a SHA-256 hash of the resume key, so the directory is safe
+     * to share across many concurrent uploads.
+     */
+    directory: string;
+}
+/**
+ * File-system backed {@link S3MultipartResumeStore} that survives process
+ * restarts. Each in-flight multipart upload is checkpointed to a single
+ * JSON file in `options.directory` after every part. On retry the upload
+ * reuses the stored `uploadId` and skips parts that S3 has already
+ * accepted.
+ *
+ * The implementation writes atomically (`<file>.tmp` then `rename`) so a
+ * crash mid-write cannot leave a corrupt checkpoint.
+ *
+ * @example
+ * ```ts
+ * import { createFileSystemS3MultipartResumeStore, createS3ProviderFactory }
+ *   from "@zero-transfer/sdk";
+ *
+ * const resumeStore = createFileSystemS3MultipartResumeStore({
+ *   directory: "./.zt-s3-resume",
+ * });
+ *
+ * const factory = createS3ProviderFactory({
+ *   multipart: { enabled: true, resumeStore },
+ * });
+ * ```
+ */
+declare function createFileSystemS3MultipartResumeStore(options: FileSystemS3MultipartResumeStoreOptions): S3MultipartResumeStore;
 /**
  * Creates an S3-compatible provider factory.
  *
@@ -3277,4 +3378,4 @@ declare function createMemoryS3MultipartResumeStore(): S3MultipartResumeStore;
  */
 declare function createS3ProviderFactory(options?: S3ProviderOptions): ProviderFactory;
 
-export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type ProgressEventInput, ProtocolError, type AuthenticationCapability as ProviderAuthenticationCapability, type CapabilitySet as ProviderCapabilities, type ChecksumCapability as ProviderChecksumCapability, type ProviderFactory, type ProviderId, type MetadataCapability as ProviderMetadataCapability, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type S3MultipartCheckpoint, type S3MultipartOptions, type S3MultipartPart, type S3MultipartResumeKey, type S3MultipartResumeStore, type S3ProviderOptions, type SecretProvider, type SecretSource, type SecretValue, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithms, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshProfile, type SshSocketFactory, type SshSocketFactoryContext, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createLocalProviderFactory, createMemoryProviderFactory, createMemoryS3MultipartResumeStore, createOAuthTokenSecretSource, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createS3ProviderFactory, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactObject, redactSecretSource, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };
+export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionPoolOptions, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileSystemS3MultipartResumeStoreOptions, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type PooledTransferClient, type ProgressEventInput, ProtocolError, type AuthenticationCapability as ProviderAuthenticationCapability, type CapabilitySet as ProviderCapabilities, type ChecksumCapability as ProviderChecksumCapability, type ProviderFactory, type ProviderId, type MetadataCapability as ProviderMetadataCapability, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type S3MultipartCheckpoint, type S3MultipartOptions, type S3MultipartPart, type S3MultipartResumeKey, type S3MultipartResumeStore, type S3ProviderOptions, type SecretProvider, type SecretSource, type SecretValue, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithms, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshProfile, type SshSocketFactory, type SshSocketFactoryContext, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createFileSystemS3MultipartResumeStore, createLocalProviderFactory, createMemoryProviderFactory, createMemoryS3MultipartResumeStore, createOAuthTokenSecretSource, createPooledTransferClient, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createS3ProviderFactory, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactObject, redactSecretSource, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };

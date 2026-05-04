@@ -87,6 +87,7 @@ function deriveKeywords(name) {
     ftp: ["ftp"],
     ftps: ["ftps", "tls"],
     sftp: ["sftp", "ssh"],
+    ssh: ["ssh", "ssh2", "tunneling", "channels"],
     http: ["http", "https", "signed-url"],
     webdav: ["webdav"],
     s3: ["s3", "object-storage", "multipart"],

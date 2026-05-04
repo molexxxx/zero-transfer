@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   ConfigurationError,
   PathNotFoundError,
   UnsupportedFeatureError,
+  createFileSystemS3MultipartResumeStore,
   createMemoryS3MultipartResumeStore,
   createS3ProviderFactory,
   type HttpFetch,
@@ -12,7 +16,7 @@ import {
 } from "../../../src/index";
 
 describe("createS3ProviderFactory", () => {
-  it("advertises S3 capabilities", () => {
+  it("advertises S3 capabilities (multipart enabled by default)", () => {
     const factory = createS3ProviderFactory({ fetch: notImplementedFetch });
     expect(factory.id).toBe("s3");
     expect(factory.capabilities).toMatchObject({
@@ -20,10 +24,18 @@ describe("createS3ProviderFactory", () => {
       provider: "s3",
       readStream: true,
       resumeDownload: true,
-      resumeUpload: false,
+      resumeUpload: true,
       stat: true,
       writeStream: true,
     });
+  });
+
+  it("advertises legacy single-shot capabilities when multipart is explicitly disabled", () => {
+    const factory = createS3ProviderFactory({
+      fetch: notImplementedFetch,
+      multipart: { enabled: false },
+    });
+    expect(factory.capabilities.resumeUpload).toBe(false);
   });
 
   it("rejects connect() without credentials or bucket", async () => {
@@ -634,3 +646,598 @@ function singleChunk(bytes: Uint8Array): AsyncIterable<Uint8Array> {
     },
   };
 }
+
+function multiChunk(chunks: Uint8Array[]): AsyncIterable<Uint8Array> {
+  return {
+    [Symbol.asyncIterator]() {
+      let i = 0;
+      return {
+        next: () => {
+          if (i >= chunks.length) return Promise.resolve({ done: true as const, value: undefined });
+          const value = chunks[i] as Uint8Array;
+          i += 1;
+          return Promise.resolve({ done: false as const, value });
+        },
+      };
+    },
+  };
+}
+
+describe("createFileSystemS3MultipartResumeStore", () => {
+  it("rejects empty directory option", () => {
+    expect(() => createFileSystemS3MultipartResumeStore({ directory: "" })).toThrow(
+      ConfigurationError,
+    );
+  });
+
+  it("rejects non-string directory option", () => {
+    expect(() =>
+      createFileSystemS3MultipartResumeStore({
+        directory: undefined as unknown as string,
+      }),
+    ).toThrow(ConfigurationError);
+  });
+
+  it("returns undefined when no checkpoint file exists for the key", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "s3-resume-"));
+    try {
+      const store = createFileSystemS3MultipartResumeStore({ directory: dir });
+      const result = await store.load({ bucket: "b", jobId: "j", path: "/x" });
+      expect(result).toBeUndefined();
+    } finally {
+      await rm(dir, { force: true, recursive: true });
+    }
+  });
+
+  it("saves, loads, and clears a checkpoint atomically", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "s3-resume-"));
+    try {
+      const store = createFileSystemS3MultipartResumeStore({ directory: dir });
+      const key = { bucket: "b", jobId: "j", path: "/x.bin" };
+      const checkpoint = {
+        parts: [{ byteEnd: 1024, etag: '"abc"', partNumber: 1 }],
+        uploadId: "u-123",
+      };
+      await store.save(key, checkpoint);
+      const loaded = await store.load(key);
+      expect(loaded).toEqual(checkpoint);
+      // Ensure no leftover .tmp files.
+      const files = await readdir(dir);
+      expect(files.some((f) => f.endsWith(".tmp"))).toBe(false);
+      await store.clear(key);
+      expect(await store.load(key)).toBeUndefined();
+    } finally {
+      await rm(dir, { force: true, recursive: true });
+    }
+  });
+
+  it("clear() is a no-op when the file is already gone", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "s3-resume-"));
+    try {
+      const store = createFileSystemS3MultipartResumeStore({ directory: dir });
+      await expect(
+        store.clear({ bucket: "b", jobId: "missing", path: "/" }),
+      ).resolves.toBeUndefined();
+    } finally {
+      await rm(dir, { force: true, recursive: true });
+    }
+  });
+
+  it("load() returns undefined for a malformed checkpoint file", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "s3-resume-"));
+    try {
+      const store = createFileSystemS3MultipartResumeStore({ directory: dir });
+      const key = { bucket: "b", jobId: "j", path: "/x" };
+      // Save a valid file first to discover the path.
+      await store.save(key, { parts: [], uploadId: "u" });
+      const files = await readdir(dir);
+      const file = files.find((f) => f.endsWith(".json"));
+      expect(file).toBeDefined();
+      // Overwrite with malformed JSON.
+      const fs = await import("node:fs/promises");
+      await fs.writeFile(join(dir, file!), JSON.stringify({ wrong: true }));
+      const result = await store.load(key);
+      expect(result).toBeUndefined();
+      // Confirm the on-disk content is what we wrote (sanity check that we hit the right path).
+      const raw = await readFile(join(dir, file!), "utf8");
+      expect(raw).toContain("wrong");
+    } finally {
+      await rm(dir, { force: true, recursive: true });
+    }
+  });
+});
+
+describe("S3 multipart upload", () => {
+  it("falls back to single-shot PUT when payload is at or below the threshold", async () => {
+    const captured: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}), url: input });
+      return Promise.resolve(new Response(null, { headers: { etag: '"e"' }, status: 200 }));
+    };
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      multipart: { enabled: true, partSizeBytes: 1024, thresholdBytes: 1024 * 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const small = new Uint8Array(64);
+    const result = await transfers.write(makeWriteRequest("/small.bin", small));
+    expect(result.bytesTransferred).toBe(64);
+    expect(captured).toHaveLength(1);
+    expect(captured[0]?.init?.method).toBe("PUT");
+    expect(captured[0]?.url).not.toMatch(/uploads/);
+  });
+
+  it("performs a full multipart upload with CreateMultipartUpload, UploadPart x N, CompleteMultipartUpload", async () => {
+    const captured: Array<{ url: string; init?: RequestInit }> = [];
+    let partCount = 0;
+    const resumeStore = createMemoryS3MultipartResumeStore();
+    const fetchImpl: HttpFetch = (input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}), url: String(input) });
+      const url = String(input);
+      if (init?.method === "POST" && url.includes("uploads")) {
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0"?><InitiateMultipartUploadResult><UploadId>UP-1</UploadId></InitiateMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      if (init?.method === "PUT" && url.includes("partNumber")) {
+        partCount += 1;
+        return Promise.resolve(
+          new Response(null, {
+            headers: { etag: `"part-${String(partCount)}"` },
+            status: 200,
+          }),
+        );
+      }
+      if (init?.method === "POST" && url.includes("uploadId")) {
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0"?><CompleteMultipartUploadResult><ETag>"final-etag"</ETag></CompleteMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(null, { status: 500 }));
+    };
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      multipart: {
+        enabled: true,
+        partSizeBytes: 1024,
+        resumeStore,
+        thresholdBytes: 1024,
+      },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    // 3.5 KB payload across multiple chunks → 4 parts at 1 KB each.
+    const chunks: Uint8Array[] = [];
+    for (let i = 0; i < 7; i += 1) chunks.push(new Uint8Array(512).fill(i));
+    const result = await transfers.write({
+      attempt: 1,
+      content: multiChunk(chunks),
+      endpoint: { path: "/big.bin", provider: "s3" },
+      job: { id: "s3-mp", operation: "upload" },
+      reportProgress: (b, t) => makeProgressEvent(b, t),
+      throwIfAborted: () => undefined,
+    });
+    expect(partCount).toBeGreaterThanOrEqual(3);
+    expect(result.bytesTransferred).toBe(7 * 512);
+    expect(result.checksum).toBe('"final-etag"');
+    // Resume store should be cleared after success.
+    expect(
+      await resumeStore.load({ bucket: "bucket-a", jobId: "s3-mp", path: "/big.bin" }),
+    ).toBeUndefined();
+  });
+
+  it("resumes a multipart upload from a saved checkpoint", async () => {
+    const resumeStore = createMemoryS3MultipartResumeStore();
+    await resumeStore.save(
+      { bucket: "bucket-a", jobId: "resume-job", path: "/r.bin" },
+      {
+        parts: [
+          { byteEnd: 1024, etag: '"p1"', partNumber: 1 },
+          { byteEnd: 2048, etag: '"p2"', partNumber: 2 },
+        ],
+        uploadId: "RESUME-UP",
+      },
+    );
+    let initiateCalls = 0;
+    let partCalls = 0;
+    const fetchImpl: HttpFetch = (input, init) => {
+      const url = String(input);
+      if (init?.method === "POST" && url.includes("uploads") && !url.includes("uploadId")) {
+        initiateCalls += 1;
+        return Promise.resolve(new Response(null, { status: 500 }));
+      }
+      if (init?.method === "PUT" && url.includes("partNumber")) {
+        partCalls += 1;
+        return Promise.resolve(new Response(null, { headers: { etag: '"p-new"' }, status: 200 }));
+      }
+      if (init?.method === "POST" && url.includes("uploadId")) {
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0"?><CompleteMultipartUploadResult><ETag>"final"</ETag></CompleteMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(null, { status: 500 }));
+    };
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      multipart: { enabled: true, partSizeBytes: 1024, resumeStore, thresholdBytes: 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.write({
+      ...makeWriteRequest("/r.bin", new Uint8Array(1024).fill(9)),
+      job: { id: "resume-job", operation: "upload" },
+      offset: 2048,
+    });
+    // No new InitiateMultipartUpload should have been issued.
+    expect(initiateCalls).toBe(0);
+    expect(partCalls).toBeGreaterThan(0);
+    expect(result.bytesTransferred).toBeGreaterThanOrEqual(2048);
+  });
+
+  it("rejects a resume request with no stored checkpoint as UnsupportedFeatureError", async () => {
+    const resumeStore = createMemoryS3MultipartResumeStore();
+    const factory = createS3ProviderFactory({
+      fetch: notImplementedFetch,
+      multipart: { enabled: true, partSizeBytes: 1024, resumeStore, thresholdBytes: 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(
+      transfers.write({
+        ...makeWriteRequest("/missing.bin", new Uint8Array()),
+        offset: 4096,
+      }),
+    ).rejects.toBeInstanceOf(UnsupportedFeatureError);
+  });
+
+  it("rejects a resume request whose offset doesn't match the stored checkpoint", async () => {
+    const resumeStore = createMemoryS3MultipartResumeStore();
+    await resumeStore.save(
+      { bucket: "bucket-a", jobId: "j", path: "/x.bin" },
+      { parts: [{ byteEnd: 1024, etag: '"p"', partNumber: 1 }], uploadId: "u" },
+    );
+    const factory = createS3ProviderFactory({
+      fetch: notImplementedFetch,
+      multipart: { enabled: true, partSizeBytes: 1024, resumeStore, thresholdBytes: 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(
+      transfers.write({
+        ...makeWriteRequest("/x.bin", new Uint8Array()),
+        job: { id: "j", operation: "upload" },
+        offset: 9999,
+      }),
+    ).rejects.toBeInstanceOf(UnsupportedFeatureError);
+  });
+
+  it("aborts the multipart upload on a part failure when no resume store is configured", async () => {
+    let aborted = false;
+    const fetchImpl: HttpFetch = (input, init) => {
+      const url = String(input);
+      if (init?.method === "POST" && url.includes("uploads") && !url.includes("uploadId")) {
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0"?><InitiateMultipartUploadResult><UploadId>UP-X</UploadId></InitiateMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      if (init?.method === "PUT" && url.includes("partNumber")) {
+        return Promise.resolve(new Response(null, { status: 500 }));
+      }
+      if (init?.method === "DELETE" && url.includes("uploadId")) {
+        aborted = true;
+        return Promise.resolve(new Response(null, { status: 204 }));
+      }
+      return Promise.resolve(new Response(null, { status: 500 }));
+    };
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      multipart: { enabled: true, partSizeBytes: 1024, thresholdBytes: 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const big = new Uint8Array(4096).fill(1);
+    await expect(transfers.write(makeWriteRequest("/abort.bin", big))).rejects.toBeDefined();
+    expect(aborted).toBe(true);
+  });
+
+  it("preserves the checkpoint on part failure when a resume store is configured", async () => {
+    const resumeStore = createMemoryS3MultipartResumeStore();
+    let aborted = false;
+    const fetchImpl: HttpFetch = (input, init) => {
+      const url = String(input);
+      if (init?.method === "POST" && url.includes("uploads") && !url.includes("uploadId")) {
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0"?><InitiateMultipartUploadResult><UploadId>UP-Y</UploadId></InitiateMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      if (init?.method === "PUT" && url.includes("partNumber")) {
+        return Promise.resolve(new Response(null, { status: 500 }));
+      }
+      if (init?.method === "DELETE") {
+        aborted = true;
+        return Promise.resolve(new Response(null, { status: 204 }));
+      }
+      return Promise.resolve(new Response(null, { status: 500 }));
+    };
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      multipart: { enabled: true, partSizeBytes: 1024, resumeStore, thresholdBytes: 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const big = new Uint8Array(4096).fill(2);
+    await expect(
+      transfers.write({
+        ...makeWriteRequest("/preserve.bin", big),
+        job: { id: "preserve", operation: "upload" },
+      }),
+    ).rejects.toBeDefined();
+    expect(aborted).toBe(false);
+    expect(
+      await resumeStore.load({ bucket: "bucket-a", jobId: "preserve", path: "/preserve.bin" }),
+    ).toBeDefined();
+  });
+
+  it("throws ConnectionError when CreateMultipartUpload returns no UploadId", async () => {
+    const fetchImpl: HttpFetch = (input, init) => {
+      const url = String(input);
+      if (init?.method === "POST" && url.includes("uploads") && !url.includes("uploadId")) {
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0"?><InitiateMultipartUploadResult></InitiateMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(null, { status: 500 }));
+    };
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      multipart: { enabled: true, partSizeBytes: 1024, thresholdBytes: 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(
+      transfers.write(makeWriteRequest("/no-id.bin", new Uint8Array(4096))),
+    ).rejects.toBeDefined();
+  });
+
+  it("throws ConnectionError when UploadPart returns no ETag", async () => {
+    const fetchImpl: HttpFetch = (input, init) => {
+      const url = String(input);
+      if (init?.method === "POST" && url.includes("uploads") && !url.includes("uploadId")) {
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0"?><InitiateMultipartUploadResult><UploadId>UP-Z</UploadId></InitiateMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      if (init?.method === "PUT" && url.includes("partNumber")) {
+        return Promise.resolve(new Response(null, { status: 200 }));
+      }
+      if (init?.method === "DELETE") return Promise.resolve(new Response(null, { status: 204 }));
+      return Promise.resolve(new Response(null, { status: 500 }));
+    };
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      multipart: { enabled: true, partSizeBytes: 1024, thresholdBytes: 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(
+      transfers.write(makeWriteRequest("/no-etag.bin", new Uint8Array(4096))),
+    ).rejects.toBeDefined();
+  });
+
+  it("escapes special XML characters in the CompleteMultipartUpload body", async () => {
+    let completeBody: string | undefined;
+    const fetchImpl: HttpFetch = (input, init) => {
+      const url = String(input);
+      if (init?.method === "POST" && url.includes("uploads") && !url.includes("uploadId")) {
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0"?><InitiateMultipartUploadResult><UploadId>U</UploadId></InitiateMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      if (init?.method === "PUT" && url.includes("partNumber")) {
+        return Promise.resolve(new Response(null, { headers: { etag: '"a&b<c>"' }, status: 200 }));
+      }
+      if (init?.method === "POST" && url.includes("uploadId")) {
+        completeBody = new TextDecoder().decode(init.body as Uint8Array);
+        return Promise.resolve(
+          new Response(
+            `<?xml version="1.0"?><CompleteMultipartUploadResult><ETag>"final"</ETag></CompleteMultipartUploadResult>`,
+            { status: 200 },
+          ),
+        );
+      }
+      return Promise.resolve(new Response(null, { status: 500 }));
+    };
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      multipart: { enabled: true, partSizeBytes: 1024, thresholdBytes: 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await transfers.write(makeWriteRequest("/escape.bin", new Uint8Array(4096)));
+    expect(completeBody).toContain("&amp;");
+    expect(completeBody).toContain("&lt;");
+    expect(completeBody).toContain("&gt;");
+  });
+});
+
+describe("S3 misc paths", () => {
+  it("forwards sessionToken from factory options to SigV4 signing", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(new Response(null, { status: 200 }));
+    };
+    const factory = createS3ProviderFactory({
+      fetch: fetchImpl,
+      sessionToken: "STS-TOKEN-XYZ",
+    });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    await session.fs.stat("/x").catch(() => undefined);
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["x-amz-security-token"]).toBe("STS-TOKEN-XYZ");
+  });
+
+  it("uses virtual-hosted style URLs when pathStyle is false", async () => {
+    const captured: Array<{ url: string }> = [];
+    const fetchImpl: HttpFetch = (input) => {
+      captured.push({ url: String(input) });
+      return Promise.resolve(new Response(null, { status: 200 }));
+    };
+    const factory = createS3ProviderFactory({ fetch: fetchImpl, pathStyle: false });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    await session.fs.stat("/x").catch(() => undefined);
+    expect(captured[0]?.url).toMatch(/^https:\/\/bucket-a\.s3\./);
+  });
+
+  it("propagates the request signal during reads", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(new Response("hi", { status: 200 }));
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const ctrl = new AbortController();
+    const result = await transfers.read({ ...makeReadRequest("/x"), signal: ctrl.signal });
+    expect(result.content).toBeDefined();
+    expect(captured[0]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("read() throws ConnectionError when response has no body", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(new Response(null, { headers: { "content-length": "0" }, status: 200 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(transfers.read(makeReadRequest("/x"))).rejects.toMatchObject({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      message: expect.stringMatching(/no body/),
+    });
+  });
+
+  it("read() maps a 404 to PathNotFoundError", async () => {
+    const fetchImpl: HttpFetch = () => Promise.resolve(new Response(null, { status: 404 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(transfers.read(makeReadRequest("/missing"))).rejects.toBeInstanceOf(
+      PathNotFoundError,
+    );
+  });
+
+  it("read() uses Range with offset+length", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(
+        new Response("xy", {
+          headers: { "content-length": "2", "content-range": "bytes 5-6/100" },
+          status: 206,
+        }),
+      );
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await transfers.read({ ...makeReadRequest("/x"), range: { length: 2, offset: 5 } });
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["range"]).toBe("bytes=5-6");
+  });
+});

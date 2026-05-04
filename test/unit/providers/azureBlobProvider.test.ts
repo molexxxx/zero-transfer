@@ -345,3 +345,266 @@ function singleChunk(bytes: Uint8Array): AsyncIterable<Uint8Array> {
     },
   };
 }
+
+describe("createAzureBlobProviderFactory edge cases", () => {
+  it("throws ConfigurationError when neither account nor endpoint is provided", () => {
+    expect(() =>
+      createAzureBlobProviderFactory({ container: "data", fetch: notImplementedFetch }),
+    ).toThrow(ConfigurationError);
+  });
+
+  it("throws ConfigurationError when fetch is unavailable", () => {
+    const original = globalThis.fetch;
+    (globalThis as { fetch?: unknown }).fetch = undefined;
+    try {
+      expect(() => createAzureBlobProviderFactory({ account: "acct", container: "data" })).toThrow(
+        ConfigurationError,
+      );
+    } finally {
+      (globalThis as { fetch?: unknown }).fetch = original;
+    }
+  });
+
+  it("uses an explicit endpoint when provided (Azurite-style)", async () => {
+    const captured: string[] = [];
+    const fetchImpl: HttpFetch = (input) => {
+      captured.push(input);
+      return Promise.resolve(
+        new Response(`<EnumerationResults><Blobs></Blobs></EnumerationResults>`, {
+          headers: { "content-type": "application/xml" },
+          status: 200,
+        }),
+      );
+    };
+    const factory = createAzureBlobProviderFactory({
+      container: "data",
+      endpoint: "http://127.0.0.1:10000/devstoreaccount1/",
+      fetch: fetchImpl,
+      sasToken: "sv=t",
+    });
+    const session = await factory.create().connect({ host: "", protocol: "ftp" });
+    await session.fs.list("/");
+    expect(captured[0]).toMatch(/^http:\/\/127\.0\.0\.1:10000\/devstoreaccount1\/data/);
+  });
+
+  it("forwards apiVersion as the x-ms-version header", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(
+        new Response(null, { headers: { "content-length": "1" }, status: 200 }),
+      );
+    };
+    const factory = createAzureBlobProviderFactory({
+      account: "acct",
+      apiVersion: "2099-01-01",
+      container: "data",
+      fetch: fetchImpl,
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    await session.fs.stat("/x");
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["x-ms-version"]).toBe("2099-01-01");
+  });
+
+  it("merges defaultHeaders into every request", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(
+        new Response(null, { headers: { "content-length": "1" }, status: 200 }),
+      );
+    };
+    const factory = createAzureBlobProviderFactory({
+      account: "acct",
+      container: "data",
+      defaultHeaders: { "X-Trace": "trace-1" },
+      fetch: fetchImpl,
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    await session.fs.stat("/x");
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["X-Trace"]).toBe("trace-1");
+  });
+
+  it("forwards profile.timeoutMs when set", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(
+        new Response(null, { headers: { "content-length": "1" }, status: 200 }),
+      );
+    };
+    const factory = createAzureBlobProviderFactory({
+      account: "acct",
+      container: "data",
+      fetch: fetchImpl,
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+      timeoutMs: 5_000,
+    });
+    await session.fs.stat("/x");
+    expect(captured[0]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("wraps fetch failures in ConnectionError", async () => {
+    const factory = createAzureBlobProviderFactory({
+      account: "acct",
+      container: "data",
+      fetch: () => Promise.reject(new Error("network down")),
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    await expect(session.fs.stat("/x")).rejects.toMatchObject({ message: /failed/ });
+  });
+
+  it("maps 429 throttling and 500 server errors to ConnectionError", async () => {
+    let attempt = 0;
+    const fetchImpl: HttpFetch = () => {
+      attempt += 1;
+      if (attempt === 1) return Promise.resolve(new Response("throttled", { status: 429 }));
+      return Promise.resolve(new Response("oops", { status: 500 }));
+    };
+    const session = await connect({ fetch: fetchImpl });
+    await expect(session.fs.stat("/a")).rejects.toMatchObject({ message: /throttled/ });
+    await expect(session.fs.stat("/a")).rejects.toMatchObject({ message: /failed with status/ });
+  });
+
+  it("read() throws ConnectionError when response has no body", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(new Response(null, { headers: { "content-length": "0" }, status: 200 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(transfers.read(makeReadRequest("/x"))).rejects.toMatchObject({
+      message: /no body/,
+    });
+  });
+
+  it("read() honors range offset and reports bytesRead", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(
+        new Response("xy", {
+          headers: { "content-length": "2", "content-range": "bytes 5-6/100" },
+          status: 206,
+        }),
+      );
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.read({
+      ...makeReadRequest("/x"),
+      range: { offset: 5 },
+    });
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["range"]).toBe("bytes=5-");
+    expect(result.bytesRead).toBe(5);
+    expect(result.totalBytes).toBe(100);
+  });
+
+  it("read() maps a non-OK GET response to a typed error", async () => {
+    const fetchImpl: HttpFetch = () => Promise.resolve(new Response("nope", { status: 404 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(transfers.read(makeReadRequest("/missing"))).rejects.toBeInstanceOf(
+      PathNotFoundError,
+    );
+  });
+
+  it("write() maps a non-OK PUT response to a typed error", async () => {
+    const fetchImpl: HttpFetch = () => Promise.resolve(new Response("forbid", { status: 403 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(
+      transfers.write(makeWriteRequest("/x", new TextEncoder().encode("y"))),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+  });
+
+  it("write() returns content-md5 from the response when provided", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(new Response(null, { headers: { "content-md5": "md5-up" }, status: 201 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.write(
+      makeWriteRequest("/x.bin", new TextEncoder().encode("hi")),
+    );
+    expect(result.checksum).toBe("md5-up");
+  });
+
+  it("list() decodes XML entities (&amp; etc.) in extracted blob names", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        new Response(
+          `<?xml version="1.0"?>
+            <EnumerationResults><Blobs>
+              <Blob><Name>folder/a&amp;b.txt</Name>
+                <Properties><Content-Length>3</Content-Length></Properties>
+              </Blob>
+            </Blobs></EnumerationResults>`,
+          { headers: { "content-type": "application/xml" }, status: 200 },
+        ),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    const list = await session.fs.list("/folder");
+    expect(list[0]?.name).toBe("a&b.txt");
+  });
+
+  it("list() falls back to contentMd5 / blob name when uniqueId is missing", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        new Response(
+          `<?xml version="1.0"?>
+            <EnumerationResults><Blobs>
+              <Blob><Name>folder/m.bin</Name>
+                <Properties>
+                  <Content-Length>1</Content-Length>
+                  <Content-MD5>md5-x</Content-MD5>
+                </Properties>
+              </Blob>
+              <Blob><Name>folder/n.bin</Name><Properties></Properties></Blob>
+            </Blobs></EnumerationResults>`,
+          { headers: { "content-type": "application/xml" }, status: 200 },
+        ),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    const list = await session.fs.list("/folder");
+    const m = list.find((e) => e.name === "m.bin");
+    const n = list.find((e) => e.name === "n.bin");
+    expect(m?.uniqueId).toBe("md5-x");
+    expect(n?.uniqueId).toBe("folder/n.bin");
+  });
+
+  it("propagates request.signal during reads", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(new Response("hi", { status: 200 }));
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const ctrl = new AbortController();
+    await transfers.read({ ...makeReadRequest("/x"), signal: ctrl.signal });
+    expect(captured[0]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+});

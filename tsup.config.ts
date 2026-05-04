@@ -18,6 +18,7 @@ const scopedEntries: Options[] = [
   "ftp",
   "ftps",
   "sftp",
+  "ssh",
   "classic",
   "http",
   "webdav",

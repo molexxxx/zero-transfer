@@ -311,3 +311,305 @@ function singleChunk(bytes: Uint8Array): AsyncIterable<Uint8Array> {
     },
   };
 }
+
+describe("createDropboxProviderFactory edge cases", () => {
+  it("throws ConfigurationError when fetch is unavailable", () => {
+    const original = globalThis.fetch;
+    (globalThis as { fetch?: unknown }).fetch = undefined;
+    try {
+      expect(() => createDropboxProviderFactory({})).toThrow(ConfigurationError);
+    } finally {
+      (globalThis as { fetch?: unknown }).fetch = original;
+    }
+  });
+
+  it("rejects connect() when bearer token resolves to an empty string", async () => {
+    const factory = createDropboxProviderFactory({ fetch: notImplementedFetch });
+    await expect(
+      factory.create().connect({ host: "", password: "", protocol: "ftp" }),
+    ).rejects.toBeInstanceOf(ConfigurationError);
+  });
+
+  it("uses overridden apiBaseUrl and contentBaseUrl when provided", async () => {
+    const captured: string[] = [];
+    const fetchImpl: HttpFetch = (input) => {
+      captured.push(input);
+      return Promise.resolve(
+        new Response(JSON.stringify({ cursor: "c", entries: [], has_more: false }), {
+          headers: { "content-type": "application/json" },
+          status: 200,
+        }),
+      );
+    };
+    const factory = createDropboxProviderFactory({
+      apiBaseUrl: "https://api.example.test",
+      contentBaseUrl: "https://content.example.test",
+      fetch: fetchImpl,
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    await session.fs.list("/a");
+    expect(captured[0]).toMatch(/^https:\/\/api\.example\.test/);
+  });
+
+  it("merges defaultHeaders into requests", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(
+        new Response(JSON.stringify({ cursor: "c", entries: [], has_more: false }), {
+          headers: { "content-type": "application/json" },
+          status: 200,
+        }),
+      );
+    };
+    const factory = createDropboxProviderFactory({
+      defaultHeaders: { "X-Trace": "t" },
+      fetch: fetchImpl,
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    await session.fs.list("/a");
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["X-Trace"]).toBe("t");
+    expect(headers["authorization"]).toBe("Bearer tok");
+  });
+
+  it("forwards profile.timeoutMs as an AbortSignal", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(
+        new Response(JSON.stringify({ cursor: "c", entries: [], has_more: false }), {
+          headers: { "content-type": "application/json" },
+          status: 200,
+        }),
+      );
+    };
+    const factory = createDropboxProviderFactory({ fetch: fetchImpl });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+      timeoutMs: 5_000,
+    });
+    await session.fs.list("/a");
+    expect(captured[0]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("wraps fetch failures in ConnectionError", async () => {
+    const factory = createDropboxProviderFactory({
+      fetch: () => Promise.reject(new Error("dns fail")),
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    await expect(session.fs.list("/a")).rejects.toMatchObject({ message: /failed/ });
+  });
+
+  it("maps 429 and 5xx responses to retryable ConnectionError", async () => {
+    let attempt = 0;
+    const fetchImpl: HttpFetch = () => {
+      attempt += 1;
+      if (attempt === 1) return Promise.resolve(new Response("rate-limited", { status: 429 }));
+      return Promise.resolve(new Response("server", { status: 503 }));
+    };
+    const session = await connect({ fetch: fetchImpl });
+    await expect(session.fs.stat("/a")).rejects.toMatchObject({ message: /rate limit/ });
+    await expect(session.fs.stat("/a")).rejects.toMatchObject({ message: /failed with status/ });
+  });
+
+  it("treats 409 without not_found as ConnectionError, not PathNotFoundError", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        new Response(JSON.stringify({ error_summary: "conflict/some_other_code" }), {
+          status: 409,
+        }),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    await expect(session.fs.stat("/a")).rejects.toMatchObject({ message: /failed with status/ });
+  });
+
+  it("read() emits content_hash from Dropbox-API-Result header when present", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        new Response("data", {
+          headers: { "dropbox-api-result": JSON.stringify({ content_hash: "hash-r" }) },
+          status: 200,
+        }),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.read(makeReadRequest("/x"));
+    expect(result.checksum).toBe("hash-r");
+  });
+
+  it("read() ignores a malformed Dropbox-API-Result header", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        new Response("data", {
+          headers: { "dropbox-api-result": "not-json" },
+          status: 200,
+        }),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.read(makeReadRequest("/x"));
+    expect(result.checksum).toBeUndefined();
+  });
+
+  it("read() honors range with offset and reports bytesRead/totalBytes", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(
+        new Response("y", {
+          headers: { "content-length": "1", "content-range": "bytes 5-5/100" },
+          status: 206,
+        }),
+      );
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.read({ ...makeReadRequest("/x"), range: { offset: 5 } });
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["range"]).toBe("bytes=5-");
+    expect(result.bytesRead).toBe(5);
+    expect(result.totalBytes).toBe(100);
+  });
+
+  it("read() throws when response has no body", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(new Response(null, { headers: { "content-length": "0" }, status: 200 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(transfers.read(makeReadRequest("/x"))).rejects.toMatchObject({
+      message: /no body/,
+    });
+  });
+
+  it("read() maps a non-OK response to a typed error", async () => {
+    const fetchImpl: HttpFetch = () => Promise.resolve(new Response(null, { status: 401 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(transfers.read(makeReadRequest("/x"))).rejects.toBeInstanceOf(AuthenticationError);
+  });
+
+  it("write() maps a non-OK PUT response to a typed error", async () => {
+    const fetchImpl: HttpFetch = () => Promise.resolve(new Response("forbid", { status: 403 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(
+      transfers.write(makeWriteRequest("/x", new TextEncoder().encode("y"))),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+  });
+
+  it("stat() throws PathNotFoundError when metadata response is for a deleted entry", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        new Response(JSON.stringify({ ".tag": "deleted", name: "x" }), {
+          headers: { "content-type": "application/json" },
+          status: 200,
+        }),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    await expect(session.fs.stat("/x")).rejects.toBeInstanceOf(PathNotFoundError);
+  });
+
+  it("list() omits deleted entries", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            cursor: "c",
+            entries: [
+              { ".tag": "deleted", name: "old.txt" },
+              {
+                ".tag": "file",
+                id: "id:f",
+                name: "new.txt",
+                path_display: "/folder/new.txt",
+                size: 1,
+              },
+            ],
+            has_more: false,
+          }),
+          { headers: { "content-type": "application/json" }, status: 200 },
+        ),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    const list = await session.fs.list("/folder");
+    expect(list).toHaveLength(1);
+    expect(list[0]?.name).toBe("new.txt");
+  });
+
+  it("list() falls back to id when content_hash is absent", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            cursor: "c",
+            entries: [
+              {
+                ".tag": "file",
+                client_modified: "2030-01-01T00:00:00Z",
+                id: "id:no-hash",
+                name: "x.bin",
+                path_display: "/folder/x.bin",
+                size: 10,
+              },
+            ],
+            has_more: false,
+          }),
+          { headers: { "content-type": "application/json" }, status: 200 },
+        ),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    const list = await session.fs.list("/folder");
+    expect(list[0]?.uniqueId).toBe("id:no-hash");
+  });
+
+  it("propagates request.signal during reads and writes", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(
+        new Response("ok", {
+          headers: {
+            "content-type": "application/json",
+            "dropbox-api-result": JSON.stringify({ content_hash: "h" }),
+          },
+          status: 200,
+        }),
+      );
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const ctrl = new AbortController();
+    await transfers.read({ ...makeReadRequest("/r"), signal: ctrl.signal });
+    expect(captured[0]?.init?.signal).toBeInstanceOf(AbortSignal);
+    captured.length = 0;
+    await Promise.resolve(
+      transfers.write({
+        ...makeWriteRequest("/w", new TextEncoder().encode("y")),
+        signal: ctrl.signal,
+      }),
+    ).catch(() => undefined);
+    expect(captured[0]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+});

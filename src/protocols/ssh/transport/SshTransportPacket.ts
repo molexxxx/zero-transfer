@@ -35,7 +35,10 @@ export function encodeSshTransportPacket(
   const padding =
     options.randomPadding === false ? Buffer.alloc(paddingLength) : randomBytes(paddingLength);
   const packetLength = 1 + body.length + paddingLength;
-  const frame = Buffer.allocUnsafe(4 + packetLength);
+  // Use Buffer.alloc (zero-init) for defense-in-depth: every byte of the frame
+  // is overwritten below, but a zeroed buffer eliminates any chance of leaking
+  // residual heap memory if a future code path mis-counts.
+  const frame = Buffer.alloc(4 + packetLength);
 
   frame.writeUInt32BE(packetLength, 0);
   frame.writeUInt8(paddingLength, 4);

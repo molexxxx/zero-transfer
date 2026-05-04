@@ -13,7 +13,7 @@ export class SshDataWriter {
 
   writeByte(value: number): this {
     this.assertByte(value, "byte");
-    const chunk = Buffer.allocUnsafe(1);
+    const chunk = Buffer.alloc(1);
     chunk.writeUInt8(value, 0);
     return this.push(chunk);
   }
@@ -35,7 +35,7 @@ export class SshDataWriter {
       });
     }
 
-    const chunk = Buffer.allocUnsafe(4);
+    const chunk = Buffer.alloc(4);
     chunk.writeUInt32BE(value, 0);
     return this.push(chunk);
   }
@@ -49,7 +49,7 @@ export class SshDataWriter {
       });
     }
 
-    const chunk = Buffer.allocUnsafe(8);
+    const chunk = Buffer.alloc(8);
     chunk.writeBigUInt64BE(value, 0);
     return this.push(chunk);
   }

@@ -1,0 +1,49 @@
+{
+  "name": "@zero-transfer/ssh",
+  "version": "0.4.0",
+  "description": "Zero-dependency SSH 2.0 transport, auth, and channel primitives.",
+  "keywords": [
+    "zero-transfer",
+    "ssh",
+    "ssh",
+    "ssh2",
+    "tunneling",
+    "channels"
+  ],
+  "author": "Tony Wiedman",
+  "license": "MIT",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tonywied17/zero-transfer.git",
+    "directory": "packages/ssh"
+  },
+  "bugs": {
+    "url": "https://github.com/tonywied17/zero-transfer/issues"
+  },
+  "homepage": "https://github.com/tonywied17/zero-transfer/tree/main/packages/ssh#readme",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "provenance": true,
+    "access": "public"
+  },
+  "sideEffects": false
+}

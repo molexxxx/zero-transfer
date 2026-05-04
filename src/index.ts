@@ -49,6 +49,11 @@ export { ProviderRegistry } from "./core/ProviderRegistry";
 export { TransferClient, type TransferClientOptions } from "./core/TransferClient";
 export type { TransferSession } from "./core/TransferSession";
 export { createTransferClient } from "./core/createTransferClient";
+export {
+  createPooledTransferClient,
+  type ConnectionPoolOptions,
+  type PooledTransferClient,
+} from "./core/ConnectionPool";
 export type { TransferProvider } from "./providers/Provider";
 export type {
   AuthenticationCapability as ProviderAuthenticationCapability,
@@ -95,9 +100,11 @@ export {
 } from "./providers/memory";
 export {
   createHttpProviderFactory,
+  createFileSystemS3MultipartResumeStore,
   createMemoryS3MultipartResumeStore,
   createS3ProviderFactory,
   createWebDavProviderFactory,
+  type FileSystemS3MultipartResumeStoreOptions,
   type HttpFetch,
   type HttpProviderOptions,
   type S3MultipartCheckpoint,
@@ -187,6 +194,30 @@ export {
   redactValue,
 } from "./logging/redaction";
 export type { RemoteFileAdapter } from "./protocols/RemoteFileAdapter";
+export {
+  SshTransportConnection,
+  SshDisconnectReason,
+  type SshTransportConnectionOptions,
+} from "./protocols/ssh/transport/SshTransportConnection";
+export { SshTransportHandshake } from "./protocols/ssh/transport/SshTransportHandshake";
+export type { SshTransportHandshakeResult } from "./protocols/ssh/transport/SshTransportHandshake";
+export {
+  DEFAULT_SSH_ALGORITHM_PREFERENCES,
+  negotiateSshAlgorithms,
+  type NegotiatedSshAlgorithms,
+  type SshAlgorithmPreferences,
+} from "./protocols/ssh/transport/SshAlgorithmNegotiation";
+export {
+  SshAuthSession,
+  type SshPasswordCredential,
+  type SshPublickeyCredential,
+  type SshKeyboardInteractiveCredential,
+} from "./protocols/ssh/auth/SshAuthSession";
+export { buildPublickeyCredential } from "./protocols/ssh/auth/SshPublickeyCredentialBuilder";
+export { SshConnectionManager } from "./protocols/ssh/connection/SshConnectionManager";
+export { SshSessionChannel } from "./protocols/ssh/connection/SshSessionChannel";
+export { SshDataReader } from "./protocols/ssh/binary/SshDataReader";
+export { SshDataWriter } from "./protocols/ssh/binary/SshDataWriter";
 export {
   FtpResponseParser,
   createFtpProviderFactory,

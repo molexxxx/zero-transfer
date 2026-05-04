@@ -181,6 +181,106 @@ describe("manifest", () => {
       expect(diff.entries[0]?.status).toBe("modified");
       expect(diff.entries[0]?.reasons).toContain("checksum");
     });
+
+    it("rejects non-object payloads, missing root, missing generatedAt, missing entries", () => {
+      expect(() => parseRemoteManifest("null")).toThrow(ConfigurationError);
+      expect(() => parseRemoteManifest("true")).toThrow(ConfigurationError);
+      expect(() =>
+        parseRemoteManifest(
+          JSON.stringify({ entries: [], formatVersion: REMOTE_MANIFEST_FORMAT_VERSION }),
+        ),
+      ).toThrow(ConfigurationError);
+      expect(() =>
+        parseRemoteManifest(
+          JSON.stringify({
+            entries: [],
+            formatVersion: REMOTE_MANIFEST_FORMAT_VERSION,
+            root: "/",
+          }),
+        ),
+      ).toThrow(ConfigurationError);
+      expect(() =>
+        parseRemoteManifest(
+          JSON.stringify({
+            entries: "not-array",
+            formatVersion: REMOTE_MANIFEST_FORMAT_VERSION,
+            generatedAt: "2030-01-01T00:00:00.000Z",
+            root: "/",
+          }),
+        ),
+      ).toThrow(ConfigurationError);
+      // entry that is not an object
+      expect(() =>
+        parseRemoteManifest(
+          JSON.stringify({
+            entries: [null],
+            formatVersion: REMOTE_MANIFEST_FORMAT_VERSION,
+            generatedAt: "2030-01-01T00:00:00.000Z",
+            root: "/",
+          }),
+        ),
+      ).toThrow(ConfigurationError);
+    });
+
+    it("preserves provider, size, modifiedAt, uniqueId, and symlinkTarget on round-trip", () => {
+      const payload = JSON.stringify({
+        entries: [
+          {
+            modifiedAt: "2030-01-01T00:00:00.000Z",
+            path: "/file.txt",
+            size: 4,
+            symlinkTarget: "/target",
+            type: "file",
+            uniqueId: "u1",
+          },
+        ],
+        formatVersion: REMOTE_MANIFEST_FORMAT_VERSION,
+        generatedAt: "2030-01-01T00:00:00.000Z",
+        provider: "memory",
+        root: "/site",
+      });
+      const parsed = parseRemoteManifest(payload);
+      expect(parsed.provider).toBe("memory");
+      expect(parsed.entries[0]).toMatchObject({
+        modifiedAt: "2030-01-01T00:00:00.000Z",
+        size: 4,
+        symlinkTarget: "/target",
+        uniqueId: "u1",
+      });
+    });
+
+    it("flags type changes, treats invalid modifiedAt as unchanged, and detects modifications outside tolerance", () => {
+      const source = manifestFromEntries("/", [
+        { modifiedAt: "not-a-date", path: "/a.txt", size: 1, type: "file" },
+        { path: "/b", type: "directory" },
+        { modifiedAt: "2030-01-01T00:00:00.000Z", path: "/c.txt", size: 1, type: "file" },
+      ]);
+      const destination = manifestFromEntries("/x", [
+        { modifiedAt: "2030-01-01T00:00:00.000Z", path: "/a.txt", size: 1, type: "file" },
+        { path: "/b", type: "file" },
+        { modifiedAt: "2030-01-01T00:00:10.000Z", path: "/c.txt", size: 1, type: "file" },
+      ]);
+      const diff = compareRemoteManifests(source, destination, {
+        modifiedAtToleranceMs: 100,
+      });
+      const byPath = Object.fromEntries(diff.entries.map((entry) => [entry.path, entry]));
+      expect(byPath["/b"]?.reasons).toContain("type");
+      expect(byPath["/c.txt"]?.reasons).toContain("modifiedAt");
+    });
+
+    it("disables size and modifiedAt comparisons when configured", () => {
+      const source = manifestFromEntries("/", [
+        { modifiedAt: "2030-01-01T00:00:00.000Z", path: "/a.txt", size: 1, type: "file" },
+      ]);
+      const destination = manifestFromEntries("/", [
+        { modifiedAt: "2030-02-01T00:00:00.000Z", path: "/a.txt", size: 99, type: "file" },
+      ]);
+      const diff = compareRemoteManifests(source, destination, {
+        compareModifiedAt: false,
+        compareSize: false,
+      });
+      expect(diff.entries.length).toBe(0);
+    });
   });
 });
 

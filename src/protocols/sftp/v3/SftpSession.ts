@@ -344,7 +344,7 @@ export class SftpSession {
    * serializes concurrent calls so byte ordering is preserved.
    */
   private sendRaw(encodedMessage: Buffer, requestId?: number): void {
-    const frame = Buffer.allocUnsafe(4 + encodedMessage.length);
+    const frame = Buffer.alloc(4 + encodedMessage.length);
     frame.writeUInt32BE(encodedMessage.length, 0);
     encodedMessage.copy(frame, 4);
     this.channel.sendData(frame).catch((err) => {

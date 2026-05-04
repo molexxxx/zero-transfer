@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.1**](../README.md)
+[**ZeroTransfer SDK v0.4.0**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createGoogleDriveProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/cloud/GoogleDriveProvider.ts:83](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/cloud/GoogleDriveProvider.ts#L83)
+Defined in: [src/providers/cloud/GoogleDriveProvider.ts:84](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/providers/cloud/GoogleDriveProvider.ts#L84)
 
 Creates a Google Drive provider factory.
 

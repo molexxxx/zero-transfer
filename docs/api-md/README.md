@@ -1,8 +1,8 @@
-**ZeroTransfer SDK v0.3.1**
+**ZeroTransfer SDK v0.4.0**
 
 ***
 
-# ZeroTransfer SDK v0.3.1
+# ZeroTransfer SDK v0.4.0
 
 ZeroTransfer public API surface.
 
@@ -16,6 +16,7 @@ path safety utilities used by future protocol adapters.
 | ------ | ------ |
 | [assertSafeFtpArgument](functions/assertSafeFtpArgument.md) | Validates that an FTP command argument cannot inject additional command lines. |
 | [basenameRemotePath](functions/basenameRemotePath.md) | Extracts the final name segment from a normalized remote path. |
+| [buildPublickeyCredential](functions/buildPublickeyCredential.md) | - |
 | [buildRemoteBreadcrumbs](functions/buildRemoteBreadcrumbs.md) | Builds breadcrumbs from `/` down to the supplied path. |
 | [compareRemoteManifests](functions/compareRemoteManifests.md) | Compares two manifests and produces an entry-level diff. |
 | [composeAuditLogs](functions/composeAuditLogs.md) | Combines multiple audit logs into a single fan-out log. |
@@ -25,6 +26,7 @@ path safety utilities used by future protocol adapters.
 | [createAzureBlobProviderFactory](functions/createAzureBlobProviderFactory.md) | Creates an Azure Blob Storage provider factory. |
 | [createBandwidthThrottle](functions/createBandwidthThrottle.md) | Creates a token-bucket throttle that paces an asynchronous data pipeline to a sustained [TransferBandwidthLimit](interfaces/TransferBandwidthLimit.md). |
 | [createDropboxProviderFactory](functions/createDropboxProviderFactory.md) | Creates a Dropbox provider factory. |
+| [createFileSystemS3MultipartResumeStore](functions/createFileSystemS3MultipartResumeStore.md) | File-system backed [S3MultipartResumeStore](interfaces/S3MultipartResumeStore.md) that survives process restarts. Each in-flight multipart upload is checkpointed to a single JSON file in `options.directory` after every part. On retry the upload reuses the stored `uploadId` and skips parts that S3 has already accepted. |
 | [createFtpProviderFactory](functions/createFtpProviderFactory.md) | Creates a provider factory for classic FTP connections. |
 | [createFtpsProviderFactory](functions/createFtpsProviderFactory.md) | Creates a provider factory for explicit or implicit FTPS connections. |
 | [createGcsProviderFactory](functions/createGcsProviderFactory.md) | Creates a Google Cloud Storage provider factory. |
@@ -38,6 +40,7 @@ path safety utilities used by future protocol adapters.
 | [createOAuthTokenSecretSource](functions/createOAuthTokenSecretSource.md) | Builds a [SecretProvider](type-aliases/SecretProvider.md) that exchanges a refresh callback for cached, auto-renewing access tokens. |
 | [createOneDriveProviderFactory](functions/createOneDriveProviderFactory.md) | Creates a OneDrive/SharePoint provider factory backed by Microsoft Graph. |
 | [createOutboxRoute](functions/createOutboxRoute.md) | Creates a route that drops files from a source endpoint into an outbox directory. |
+| [createPooledTransferClient](functions/createPooledTransferClient.md) | Wraps a [TransferClient](classes/TransferClient.md) with connection pooling. |
 | [createProgressEvent](functions/createProgressEvent.md) | Creates a progress event with elapsed time, rate, and optional percentage. |
 | [createProviderTransferExecutor](functions/createProviderTransferExecutor.md) | Creates a [TransferExecutor](type-aliases/TransferExecutor.md) that reads from a source provider and writes to a destination provider. |
 | [createRemoteBrowser](functions/createRemoteBrowser.md) | Creates a stateful directory browser around a remote file system. |
@@ -71,6 +74,7 @@ path safety utilities used by future protocol adapters.
 | [joinRemotePath](functions/joinRemotePath.md) | Joins remote path segments and normalizes the result. |
 | [matchKnownHosts](functions/matchKnownHosts.md) | Filters parsed entries down to those that match the given host/port. Negations are honored. |
 | [matchKnownHostsEntry](functions/matchKnownHostsEntry.md) | Returns true when the given host (and optional port) matches the entry's host patterns. Hashed entries use HMAC-SHA1 verification per OpenSSH semantics. |
+| [negotiateSshAlgorithms](functions/negotiateSshAlgorithms.md) | Intersects client and server algorithm lists using SSH's client-priority selection model. |
 | [nextCronFireAt](functions/nextCronFireAt.md) | Computes the next time at which a cron expression fires strictly after `from`. |
 | [nextScheduleFireAt](functions/nextScheduleFireAt.md) | Computes the next fire time for a schedule strictly after `from`. |
 | [normalizeRemotePath](functions/normalizeRemotePath.md) | Normalizes a remote path using POSIX-style separators without escaping absolute roots. |
@@ -131,6 +135,13 @@ path safety utilities used by future protocol adapters.
 | [ProviderRegistry](classes/ProviderRegistry.md) | Mutable registry of provider factories available to a transfer client. |
 | [RouteRegistry](classes/RouteRegistry.md) | Mutable in-memory registry of MFT routes. |
 | [ScheduleRegistry](classes/ScheduleRegistry.md) | Mutable in-memory registry of MFT schedules. |
+| [SshAuthSession](classes/SshAuthSession.md) | Runs SSH user authentication over an encrypted transport connection. |
+| [SshConnectionManager](classes/SshConnectionManager.md) | - |
+| [SshDataReader](classes/SshDataReader.md) | Stateful SSH primitive decoder that reads sequential values from a packet payload. |
+| [SshDataWriter](classes/SshDataWriter.md) | Minimal SSH primitive encoder for transport and authentication packets. |
+| [SshSessionChannel](classes/SshSessionChannel.md) | A single SSH session channel. Not safe to share across concurrent callers; each SftpSession should own one. |
+| [SshTransportConnection](classes/SshTransportConnection.md) | Live SSH transport connection over a TCP socket. |
+| [SshTransportHandshake](classes/SshTransportHandshake.md) | Client-side SSH handshake coordinator for version exchange and KEXINIT negotiation. |
 | [TimeoutError](classes/TimeoutError.md) | Error raised when an operation exceeds its configured timeout. |
 | [TransferClient](classes/TransferClient.md) | Small provider-neutral client that owns provider lookup and connection setup. |
 | [TransferEngine](classes/TransferEngine.md) | Executes transfer jobs and produces audit-friendly receipts. |
@@ -160,6 +171,7 @@ path safety utilities used by future protocol adapters.
 | [CompareRemoteManifestsOptions](interfaces/CompareRemoteManifestsOptions.md) | Options accepted by [compareRemoteManifests](functions/compareRemoteManifests.md). |
 | [ConnectionDiagnosticsResult](interfaces/ConnectionDiagnosticsResult.md) | Result returned by [runConnectionDiagnostics](functions/runConnectionDiagnostics.md). |
 | [ConnectionDiagnosticTimings](interfaces/ConnectionDiagnosticTimings.md) | Per-step duration measurements collected by [runConnectionDiagnostics](functions/runConnectionDiagnostics.md). |
+| [ConnectionPoolOptions](interfaces/ConnectionPoolOptions.md) | Options for [createPooledTransferClient](functions/createPooledTransferClient.md). |
 | [ConnectionProfile](interfaces/ConnectionProfile.md) | Connection settings accepted by facade and adapter implementations. |
 | [ConventionEndpoint](interfaces/ConventionEndpoint.md) | Endpoint shape used by [createInboxRoute](functions/createInboxRoute.md)/[createOutboxRoute](functions/createOutboxRoute.md). |
 | [CopyBetweenOptions](interfaces/CopyBetweenOptions.md) | Options for [copyBetween](functions/copyBetween.md). |
@@ -182,6 +194,7 @@ path safety utilities used by future protocol adapters.
 | [EnvSecretSource](interfaces/EnvSecretSource.md) | Environment variable descriptor for text secrets. |
 | [EvaluateRetentionOptions](interfaces/EvaluateRetentionOptions.md) | Options accepted by [evaluateRetention](functions/evaluateRetention.md). |
 | [FileSecretSource](interfaces/FileSecretSource.md) | File-backed secret descriptor. |
+| [FileSystemS3MultipartResumeStoreOptions](interfaces/FileSystemS3MultipartResumeStoreOptions.md) | Options for [createFileSystemS3MultipartResumeStore](functions/createFileSystemS3MultipartResumeStore.md). |
 | [FileZillaSite](interfaces/FileZillaSite.md) | Imported FileZilla site with the folder hierarchy that contained it. |
 | [FtpFeatures](interfaces/FtpFeatures.md) | Normalized server features returned by an FTP FEAT command. |
 | [FtpProviderOptions](interfaces/FtpProviderOptions.md) | Options used to create the classic FTP provider factory. |
@@ -214,10 +227,12 @@ path safety utilities used by future protocol adapters.
 | [MftSchedule](interfaces/MftSchedule.md) | Declarative schedule binding a route id to a trigger. |
 | [MftSchedulerOptions](interfaces/MftSchedulerOptions.md) | Construction options for [MftScheduler](classes/MftScheduler.md). |
 | [MkdirOptions](interfaces/MkdirOptions.md) | Options for creating a remote directory. |
+| [NegotiatedSshAlgorithms](interfaces/NegotiatedSshAlgorithms.md) | Selected algorithms after intersecting client preferences with server capabilities. |
 | [OAuthAccessToken](interfaces/OAuthAccessToken.md) | Token material returned by [OAuthRefreshCallback](type-aliases/OAuthRefreshCallback.md). |
 | [OAuthTokenSecretSourceOptions](interfaces/OAuthTokenSecretSourceOptions.md) | Options accepted by [createOAuthTokenSecretSource](functions/createOAuthTokenSecretSource.md). |
 | [OneDriveProviderOptions](interfaces/OneDriveProviderOptions.md) | Options accepted by [createOneDriveProviderFactory](functions/createOneDriveProviderFactory.md). |
 | [OpenSshConfigEntry](interfaces/OpenSshConfigEntry.md) | Parsed `Host` block from an OpenSSH config file. |
+| [PooledTransferClient](interfaces/PooledTransferClient.md) | Pool-aware [TransferClient](classes/TransferClient.md) returned by [createPooledTransferClient](functions/createPooledTransferClient.md). |
 | [ProgressEventInput](interfaces/ProgressEventInput.md) | Input used to create a transfer progress event. |
 | [ProviderFactory](interfaces/ProviderFactory.md) | Factory registered with [ProviderRegistry](classes/ProviderRegistry.md) to create providers on demand. |
 | [ProviderSelection](interfaces/ProviderSelection.md) | Minimal shape used to resolve a provider from new and compatibility profile fields. |
@@ -263,10 +278,16 @@ path safety utilities used by future protocol adapters.
 | [ScheduleTimerHooks](interfaces/ScheduleTimerHooks.md) | Timer hooks injected by tests so fake clocks stay deterministic. |
 | [SftpProviderOptions](interfaces/SftpProviderOptions.md) | Options for [createNativeSftpProviderFactory](functions/createSftpProviderFactory.md). |
 | [SftpRawSession](interfaces/SftpRawSession.md) | Low-level handles exposed by a native SFTP session for diagnostics and advanced extension. Most applications should use the [TransferSession](interfaces/TransferSession.md) returned from `client.connect()` instead. |
+| [SshAlgorithmPreferences](interfaces/SshAlgorithmPreferences.md) | Algorithm lists exchanged during SSH KEXINIT negotiation. |
 | [SshKeyboardInteractiveChallenge](interfaces/SshKeyboardInteractiveChallenge.md) | Input passed to SSH keyboard-interactive answer providers. |
+| [SshKeyboardInteractiveCredential](interfaces/SshKeyboardInteractiveCredential.md) | - |
 | [SshKeyboardInteractivePrompt](interfaces/SshKeyboardInteractivePrompt.md) | Prompt metadata supplied by an SSH keyboard-interactive server challenge. |
+| [SshPasswordCredential](interfaces/SshPasswordCredential.md) | - |
 | [SshProfile](interfaces/SshProfile.md) | SSH authentication material for SFTP-style providers. |
+| [SshPublickeyCredential](interfaces/SshPublickeyCredential.md) | - |
 | [SshSocketFactoryContext](interfaces/SshSocketFactoryContext.md) | Context passed to SSH socket factories before opening an SSH session. |
+| [SshTransportConnectionOptions](interfaces/SshTransportConnectionOptions.md) | - |
+| [SshTransportHandshakeResult](interfaces/SshTransportHandshakeResult.md) | Initial client-side handshake state before key exchange math starts. |
 | [StatOptions](interfaces/StatOptions.md) | Options for remote metadata lookup operations. |
 | [SyncEndpointInput](interfaces/SyncEndpointInput.md) | Endpoint shape supplied to [createSyncPlan](functions/createSyncPlan.md). |
 | [TlsProfile](interfaces/TlsProfile.md) | TLS settings shared by certificate-aware providers such as FTPS and future HTTPS/WebDAV adapters. |
@@ -360,6 +381,7 @@ path safety utilities used by future protocol adapters.
 | [SpecializedErrorDetails](type-aliases/SpecializedErrorDetails.md) | Error construction input for subclasses that provide default codes. |
 | [SshAgentSource](type-aliases/SshAgentSource.md) | SSH agent source accepted by SFTP providers. |
 | [SshAlgorithms](type-aliases/SshAlgorithms.md) | SSH transport algorithm overrides accepted by SFTP providers. |
+| [SshDisconnectReason](type-aliases/SshDisconnectReason.md) | Standard SSH disconnect reason codes (RFC 4253 §11.1). |
 | [SshKeyboardInteractiveHandler](type-aliases/SshKeyboardInteractiveHandler.md) | Provides ordered answers for an SSH keyboard-interactive authentication challenge. |
 | [SshKnownHostsSource](type-aliases/SshKnownHostsSource.md) | Known-hosts material source accepted by SSH connection profiles. |
 | [SshSocketFactory](type-aliases/SshSocketFactory.md) | Creates a preconnected socket-like stream for SSH sessions. |
@@ -382,9 +404,11 @@ path safety utilities used by future protocol adapters.
 | [CLASSIC\_PROVIDER\_IDS](variables/CLASSIC_PROVIDER_IDS.md) | Classic remote-transfer providers kept compatible with the original protocol field. |
 | [DEFAULT\_FAILED\_SUBDIR](variables/DEFAULT_FAILED_SUBDIR.md) | Default subdirectory used to quarantine files that failed processing. |
 | [DEFAULT\_PROCESSED\_SUBDIR](variables/DEFAULT_PROCESSED_SUBDIR.md) | Default subdirectory used to archive successfully processed inbox files. |
+| [DEFAULT\_SSH\_ALGORITHM\_PREFERENCES](variables/DEFAULT_SSH_ALGORITHM_PREFERENCES.md) | Baseline algorithm order for the initial native SSH transport implementation. |
 | [noopLogger](variables/noopLogger.md) | Logger implementation that intentionally drops every record. |
 | [REDACTED](variables/REDACTED.md) | Placeholder used when sensitive content has been removed. |
 | [REMOTE\_MANIFEST\_FORMAT\_VERSION](variables/REMOTE_MANIFEST_FORMAT_VERSION.md) | Schema version for the manifest payload. Bumped on incompatible format changes. |
+| [SshDisconnectReason](variables/SshDisconnectReason.md) | Standard SSH disconnect reason codes (RFC 4253 §11.1). |
 
 ## References
 

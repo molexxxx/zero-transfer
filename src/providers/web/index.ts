@@ -5,8 +5,10 @@ export {
 } from "./HttpProvider";
 export { createWebDavProviderFactory, type WebDavProviderOptions } from "./WebDavProvider";
 export {
+  createFileSystemS3MultipartResumeStore,
   createMemoryS3MultipartResumeStore,
   createS3ProviderFactory,
+  type FileSystemS3MultipartResumeStoreOptions,
   type S3MultipartCheckpoint,
   type S3MultipartOptions,
   type S3MultipartPart,

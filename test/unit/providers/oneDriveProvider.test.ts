@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AuthenticationError,
   ConfigurationError,
+  ConnectionError,
   PathNotFoundError,
   PermissionDeniedError,
   UnsupportedFeatureError,
@@ -316,3 +317,227 @@ function singleChunk(bytes: Uint8Array): AsyncIterable<Uint8Array> {
     },
   };
 }
+
+describe("createOneDriveProviderFactory edge cases", () => {
+  it("throws ConfigurationError when fetch is unavailable", () => {
+    const original = globalThis.fetch;
+    (globalThis as { fetch?: unknown }).fetch = undefined;
+    try {
+      expect(() => createOneDriveProviderFactory({})).toThrow(ConfigurationError);
+    } finally {
+      (globalThis as { fetch?: unknown }).fetch = original;
+    }
+  });
+
+  it("rejects connect() when bearer token resolves to empty string", async () => {
+    const factory = createOneDriveProviderFactory({ fetch: notImplementedFetch });
+    await expect(
+      factory.create().connect({ host: "", password: "", protocol: "ftp" }),
+    ).rejects.toBeInstanceOf(ConfigurationError);
+  });
+
+  it("merges defaultHeaders into requests", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(jsonResponse({ value: [] }));
+    };
+    const factory = createOneDriveProviderFactory({
+      defaultHeaders: { "X-Trace": "t" },
+      fetch: fetchImpl,
+    });
+    const session = await factory.create().connect({ host: "", password: "tok", protocol: "ftp" });
+    await session.fs.list("/");
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["X-Trace"]).toBe("t");
+  });
+
+  it("forwards profile.timeoutMs as an AbortSignal", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(jsonResponse({ value: [] }));
+    };
+    const factory = createOneDriveProviderFactory({ fetch: fetchImpl });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+      timeoutMs: 5_000,
+    });
+    await session.fs.list("/");
+    expect(captured[0]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("wraps fetch failures in ConnectionError", async () => {
+    const factory = createOneDriveProviderFactory({
+      fetch: () => Promise.reject(new Error("dns")),
+    });
+    const session = await factory.create().connect({ host: "", password: "tok", protocol: "ftp" });
+    await expect(session.fs.list("/")).rejects.toMatchObject({ message: /failed/ });
+  });
+
+  it("list() paginates via @odata.nextLink", async () => {
+    let attempt = 0;
+    const fetchImpl: HttpFetch = () => {
+      attempt += 1;
+      if (attempt === 1) {
+        return Promise.resolve(
+          jsonResponse({
+            "@odata.nextLink":
+              "https://graph.microsoft.com/v1.0/me/drive/root/children?$skiptoken=2",
+            value: [{ id: "a", name: "a.txt", size: 1, file: { hashes: { sha256Hash: "s" } } }],
+          }),
+        );
+      }
+      return Promise.resolve(
+        jsonResponse({ value: [{ id: "b", name: "sub", folder: { childCount: 0 } }] }),
+      );
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const list = await session.fs.list("/");
+    expect(list).toHaveLength(2);
+    expect(list[0]?.name).toBe("a.txt");
+    expect(list[1]?.type).toBe("directory");
+  });
+
+  it("maps 429 and 5xx responses to ConnectionError", async () => {
+    let attempt = 0;
+    const fetchImpl: HttpFetch = () => {
+      attempt += 1;
+      if (attempt === 1) return Promise.resolve(new Response("rate", { status: 429 }));
+      return Promise.resolve(new Response("server", { status: 503 }));
+    };
+    const session = await connect({ fetch: fetchImpl });
+    await expect(session.fs.stat("/a")).rejects.toMatchObject({ message: /rate limit/ });
+    await expect(session.fs.stat("/a")).rejects.toMatchObject({ message: /failed with status/ });
+  });
+
+  it("read() honors range with offset and reports bytesRead", async () => {
+    let call = 0;
+    const captured: Array<{ init?: RequestInit; url: string }> = [];
+    const fetchImpl: HttpFetch = (input, init) => {
+      call += 1;
+      captured.push({ ...(init !== undefined ? { init } : {}), url: input });
+      if (call === 1) {
+        return Promise.resolve(
+          jsonResponse({
+            id: "x",
+            name: "x.bin",
+            size: 100,
+            file: { hashes: { sha1Hash: "sh1" } },
+          }),
+        );
+      }
+      return Promise.resolve(
+        new Response("y", {
+          headers: { "content-length": "1", "content-range": "bytes 5-5/100" },
+          status: 206,
+        }),
+      );
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.read({ ...makeReadRequest("/x.bin"), range: { offset: 5 } });
+    const headers = captured[1]?.init?.headers as Record<string, string>;
+    expect(headers["range"]).toBe("bytes=5-");
+    expect(result.bytesRead).toBe(5);
+    expect(result.checksum).toBe("sh1");
+  });
+
+  it("read() throws ConnectionError when response has no body", async () => {
+    let call = 0;
+    const fetchImpl: HttpFetch = () => {
+      call += 1;
+      if (call === 1) return Promise.resolve(jsonResponse({ id: "x", name: "x.bin" }));
+      return Promise.resolve(
+        new Response(null, { headers: { "content-length": "0" }, status: 200 }),
+      );
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(transfers.read(makeReadRequest("/x.bin"))).rejects.toBeInstanceOf(ConnectionError);
+  });
+
+  it("read() prefers quickXorHash when sha hashes are absent", async () => {
+    let call = 0;
+    const fetchImpl: HttpFetch = () => {
+      call += 1;
+      if (call === 1)
+        return Promise.resolve(
+          jsonResponse({
+            file: { hashes: { quickXorHash: "qx" } },
+            id: "x",
+            name: "x.bin",
+            size: 1,
+          }),
+        );
+      return Promise.resolve(new Response("y", { status: 200 }));
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.read(makeReadRequest("/x.bin"));
+    expect(result.checksum).toBe("qx");
+  });
+
+  it("read() maps a non-OK GET to a typed error", async () => {
+    let call = 0;
+    const fetchImpl: HttpFetch = () => {
+      call += 1;
+      if (call === 1) return Promise.resolve(jsonResponse({ id: "x", name: "x" }));
+      return Promise.resolve(new Response(null, { status: 401 }));
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(transfers.read(makeReadRequest("/x"))).rejects.toBeInstanceOf(AuthenticationError);
+  });
+
+  it("write() maps a non-OK PUT to a typed error", async () => {
+    const fetchImpl: HttpFetch = () => Promise.resolve(new Response("forbid", { status: 403 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(
+      transfers.write(makeWriteRequest("/x", new TextEncoder().encode("y"))),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+  });
+
+  it("write() returns sha256 from response when available", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        jsonResponse({
+          file: { hashes: { sha256Hash: "sh256" } },
+          id: "x",
+          name: "x.bin",
+        }),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.write(
+      makeWriteRequest("/x.bin", new TextEncoder().encode("hi")),
+    );
+    expect(result.checksum).toBe("sh256");
+  });
+
+  it("propagates request.signal during reads", async () => {
+    let call = 0;
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      call += 1;
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      if (call === 1) return Promise.resolve(jsonResponse({ id: "x", name: "x" }));
+      return Promise.resolve(new Response("hi", { status: 200 }));
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const ctrl = new AbortController();
+    await transfers.read({ ...makeReadRequest("/r"), signal: ctrl.signal });
+    expect(captured[1]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+});

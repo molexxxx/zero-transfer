@@ -1767,6 +1767,186 @@ function summarizeDiagnosticError(error) {
   return { message: String(error) };
 }
 
+// src/core/ConnectionPool.ts
+var DEFAULT_MAX_IDLE_PER_KEY = 4;
+var DEFAULT_IDLE_TIMEOUT_MS = 6e4;
+function createPooledTransferClient(inner, options = {}) {
+  const maxIdlePerKey = Math.max(1, options.maxIdlePerKey ?? DEFAULT_MAX_IDLE_PER_KEY);
+  const idleTimeoutMs = Math.max(0, options.idleTimeoutMs ?? DEFAULT_IDLE_TIMEOUT_MS);
+  const keyOf = options.keyOf ?? defaultKeyOf;
+  const state = {
+    drained: false,
+    idle: /* @__PURE__ */ new Map()
+  };
+  const release = (key, session, tainted) => {
+    if (tainted || state.drained) {
+      return safelyDisconnect(session);
+    }
+    let bucket = state.idle.get(key);
+    if (bucket === void 0) {
+      bucket = [];
+      state.idle.set(key, bucket);
+    }
+    const entry = { session };
+    if (idleTimeoutMs > 0) {
+      entry.idleTimer = setTimeout(() => {
+        evictEntry(state, key, entry);
+      }, idleTimeoutMs);
+      const timer = entry.idleTimer;
+      if (timer !== void 0 && typeof timer.unref === "function") {
+        timer.unref();
+      }
+    }
+    bucket.push(entry);
+    while (bucket.length > maxIdlePerKey) {
+      const dropped = bucket.shift();
+      if (dropped !== void 0) {
+        clearEntryTimer(dropped);
+        void safelyDisconnect(dropped.session);
+      }
+    }
+    return Promise.resolve();
+  };
+  const acquire = async (profile) => {
+    const key = keyOf(profile);
+    const bucket = state.idle.get(key);
+    if (bucket !== void 0 && bucket.length > 0) {
+      const entry = bucket.pop();
+      if (entry !== void 0) {
+        clearEntryTimer(entry);
+        if (bucket.length === 0) state.idle.delete(key);
+        return { key, session: entry.session };
+      }
+    }
+    const session = await inner.connect(profile);
+    return { key, session };
+  };
+  return {
+    connect: async (profile) => {
+      const { key, session } = await acquire(profile);
+      return wrapPooledSession(session, key, release);
+    },
+    drainPool: async () => {
+      state.drained = true;
+      const entries = [];
+      for (const bucket of state.idle.values()) {
+        for (const entry of bucket) {
+          clearEntryTimer(entry);
+          entries.push(entry);
+        }
+      }
+      state.idle.clear();
+      await Promise.all(entries.map((entry) => safelyDisconnect(entry.session)));
+    },
+    getCapabilities: ((providerId) => {
+      if (providerId === void 0) return inner.getCapabilities();
+      return inner.getCapabilities(providerId);
+    }),
+    hasProvider: (providerId) => inner.hasProvider(providerId),
+    poolSize: () => {
+      let total = 0;
+      for (const bucket of state.idle.values()) total += bucket.length;
+      return total;
+    }
+  };
+}
+function defaultKeyOf(profile) {
+  const provider = profile.provider ?? profile.protocol ?? "unknown";
+  const host = profile.host ?? "";
+  const port = profile.port ?? "";
+  const username = typeof profile.username === "string" ? profile.username : "";
+  return `${provider}|${host}|${String(port)}|${username}`;
+}
+function evictEntry(state, key, entry) {
+  const bucket = state.idle.get(key);
+  if (bucket === void 0) return;
+  const index = bucket.indexOf(entry);
+  if (index < 0) return;
+  bucket.splice(index, 1);
+  if (bucket.length === 0) state.idle.delete(key);
+  clearEntryTimer(entry);
+  void safelyDisconnect(entry.session);
+}
+function clearEntryTimer(entry) {
+  if (entry.idleTimer !== void 0) {
+    clearTimeout(entry.idleTimer);
+    delete entry.idleTimer;
+  }
+}
+async function safelyDisconnect(session) {
+  try {
+    await session.disconnect();
+  } catch {
+  }
+}
+function isTaintingError(error) {
+  return error instanceof ConnectionError || error instanceof TimeoutError || error instanceof ProtocolError;
+}
+function wrapPooledSession(session, key, release) {
+  let tainted = false;
+  let released = false;
+  const guard = (fn) => {
+    let promise;
+    try {
+      promise = fn();
+    } catch (error) {
+      if (isTaintingError(error)) tainted = true;
+      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+    }
+    return promise.catch((error) => {
+      if (isTaintingError(error)) tainted = true;
+      throw error;
+    });
+  };
+  const fs = wrapFs(session.fs, guard);
+  const transfers = session.transfers === void 0 ? void 0 : wrapTransfers(session.transfers, guard);
+  const wrapped = {
+    capabilities: session.capabilities,
+    disconnect: async () => {
+      if (released) return;
+      released = true;
+      await release(key, session, tainted);
+    },
+    fs,
+    provider: session.provider,
+    ...transfers !== void 0 ? { transfers } : {}
+  };
+  if (typeof session.raw === "function") {
+    const rawFn = session.raw.bind(session);
+    wrapped.raw = () => rawFn();
+  }
+  return wrapped;
+}
+function wrapFs(fs, guard) {
+  const wrapped = {
+    list: (path2, options) => guard(() => options !== void 0 ? fs.list(path2, options) : fs.list(path2)),
+    stat: (path2, options) => guard(() => options !== void 0 ? fs.stat(path2, options) : fs.stat(path2))
+  };
+  if (typeof fs.remove === "function") {
+    const remove = fs.remove.bind(fs);
+    wrapped.remove = (path2, options) => guard(() => options !== void 0 ? remove(path2, options) : remove(path2));
+  }
+  if (typeof fs.rename === "function") {
+    const rename2 = fs.rename.bind(fs);
+    wrapped.rename = (from, to, options) => guard(() => options !== void 0 ? rename2(from, to, options) : rename2(from, to));
+  }
+  if (typeof fs.mkdir === "function") {
+    const mkdir2 = fs.mkdir.bind(fs);
+    wrapped.mkdir = (path2, options) => guard(() => options !== void 0 ? mkdir2(path2, options) : mkdir2(path2));
+  }
+  if (typeof fs.rmdir === "function") {
+    const rmdir = fs.rmdir.bind(fs);
+    wrapped.rmdir = (path2, options) => guard(() => options !== void 0 ? rmdir(path2, options) : rmdir(path2));
+  }
+  return wrapped;
+}
+function wrapTransfers(transfers, guard) {
+  return {
+    read: (request) => guard(() => Promise.resolve(transfers.read(request))),
+    write: (request) => guard(() => Promise.resolve(transfers.write(request)))
+  };
+}
+
 // src/providers/local/LocalProvider.ts
 import { createReadStream } from "fs";
 import {
@@ -6287,7 +6467,7 @@ var SshDataWriter = class {
   length = 0;
   writeByte(value) {
     this.assertByte(value, "byte");
-    const chunk = Buffer8.allocUnsafe(1);
+    const chunk = Buffer8.alloc(1);
     chunk.writeUInt8(value, 0);
     return this.push(chunk);
   }
@@ -6305,7 +6485,7 @@ var SshDataWriter = class {
         retryable: false
       });
     }
-    const chunk = Buffer8.allocUnsafe(4);
+    const chunk = Buffer8.alloc(4);
     chunk.writeUInt32BE(value, 0);
     return this.push(chunk);
   }
@@ -6317,7 +6497,7 @@ var SshDataWriter = class {
         retryable: false
       });
     }
-    const chunk = Buffer8.allocUnsafe(8);
+    const chunk = Buffer8.alloc(8);
     chunk.writeBigUInt64BE(value, 0);
     return this.push(chunk);
   }
@@ -7873,7 +8053,7 @@ function encodeSshTransportPacket(payload, options = {}) {
   }
   const padding = options.randomPadding === false ? Buffer15.alloc(paddingLength) : randomBytes2(paddingLength);
   const packetLength = 1 + body.length + paddingLength;
-  const frame = Buffer15.allocUnsafe(4 + packetLength);
+  const frame = Buffer15.alloc(4 + packetLength);
   frame.writeUInt32BE(packetLength, 0);
   frame.writeUInt8(paddingLength, 4);
   body.copy(frame, 5);
@@ -8754,7 +8934,7 @@ function computeMac(macAlgorithm, macKey, sequence, packet, macLength) {
     return Buffer18.alloc(0);
   }
   const hashName = macAlgorithm === "hmac-sha2-512" ? "sha512" : "sha256";
-  const sequenceBuffer = Buffer18.allocUnsafe(4);
+  const sequenceBuffer = Buffer18.alloc(4);
   sequenceBuffer.writeUInt32BE(sequence >>> 0, 0);
   return createHmac2(hashName, macKey).update(sequenceBuffer).update(packet).digest().subarray(0, macLength);
 }
@@ -9706,7 +9886,7 @@ var SftpSession = class {
    * serializes concurrent calls so byte ordering is preserved.
    */
   sendRaw(encodedMessage, requestId) {
-    const frame = Buffer21.allocUnsafe(4 + encodedMessage.length);
+    const frame = Buffer21.alloc(4 + encodedMessage.length);
     frame.writeUInt32BE(encodedMessage.length, 0);
     encodedMessage.copy(frame, 4);
     this.channel.sendData(frame).catch((err) => {
@@ -9824,44 +10004,54 @@ var NATIVE_SFTP_ALGORITHM_PREFERENCES = {
     "rsa-sha2-256"
   ]
 };
-var NATIVE_SFTP_PROVIDER_CAPABILITIES = {
-  provider: NATIVE_SFTP_PROVIDER_ID,
-  authentication: ["password", "keyboard-interactive", "publickey"],
-  list: true,
-  stat: true,
-  readStream: true,
-  writeStream: true,
-  serverSideCopy: false,
-  serverSideMove: false,
-  resumeDownload: true,
-  resumeUpload: true,
-  checksum: [],
-  atomicRename: false,
-  chmod: false,
-  chown: false,
-  symlink: true,
-  metadata: ["accessedAt", "group", "modifiedAt", "owner", "permissions"],
-  maxConcurrency: 8,
-  notes: [
-    "Native SSH/SFTP provider using the project's own protocol stack (Waves 1\u20133).",
-    "Supports password and keyboard-interactive authentication."
-  ]
-};
+var NATIVE_SFTP_DEFAULT_MAX_CONCURRENCY = 8;
+function buildNativeSftpCapabilities(maxConcurrency) {
+  return {
+    provider: NATIVE_SFTP_PROVIDER_ID,
+    authentication: ["password", "keyboard-interactive", "publickey"],
+    list: true,
+    stat: true,
+    readStream: true,
+    writeStream: true,
+    serverSideCopy: false,
+    serverSideMove: false,
+    resumeDownload: true,
+    resumeUpload: true,
+    checksum: [],
+    atomicRename: false,
+    chmod: false,
+    chown: false,
+    symlink: true,
+    metadata: ["accessedAt", "group", "modifiedAt", "owner", "permissions"],
+    maxConcurrency,
+    notes: [
+      "Native SSH/SFTP provider using the project's own protocol stack (Waves 1\u20133).",
+      "Supports password, keyboard-interactive, and public-key (Ed25519/RSA) authentication."
+    ]
+  };
+}
+var NATIVE_SFTP_PROVIDER_CAPABILITIES = buildNativeSftpCapabilities(
+  NATIVE_SFTP_DEFAULT_MAX_CONCURRENCY
+);
 function createNativeSftpProviderFactory(options = {}) {
   validateNativeSftpOptions(options);
+  const capabilities = buildNativeSftpCapabilities(
+    options.maxConcurrency ?? NATIVE_SFTP_DEFAULT_MAX_CONCURRENCY
+  );
   return {
-    capabilities: NATIVE_SFTP_PROVIDER_CAPABILITIES,
-    create: () => new NativeSftpProvider(options),
+    capabilities,
+    create: () => new NativeSftpProvider(options, capabilities),
     id: NATIVE_SFTP_PROVIDER_ID
   };
 }
 var NativeSftpProvider = class {
-  constructor(options) {
+  constructor(options, capabilities = NATIVE_SFTP_PROVIDER_CAPABILITIES) {
     this.options = options;
+    this.capabilities = capabilities;
   }
   options;
   id = NATIVE_SFTP_PROVIDER_ID;
-  capabilities = NATIVE_SFTP_PROVIDER_CAPABILITIES;
+  capabilities;
   async connect(profile) {
     const resolved = await resolveConnectionProfileSecrets(profile);
     const username = requireNativeSftpUsername(resolved);
@@ -10490,6 +10680,14 @@ function validateNativeSftpOptions(options) {
       retryable: false
     });
   }
+  if (options.maxConcurrency !== void 0 && (!Number.isInteger(options.maxConcurrency) || options.maxConcurrency <= 0)) {
+    throw new ConfigurationError({
+      details: { maxConcurrency: options.maxConcurrency },
+      message: "Native SFTP provider maxConcurrency must be a positive integer",
+      protocol: "sftp",
+      retryable: false
+    });
+  }
 }
 export {
   AbortError,
@@ -10528,6 +10726,7 @@ export {
   createLocalProviderFactory,
   createMemoryProviderFactory,
   createOAuthTokenSecretSource,
+  createPooledTransferClient,
   createProgressEvent,
   createProviderTransferExecutor,
   createRemoteBrowser,

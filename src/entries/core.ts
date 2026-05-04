@@ -49,6 +49,11 @@ export { ProviderRegistry } from "../core/ProviderRegistry";
 export { TransferClient, type TransferClientOptions } from "../core/TransferClient";
 export type { TransferSession } from "../core/TransferSession";
 export { createTransferClient } from "../core/createTransferClient";
+export {
+  createPooledTransferClient,
+  type ConnectionPoolOptions,
+  type PooledTransferClient,
+} from "../core/ConnectionPool";
 export type { TransferProvider } from "../providers/Provider";
 export type {
   AuthenticationCapability as ProviderAuthenticationCapability,

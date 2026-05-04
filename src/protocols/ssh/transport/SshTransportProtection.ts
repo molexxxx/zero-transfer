@@ -380,7 +380,9 @@ function computeMac(
   }
 
   const hashName = macAlgorithm === "hmac-sha2-512" ? "sha512" : "sha256";
-  const sequenceBuffer = Buffer.allocUnsafe(4);
+  // Defense-in-depth: zero-init this small buffer so any future change in MAC
+  // input length cannot leak uninitialized memory into the HMAC tag.
+  const sequenceBuffer = Buffer.alloc(4);
   sequenceBuffer.writeUInt32BE(sequence >>> 0, 0);
 
   return createHmac(hashName, macKey)

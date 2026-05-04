@@ -107,29 +107,37 @@ const NATIVE_SFTP_ALGORITHM_PREFERENCES: SshAlgorithmPreferences = {
   ],
 };
 
-const NATIVE_SFTP_PROVIDER_CAPABILITIES: CapabilitySet = {
-  provider: NATIVE_SFTP_PROVIDER_ID,
-  authentication: ["password", "keyboard-interactive", "publickey"],
-  list: true,
-  stat: true,
-  readStream: true,
-  writeStream: true,
-  serverSideCopy: false,
-  serverSideMove: false,
-  resumeDownload: true,
-  resumeUpload: true,
-  checksum: [],
-  atomicRename: false,
-  chmod: false,
-  chown: false,
-  symlink: true,
-  metadata: ["accessedAt", "group", "modifiedAt", "owner", "permissions"],
-  maxConcurrency: 8,
-  notes: [
-    "Native SSH/SFTP provider using the project's own protocol stack (Waves 1–3).",
-    "Supports password and keyboard-interactive authentication.",
-  ],
-};
+const NATIVE_SFTP_DEFAULT_MAX_CONCURRENCY = 8;
+
+function buildNativeSftpCapabilities(maxConcurrency: number): CapabilitySet {
+  return {
+    provider: NATIVE_SFTP_PROVIDER_ID,
+    authentication: ["password", "keyboard-interactive", "publickey"],
+    list: true,
+    stat: true,
+    readStream: true,
+    writeStream: true,
+    serverSideCopy: false,
+    serverSideMove: false,
+    resumeDownload: true,
+    resumeUpload: true,
+    checksum: [],
+    atomicRename: false,
+    chmod: false,
+    chown: false,
+    symlink: true,
+    metadata: ["accessedAt", "group", "modifiedAt", "owner", "permissions"],
+    maxConcurrency,
+    notes: [
+      "Native SSH/SFTP provider using the project's own protocol stack (Waves 1\u20133).",
+      "Supports password, keyboard-interactive, and public-key (Ed25519/RSA) authentication.",
+    ],
+  };
+}
+
+const NATIVE_SFTP_PROVIDER_CAPABILITIES: CapabilitySet = buildNativeSftpCapabilities(
+  NATIVE_SFTP_DEFAULT_MAX_CONCURRENCY,
+);
 
 // -- Public types --------------------------------------------------------------
 
@@ -158,6 +166,15 @@ export interface NativeSftpProviderOptions {
    * traffic. Disabled when omitted or `0`.
    */
   keepaliveIntervalMs?: number;
+  /**
+   * Maximum concurrent file-transfer operations the engine should schedule
+   * against a single SFTP session. Each in-flight read/write occupies an
+   * outstanding SFTP request slot multiplexed over the same SSH channel; the
+   * default of `8` keeps memory bounded on commodity servers, but high-RTT
+   * links and modern OpenSSH builds can comfortably handle 16\u201364. Must be
+   * a positive integer.
+   */
+  maxConcurrency?: number;
 }
 
 /**
@@ -228,9 +245,13 @@ export function createNativeSftpProviderFactory(
 ): ProviderFactory {
   validateNativeSftpOptions(options);
 
+  const capabilities = buildNativeSftpCapabilities(
+    options.maxConcurrency ?? NATIVE_SFTP_DEFAULT_MAX_CONCURRENCY,
+  );
+
   return {
-    capabilities: NATIVE_SFTP_PROVIDER_CAPABILITIES,
-    create: () => new NativeSftpProvider(options),
+    capabilities,
+    create: () => new NativeSftpProvider(options, capabilities),
     id: NATIVE_SFTP_PROVIDER_ID,
   };
 }
@@ -239,9 +260,14 @@ export function createNativeSftpProviderFactory(
 
 class NativeSftpProvider implements TransferProvider<NativeSftpSession> {
   readonly id = NATIVE_SFTP_PROVIDER_ID;
-  readonly capabilities = NATIVE_SFTP_PROVIDER_CAPABILITIES;
+  readonly capabilities: CapabilitySet;
 
-  constructor(private readonly options: NativeSftpProviderOptions) {}
+  constructor(
+    private readonly options: NativeSftpProviderOptions,
+    capabilities: CapabilitySet = NATIVE_SFTP_PROVIDER_CAPABILITIES,
+  ) {
+    this.capabilities = capabilities;
+  }
 
   async connect(profile: ConnectionProfile): Promise<NativeSftpSession> {
     const resolved = await resolveConnectionProfileSecrets(profile);
@@ -1074,6 +1100,17 @@ function validateNativeSftpOptions(options: NativeSftpProviderOptions): void {
     throw new ConfigurationError({
       details: { keepaliveIntervalMs: options.keepaliveIntervalMs },
       message: "Native SFTP provider keepaliveIntervalMs must be a non-negative finite number",
+      protocol: "sftp",
+      retryable: false,
+    });
+  }
+  if (
+    options.maxConcurrency !== undefined &&
+    (!Number.isInteger(options.maxConcurrency) || options.maxConcurrency <= 0)
+  ) {
+    throw new ConfigurationError({
+      details: { maxConcurrency: options.maxConcurrency },
+      message: "Native SFTP provider maxConcurrency must be a positive integer",
       protocol: "sftp",
       retryable: false,
     });

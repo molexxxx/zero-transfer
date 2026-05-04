@@ -4,8 +4,9 @@
  * Aggregates the {@link CapabilitySet} advertised by every shipped provider
  * factory so applications, docs, and diagnostics can compare features across
  * providers without instantiating each one. The S3 entry is captured twice —
- * once with multipart upload disabled (default) and once with multipart
- * upload enabled — because that flag flips `resumeUpload`.
+ * once with the new multipart-by-default configuration and once with
+ * `multipart.enabled: false` for the legacy single-shot variant — because
+ * that flag flips `resumeUpload`.
  *
  * @module providers/capabilityMatrix
  */
@@ -29,11 +30,11 @@ import {
 } from "./web";
 
 /** Identifier for an entry in {@link getBuiltinCapabilityMatrix}. */
-export type BuiltinProviderMatrixId = ProviderId | "s3:multipart";
+export type BuiltinProviderMatrixId = ProviderId | "s3:single-shot";
 
 /** Single entry in the built-in capability matrix. */
 export interface BuiltinCapabilityMatrixEntry {
-  /** Stable matrix identifier (provider id, or `s3:multipart` for the multipart variant). */
+  /** Stable matrix identifier (provider id, or `s3:single-shot` for the legacy variant). */
   id: BuiltinProviderMatrixId;
   /** Human-readable label, suitable for documentation tables. */
   label: string;
@@ -91,15 +92,15 @@ export function getBuiltinCapabilityMatrix(): BuiltinCapabilityMatrixEntry[] {
     {
       capabilities: createS3ProviderFactory({ fetch: noopFetch }).capabilities,
       id: "s3",
-      label: "S3-compatible (single-shot uploads)",
+      label: "S3-compatible (multipart uploads, default)",
     },
     {
       capabilities: createS3ProviderFactory({
         fetch: noopFetch,
-        multipart: { enabled: true },
+        multipart: { enabled: false },
       }).capabilities,
-      id: "s3:multipart",
-      label: "S3-compatible (multipart uploads)",
+      id: "s3:single-shot",
+      label: "S3-compatible (single-shot uploads)",
     },
     {
       capabilities: createDropboxProviderFactory({ fetch: noopFetch }).capabilities,

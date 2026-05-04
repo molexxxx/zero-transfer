@@ -1,0 +1,128 @@
+[**ZeroTransfer SDK v0.4.0**](../README.md)
+
+***
+
+[ZeroTransfer SDK](../README.md) / PooledTransferClient
+
+# Interface: PooledTransferClient
+
+Defined in: src/core/ConnectionPool.ts:70
+
+Pool-aware [TransferClient](../classes/TransferClient.md) returned by
+[createPooledTransferClient](../functions/createPooledTransferClient.md).
+
+## Methods
+
+### connect()
+
+```ts
+connect(profile): Promise<TransferSession<unknown>>;
+```
+
+Defined in: src/core/ConnectionPool.ts:72
+
+Opens (or leases) a pooled provider session.
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `profile` | [`ConnectionProfile`](ConnectionProfile.md) |
+
+#### Returns
+
+`Promise`\<[`TransferSession`](TransferSession.md)\<`unknown`\>\>
+
+***
+
+### drainPool()
+
+```ts
+drainPool(): Promise<void>;
+```
+
+Defined in: src/core/ConnectionPool.ts:84
+
+Disconnects every idle session and prevents further pooling. After
+`drainPool()` resolves, subsequent `connect()` calls still work but
+always create fresh sessions (and never return them to the pool).
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
+### getCapabilities()
+
+#### Call Signature
+
+```ts
+getCapabilities(): CapabilitySet[];
+```
+
+Defined in: src/core/ConnectionPool.ts:76
+
+Returns the registered capability snapshots (delegated).
+
+##### Returns
+
+[`CapabilitySet`](CapabilitySet.md)[]
+
+#### Call Signature
+
+```ts
+getCapabilities(providerId): CapabilitySet;
+```
+
+Defined in: src/core/ConnectionPool.ts:78
+
+Returns a specific capability snapshot (delegated).
+
+##### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `providerId` | [`ProviderId`](../type-aliases/ProviderId.md) |
+
+##### Returns
+
+[`CapabilitySet`](CapabilitySet.md)
+
+***
+
+### hasProvider()
+
+```ts
+hasProvider(providerId): boolean;
+```
+
+Defined in: src/core/ConnectionPool.ts:74
+
+Inspects the registered providers (delegated to the underlying client).
+
+#### Parameters
+
+| Parameter | Type |
+| ------ | ------ |
+| `providerId` | [`ProviderId`](../type-aliases/ProviderId.md) |
+
+#### Returns
+
+`boolean`
+
+***
+
+### poolSize()
+
+```ts
+poolSize(): number;
+```
+
+Defined in: src/core/ConnectionPool.ts:86
+
+Returns the number of idle sessions currently held in the pool.
+
+#### Returns
+
+`number`

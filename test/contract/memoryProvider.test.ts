@@ -290,6 +290,62 @@ describe("createMemoryProviderFactory", () => {
       await session.disconnect();
     }
   });
+
+  it("supports remove/rename/mkdir/rmdir branch coverage", async () => {
+    const client = createTransferClient({
+      providers: [
+        createMemoryProviderFactory({
+          entries: [
+            { content: "abc", path: "/data/a.txt", type: "file" },
+            { path: "/data/sub", type: "directory" },
+            { content: "xyz", path: "/data/sub/x.txt", type: "file" },
+          ],
+        }),
+      ],
+    });
+    const session = await client.connect({ host: "memory.local", provider: "memory" });
+    try {
+      // remove existing file
+      await session.fs.remove!("/data/a.txt");
+      // remove missing with ignoreMissing
+      await session.fs.remove!("/data/a.txt", { ignoreMissing: true });
+      // remove missing without ignoreMissing
+      await expect(session.fs.remove!("/data/a.txt")).rejects.toBeInstanceOf(PathNotFoundError);
+      // remove directory throws
+      await expect(session.fs.remove!("/data/sub")).rejects.toBeInstanceOf(PathNotFoundError);
+      // rename missing
+      await expect(session.fs.rename!("/data/missing", "/data/x")).rejects.toBeInstanceOf(
+        PathNotFoundError,
+      );
+      // rename file
+      await session.fs.rename!("/data/sub/x.txt", "/data/sub/y.txt");
+      // mkdir existing directory recursive (no-op)
+      await session.fs.mkdir!("/data/sub", { recursive: true });
+      // mkdir existing as conflict (file exists)
+      await session.fs.mkdir!("/data/file2", { recursive: true });
+      // mkdir without recursive when parent missing
+      await expect(session.fs.mkdir!("/missing/parent/leaf")).rejects.toBeInstanceOf(
+        PathNotFoundError,
+      );
+      // mkdir conflict with existing entry
+      await expect(session.fs.mkdir!("/data/sub")).rejects.toThrow(/already exists/);
+      // rmdir missing with ignoreMissing
+      await session.fs.rmdir!("/never", { ignoreMissing: true });
+      // rmdir missing without
+      await expect(session.fs.rmdir!("/never")).rejects.toBeInstanceOf(PathNotFoundError);
+      // rmdir non-directory
+      const session2 = await client.connect({ host: "memory.local", provider: "memory" });
+      await session2.fs.mkdir?.("/d");
+      await session2.disconnect();
+      // rmdir non-empty without recursive
+      await expect(session.fs.rmdir!("/data/sub")).rejects.toThrow(/not empty/);
+      // rmdir recursive deeper - first add nested
+      await session.fs.mkdir!("/data/deep/inner", { recursive: true });
+      await session.fs.rmdir!("/data", { recursive: true });
+    } finally {
+      await session.disconnect();
+    }
+  });
 });
 
 function requireTransfers(session: TransferSession): ProviderTransferOperations {

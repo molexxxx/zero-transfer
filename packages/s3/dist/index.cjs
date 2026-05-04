@@ -60,10 +60,12 @@ __export(s3_exports, {
   copyBetween: () => copyBetween,
   createAtomicDeployPlan: () => createAtomicDeployPlan,
   createBandwidthThrottle: () => createBandwidthThrottle,
+  createFileSystemS3MultipartResumeStore: () => createFileSystemS3MultipartResumeStore,
   createLocalProviderFactory: () => createLocalProviderFactory,
   createMemoryProviderFactory: () => createMemoryProviderFactory,
   createMemoryS3MultipartResumeStore: () => createMemoryS3MultipartResumeStore,
   createOAuthTokenSecretSource: () => createOAuthTokenSecretSource,
+  createPooledTransferClient: () => createPooledTransferClient,
   createProgressEvent: () => createProgressEvent,
   createProviderTransferExecutor: () => createProviderTransferExecutor,
   createRemoteBrowser: () => createRemoteBrowser,
@@ -1881,6 +1883,186 @@ function summarizeDiagnosticError(error) {
     return summary;
   }
   return { message: String(error) };
+}
+
+// src/core/ConnectionPool.ts
+var DEFAULT_MAX_IDLE_PER_KEY = 4;
+var DEFAULT_IDLE_TIMEOUT_MS = 6e4;
+function createPooledTransferClient(inner, options = {}) {
+  const maxIdlePerKey = Math.max(1, options.maxIdlePerKey ?? DEFAULT_MAX_IDLE_PER_KEY);
+  const idleTimeoutMs = Math.max(0, options.idleTimeoutMs ?? DEFAULT_IDLE_TIMEOUT_MS);
+  const keyOf = options.keyOf ?? defaultKeyOf;
+  const state = {
+    drained: false,
+    idle: /* @__PURE__ */ new Map()
+  };
+  const release = (key, session, tainted) => {
+    if (tainted || state.drained) {
+      return safelyDisconnect(session);
+    }
+    let bucket = state.idle.get(key);
+    if (bucket === void 0) {
+      bucket = [];
+      state.idle.set(key, bucket);
+    }
+    const entry = { session };
+    if (idleTimeoutMs > 0) {
+      entry.idleTimer = setTimeout(() => {
+        evictEntry(state, key, entry);
+      }, idleTimeoutMs);
+      const timer = entry.idleTimer;
+      if (timer !== void 0 && typeof timer.unref === "function") {
+        timer.unref();
+      }
+    }
+    bucket.push(entry);
+    while (bucket.length > maxIdlePerKey) {
+      const dropped = bucket.shift();
+      if (dropped !== void 0) {
+        clearEntryTimer(dropped);
+        void safelyDisconnect(dropped.session);
+      }
+    }
+    return Promise.resolve();
+  };
+  const acquire = async (profile) => {
+    const key = keyOf(profile);
+    const bucket = state.idle.get(key);
+    if (bucket !== void 0 && bucket.length > 0) {
+      const entry = bucket.pop();
+      if (entry !== void 0) {
+        clearEntryTimer(entry);
+        if (bucket.length === 0) state.idle.delete(key);
+        return { key, session: entry.session };
+      }
+    }
+    const session = await inner.connect(profile);
+    return { key, session };
+  };
+  return {
+    connect: async (profile) => {
+      const { key, session } = await acquire(profile);
+      return wrapPooledSession(session, key, release);
+    },
+    drainPool: async () => {
+      state.drained = true;
+      const entries = [];
+      for (const bucket of state.idle.values()) {
+        for (const entry of bucket) {
+          clearEntryTimer(entry);
+          entries.push(entry);
+        }
+      }
+      state.idle.clear();
+      await Promise.all(entries.map((entry) => safelyDisconnect(entry.session)));
+    },
+    getCapabilities: ((providerId) => {
+      if (providerId === void 0) return inner.getCapabilities();
+      return inner.getCapabilities(providerId);
+    }),
+    hasProvider: (providerId) => inner.hasProvider(providerId),
+    poolSize: () => {
+      let total = 0;
+      for (const bucket of state.idle.values()) total += bucket.length;
+      return total;
+    }
+  };
+}
+function defaultKeyOf(profile) {
+  const provider = profile.provider ?? profile.protocol ?? "unknown";
+  const host = profile.host ?? "";
+  const port = profile.port ?? "";
+  const username = typeof profile.username === "string" ? profile.username : "";
+  return `${provider}|${host}|${String(port)}|${username}`;
+}
+function evictEntry(state, key, entry) {
+  const bucket = state.idle.get(key);
+  if (bucket === void 0) return;
+  const index = bucket.indexOf(entry);
+  if (index < 0) return;
+  bucket.splice(index, 1);
+  if (bucket.length === 0) state.idle.delete(key);
+  clearEntryTimer(entry);
+  void safelyDisconnect(entry.session);
+}
+function clearEntryTimer(entry) {
+  if (entry.idleTimer !== void 0) {
+    clearTimeout(entry.idleTimer);
+    delete entry.idleTimer;
+  }
+}
+async function safelyDisconnect(session) {
+  try {
+    await session.disconnect();
+  } catch {
+  }
+}
+function isTaintingError(error) {
+  return error instanceof ConnectionError || error instanceof TimeoutError || error instanceof ProtocolError;
+}
+function wrapPooledSession(session, key, release) {
+  let tainted = false;
+  let released = false;
+  const guard = (fn) => {
+    let promise;
+    try {
+      promise = fn();
+    } catch (error) {
+      if (isTaintingError(error)) tainted = true;
+      return Promise.reject(error instanceof Error ? error : new Error(String(error)));
+    }
+    return promise.catch((error) => {
+      if (isTaintingError(error)) tainted = true;
+      throw error;
+    });
+  };
+  const fs = wrapFs(session.fs, guard);
+  const transfers = session.transfers === void 0 ? void 0 : wrapTransfers(session.transfers, guard);
+  const wrapped = {
+    capabilities: session.capabilities,
+    disconnect: async () => {
+      if (released) return;
+      released = true;
+      await release(key, session, tainted);
+    },
+    fs,
+    provider: session.provider,
+    ...transfers !== void 0 ? { transfers } : {}
+  };
+  if (typeof session.raw === "function") {
+    const rawFn = session.raw.bind(session);
+    wrapped.raw = () => rawFn();
+  }
+  return wrapped;
+}
+function wrapFs(fs, guard) {
+  const wrapped = {
+    list: (path2, options) => guard(() => options !== void 0 ? fs.list(path2, options) : fs.list(path2)),
+    stat: (path2, options) => guard(() => options !== void 0 ? fs.stat(path2, options) : fs.stat(path2))
+  };
+  if (typeof fs.remove === "function") {
+    const remove = fs.remove.bind(fs);
+    wrapped.remove = (path2, options) => guard(() => options !== void 0 ? remove(path2, options) : remove(path2));
+  }
+  if (typeof fs.rename === "function") {
+    const rename2 = fs.rename.bind(fs);
+    wrapped.rename = (from, to, options) => guard(() => options !== void 0 ? rename2(from, to, options) : rename2(from, to));
+  }
+  if (typeof fs.mkdir === "function") {
+    const mkdir2 = fs.mkdir.bind(fs);
+    wrapped.mkdir = (path2, options) => guard(() => options !== void 0 ? mkdir2(path2, options) : mkdir2(path2));
+  }
+  if (typeof fs.rmdir === "function") {
+    const rmdir = fs.rmdir.bind(fs);
+    wrapped.rmdir = (path2, options) => guard(() => options !== void 0 ? rmdir(path2, options) : rmdir(path2));
+  }
+  return wrapped;
+}
+function wrapTransfers(transfers, guard) {
+  return {
+    read: (request) => guard(() => Promise.resolve(transfers.read(request))),
+    write: (request) => guard(() => Promise.resolve(transfers.write(request)))
+  };
 }
 
 // src/providers/local/LocalProvider.ts
@@ -4711,6 +4893,11 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   return Math.abs(sourceTime - destinationTime) > toleranceMs;
 }
 
+// src/providers/web/S3Provider.ts
+var import_node_crypto3 = require("crypto");
+var import_promises3 = require("fs/promises");
+var import_node_path3 = require("path");
+
 // src/providers/web/awsSigv4.ts
 var import_node_crypto2 = require("crypto");
 function signSigV4(input) {
@@ -4881,6 +5068,48 @@ function createMemoryS3MultipartResumeStore() {
     }
   };
 }
+function createFileSystemS3MultipartResumeStore(options) {
+  const directory = options.directory;
+  if (typeof directory !== "string" || directory.length === 0) {
+    throw new ConfigurationError({
+      message: "createFileSystemS3MultipartResumeStore requires a non-empty directory option",
+      retryable: false
+    });
+  }
+  const fileFor = (key) => {
+    const hash = (0, import_node_crypto3.createHash)("sha256").update(`${key.bucket}\0${key.jobId}\0${key.path}`).digest("hex");
+    return (0, import_node_path3.join)(directory, `${hash}.json`);
+  };
+  return {
+    async clear(key) {
+      try {
+        await (0, import_promises3.unlink)(fileFor(key));
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+    },
+    async load(key) {
+      try {
+        const text = await (0, import_promises3.readFile)(fileFor(key), "utf8");
+        const parsed = JSON.parse(text);
+        if (typeof parsed !== "object" || parsed === null || typeof parsed.uploadId !== "string" || !Array.isArray(parsed.parts)) {
+          return void 0;
+        }
+        return parsed;
+      } catch (error) {
+        if (error.code === "ENOENT") return void 0;
+        throw error;
+      }
+    },
+    async save(key, checkpoint) {
+      await (0, import_promises3.mkdir)(directory, { recursive: true });
+      const target = fileFor(key);
+      const tmp = `${target}.${String(process.pid)}.${String(Date.now())}.tmp`;
+      await (0, import_promises3.writeFile)(tmp, JSON.stringify(checkpoint), { encoding: "utf8", mode: 384 });
+      await (0, import_promises3.rename)(tmp, target);
+    }
+  };
+}
 var DEFAULT_MULTIPART_PART_SIZE = 8 * 1024 * 1024;
 var DEFAULT_MULTIPART_THRESHOLD = 8 * 1024 * 1024;
 var S3_CHECKSUM_CAPABILITIES = ["etag"];
@@ -4908,7 +5137,7 @@ function createS3ProviderFactory(options = {}) {
       retryable: false
     });
   }
-  const multipartEnabled = options.multipart?.enabled ?? false;
+  const multipartEnabled = options.multipart?.enabled ?? true;
   const multipart = {
     enabled: multipartEnabled,
     partSizeBytes: options.multipart?.partSizeBytes ?? DEFAULT_MULTIPART_PART_SIZE,
@@ -4925,9 +5154,11 @@ function createS3ProviderFactory(options = {}) {
     maxConcurrency: 16,
     metadata: ["modifiedAt", "mimeType", "uniqueId"],
     notes: multipartEnabled ? [
-      `S3 multipart upload enabled (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`
+      `S3 multipart upload enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`,
+      "Payloads at or below the threshold automatically fall back to single-shot PUT.",
+      "Pass `multipart: { enabled: false }` to force the legacy single-shot behaviour."
     ] : [
-      "S3 provider performs single-shot PUT uploads; pass multipart.enabled to stream large objects."
+      "S3 provider performs single-shot PUT uploads; entire object is buffered in memory before transmission."
     ],
     provider: id,
     readStream: true,
@@ -5534,10 +5765,12 @@ function innerText(xml, tag) {
   copyBetween,
   createAtomicDeployPlan,
   createBandwidthThrottle,
+  createFileSystemS3MultipartResumeStore,
   createLocalProviderFactory,
   createMemoryProviderFactory,
   createMemoryS3MultipartResumeStore,
   createOAuthTokenSecretSource,
+  createPooledTransferClient,
   createProgressEvent,
   createProviderTransferExecutor,
   createRemoteBrowser,

@@ -9,7 +9,9 @@
 export * from "./core";
 export {
   createS3ProviderFactory,
+  createFileSystemS3MultipartResumeStore,
   createMemoryS3MultipartResumeStore,
+  type FileSystemS3MultipartResumeStoreOptions,
   type S3MultipartCheckpoint,
   type S3MultipartOptions,
   type S3MultipartPart,

@@ -51,7 +51,7 @@ export function encodeSftpPacket(packet: SftpPacket): Buffer {
   }
 
   const payload = Buffer.from(packet.payload);
-  const frame = Buffer.allocUnsafe(4 + 1 + payload.length);
+  const frame = Buffer.alloc(4 + 1 + payload.length);
   frame.writeUInt32BE(1 + payload.length, 0);
   frame.writeUInt8(packet.type, 4);
   payload.copy(frame, 5);

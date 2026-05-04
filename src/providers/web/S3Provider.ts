@@ -11,6 +11,15 @@
 import type { CapabilitySet, ChecksumCapability } from "../../core/CapabilitySet";
 import type { ProviderId } from "../../core/ProviderId";
 import type { TransferSession } from "../../core/TransferSession";
+import { createHash } from "node:crypto";
+import {
+  mkdir as fsMkdir,
+  readFile as fsReadFile,
+  rename as fsRename,
+  unlink as fsUnlink,
+  writeFile as fsWriteFile,
+} from "node:fs/promises";
+import { join as joinPath } from "node:path";
 import {
   ConfigurationError,
   ConnectionError,
@@ -67,7 +76,14 @@ export interface S3ProviderOptions {
 
 /** Multipart upload tuning for the S3 provider. */
 export interface S3MultipartOptions {
-  /** Enable multipart upload. Defaults to `false`. */
+  /**
+   * Enable multipart upload. **Defaults to `true`** so large objects stream
+   * in fixed-size parts instead of being buffered in memory before a single
+   * `PUT`. Payloads at or below {@link S3MultipartOptions.thresholdBytes}
+   * still fall back to a single-shot `PUT` automatically. Set to `false` to
+   * force the legacy single-shot behaviour (e.g. when targeting an
+   * S3-compatible endpoint that does not support `CreateMultipartUpload`).
+   */
   enabled?: boolean;
   /** Object size threshold in bytes above which multipart is used. Defaults to 8 MiB. */
   thresholdBytes?: number;
@@ -130,6 +146,95 @@ export function createMemoryS3MultipartResumeStore(): S3MultipartResumeStore {
     load: (key) => map.get(stringify(key)),
     save: (key, checkpoint) => {
       map.set(stringify(key), checkpoint);
+    },
+  };
+}
+
+/** Options for {@link createFileSystemS3MultipartResumeStore}. */
+export interface FileSystemS3MultipartResumeStoreOptions {
+  /**
+   * Directory under which checkpoint JSON files are written. Created
+   * recursively if it does not exist. Each upload occupies a single file
+   * named after a SHA-256 hash of the resume key, so the directory is safe
+   * to share across many concurrent uploads.
+   */
+  directory: string;
+}
+
+/**
+ * File-system backed {@link S3MultipartResumeStore} that survives process
+ * restarts. Each in-flight multipart upload is checkpointed to a single
+ * JSON file in `options.directory` after every part. On retry the upload
+ * reuses the stored `uploadId` and skips parts that S3 has already
+ * accepted.
+ *
+ * The implementation writes atomically (`<file>.tmp` then `rename`) so a
+ * crash mid-write cannot leave a corrupt checkpoint.
+ *
+ * @example
+ * ```ts
+ * import { createFileSystemS3MultipartResumeStore, createS3ProviderFactory }
+ *   from "@zero-transfer/sdk";
+ *
+ * const resumeStore = createFileSystemS3MultipartResumeStore({
+ *   directory: "./.zt-s3-resume",
+ * });
+ *
+ * const factory = createS3ProviderFactory({
+ *   multipart: { enabled: true, resumeStore },
+ * });
+ * ```
+ */
+export function createFileSystemS3MultipartResumeStore(
+  options: FileSystemS3MultipartResumeStoreOptions,
+): S3MultipartResumeStore {
+  const directory = options.directory;
+  if (typeof directory !== "string" || directory.length === 0) {
+    throw new ConfigurationError({
+      message: "createFileSystemS3MultipartResumeStore requires a non-empty directory option",
+      retryable: false,
+    });
+  }
+
+  const fileFor = (key: S3MultipartResumeKey): string => {
+    const hash = createHash("sha256")
+      .update(`${key.bucket}\u0000${key.jobId}\u0000${key.path}`)
+      .digest("hex");
+    return joinPath(directory, `${hash}.json`);
+  };
+
+  return {
+    async clear(key) {
+      try {
+        await fsUnlink(fileFor(key));
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+      }
+    },
+    async load(key) {
+      try {
+        const text = await fsReadFile(fileFor(key), "utf8");
+        const parsed = JSON.parse(text) as S3MultipartCheckpoint;
+        if (
+          typeof parsed !== "object" ||
+          parsed === null ||
+          typeof parsed.uploadId !== "string" ||
+          !Array.isArray(parsed.parts)
+        ) {
+          return undefined;
+        }
+        return parsed;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+        throw error;
+      }
+    },
+    async save(key, checkpoint) {
+      await fsMkdir(directory, { recursive: true });
+      const target = fileFor(key);
+      const tmp = `${target}.${String(process.pid)}.${String(Date.now())}.tmp`;
+      await fsWriteFile(tmp, JSON.stringify(checkpoint), { encoding: "utf8", mode: 0o600 });
+      await fsRename(tmp, target);
     },
   };
 }
@@ -200,7 +305,7 @@ export function createS3ProviderFactory(options: S3ProviderOptions = {}): Provid
     });
   }
 
-  const multipartEnabled = options.multipart?.enabled ?? false;
+  const multipartEnabled = options.multipart?.enabled ?? true;
   const multipart: ResolvedMultipartOptions = {
     enabled: multipartEnabled,
     partSizeBytes: options.multipart?.partSizeBytes ?? DEFAULT_MULTIPART_PART_SIZE,
@@ -221,10 +326,12 @@ export function createS3ProviderFactory(options: S3ProviderOptions = {}): Provid
     metadata: ["modifiedAt", "mimeType", "uniqueId"],
     notes: multipartEnabled
       ? [
-          `S3 multipart upload enabled (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`,
+          `S3 multipart upload enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`,
+          "Payloads at or below the threshold automatically fall back to single-shot PUT.",
+          "Pass `multipart: { enabled: false }` to force the legacy single-shot behaviour.",
         ]
       : [
-          "S3 provider performs single-shot PUT uploads; pass multipart.enabled to stream large objects.",
+          "S3 provider performs single-shot PUT uploads; entire object is buffered in memory before transmission.",
         ],
     provider: id,
     readStream: true,

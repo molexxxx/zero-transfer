@@ -10,6 +10,7 @@
  * @module providers/cloud/GoogleDriveProvider
  */
 import { Buffer } from "node:buffer";
+import { randomBytes } from "node:crypto";
 import type { CapabilitySet, ChecksumCapability } from "../../core/CapabilitySet";
 import type { ProviderId } from "../../core/ProviderId";
 import type { TransferSession } from "../../core/TransferSession";
@@ -414,7 +415,7 @@ class GoogleDriveTransferOperations implements ProviderTransferOperations {
     const metadata: Record<string, unknown> = { name };
     if (existing === undefined) metadata["parents"] = [parentId];
 
-    const boundary = `----zt-boundary-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
+    const boundary = `----zt-boundary-${randomBytes(16).toString("hex")}`;
     const bodyParts: Uint8Array[] = [];
     const enc = new TextEncoder();
     bodyParts.push(

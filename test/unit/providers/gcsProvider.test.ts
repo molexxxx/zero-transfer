@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   AuthenticationError,
   ConfigurationError,
+  ConnectionError,
   PathNotFoundError,
   PermissionDeniedError,
   UnsupportedFeatureError,
@@ -290,3 +291,217 @@ function singleChunk(bytes: Uint8Array): AsyncIterable<Uint8Array> {
     },
   };
 }
+
+describe("createGcsProviderFactory edge cases", () => {
+  it("throws ConfigurationError when fetch is unavailable", () => {
+    const original = globalThis.fetch;
+    (globalThis as { fetch?: unknown }).fetch = undefined;
+    try {
+      expect(() => createGcsProviderFactory({ bucket: "data" })).toThrow(ConfigurationError);
+    } finally {
+      (globalThis as { fetch?: unknown }).fetch = original;
+    }
+  });
+
+  it("rejects connect() when bearer token resolves to empty string", async () => {
+    const factory = createGcsProviderFactory({ bucket: "data", fetch: notImplementedFetch });
+    await expect(
+      factory.create().connect({ host: "", password: "", protocol: "ftp" }),
+    ).rejects.toBeInstanceOf(ConfigurationError);
+  });
+
+  it("uses overridden apiBaseUrl and uploadBaseUrl", async () => {
+    const captured: string[] = [];
+    const fetchImpl: HttpFetch = (input) => {
+      captured.push(input);
+      return Promise.resolve(jsonResponse({ items: [] }));
+    };
+    const factory = createGcsProviderFactory({
+      apiBaseUrl: "https://api.example.test/storage/v1/",
+      bucket: "data",
+      fetch: fetchImpl,
+      uploadBaseUrl: "https://up.example.test/upload/storage/v1/",
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    await session.fs.list("/x");
+    expect(captured[0]).toMatch(/^https:\/\/api\.example\.test\/storage\/v1\/b\/data\/o/);
+  });
+
+  it("merges defaultHeaders into requests", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(jsonResponse({ items: [] }));
+    };
+    const factory = createGcsProviderFactory({
+      bucket: "data",
+      defaultHeaders: { "X-Trace": "t" },
+      fetch: fetchImpl,
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    await session.fs.list("/x");
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["X-Trace"]).toBe("t");
+  });
+
+  it("forwards profile.timeoutMs as an AbortSignal", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(jsonResponse({ items: [] }));
+    };
+    const factory = createGcsProviderFactory({ bucket: "data", fetch: fetchImpl });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+      timeoutMs: 5_000,
+    });
+    await session.fs.list("/x");
+    expect(captured[0]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("wraps fetch failures in ConnectionError", async () => {
+    const factory = createGcsProviderFactory({
+      bucket: "data",
+      fetch: () => Promise.reject(new Error("dns")),
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    await expect(session.fs.list("/")).rejects.toMatchObject({ message: /failed/ });
+  });
+
+  it("maps 429 and 5xx response codes to ConnectionError", async () => {
+    let attempt = 0;
+    const fetchImpl: HttpFetch = () => {
+      attempt += 1;
+      if (attempt === 1) return Promise.resolve(new Response("rate", { status: 429 }));
+      return Promise.resolve(new Response("server", { status: 503 }));
+    };
+    const session = await connect({ fetch: fetchImpl });
+    await expect(session.fs.stat("/a")).rejects.toMatchObject({ message: /rate limit/ });
+    await expect(session.fs.stat("/a")).rejects.toMatchObject({ message: /failed with status/ });
+  });
+
+  it("read() honors range with offset and emits bytesRead/totalBytes", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(
+        new Response("y", {
+          headers: { "content-length": "1", "content-range": "bytes 5-5/100" },
+          status: 206,
+        }),
+      );
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.read({ ...makeReadRequest("/x"), range: { offset: 5 } });
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["range"]).toBe("bytes=5-");
+    expect(result.bytesRead).toBe(5);
+    expect(result.totalBytes).toBe(100);
+  });
+
+  it("read() throws ConnectionError when response has no body", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(new Response(null, { headers: { "content-length": "0" }, status: 200 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(transfers.read(makeReadRequest("/x"))).rejects.toBeInstanceOf(ConnectionError);
+  });
+
+  it("read() falls back to content-md5 header when x-goog-hash is missing", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        new Response("hi", {
+          headers: { "content-length": "2", "content-md5": "md5-r" },
+          status: 200,
+        }),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.read(makeReadRequest("/x"));
+    expect(result.checksum).toBe("md5-r");
+  });
+
+  it("read() maps a non-OK GET to a typed error", async () => {
+    const fetchImpl: HttpFetch = () => Promise.resolve(new Response(null, { status: 401 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(transfers.read(makeReadRequest("/x"))).rejects.toBeInstanceOf(AuthenticationError);
+  });
+
+  it("write() maps a non-OK POST to a typed error", async () => {
+    const fetchImpl: HttpFetch = () => Promise.resolve(new Response("forbid", { status: 403 }));
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(
+      transfers.write(makeWriteRequest("/x", new TextEncoder().encode("y"))),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+  });
+
+  it("list() filters items whose names do not start with the prefix", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        jsonResponse({
+          items: [
+            { name: "other/foo.txt", size: "1" },
+            { name: "folder/keep.txt", size: "2" },
+          ],
+        }),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    const list = await session.fs.list("/folder");
+    expect(list).toHaveLength(1);
+    expect(list[0]?.name).toBe("keep.txt");
+  });
+
+  it("list() filters nested object names that contain a slash", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        jsonResponse({
+          items: [{ name: "folder/sub/deep.txt", size: "1" }],
+        }),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    const list = await session.fs.list("/folder");
+    expect(list).toHaveLength(0);
+  });
+
+  it("stat() throws PathNotFoundError when entry projection rejects the response", async () => {
+    const fetchImpl: HttpFetch = () => Promise.resolve(jsonResponse({ name: "" }));
+    const session = await connect({ fetch: fetchImpl });
+    await expect(session.fs.stat("/a/b/c.txt")).rejects.toBeInstanceOf(PathNotFoundError);
+  });
+
+  it("propagates request.signal during reads", async () => {
+    const captured: Array<{ init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (_input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}) });
+      return Promise.resolve(new Response("hi", { status: 200 }));
+    };
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const ctrl = new AbortController();
+    await transfers.read({ ...makeReadRequest("/r"), signal: ctrl.signal });
+    expect(captured[0]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+});

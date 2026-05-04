@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/sdk",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Unified TypeScript file transfer SDK for Node.js",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
@@ -45,6 +45,9 @@
     "test:coverage": "vitest run --coverage",
     "test:report": "vitest run --reporter=default --reporter=json --outputFile=coverage/test-results.json --coverage",
     "test:integration:ftp": "vitest run test/integration/ftpProvider.docker.test.ts",
+    "test:integration:sftp": "vitest run test/integration/sftpProvider.docker.test.ts",
+    "test:integration:s3": "vitest run test/integration/s3Provider.docker.test.ts",
+    "test:integration:webdav": "vitest run test/integration/webdavProvider.docker.test.ts",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
