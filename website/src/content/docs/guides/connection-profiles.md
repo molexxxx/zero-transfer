@@ -3,32 +3,32 @@ title: Connection profiles
 description: The provider-neutral ConnectionProfile shape, every SecretSource variant, and the security knobs that matter.
 ---
 
-Every operation that touches a remote system takes a [`ConnectionProfile`](/api/interfaces/connectionprofile/). Profiles are provider-neutral data — build one once and pass it to `client.connect()`, `uploadFile()`, `downloadFile()`, `copyBetween()`, MFT routes, and diagnostics. The same shape works for every provider; only the optional auth blocks (`ssh`, `tls`, `oauth`, `s3`, …) change.
+Every operation that touches a remote system takes a [`ConnectionProfile`](../../api/interfaces/connectionprofile/). Profiles are provider-neutral data — build one once and pass it to `client.connect()`, `uploadFile()`, `downloadFile()`, `copyBetween()`, MFT routes, and diagnostics. The same shape works for every provider; only the optional auth blocks (`ssh`, `tls`, `oauth`, `s3`, …) change.
 
 ## Required fields
 
 | Field      | Type                                          | Notes                                                                                                                                                                                                       |
 | ---------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `host`     | `string`                                      | Remote hostname / IP / bucket / drive identifier (provider-specific). Always required.                                                                                                                      |
-| `provider` | [`ProviderId`](/api/type-aliases/providerid/) | One of `"ftp"`, `"ftps"`, `"sftp"`, `"http"`, `"https"`, `"webdav"`, `"s3"`, `"azure-blob"`, `"gcs"`, `"google-drive"`, `"dropbox"`, `"one-drive"`, `"local"`, `"memory"`, or any custom id you registered. |
+| `provider` | [`ProviderId`](../../api/type-aliases/providerid/) | One of `"ftp"`, `"ftps"`, `"sftp"`, `"http"`, `"https"`, `"webdav"`, `"s3"`, `"azure-blob"`, `"gcs"`, `"google-drive"`, `"dropbox"`, `"one-drive"`, `"local"`, `"memory"`, or any custom id you registered. |
 
 ## Optional top-level fields
 
 | Field       | Type                                                        | Notes                                                                    |
 | ----------- | ----------------------------------------------------------- | ------------------------------------------------------------------------ |
 | `port`      | `number`                                                    | Provider applies a sensible default when omitted.                        |
-| `username`  | [`SecretSource`](/api/type-aliases/secretsource/)           | String, `{ env }`, `{ path }`, `{ base64Env }`, `{ value }`, callback.   |
-| `password`  | [`SecretSource`](/api/type-aliases/secretsource/)           | Same shapes as `username`. Used as bearer token for cloud providers.     |
+| `username`  | [`SecretSource`](../../api/type-aliases/secretsource/)           | String, `{ env }`, `{ path }`, `{ base64Env }`, `{ value }`, callback.   |
+| `password`  | [`SecretSource`](../../api/type-aliases/secretsource/)           | Same shapes as `username`. Used as bearer token for cloud providers.     |
 | `secure`    | `boolean`                                                   | Request encrypted transport when the protocol allows opt-in TLS.         |
-| `tls`       | [`TlsProfile`](/api/interfaces/tlsprofile/)                 | CA bundle, mTLS cert/key, fingerprint pinning, min/max TLS version.      |
-| `ssh`       | [`SshProfile`](/api/interfaces/sshprofile/)                 | Private key, passphrase, `known_hosts`, host-key pin, agent, algorithms. |
+| `tls`       | [`TlsProfile`](../../api/interfaces/tlsprofile/)                 | CA bundle, mTLS cert/key, fingerprint pinning, min/max TLS version.      |
+| `ssh`       | [`SshProfile`](../../api/interfaces/sshprofile/)                 | Private key, passphrase, `known_hosts`, host-key pin, agent, algorithms. |
 | `timeoutMs` | `number`                                                    | Connection / operation timeout.                                          |
 | `signal`    | `AbortSignal`                                               | Cancels connection setup and long-running operations.                    |
-| `logger`    | [`ZeroTransferLogger`](/api/interfaces/zerotransferlogger/) | Per-profile structured logger override (still redaction-safe).           |
+| `logger`    | [`ZeroTransferLogger`](../../api/interfaces/zerotransferlogger/) | Per-profile structured logger override (still redaction-safe).           |
 
 ## Secret-bearing fields use `SecretSource`
 
-Every credential field (`username`, `password`, `tls.ca`, `tls.key`, `ssh.privateKey`, `ssh.knownHosts`, `ssh.passphrase`, …) accepts a [`SecretSource`](/api/type-aliases/secretsource/). Inline strings work for prototypes, but production code should pull from the environment, a file, or a callback so secrets stay out of source control and out of process memory dumps.
+Every credential field (`username`, `password`, `tls.ca`, `tls.key`, `ssh.privateKey`, `ssh.knownHosts`, `ssh.passphrase`, …) accepts a [`SecretSource`](../../api/type-aliases/secretsource/). Inline strings work for prototypes, but production code should pull from the environment, a file, or a callback so secrets stay out of source control and out of process memory dumps.
 
 ```ts
 // Inline string — fine for tests, avoid in production.
@@ -53,7 +53,7 @@ ca: {
 password: async () => await vault.read("kv/sftp/deploy");
 ```
 
-Profiles are run through [`redactConnectionProfile()`](/api/functions/redactconnectionprofile/) before any log line is emitted, so secret values never appear in logs, audit entries, or diagnostics.
+Profiles are run through [`redactConnectionProfile()`](../../api/functions/redactconnectionprofile/) before any log line is emitted, so secret values never appear in logs, audit entries, or diagnostics.
 
 ## Worked examples
 
@@ -119,8 +119,8 @@ const dropbox: ConnectionProfile = {
 
 ## Full per-field reference
 
-- [`ConnectionProfile`](/api/interfaces/connectionprofile/)
-- [`SshProfile`](/api/interfaces/sshprofile/)
-- [`TlsProfile`](/api/interfaces/tlsprofile/)
-- [`SecretSource`](/api/type-aliases/secretsource/)
-- [`ProviderId`](/api/type-aliases/providerid/)
+- [`ConnectionProfile`](../../api/interfaces/connectionprofile/)
+- [`SshProfile`](../../api/interfaces/sshprofile/)
+- [`TlsProfile`](../../api/interfaces/tlsprofile/)
+- [`SecretSource`](../../api/type-aliases/secretsource/)
+- [`ProviderId`](../../api/type-aliases/providerid/)

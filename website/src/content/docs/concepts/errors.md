@@ -5,7 +5,7 @@ description: ZeroTransferError taxonomy, structured details, and the diagnostics
 
 ## Every error is a `ZeroTransferError`
 
-All SDK errors derive from [`ZeroTransferError`](/api/classes/zerotransfererror/). They carry:
+All SDK errors derive from [`ZeroTransferError`](../../api/classes/zerotransfererror/). They carry:
 
 | Field       | Type                    | Notes                                                      |
 | ----------- | ----------------------- | ---------------------------------------------------------- |
@@ -31,7 +31,7 @@ All SDK errors derive from [`ZeroTransferError`](/api/classes/zerotransfererror/
 - `"protocol-error"` — server replied with malformed / unexpected data.
 - `"internal"` — bug or invariant violation in the SDK itself.
 
-The full enum lives in [`ZeroTransferErrorCode`](/api/type-aliases/zerotransfererrorcode/).
+The full enum lives in [`ZeroTransferErrorCode`](../../api/type-aliases/zerotransfererrorcode/).
 
 ### Pattern: branch on `code`
 
@@ -56,7 +56,7 @@ try {
 
 ## Connection diagnostics
 
-[`runConnectionDiagnostics`](/api/functions/runconnectiondiagnostics/) probes a profile and returns a structured report (DNS, TCP, TLS handshake, auth, capability advertisement). Pair it with [`summarizeClientDiagnostics`](/api/functions/summarizeclientdiagnostics/) for an at-a-glance view of every pooled session.
+[`runConnectionDiagnostics`](../../api/functions/runconnectiondiagnostics/) probes a profile and returns a structured report (DNS, TCP, TLS handshake, auth, capability advertisement). Pair it with [`summarizeClientDiagnostics`](../../api/functions/summarizeclientdiagnostics/) for an at-a-glance view of every pooled session.
 
 ```ts
 import { runConnectionDiagnostics, summarizeClientDiagnostics } from "@zero-transfer/sdk";

@@ -29,7 +29,7 @@ const receipt = await runRoute({ client, route });
 
 ## Scheduling
 
-Group routes and schedules into registries, then drive them with [`MftScheduler`](/api/classes/mftscheduler/):
+Group routes and schedules into registries, then drive them with [`MftScheduler`](../../api/classes/mftscheduler/):
 
 ```ts
 import { MftScheduler, RouteRegistry, ScheduleRegistry } from "@zero-transfer/sdk";
@@ -46,7 +46,7 @@ scheduler.start();
 
 ## Approval gates
 
-Wrap any runner in [`createApprovalGate`](/api/functions/createapprovalgate/) to require human approval before bytes move:
+Wrap any runner in [`createApprovalGate`](../../api/functions/createapprovalgate/) to require human approval before bytes move:
 
 ```ts
 import { ApprovalRegistry, createApprovalGate, runRoute } from "@zero-transfer/sdk";
@@ -63,6 +63,6 @@ const gatedRunner = createApprovalGate({
 
 ## Audit logs
 
-[`createWebhookAuditLog`](/api/functions/createwebhookauditlog/) and other audit-log adapters are passed to the scheduler so every route execution emits a structured, redaction-safe record to your SIEM / webhook / file sink.
+[`createWebhookAuditLog`](../../api/functions/createwebhookauditlog/) and other audit-log adapters are passed to the scheduler so every route execution emits a structured, redaction-safe record to your SIEM / webhook / file sink.
 
 See [`examples/mft-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/mft-route.ts) and [`examples/approval-gated-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/approval-gated-route.ts) for runnable end-to-end setups.

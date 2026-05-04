@@ -31,7 +31,7 @@ The scoped packages re-export the same `createTransferClient`, `uploadFile`, etc
 
 ## 3. Build a connection profile
 
-Every operation that touches a remote system takes a [`ConnectionProfile`](/api/interfaces/connectionprofile/). The shape is provider-neutral — you describe the destination once and reuse it.
+Every operation that touches a remote system takes a [`ConnectionProfile`](../../api/interfaces/connectionprofile/). The shape is provider-neutral — you describe the destination once and reuse it.
 
 ```ts
 import type { ConnectionProfile } from "@zero-transfer/sdk";
@@ -49,7 +49,7 @@ const sftp: ConnectionProfile = {
 };
 ```
 
-For the full field reference and every secret-loading variant, see **[Connection profiles](/guides/connection-profiles/)**.
+For the full field reference and every secret-loading variant, see **[Connection profiles](../../guides/connection-profiles/)**.
 
 ## 4. Connect and run an operation
 
@@ -83,7 +83,7 @@ await uploadFile({
 
 ## 6. Where to next
 
-- **[Connection profiles](/guides/connection-profiles/)** — every field, every secret variant, every security knob.
-- **[Capability matrix](/guides/capabilities/)** — what each provider can and can't do.
-- **[Examples](/guides/examples/)** — runnable end-to-end scripts (sync, MFT, atomic deploy, signed URLs, …).
-- **[API reference](/api/)** — auto-generated from the source.
+- **[Connection profiles](../../guides/connection-profiles/)** — every field, every secret variant, every security knob.
+- **[Capability matrix](../../guides/capabilities/)** — what each provider can and can't do.
+- **[Examples](../../guides/examples/)** — runnable end-to-end scripts (sync, MFT, atomic deploy, signed URLs, …).
+- **[API reference](../../api/)** — auto-generated from the source.

@@ -3,7 +3,7 @@ title: Capability matrix
 description: What each provider can and can't do — streaming, resume, server-side copy, multipart upload, checksum exposure.
 ---
 
-Every provider advertises its own [`CapabilitySet`](/api/interfaces/capabilityset/). The full programmatic matrix is exposed via [`getBuiltinCapabilityMatrix()`](/api/functions/getbuiltincapabilitymatrix/) and renders to Markdown via [`formatCapabilityMatrixMarkdown()`](/api/functions/formatcapabilitymatrixmarkdown/).
+Every provider advertises its own [`CapabilitySet`](../../api/interfaces/capabilityset/). The full programmatic matrix is exposed via [`getBuiltinCapabilityMatrix()`](../../api/functions/getbuiltincapabilitymatrix/) and renders to Markdown via [`formatCapabilityMatrixMarkdown()`](../../api/functions/formatcapabilitymatrixmarkdown/).
 
 | Provider     | Streaming | Resume  | Server-side copy | Multipart upload | Checksum exposed |
 | ------------ | :-------: | :-----: | :--------------: | :--------------: | :--------------: |

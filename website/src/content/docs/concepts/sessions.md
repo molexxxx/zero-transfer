@@ -11,7 +11,7 @@ import { createTransferClient } from "@zero-transfer/sdk";
 const client = createTransferClient();
 ```
 
-`client.connect(profile)` returns a [`TransferSession`](/api/interfaces/transfersession/). A session is a live, authenticated handle to one remote system.
+`client.connect(profile)` returns a [`TransferSession`](../../api/interfaces/transfersession/). A session is a live, authenticated handle to one remote system.
 
 ```ts
 const session = await client.connect(profile);
@@ -49,8 +49,8 @@ await uploadFile({
 });
 ```
 
-Aborting cancels the in-flight transfer, releases the underlying socket, and rejects the promise with a [`ZeroTransferError`](/api/classes/zerotransfererror/) of code `"aborted"`.
+Aborting cancels the in-flight transfer, releases the underlying socket, and rejects the promise with a [`ZeroTransferError`](../../api/classes/zerotransfererror/) of code `"aborted"`.
 
 ## Errors
 
-All SDK errors derive from [`ZeroTransferError`](/api/classes/zerotransfererror/), which carries a stable `code`, an optional `cause`, and structured `details`. See [Errors & diagnostics](/concepts/errors/) for the full taxonomy.
+All SDK errors derive from [`ZeroTransferError`](../../api/classes/zerotransfererror/), which carries a stable `code`, an optional `cause`, and structured `details`. See [Errors & diagnostics](../../concepts/errors/) for the full taxonomy.
