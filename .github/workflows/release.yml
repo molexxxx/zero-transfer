@@ -17,11 +17,10 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 jobs:
   publish:
-    name: Publish @zero-transfer/* to npmjs (OIDC)
+    name: Publish @zero-transfer/* to npmjs
     runs-on: ubuntu-latest
 
     steps:

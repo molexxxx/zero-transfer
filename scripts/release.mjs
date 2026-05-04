@@ -26,7 +26,8 @@
  * Pushing the bumped package.json triggers the `release-on-bump.yml` workflow,
  * which tags `v<version>` and creates a GitHub Release. That release event then
  * triggers the `release.yml` workflow, which publishes @zero-transfer/sdk and
- * all 12 narrowed @zero-transfer/* packages to npmjs via OIDC trusted publishing.
+ * all 12 narrowed @zero-transfer/* packages to npmjs using the NPM_TOKEN
+ * secret (an automation token configured to bypass 2FA).
  *
  * Pass `--no-push` to stop after the local commit (useful for testing).
  */
