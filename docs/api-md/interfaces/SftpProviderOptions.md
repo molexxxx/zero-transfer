@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.0**](../README.md)
+[**ZeroTransfer SDK v0.3.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: SftpProviderOptions
 
-Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:145](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/native/sftp/NativeSftpProvider.ts#L145)
+Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:145](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/native/sftp/NativeSftpProvider.ts#L145)
 
 Options for [createNativeSftpProviderFactory](../functions/createSftpProviderFactory.md).
 
@@ -20,5 +20,5 @@ SFTP v3 client protocol multiplexed over a single channel.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="keepaliveintervalms"></a> `keepaliveIntervalMs?` | `number` | Default interval (milliseconds) between SSH-level keepalive pings sent once the transport is connected and idle. Prevents stateful firewalls / NAT devices from dropping long-lived sessions. The timer is reset on every outbound payload so active transfers do not generate extra traffic. Disabled when omitted or `0`. | [src/providers/native/sftp/NativeSftpProvider.ts:160](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/native/sftp/NativeSftpProvider.ts#L160) |
-| <a id="readytimeoutms"></a> `readyTimeoutMs?` | `number` | Default connection timeout in milliseconds when the profile omits `timeoutMs`. Bounds both the TCP connect *and* the SSH identification + key-exchange handshake, so a hung server cannot stall `connect()` indefinitely after the socket is accepted. | [src/providers/native/sftp/NativeSftpProvider.ts:152](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/native/sftp/NativeSftpProvider.ts#L152) |
+| <a id="keepaliveintervalms"></a> `keepaliveIntervalMs?` | `number` | Default interval (milliseconds) between SSH-level keepalive pings sent once the transport is connected and idle. Prevents stateful firewalls / NAT devices from dropping long-lived sessions. The timer is reset on every outbound payload so active transfers do not generate extra traffic. Disabled when omitted or `0`. | [src/providers/native/sftp/NativeSftpProvider.ts:160](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/native/sftp/NativeSftpProvider.ts#L160) |
+| <a id="readytimeoutms"></a> `readyTimeoutMs?` | `number` | Default connection timeout in milliseconds when the profile omits `timeoutMs`. Bounds both the TCP connect *and* the SSH identification + key-exchange handshake, so a hung server cannot stall `connect()` indefinitely after the socket is accepted. | [src/providers/native/sftp/NativeSftpProvider.ts:152](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/native/sftp/NativeSftpProvider.ts#L152) |

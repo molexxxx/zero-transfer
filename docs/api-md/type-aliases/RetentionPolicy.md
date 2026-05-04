@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.0**](../README.md)
+[**ZeroTransfer SDK v0.3.1**](../README.md)
 
 ***
 
@@ -12,6 +12,6 @@ type RetentionPolicy =
   | CountRetentionPolicy;
 ```
 
-Defined in: [src/mft/retention.ts:36](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/retention.ts#L36)
+Defined in: [src/mft/retention.ts:36](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/retention.ts#L36)
 
 Combined retention policy union accepted by [evaluateRetention](../functions/evaluateRetention.md).

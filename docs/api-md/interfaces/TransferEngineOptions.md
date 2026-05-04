@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.0**](../README.md)
+[**ZeroTransfer SDK v0.3.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: TransferEngineOptions
 
-Defined in: [src/transfers/TransferEngine.ts:81](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/transfers/TransferEngine.ts#L81)
+Defined in: [src/transfers/TransferEngine.ts:81](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/transfers/TransferEngine.ts#L81)
 
 Construction options for deterministic tests and host integration.
 
@@ -14,4 +14,4 @@ Construction options for deterministic tests and host integration.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="now"></a> `now?` | () => `Date` | Clock used for receipts and progress events. Defaults to `new Date()`. | [src/transfers/TransferEngine.ts:83](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/transfers/TransferEngine.ts#L83) |
+| <a id="now"></a> `now?` | () => `Date` | Clock used for receipts and progress events. Defaults to `new Date()`. | [src/transfers/TransferEngine.ts:83](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/transfers/TransferEngine.ts#L83) |

@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/ftp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Classic FTP provider with EPSV/PASV streaming and REST resume.",
   "keywords": [
     "zero-transfer",

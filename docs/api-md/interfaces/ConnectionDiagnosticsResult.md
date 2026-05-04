@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.0**](../README.md)
+[**ZeroTransfer SDK v0.3.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ConnectionDiagnosticsResult
 
-Defined in: [src/diagnostics/index.ts:46](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L46)
+Defined in: [src/diagnostics/index.ts:46](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L46)
 
 Result returned by [runConnectionDiagnostics](../functions/runConnectionDiagnostics.md).
 
@@ -14,14 +14,14 @@ Result returned by [runConnectionDiagnostics](../functions/runConnectionDiagnost
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="capabilities"></a> `capabilities?` | [`CapabilitySet`](CapabilitySet.md) | Capability snapshot reported by the connected session. | [src/diagnostics/index.ts:52](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L52) |
-| <a id="error"></a> `error?` | \{ `code?`: `string`; `message`: `string`; `name?`: `string`; \} | Captured error summary when the diagnostics could not complete. | [src/diagnostics/index.ts:62](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L62) |
-| `error.code?` | `string` | - | [src/diagnostics/index.ts:62](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L62) |
-| `error.message` | `string` | - | [src/diagnostics/index.ts:62](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L62) |
-| `error.name?` | `string` | - | [src/diagnostics/index.ts:62](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L62) |
-| <a id="host"></a> `host` | `string` | Profile host (after redaction). | [src/diagnostics/index.ts:50](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L50) |
-| <a id="ok"></a> `ok` | `boolean` | Whether all probes ran without throwing. | [src/diagnostics/index.ts:60](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L60) |
-| <a id="provider"></a> `provider?` | [`ProviderId`](../type-aliases/ProviderId.md) | Resolved provider id used to open the session. | [src/diagnostics/index.ts:48](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L48) |
-| <a id="redactedprofile"></a> `redactedProfile` | `Record`\<`string`, `unknown`\> | Redacted connection profile mirroring [redactConnectionProfile](../functions/redactConnectionProfile.md). | [src/diagnostics/index.ts:54](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L54) |
-| <a id="sample"></a> `sample?` | readonly [`RemoteEntry`](RemoteEntry.md)[] | Sample of entries returned by the optional `fs.list` probe. | [src/diagnostics/index.ts:58](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L58) |
-| <a id="timings"></a> `timings` | [`ConnectionDiagnosticTimings`](ConnectionDiagnosticTimings.md) | Per-step duration measurements. | [src/diagnostics/index.ts:56](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/diagnostics/index.ts#L56) |
+| <a id="capabilities"></a> `capabilities?` | [`CapabilitySet`](CapabilitySet.md) | Capability snapshot reported by the connected session. | [src/diagnostics/index.ts:52](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L52) |
+| <a id="error"></a> `error?` | \{ `code?`: `string`; `message`: `string`; `name?`: `string`; \} | Captured error summary when the diagnostics could not complete. | [src/diagnostics/index.ts:62](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L62) |
+| `error.code?` | `string` | - | [src/diagnostics/index.ts:62](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L62) |
+| `error.message` | `string` | - | [src/diagnostics/index.ts:62](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L62) |
+| `error.name?` | `string` | - | [src/diagnostics/index.ts:62](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L62) |
+| <a id="host"></a> `host` | `string` | Profile host (after redaction). | [src/diagnostics/index.ts:50](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L50) |
+| <a id="ok"></a> `ok` | `boolean` | Whether all probes ran without throwing. | [src/diagnostics/index.ts:60](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L60) |
+| <a id="provider"></a> `provider?` | [`ProviderId`](../type-aliases/ProviderId.md) | Resolved provider id used to open the session. | [src/diagnostics/index.ts:48](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L48) |
+| <a id="redactedprofile"></a> `redactedProfile` | `Record`\<`string`, `unknown`\> | Redacted connection profile mirroring [redactConnectionProfile](../functions/redactConnectionProfile.md). | [src/diagnostics/index.ts:54](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L54) |
+| <a id="sample"></a> `sample?` | readonly [`RemoteEntry`](RemoteEntry.md)[] | Sample of entries returned by the optional `fs.list` probe. | [src/diagnostics/index.ts:58](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L58) |
+| <a id="timings"></a> `timings` | [`ConnectionDiagnosticTimings`](ConnectionDiagnosticTimings.md) | Per-step duration measurements. | [src/diagnostics/index.ts:56](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/diagnostics/index.ts#L56) |

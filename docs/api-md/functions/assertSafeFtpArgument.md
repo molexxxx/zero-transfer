@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.0**](../README.md)
+[**ZeroTransfer SDK v0.3.1**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function assertSafeFtpArgument(value, label?): string;
 ```
 
-Defined in: [src/utils/path.ts:21](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/utils/path.ts#L21)
+Defined in: [src/utils/path.ts:21](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/utils/path.ts#L21)
 
 Validates that an FTP command argument cannot inject additional command lines.
 

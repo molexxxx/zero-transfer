@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.0**](../README.md)
+[**ZeroTransfer SDK v0.3.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: MftSchedule
 
-Defined in: [src/mft/MftSchedule.ts:40](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/MftSchedule.ts#L40)
+Defined in: [src/mft/MftSchedule.ts:40](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/MftSchedule.ts#L40)
 
 Declarative schedule binding a route id to a trigger.
 
@@ -14,8 +14,8 @@ Declarative schedule binding a route id to a trigger.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="enabled"></a> `enabled?` | `boolean` | Whether the schedule is enabled. Defaults to `true`. | [src/mft/MftSchedule.ts:48](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/MftSchedule.ts#L48) |
-| <a id="id"></a> `id` | `string` | Stable schedule identifier. | [src/mft/MftSchedule.ts:42](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/MftSchedule.ts#L42) |
-| <a id="metadata"></a> `metadata?` | `Record`\<`string`, `unknown`\> | Caller-defined metadata retained for audit records and diagnostics. | [src/mft/MftSchedule.ts:50](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/MftSchedule.ts#L50) |
-| <a id="routeid"></a> `routeId` | `string` | Route id the schedule fires through [runRoute](../functions/runRoute.md). | [src/mft/MftSchedule.ts:44](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/MftSchedule.ts#L44) |
-| <a id="trigger"></a> `trigger` | [`MftScheduleTrigger`](../type-aliases/MftScheduleTrigger.md) | Trigger definition. | [src/mft/MftSchedule.ts:46](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/MftSchedule.ts#L46) |
+| <a id="enabled"></a> `enabled?` | `boolean` | Whether the schedule is enabled. Defaults to `true`. | [src/mft/MftSchedule.ts:48](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/MftSchedule.ts#L48) |
+| <a id="id"></a> `id` | `string` | Stable schedule identifier. | [src/mft/MftSchedule.ts:42](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/MftSchedule.ts#L42) |
+| <a id="metadata"></a> `metadata?` | `Record`\<`string`, `unknown`\> | Caller-defined metadata retained for audit records and diagnostics. | [src/mft/MftSchedule.ts:50](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/MftSchedule.ts#L50) |
+| <a id="routeid"></a> `routeId` | `string` | Route id the schedule fires through [runRoute](../functions/runRoute.md). | [src/mft/MftSchedule.ts:44](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/MftSchedule.ts#L44) |
+| <a id="trigger"></a> `trigger` | [`MftScheduleTrigger`](../type-aliases/MftScheduleTrigger.md) | Trigger definition. | [src/mft/MftSchedule.ts:46](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/MftSchedule.ts#L46) |

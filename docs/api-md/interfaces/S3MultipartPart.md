@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.0**](../README.md)
+[**ZeroTransfer SDK v0.3.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: S3MultipartPart
 
-Defined in: [src/providers/web/S3Provider.ts:100](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/web/S3Provider.ts#L100)
+Defined in: [src/providers/web/S3Provider.ts:100](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/web/S3Provider.ts#L100)
 
 Single part recorded in a multipart-upload checkpoint.
 
@@ -14,6 +14,6 @@ Single part recorded in a multipart-upload checkpoint.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="byteend"></a> `byteEnd` | `number` | Cumulative byte offset reached after this part (exclusive). | [src/providers/web/S3Provider.ts:104](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/web/S3Provider.ts#L104) |
-| <a id="etag"></a> `etag` | `string` | - | [src/providers/web/S3Provider.ts:102](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/web/S3Provider.ts#L102) |
-| <a id="partnumber"></a> `partNumber` | `number` | - | [src/providers/web/S3Provider.ts:101](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/web/S3Provider.ts#L101) |
+| <a id="byteend"></a> `byteEnd` | `number` | Cumulative byte offset reached after this part (exclusive). | [src/providers/web/S3Provider.ts:104](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/web/S3Provider.ts#L104) |
+| <a id="etag"></a> `etag` | `string` | - | [src/providers/web/S3Provider.ts:102](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/web/S3Provider.ts#L102) |
+| <a id="partnumber"></a> `partNumber` | `number` | - | [src/providers/web/S3Provider.ts:101](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/web/S3Provider.ts#L101) |

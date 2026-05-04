@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.0**](../README.md)
+[**ZeroTransfer SDK v0.3.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: S3MultipartResumeStore
 
-Defined in: [src/providers/web/S3Provider.ts:113](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/web/S3Provider.ts#L113)
+Defined in: [src/providers/web/S3Provider.ts:113](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/web/S3Provider.ts#L113)
 
 Persistence contract for resuming partial multipart uploads across
 processes or retries. Implementations may be synchronous or asynchronous;
@@ -21,7 +21,7 @@ explicitly aborted).
 clear(key): void | Promise<void>;
 ```
 
-Defined in: [src/providers/web/S3Provider.ts:118](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/web/S3Provider.ts#L118)
+Defined in: [src/providers/web/S3Provider.ts:118](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/web/S3Provider.ts#L118)
 
 #### Parameters
 
@@ -44,7 +44,7 @@ load(key):
   | undefined;
 ```
 
-Defined in: [src/providers/web/S3Provider.ts:114](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/web/S3Provider.ts#L114)
+Defined in: [src/providers/web/S3Provider.ts:114](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/web/S3Provider.ts#L114)
 
 #### Parameters
 
@@ -66,7 +66,7 @@ Defined in: [src/providers/web/S3Provider.ts:114](https://github.com/tonywied17/
 save(key, checkpoint): void | Promise<void>;
 ```
 
-Defined in: [src/providers/web/S3Provider.ts:117](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/web/S3Provider.ts#L117)
+Defined in: [src/providers/web/S3Provider.ts:117](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/web/S3Provider.ts#L117)
 
 #### Parameters
 

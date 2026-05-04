@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.0**](../README.md)
+[**ZeroTransfer SDK v0.3.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: InMemoryAuditLog
 
-Defined in: [src/mft/audit.ts:47](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/audit.ts#L47)
+Defined in: [src/mft/audit.ts:47](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/audit.ts#L47)
 
 In-memory implementation of [MftAuditLog](../interfaces/MftAuditLog.md).
 
@@ -24,7 +24,7 @@ In-memory implementation of [MftAuditLog](../interfaces/MftAuditLog.md).
 get size(): number;
 ```
 
-Defined in: [src/mft/audit.ts:67](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/audit.ts#L67)
+Defined in: [src/mft/audit.ts:67](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/audit.ts#L67)
 
 Number of currently recorded entries.
 
@@ -52,7 +52,7 @@ new InMemoryAuditLog(): InMemoryAuditLog;
 clear(): void;
 ```
 
-Defined in: [src/mft/audit.ts:62](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/audit.ts#L62)
+Defined in: [src/mft/audit.ts:62](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/audit.ts#L62)
 
 Drops all recorded entries.
 
@@ -68,7 +68,7 @@ Drops all recorded entries.
 list(): Promise<readonly MftAuditEntry[]>;
 ```
 
-Defined in: [src/mft/audit.ts:57](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/audit.ts#L57)
+Defined in: [src/mft/audit.ts:57](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/audit.ts#L57)
 
 Returns recorded entries in insertion order.
 
@@ -88,7 +88,7 @@ Returns recorded entries in insertion order.
 record(entry): Promise<void>;
 ```
 
-Defined in: [src/mft/audit.ts:51](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/audit.ts#L51)
+Defined in: [src/mft/audit.ts:51](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/audit.ts#L51)
 
 Records a new audit entry.
 

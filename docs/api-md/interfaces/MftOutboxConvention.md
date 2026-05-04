@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.0**](../README.md)
+[**ZeroTransfer SDK v0.3.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: MftOutboxConvention
 
-Defined in: [src/mft/conventions.ts:38](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/conventions.ts#L38)
+Defined in: [src/mft/conventions.ts:38](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/conventions.ts#L38)
 
 Outbox layout convention.
 
@@ -14,5 +14,5 @@ Outbox layout convention.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="basepath"></a> `basePath` | `string` | Base outbox directory where files are dropped. | [src/mft/conventions.ts:42](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/conventions.ts#L42) |
-| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Profile used to connect to the outbox provider. | [src/mft/conventions.ts:40](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/mft/conventions.ts#L40) |
+| <a id="basepath"></a> `basePath` | `string` | Base outbox directory where files are dropped. | [src/mft/conventions.ts:42](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/conventions.ts#L42) |
+| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Profile used to connect to the outbox provider. | [src/mft/conventions.ts:40](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/mft/conventions.ts#L40) |

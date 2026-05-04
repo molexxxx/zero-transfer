@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.3.0**](../README.md)
+[**ZeroTransfer SDK v0.3.1**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: FtpResponseParser
 
-Defined in: [src/providers/classic/ftp/FtpResponseParser.ts:57](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/classic/ftp/FtpResponseParser.ts#L57)
+Defined in: [src/providers/classic/ftp/FtpResponseParser.ts:57](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/classic/ftp/FtpResponseParser.ts#L57)
 
 Stateful parser for socket-delivered FTP response text.
 
@@ -30,7 +30,7 @@ new FtpResponseParser(): FtpResponseParser;
 hasPendingResponse(): boolean;
 ```
 
-Defined in: [src/providers/classic/ftp/FtpResponseParser.ts:101](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/classic/ftp/FtpResponseParser.ts#L101)
+Defined in: [src/providers/classic/ftp/FtpResponseParser.ts:101](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/classic/ftp/FtpResponseParser.ts#L101)
 
 Checks whether the parser is holding buffered or incomplete response data.
 
@@ -48,7 +48,7 @@ Checks whether the parser is holding buffered or incomplete response data.
 push(chunk): FtpResponse[];
 ```
 
-Defined in: [src/providers/classic/ftp/FtpResponseParser.ts:68](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/classic/ftp/FtpResponseParser.ts#L68)
+Defined in: [src/providers/classic/ftp/FtpResponseParser.ts:68](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/classic/ftp/FtpResponseParser.ts#L68)
 
 Adds incoming socket data and returns any complete responses.
 
@@ -76,7 +76,7 @@ Zero or more complete parsed responses.
 reset(): void;
 ```
 
-Defined in: [src/providers/classic/ftp/FtpResponseParser.ts:91](https://github.com/tonywied17/zero-transfer/blob/c68c4294e4eb621edd6d8f74af060620c8edd302/src/providers/classic/ftp/FtpResponseParser.ts#L91)
+Defined in: [src/providers/classic/ftp/FtpResponseParser.ts:91](https://github.com/tonywied17/zero-transfer/blob/852251b2b6cc696c7037358436058af38b33f574/src/providers/classic/ftp/FtpResponseParser.ts#L91)
 
 Clears buffered text and any incomplete multi-line response state.
 
