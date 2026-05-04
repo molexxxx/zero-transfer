@@ -7,23 +7,23 @@ Every operation that touches a remote system takes a [`ConnectionProfile`](../..
 
 ## Required fields
 
-| Field      | Type                                          | Notes                                                                                                                                                                                                       |
-| ---------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `host`     | `string`                                      | Remote hostname / IP / bucket / drive identifier (provider-specific). Always required.                                                                                                                      |
+| Field      | Type                                               | Notes                                                                                                                                                                                                       |
+| ---------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `host`     | `string`                                           | Remote hostname / IP / bucket / drive identifier (provider-specific). Always required.                                                                                                                      |
 | `provider` | [`ProviderId`](../../api/type-aliases/providerid/) | One of `"ftp"`, `"ftps"`, `"sftp"`, `"http"`, `"https"`, `"webdav"`, `"s3"`, `"azure-blob"`, `"gcs"`, `"google-drive"`, `"dropbox"`, `"one-drive"`, `"local"`, `"memory"`, or any custom id you registered. |
 
 ## Optional top-level fields
 
-| Field       | Type                                                        | Notes                                                                    |
-| ----------- | ----------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `port`      | `number`                                                    | Provider applies a sensible default when omitted.                        |
+| Field       | Type                                                             | Notes                                                                    |
+| ----------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `port`      | `number`                                                         | Provider applies a sensible default when omitted.                        |
 | `username`  | [`SecretSource`](../../api/type-aliases/secretsource/)           | String, `{ env }`, `{ path }`, `{ base64Env }`, `{ value }`, callback.   |
 | `password`  | [`SecretSource`](../../api/type-aliases/secretsource/)           | Same shapes as `username`. Used as bearer token for cloud providers.     |
-| `secure`    | `boolean`                                                   | Request encrypted transport when the protocol allows opt-in TLS.         |
+| `secure`    | `boolean`                                                        | Request encrypted transport when the protocol allows opt-in TLS.         |
 | `tls`       | [`TlsProfile`](../../api/interfaces/tlsprofile/)                 | CA bundle, mTLS cert/key, fingerprint pinning, min/max TLS version.      |
 | `ssh`       | [`SshProfile`](../../api/interfaces/sshprofile/)                 | Private key, passphrase, `known_hosts`, host-key pin, agent, algorithms. |
-| `timeoutMs` | `number`                                                    | Connection / operation timeout.                                          |
-| `signal`    | `AbortSignal`                                               | Cancels connection setup and long-running operations.                    |
+| `timeoutMs` | `number`                                                         | Connection / operation timeout.                                          |
+| `signal`    | `AbortSignal`                                                    | Cancels connection setup and long-running operations.                    |
 | `logger`    | [`ZeroTransferLogger`](../../api/interfaces/zerotransferlogger/) | Per-profile structured logger override (still redaction-safe).           |
 
 ## Secret-bearing fields use `SecretSource`
