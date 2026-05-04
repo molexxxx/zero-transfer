@@ -54,9 +54,10 @@ This package publishes a narrowed surface of **23** exports. These symbols are a
 
 ## Examples
 
-| Example                                                                                                              | What it shows                                                  |
-| -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| [`examples/sftp-private-key.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/sftp-private-key.ts) | SFTP private-key authentication example with host-key pinning. |
+| Example                                                                                                              | What it shows                                                               |
+| -------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [`examples/ssh-exec-command.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ssh-exec-command.ts) | SSH remote command execution via the standalone `@zero-transfer/ssh` stack. |
+| [`examples/sftp-private-key.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/sftp-private-key.ts) | SFTP private-key authentication example with host-key pinning.              |
 
 ## Documentation
 

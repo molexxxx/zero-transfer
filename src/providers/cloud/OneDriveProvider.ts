@@ -69,7 +69,40 @@ export interface OneDriveProviderOptions {
  * Creates a OneDrive/SharePoint provider factory backed by Microsoft Graph.
  *
  * The bearer token is resolved per-connection from `profile.password`.
- * `profile.host` is unused.
+ * `profile.host` is unused. To target a SharePoint site or specific drive,
+ * override `driveBaseUrl` with `https://graph.microsoft.com/v1.0/drives/{driveId}`.
+ *
+ * @param options - Optional `driveBaseUrl`, `fetch`, and default headers.
+ * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example Upload to the authenticated user's OneDrive
+ * ```ts
+ * import { createOneDriveProviderFactory, createTransferClient, uploadFile } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({
+ *   providers: [createOneDriveProviderFactory()],
+ * });
+ *
+ * await uploadFile({
+ *   client,
+ *   localPath: "./report.xlsx",
+ *   destination: {
+ *     path: "/Reports/Q2/report.xlsx",
+ *     profile: {
+ *       host: "",
+ *       provider: "one-drive",
+ *       password: { env: "GRAPH_ACCESS_TOKEN" },
+ *     },
+ *   },
+ * });
+ * ```
+ *
+ * @example Target a specific SharePoint drive
+ * ```ts
+ * createOneDriveProviderFactory({
+ *   driveBaseUrl: "https://graph.microsoft.com/v1.0/drives/b!abc123",
+ * });
+ * ```
  */
 export function createOneDriveProviderFactory(
   options: OneDriveProviderOptions = {},

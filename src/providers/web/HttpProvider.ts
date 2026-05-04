@@ -63,8 +63,45 @@ const HTTP_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["etag"];
 /**
  * Creates a provider factory backed by HTTP(S) GET/HEAD.
  *
- * @param options - Optional provider configuration.
+ * Read-only by design — use it to fetch artifacts from public URLs, signed
+ * URLs, or HTTP-only artifact servers. Range-based resume is supported when
+ * the server advertises `Accept-Ranges: bytes`. To upload to an HTTP endpoint,
+ * use the WebDAV provider, the S3 provider, or a cloud-specific provider.
+ *
+ * @param options - Optional id, base path, secure flag, fetch override.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example Download a public artifact
+ * ```ts
+ * import { createHttpProviderFactory, createTransferClient, downloadFile } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({ providers: [createHttpProviderFactory()] });
+ *
+ * await downloadFile({
+ *   client,
+ *   localPath: "./tmp/release.tar.gz",
+ *   source: {
+ *     path: "/releases/v1.0.0/release.tar.gz",
+ *     profile: { host: "downloads.example.com", provider: "http" },
+ *   },
+ * });
+ * ```
+ *
+ * @example Bearer-token-protected endpoint
+ * ```ts
+ * await downloadFile({
+ *   client,
+ *   localPath: "./reports/today.json",
+ *   source: {
+ *     path: "/reports/today.json",
+ *     profile: {
+ *       host: "api.example.com",
+ *       provider: "http",
+ *       password: { env: "REPORTS_TOKEN" },
+ *     },
+ *   },
+ * });
+ * ```
  */
 export function createHttpProviderFactory(options: HttpProviderOptions = {}): ProviderFactory {
   const id: ProviderId = options.id ?? "http";

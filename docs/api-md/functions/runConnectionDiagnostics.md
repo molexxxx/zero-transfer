@@ -10,9 +10,14 @@
 function runConnectionDiagnostics(options): Promise<ConnectionDiagnosticsResult>;
 ```
 
-Defined in: [src/diagnostics/index.ts:87](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/diagnostics/index.ts#L87)
+Defined in: [src/diagnostics/index.ts:127](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/diagnostics/index.ts#L127)
 
 Connects to a profile, captures capability and listing samples, and returns a redaction-safe report.
+
+Useful for connectivity "ping" pages, smoke tests, and bug reports. Secrets
+in the profile are redacted via [redactConnectionProfile](redactConnectionProfile.md) before being
+returned. The session is always disconnected before the function returns,
+including when probes throw.
 
 ## Parameters
 
@@ -25,3 +30,27 @@ Connects to a profile, captures capability and listing samples, and returns a re
 `Promise`\<[`ConnectionDiagnosticsResult`](../interfaces/ConnectionDiagnosticsResult.md)\>
 
 Diagnostic report including timings and any captured error.
+
+## Example
+
+```ts
+import { runConnectionDiagnostics } from "@zero-transfer/sdk";
+
+const report = await runConnectionDiagnostics({
+  client,
+  profile: {
+    host: "sftp.example.com",
+    provider: "sftp",
+    username: "deploy",
+    ssh: { privateKey: { path: "./keys/id_ed25519" } },
+  },
+  listPath: "/uploads",
+});
+
+if (!report.ok) {
+  console.error("connection failed:", report.error);
+} else {
+  console.log(`connect=${report.timings.connectMs}ms list=${report.timings.listMs}ms`);
+  console.log(report.sample); // up to 5 entries from /uploads
+}
+```

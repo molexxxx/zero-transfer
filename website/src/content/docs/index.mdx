@@ -1,0 +1,100 @@
+---
+title: Zero Transfer SDK
+description: Unified TypeScript file transfer SDK for Node.js. One API across SFTP, FTP, FTPS, S3, Azure Blob, GCS, WebDAV, HTTP, and the major cloud drives.
+template: splash
+hero:
+  tagline: One unified, type-safe API for moving bytes between any two systems — SFTP, FTPS, S3, Azure Blob, GCS, WebDAV, HTTP, Dropbox, Google Drive, OneDrive, and more.
+  image:
+    file: ../../assets/logo.svg
+  actions:
+    - text: Get started
+      link: /zero-transfer/guides/getting-started/
+      icon: right-arrow
+      variant: primary
+    - text: API reference
+      link: /zero-transfer/api/
+      icon: external
+      variant: secondary
+    - text: View on GitHub
+      link: https://github.com/tonywied17/zero-transfer
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+## Why Zero Transfer
+
+<CardGrid stagger>
+  <Card title="One profile, every provider" icon="rocket">
+    A single `ConnectionProfile` shape works for SFTP, FTPS, S3, Azure Blob, GCS, WebDAV, HTTP, and
+    every major cloud drive. Switch backends without rewriting code.
+  </Card>
+  <Card title="Type-safe & tree-shakeable" icon="seti:typescript">
+    First-class TypeScript: every option, callback, and error is typed. Scoped packages
+    (`@zero-transfer/sftp`, `@zero-transfer/s3`, …) let you pull in only the providers you actually
+    use.
+  </Card>
+  <Card title="Production-grade transfers" icon="approve-check">
+    Streaming, resume, multipart, server-side copy, checksum verification, and structured progress
+    events on the providers that support them — discoverable through the [capability
+    matrix](/guides/capabilities/).
+  </Card>
+  <Card title="MFT-grade orchestration" icon="setting">
+    Compose transfers into routes, schedules, approvals, and audit logs. Plan syncs without moving
+    bytes; apply atomic deploys with rollback.
+  </Card>
+  <Card title="Secrets stay secret" icon="seti:lock">
+    Every credential field accepts a `SecretSource` (env, file, callback). Profiles are
+    auto-redacted before any log line is emitted.
+  </Card>
+  <Card title="Built for Node 20+" icon="node">
+    Modern engine target, native fetch, AbortSignal everywhere, ESM-first with CJS interop, and
+    tested against real Dockerized servers.
+  </Card>
+</CardGrid>
+
+## Install
+
+```bash
+npm install @zero-transfer/sdk
+```
+
+Or pull in just the provider you need:
+
+```bash
+npm install @zero-transfer/sftp
+npm install @zero-transfer/s3
+npm install @zero-transfer/ftps
+```
+
+## A 30-second tour
+
+```ts
+import { createTransferClient, uploadFile } from "@zero-transfer/sdk";
+
+const client = createTransferClient();
+const session = await client.connect({
+  host: "sftp.example.com",
+  provider: "sftp",
+  username: "deploy",
+  ssh: {
+    privateKey: { path: "./keys/id_ed25519" },
+    pinnedHostKeySha256: "SHA256:abc123…",
+  },
+});
+
+await uploadFile({
+  client,
+  localPath: "./dist/app.tar.gz",
+  destination: {
+    path: "/releases/2026.04.28/app.tar.gz",
+    profile: session.profile,
+  },
+  onProgress: (e) => console.log(`${e.bytesTransferred}/${e.totalBytes ?? "?"}`),
+});
+
+await session.disconnect();
+```
+
+Keep going → **[Getting started](/guides/getting-started/)**.

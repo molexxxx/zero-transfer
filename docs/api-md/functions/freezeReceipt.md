@@ -10,7 +10,7 @@
 function freezeReceipt(receipt): Readonly<TransferReceipt>;
 ```
 
-Defined in: [src/mft/audit.ts:127](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/mft/audit.ts#L127)
+Defined in: [src/mft/audit.ts:127](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/audit.ts#L127)
 
 Returns a deeply frozen copy of a transfer receipt.
 

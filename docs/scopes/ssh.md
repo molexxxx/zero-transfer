@@ -46,6 +46,7 @@ This is the actual surface published by [`@zero-transfer/ssh`](https://www.npmjs
 
 | Example | What it shows |
 | --- | --- |
+| [`examples/ssh-exec-command.ts`](../../examples/ssh-exec-command.ts) | SSH remote command execution via the standalone `@zero-transfer/ssh` stack. |
 | [`examples/sftp-private-key.ts`](../../examples/sftp-private-key.ts) | SFTP private-key authentication example with host-key pinning. |
 
 ## See also

@@ -80,6 +80,31 @@ export interface CreateSyncPlanOptions {
  * @param options - Inputs and policies that shape the plan.
  * @returns Transfer plan ready for `createTransferJobsFromPlan` or queue execution.
  * @throws {@link ConfigurationError} When `conflictPolicy: "error"` encounters a conflict.
+ *
+ * @example Mirror SFTP → S3 with deletes
+ * ```ts
+ * import {
+ *   createSyncPlan,
+ *   diffRemoteTrees,
+ *   summarizeTransferPlan,
+ * } from "@zero-transfer/sdk";
+ *
+ * const diff = await diffRemoteTrees(
+ *   srcSession.fs, "/dist",
+ *   dstSession.fs, "/releases/current",
+ * );
+ *
+ * const plan = createSyncPlan({
+ *   id: "release-mirror",
+ *   diff,
+ *   source: { provider: "sftp", rootPath: "/dist" },
+ *   destination: { provider: "s3", rootPath: "/releases/current" },
+ *   deletePolicy: "mirror",
+ *   conflictPolicy: "overwrite",
+ * });
+ *
+ * console.table(summarizeTransferPlan(plan));
+ * ```
  */
 export function createSyncPlan(options: CreateSyncPlanOptions): TransferPlan {
   const direction: SyncDirection = options.direction ?? "source-to-destination";

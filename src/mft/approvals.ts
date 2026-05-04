@@ -219,10 +219,33 @@ export interface CreateApprovalGateOptions {
  *
  * The returned runner creates an approval request, waits for resolution, and
  * dispatches the underlying runner only when the request is approved. Rejection
- * surfaces an {@link ApprovalRejectedError}.
+ * surfaces an {@link ApprovalRejectedError}. Pair with {@link MftScheduler} to
+ * implement two-person rules and human-in-the-loop release flows.
  *
  * @param options - Registry, downstream runner, approval-id derivation, hooks.
  * @returns A {@link ScheduleRouteRunner} that gates execution behind approval.
+ *
+ * @example Two-person rule on a release route
+ * ```ts
+ * import {
+ *   ApprovalRegistry,
+ *   createApprovalGate,
+ *   runRoute,
+ * } from "@zero-transfer/sdk";
+ *
+ * const approvals = new ApprovalRegistry();
+ *
+ * const gatedRunner = createApprovalGate({
+ *   registry: approvals,
+ *   approvalId: ({ route }) => `release:${route.id}:${Date.now()}`,
+ *   onRequested: (req) => notifyOnCallChannel(req),
+ *   runner: ({ client, route, signal }) => runRoute({ client, route, signal }),
+ * });
+ *
+ * // Elsewhere, an authorized operator approves or rejects:
+ * approvals.approve(approvalId, { actor: "alice@example.com" });
+ * // approvals.reject(approvalId, { actor: "bob@example.com", reason: "hold release" });
+ * ```
  */
 export function createApprovalGate(options: CreateApprovalGateOptions): ScheduleRouteRunner {
   const now = options.now ?? (() => new Date());

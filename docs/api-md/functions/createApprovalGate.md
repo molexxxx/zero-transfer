@@ -10,13 +10,14 @@
 function createApprovalGate(options): ScheduleRouteRunner;
 ```
 
-Defined in: [src/mft/approvals.ts:227](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/mft/approvals.ts#L227)
+Defined in: [src/mft/approvals.ts:250](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/approvals.ts#L250)
 
 Wraps a route runner with an approval gate.
 
 The returned runner creates an approval request, waits for resolution, and
 dispatches the underlying runner only when the request is approved. Rejection
-surfaces an [ApprovalRejectedError](../classes/ApprovalRejectedError.md).
+surfaces an [ApprovalRejectedError](../classes/ApprovalRejectedError.md). Pair with [MftScheduler](../classes/MftScheduler.md) to
+implement two-person rules and human-in-the-loop release flows.
 
 ## Parameters
 
@@ -29,3 +30,26 @@ surfaces an [ApprovalRejectedError](../classes/ApprovalRejectedError.md).
 [`ScheduleRouteRunner`](../type-aliases/ScheduleRouteRunner.md)
 
 A [ScheduleRouteRunner](../type-aliases/ScheduleRouteRunner.md) that gates execution behind approval.
+
+## Example
+
+```ts
+import {
+  ApprovalRegistry,
+  createApprovalGate,
+  runRoute,
+} from "@zero-transfer/sdk";
+
+const approvals = new ApprovalRegistry();
+
+const gatedRunner = createApprovalGate({
+  registry: approvals,
+  approvalId: ({ route }) => `release:${route.id}:${Date.now()}`,
+  onRequested: (req) => notifyOnCallChannel(req),
+  runner: ({ client, route, signal }) => runRoute({ client, route, signal }),
+});
+
+// Elsewhere, an authorized operator approves or rejects:
+approvals.approve(approvalId, { actor: "alice@example.com" });
+// approvals.reject(approvalId, { actor: "bob@example.com", reason: "hold release" });
+```

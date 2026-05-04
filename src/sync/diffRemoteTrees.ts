@@ -92,6 +92,26 @@ export interface DiffRemoteTreesOptions {
  * @param destinationPath - Destination-side root path being compared.
  * @param options - Optional comparison controls.
  * @returns Diff result containing entries and a summary.
+ *
+ * @example Diff two SFTP subtrees and feed the result into createSyncPlan
+ * ```ts
+ * import { createSyncPlan, diffRemoteTrees } from "@zero-transfer/sdk";
+ *
+ * const diff = await diffRemoteTrees(
+ *   srcSession.fs, "/exports",
+ *   dstSession.fs, "/exports",
+ *   { compareUniqueId: true },
+ * );
+ *
+ * console.log(diff.summary); // { added, removed, changed, unchanged }
+ *
+ * const plan = createSyncPlan({
+ *   id: "exports-sync",
+ *   diff,
+ *   source: { provider: "sftp", rootPath: "/exports" },
+ *   destination: { provider: "sftp", rootPath: "/exports" },
+ * });
+ * ```
  */
 export async function diffRemoteTrees(
   source: RemoteFileSystem,

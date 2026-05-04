@@ -15,7 +15,7 @@ function diffRemoteTrees(
 options?): Promise<RemoteTreeDiff>;
 ```
 
-Defined in: [src/sync/diffRemoteTrees.ts:96](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/sync/diffRemoteTrees.ts#L96)
+Defined in: [src/sync/diffRemoteTrees.ts:116](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/diffRemoteTrees.ts#L116)
 
 Compares two remote subtrees and produces an entry-level diff.
 
@@ -38,3 +38,24 @@ are equal when their relative paths match and the entry types agree.
 `Promise`\<[`RemoteTreeDiff`](../interfaces/RemoteTreeDiff.md)\>
 
 Diff result containing entries and a summary.
+
+## Example
+
+```ts
+import { createSyncPlan, diffRemoteTrees } from "@zero-transfer/sdk";
+
+const diff = await diffRemoteTrees(
+  srcSession.fs, "/exports",
+  dstSession.fs, "/exports",
+  { compareUniqueId: true },
+);
+
+console.log(diff.summary); // { added, removed, changed, unchanged }
+
+const plan = createSyncPlan({
+  id: "exports-sync",
+  diff,
+  source: { provider: "sftp", rootPath: "/exports" },
+  destination: { provider: "sftp", rootPath: "/exports" },
+});
+```

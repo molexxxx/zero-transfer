@@ -77,8 +77,29 @@ export interface MemoryProviderOptions {
 /**
  * Creates a provider factory backed by deterministic in-memory fixture entries.
  *
+ * Useful for tests and examples where you want a real `TransferSession` without
+ * touching disk or the network. Entries are pre-seeded; mutations made through
+ * the session are visible to subsequent operations on the same provider.
+ *
  * @param options - Optional fixture entries to expose through the memory provider.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example Seed entries and read them back
+ * ```ts
+ * import { createMemoryProviderFactory, createTransferClient } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({
+ *   providers: [createMemoryProviderFactory({
+ *     entries: [
+ *       { path: "/fixtures/hello.txt", content: "hello world" },
+ *       { path: "/fixtures/data.bin", content: new Uint8Array([1, 2, 3]) },
+ *     ],
+ *   })],
+ * });
+ *
+ * const session = await client.connect({ host: "fixtures", provider: "memory" });
+ * console.log(await session.fs.list("/fixtures"));
+ * ```
  */
 export function createMemoryProviderFactory(options: MemoryProviderOptions = {}): ProviderFactory {
   const state = createMemoryState(options.entries ?? []);

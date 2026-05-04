@@ -10,7 +10,7 @@
 function dispatchWebhook(options): Promise<DispatchWebhookResult>;
 ```
 
-Defined in: [src/mft/webhooks.ts:98](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/mft/webhooks.ts#L98)
+Defined in: [src/mft/webhooks.ts:98](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/webhooks.ts#L98)
 
 Dispatches a single webhook payload with bounded retries.
 

@@ -6,9 +6,42 @@
 
 # Class: TransferEngine
 
-Defined in: [src/transfers/TransferEngine.ts:87](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/transfers/TransferEngine.ts#L87)
+Defined in: [src/transfers/TransferEngine.ts:121](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferEngine.ts#L121)
 
 Executes transfer jobs and produces audit-friendly receipts.
+
+The engine is the lowest-level entry point in the transfer stack: it owns
+retry policy, attempt history, abort propagation, progress event
+normalization, and receipt construction. Most callers reach the engine
+indirectly through [runRoute](../functions/runRoute.md), [uploadFile](../functions/uploadFile.md), [downloadFile](../functions/downloadFile.md),
+[copyBetween](../functions/copyBetween.md), or [TransferQueue](TransferQueue.md); instantiate it directly when
+you need full control over execution semantics.
+
+## Example
+
+```ts
+import { TransferEngine, type TransferExecutor, type TransferJob } from "@zero-transfer/sdk";
+
+const engine = new TransferEngine();
+
+const executor: TransferExecutor = async ({ job, signal, onProgress }) => {
+  onProgress?.({ jobId: job.id, bytesTransferred: 0 });
+  // … perform the bytes here, honoring `signal` …
+  return { jobId: job.id, bytesTransferred: 1234, completedAt: new Date() };
+};
+
+const job: TransferJob = {
+  id: "manual-1",
+  operation: "upload",
+  source: { profile: localProfile, path: "./data.bin" },
+  destination: { profile: s3Profile, path: "/data/data.bin" },
+};
+
+const receipt = await engine.execute(job, executor, {
+  retry: { maxAttempts: 3, baseDelayMs: 250 },
+});
+console.log(receipt.attempts.length); // 1 on success
+```
 
 ## Constructors
 
@@ -18,7 +51,7 @@ Executes transfer jobs and produces audit-friendly receipts.
 new TransferEngine(options?): TransferEngine;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:95](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/transfers/TransferEngine.ts#L95)
+Defined in: [src/transfers/TransferEngine.ts:129](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferEngine.ts#L129)
 
 Creates a transfer engine.
 
@@ -43,7 +76,7 @@ execute(
 options?): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:109](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/transfers/TransferEngine.ts#L109)
+Defined in: [src/transfers/TransferEngine.ts:143](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferEngine.ts#L143)
 
 Executes a transfer job through a caller-supplied operation.
 

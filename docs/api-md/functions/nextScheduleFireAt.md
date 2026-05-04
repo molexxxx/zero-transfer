@@ -10,7 +10,7 @@
 function nextScheduleFireAt(schedule, from?): Date | undefined;
 ```
 
-Defined in: [src/mft/MftSchedule.ts:101](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/mft/MftSchedule.ts#L101)
+Defined in: [src/mft/MftSchedule.ts:101](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/MftSchedule.ts#L101)
 
 Computes the next fire time for a schedule strictly after `from`.
 

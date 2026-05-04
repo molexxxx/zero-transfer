@@ -10,7 +10,7 @@
 type RemoteTreeFilter = (entry) => boolean;
 ```
 
-Defined in: [src/sync/walkRemoteTree.ts:12](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/sync/walkRemoteTree.ts#L12)
+Defined in: [src/sync/walkRemoteTree.ts:12](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/walkRemoteTree.ts#L12)
 
 Filter callback applied to each visited entry. Returning `false` skips the entry.
 

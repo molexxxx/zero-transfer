@@ -57,9 +57,41 @@ export interface RunRouteOptions {
 /**
  * Executes an MFT route as a single transfer through the supplied client.
  *
+ * Connects the source and destination profiles, runs the route's transfer
+ * through the engine, and returns the resulting receipt. The friendly helpers
+ * {@link uploadFile}, {@link downloadFile}, and {@link copyBetween} synthesize
+ * routes and delegate to this function, so behaviour around retry, abort,
+ * progress, timeout, and bandwidth limits is identical.
+ *
  * @param options - Client, route, and optional engine/abort/retry hooks.
  * @returns Receipt produced by the underlying transfer engine.
  * @throws {@link ConfigurationError} When the route is disabled.
+ *
+ * @example Run a pre-built route with progress + retry
+ * ```ts
+ * import { createTransferClient, runRoute, type MftRoute } from "@zero-transfer/sdk";
+ *
+ * const route: MftRoute = {
+ *   id: "nightly-export",
+ *   operation: "copy",
+ *   source: {
+ *     path: "/exports/daily.csv",
+ *     profile: { host: "sftp.example.com", provider: "sftp", username: "etl" },
+ *   },
+ *   destination: {
+ *     path: "warehouse/daily.csv",
+ *     profile: { host: "warehouse", provider: "s3", s3: { region: "us-east-1" } },
+ *   },
+ * };
+ *
+ * const receipt = await runRoute({
+ *   client,
+ *   route,
+ *   onProgress: (e) => console.log(`${e.bytesTransferred}/${e.totalBytes ?? "?"}`),
+ *   retry: { maxAttempts: 3, baseDelayMs: 500 },
+ * });
+ * console.log(`Job ${receipt.jobId} moved ${receipt.bytesTransferred} bytes…`);
+ * ```
  */
 export async function runRoute(options: RunRouteOptions): Promise<TransferReceipt> {
   const { client, route } = options;

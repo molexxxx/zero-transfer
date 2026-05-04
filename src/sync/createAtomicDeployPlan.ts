@@ -125,9 +125,39 @@ const DEFAULT_RETAIN = 3;
 /**
  * Builds an {@link AtomicDeployPlan} that stages a release, swaps it live, and prunes old releases.
  *
+ * The plan describes a blue/green-style deploy:
+ *  1. Upload to a timestamped staging directory under `<destination>/.releases/`.
+ *  2. Atomically swap the `current` symlink/rename to point at the new release.
+ *  3. Optionally prune old releases beyond `retain`.
+ *
+ * No I/O is performed — the host executes the plan steps. Pair with
+ * {@link createTransferPlan} or {@link createTransferJobsFromPlan} to execute.
+ *
  * @param options - Inputs and policies that shape the deploy.
  * @returns Structured deploy plan ready for execution by the calling host.
  * @throws {@link ConfigurationError} When `retain` is less than `1` or the destination root is empty.
+ *
+ * @example Plan a release with rollback path
+ * ```ts
+ * import { createAtomicDeployPlan } from "@zero-transfer/sdk";
+ *
+ * const plan = createAtomicDeployPlan({
+ *   id: "web-2026-04-28",
+ *   source: { rootPath: "./dist" },
+ *   destination: {
+ *     profile: { host: "web1.example.com", provider: "sftp", username: "deploy" },
+ *     rootPath: "/srv/www",
+ *   },
+ *   retain: 5,
+ *   existingReleases: [
+ *     "/srv/www/.releases/2026-04-21T00-00-00Z",
+ *     "/srv/www/.releases/2026-04-14T00-00-00Z",
+ *   ],
+ * });
+ *
+ * console.log(plan.swap);   // staging → current rename
+ * console.log(plan.prune);  // releases scheduled for removal
+ * ```
  */
 export function createAtomicDeployPlan(options: CreateAtomicDeployPlanOptions): AtomicDeployPlan {
   const retain = options.retain ?? DEFAULT_RETAIN;

@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build TypeDoc HTML
+    name: Build Starlight site
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,10 +29,10 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies
+      - name: Install root dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Build SDK (needed for TypeDoc entry points)
+      - name: Build SDK (needed so TypeDoc + Starlight can resolve src/)
         run: npm run build
 
       - name: Generate scoped packages
@@ -41,21 +41,35 @@ jobs:
       - name: Run tests with coverage + JSON report (for badges)
         run: npm run test:report
 
-      - name: Generate TypeDoc HTML
-        run: npm run docs
-
       - name: Generate shields.io badge JSON
         run: node scripts/generate-badges.mjs
 
-      - name: Stage public assets alongside docs
+      - name: Stage badges + assets into website/public
         run: |
-          mkdir -p docs/api/assets
-          cp -R assets/. docs/api/assets/
+          mkdir -p website/public/badges
+          cp -R docs/api/badges/. website/public/badges/
+          mkdir -p website/public/assets
+          cp -R assets/. website/public/assets/
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Install website dependencies
+        working-directory: website
+        run: npm install --no-audit --no-fund
+
+      - name: Build website
+        working-directory: website
+        env:
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: npm run build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/api
+          path: website/dist
 
   deploy:
     name: Deploy to GitHub Pages

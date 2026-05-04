@@ -160,9 +160,33 @@ export interface CreateWebhookAuditLogOptions {
  *
  * Entries whose `type` is not in `target.types` are silently dropped. `list()`
  * always returns an empty array because webhook deliveries are not buffered.
+ * Payloads are HMAC-signed with `target.secret` (when provided) so receivers
+ * can verify authenticity before acting on them.
  *
  * @param options - Webhook target plus optional retry/observer hooks.
  * @returns An audit log that delivers each `record` call to the webhook.
+ *
+ * @example Compose a webhook log with an in-memory log for local replay
+ * ```ts
+ * import {
+ *   InMemoryAuditLog,
+ *   composeAuditLogs,
+ *   createWebhookAuditLog,
+ * } from "@zero-transfer/sdk";
+ *
+ * const memory = new InMemoryAuditLog();
+ * const webhook = createWebhookAuditLog({
+ *   target: {
+ *     url: "https://hooks.example.com/zt",
+ *     secret: { env: "ZT_WEBHOOK_SECRET" },
+ *     types: ["transfer.success", "transfer.failure"],
+ *   },
+ *   onDelivery: ({ result }) => console.log("delivered", result.statusCode),
+ * });
+ *
+ * const audit = composeAuditLogs(memory, webhook);
+ * await audit.record({ type: "transfer.success", receipt });
+ * ```
  */
 export function createWebhookAuditLog(options: CreateWebhookAuditLogOptions): MftAuditLog {
   return {

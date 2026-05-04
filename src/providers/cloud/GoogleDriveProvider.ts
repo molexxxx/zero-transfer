@@ -79,7 +79,34 @@ export interface GoogleDriveProviderOptions {
  * Creates a Google Drive provider factory.
  *
  * The bearer token is resolved per-connection from `profile.password`
- * (typically an OAuth 2 access token). `profile.host` is unused.
+ * (typically an OAuth 2 access token). `profile.host` is unused. Set
+ * `rootFolderId` to scope the provider to a shared-drive subtree instead
+ * of the authenticated user's My Drive root.
+ *
+ * @param options - Optional `rootFolderId`, `fetch`, and default headers.
+ * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example Upload to a shared drive folder
+ * ```ts
+ * import { createGoogleDriveProviderFactory, createTransferClient, uploadFile } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({
+ *   providers: [createGoogleDriveProviderFactory({ rootFolderId: "0AB1cDeFG2HiJk" })],
+ * });
+ *
+ * await uploadFile({
+ *   client,
+ *   localPath: "./contracts/2026-Q2.pdf",
+ *   destination: {
+ *     path: "/Contracts/2026-Q2.pdf",
+ *     profile: {
+ *       host: "",
+ *       provider: "google-drive",
+ *       password: { env: "GOOGLE_OAUTH_ACCESS_TOKEN" },
+ *     },
+ *   },
+ * });
+ * ```
  */
 export function createGoogleDriveProviderFactory(
   options: GoogleDriveProviderOptions = {},

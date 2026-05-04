@@ -22,8 +22,20 @@ export interface ClientDiagnostics {
 /**
  * Returns a redaction-safe snapshot of the providers registered with a client.
  *
+ * Use this when rendering a setup screen, generating a support bundle, or
+ * asserting in tests that the expected provider factories were registered.
+ *
  * @param client - Transfer client to inspect.
  * @returns Provider id and capability snapshot tuples.
+ *
+ * @example List registered providers
+ * ```ts
+ * import { summarizeClientDiagnostics } from "@zero-transfer/sdk";
+ *
+ * for (const { id, capabilities } of summarizeClientDiagnostics(client).providers) {
+ *   console.log(`${id}: streaming=${capabilities.readStream} resume=${capabilities.resumeDownload}`);
+ * }
+ * ```
  */
 export function summarizeClientDiagnostics(client: TransferClient): ClientDiagnostics {
   const capabilities = client.getCapabilities();
@@ -81,8 +93,36 @@ export interface RunConnectionDiagnosticsOptions {
 /**
  * Connects to a profile, captures capability and listing samples, and returns a redaction-safe report.
  *
+ * Useful for connectivity "ping" pages, smoke tests, and bug reports. Secrets
+ * in the profile are redacted via {@link redactConnectionProfile} before being
+ * returned. The session is always disconnected before the function returns,
+ * including when probes throw.
+ *
  * @param options - Diagnostic probe options.
  * @returns Diagnostic report including timings and any captured error.
+ *
+ * @example Probe an SFTP connection
+ * ```ts
+ * import { runConnectionDiagnostics } from "@zero-transfer/sdk";
+ *
+ * const report = await runConnectionDiagnostics({
+ *   client,
+ *   profile: {
+ *     host: "sftp.example.com",
+ *     provider: "sftp",
+ *     username: "deploy",
+ *     ssh: { privateKey: { path: "./keys/id_ed25519" } },
+ *   },
+ *   listPath: "/uploads",
+ * });
+ *
+ * if (!report.ok) {
+ *   console.error("connection failed:", report.error);
+ * } else {
+ *   console.log(`connect=${report.timings.connectMs}ms list=${report.timings.listMs}ms`);
+ *   console.log(report.sample); // up to 5 entries from /uploads
+ * }
+ * ```
  */
 export async function runConnectionDiagnostics(
   options: RunConnectionDiagnosticsOptions,

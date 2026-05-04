@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Zero Transfer">
+  <defs>
+    <linearGradient id="fgAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <radialGradient id="fgCore" cx="50%" cy="50%" r="55%">
+      <stop offset="0%" stop-color="#0b1730"/>
+      <stop offset="100%" stop-color="#050912"/>
+    </radialGradient>
+  </defs>
+
+  <!-- rounded-square background so the icon stays visible on light browser tabs -->
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="url(#fgCore)"/>
+
+  <g transform="translate(32,32)">
+    <!-- single tilted orbit for an unmistakable "transfer/atom" silhouette at 16px -->
+    <ellipse rx="24" ry="9" fill="none" stroke="url(#fgAccent)" stroke-width="2"
+             transform="rotate(-30)" opacity="0.95"/>
+    <ellipse rx="24" ry="9" fill="none" stroke="url(#fgAccent)" stroke-width="2"
+             transform="rotate(30)" opacity="0.6"/>
+
+    <!-- nucleus + Z mark -->
+    <circle r="11" fill="url(#fgCore)" stroke="url(#fgAccent)" stroke-width="1.8"/>
+    <path d="M -5.5,-4 L 5.5,-4 L -5.5,4 L 5.5,4"
+          fill="none" stroke="url(#fgAccent)"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>

@@ -10,18 +10,55 @@
 function createHttpProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/web/HttpProvider.ts:69](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/providers/web/HttpProvider.ts#L69)
+Defined in: [src/providers/web/HttpProvider.ts:106](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/web/HttpProvider.ts#L106)
 
 Creates a provider factory backed by HTTP(S) GET/HEAD.
+
+Read-only by design — use it to fetch artifacts from public URLs, signed
+URLs, or HTTP-only artifact servers. Range-based resume is supported when
+the server advertises `Accept-Ranges: bytes`. To upload to an HTTP endpoint,
+use the WebDAV provider, the S3 provider, or a cloud-specific provider.
 
 ## Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
-| `options` | [`HttpProviderOptions`](../interfaces/HttpProviderOptions.md) | Optional provider configuration. |
+| `options` | [`HttpProviderOptions`](../interfaces/HttpProviderOptions.md) | Optional id, base path, secure flag, fetch override. |
 
 ## Returns
 
 [`ProviderFactory`](../interfaces/ProviderFactory.md)
 
 Provider factory suitable for `createTransferClient({ providers: [...] })`.
+
+## Examples
+
+```ts
+import { createHttpProviderFactory, createTransferClient, downloadFile } from "@zero-transfer/sdk";
+
+const client = createTransferClient({ providers: [createHttpProviderFactory()] });
+
+await downloadFile({
+  client,
+  localPath: "./tmp/release.tar.gz",
+  source: {
+    path: "/releases/v1.0.0/release.tar.gz",
+    profile: { host: "downloads.example.com", provider: "http" },
+  },
+});
+```
+
+```ts
+await downloadFile({
+  client,
+  localPath: "./reports/today.json",
+  source: {
+    path: "/reports/today.json",
+    profile: {
+      host: "api.example.com",
+      provider: "http",
+      password: { env: "REPORTS_TOKEN" },
+    },
+  },
+});
+```

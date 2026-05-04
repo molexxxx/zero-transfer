@@ -13,7 +13,7 @@ function parseUnixList(
    now?): RemoteEntry[];
 ```
 
-Defined in: [src/providers/classic/ftp/FtpListParser.ts:48](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/providers/classic/ftp/FtpListParser.ts#L48)
+Defined in: [src/providers/classic/ftp/FtpListParser.ts:48](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/classic/ftp/FtpListParser.ts#L48)
 
 Parses a Unix-style FTP `LIST` response into normalized remote entries.
 

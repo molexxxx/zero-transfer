@@ -10,3 +10,11 @@ docs/api/
 zero-transfer-remake.md
 PUBLISHING.md
 ssh-sftp-native-replacement-plan.md
+
+# Starlight docs site
+website/node_modules/
+website/dist/
+website/.astro/
+website/src/content/docs/api/
+website/public/badges/
+website/public/assets/

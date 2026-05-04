@@ -10,7 +10,7 @@
 function importFileZillaSites(xml): ImportFileZillaSitesResult;
 ```
 
-Defined in: [src/profiles/importers/FileZillaImporter.ts:43](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/profiles/importers/FileZillaImporter.ts#L43)
+Defined in: [src/profiles/importers/FileZillaImporter.ts:43](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/profiles/importers/FileZillaImporter.ts#L43)
 
 Parses FileZilla `sitemanager.xml` text and returns generated profiles.
 

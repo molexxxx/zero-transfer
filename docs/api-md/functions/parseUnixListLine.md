@@ -13,7 +13,7 @@ function parseUnixListLine(
    now?): RemoteEntry;
 ```
 
-Defined in: [src/providers/classic/ftp/FtpListParser.ts:66](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/providers/classic/ftp/FtpListParser.ts#L66)
+Defined in: [src/providers/classic/ftp/FtpListParser.ts:66](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/providers/classic/ftp/FtpListParser.ts#L66)
 
 Parses one Unix-style FTP `LIST` line.
 

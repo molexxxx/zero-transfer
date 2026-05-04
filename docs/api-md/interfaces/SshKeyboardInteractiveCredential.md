@@ -6,12 +6,12 @@
 
 # Interface: SshKeyboardInteractiveCredential
 
-Defined in: [src/protocols/ssh/auth/SshAuthSession.ts:58](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/protocols/ssh/auth/SshAuthSession.ts#L58)
+Defined in: [src/protocols/ssh/auth/SshAuthSession.ts:58](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/auth/SshAuthSession.ts#L58)
 
 ## Properties
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="respond"></a> `respond` | (`name`, `instruction`, `prompts`) => `string`[] \| `Promise`\<`string`[]\> | Called for each INFO_REQUEST round. Return one string per prompt in order. | [src/protocols/ssh/auth/SshAuthSession.ts:64](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/protocols/ssh/auth/SshAuthSession.ts#L64) |
-| <a id="type"></a> `type` | `"keyboard-interactive"` | - | [src/protocols/ssh/auth/SshAuthSession.ts:59](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/protocols/ssh/auth/SshAuthSession.ts#L59) |
-| <a id="username"></a> `username` | `string` | - | [src/protocols/ssh/auth/SshAuthSession.ts:60](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/protocols/ssh/auth/SshAuthSession.ts#L60) |
+| <a id="respond"></a> `respond` | (`name`, `instruction`, `prompts`) => `string`[] \| `Promise`\<`string`[]\> | Called for each INFO_REQUEST round. Return one string per prompt in order. | [src/protocols/ssh/auth/SshAuthSession.ts:64](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/auth/SshAuthSession.ts#L64) |
+| <a id="type"></a> `type` | `"keyboard-interactive"` | - | [src/protocols/ssh/auth/SshAuthSession.ts:59](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/auth/SshAuthSession.ts#L59) |
+| <a id="username"></a> `username` | `string` | - | [src/protocols/ssh/auth/SshAuthSession.ts:60](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/protocols/ssh/auth/SshAuthSession.ts#L60) |

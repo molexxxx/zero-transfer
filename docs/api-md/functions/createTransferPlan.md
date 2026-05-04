@@ -10,9 +10,14 @@
 function createTransferPlan(input): TransferPlan;
 ```
 
-Defined in: [src/transfers/TransferPlan.ts:80](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/transfers/TransferPlan.ts#L80)
+Defined in: [src/transfers/TransferPlan.ts:102](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferPlan.ts#L102)
 
 Creates a transfer plan from dry-run planning input.
+
+Plans are immutable, structured descriptions of intended work. Pair with
+[createSyncPlan](createSyncPlan.md) or [createAtomicDeployPlan](createAtomicDeployPlan.md) for end-to-end
+planning, or build steps by hand when you need full control. Pass the plan
+to [createTransferJobsFromPlan](createTransferJobsFromPlan.md) to materialize executable jobs.
 
 ## Parameters
 
@@ -23,3 +28,19 @@ Creates a transfer plan from dry-run planning input.
 ## Returns
 
 [`TransferPlan`](../interfaces/TransferPlan.md)
+
+## Example
+
+```ts
+import { createTransferPlan, summarizeTransferPlan } from "@zero-transfer/sdk";
+
+const plan = createTransferPlan({
+  id: "manual-batch",
+  steps: [
+    { action: "upload", source: "./a.bin", destination: "/lake/a.bin", expectedBytes: 1024 },
+    { action: "upload", source: "./b.bin", destination: "/lake/b.bin", expectedBytes: 2048 },
+  ],
+});
+
+console.table(summarizeTransferPlan(plan));
+```

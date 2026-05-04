@@ -10,12 +10,14 @@
 function createWebhookAuditLog(options): MftAuditLog;
 ```
 
-Defined in: [src/mft/webhooks.ts:167](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/mft/webhooks.ts#L167)
+Defined in: [src/mft/webhooks.ts:191](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/webhooks.ts#L191)
 
 Wraps a webhook target as an [MftAuditLog](../interfaces/MftAuditLog.md).
 
 Entries whose `type` is not in `target.types` are silently dropped. `list()`
 always returns an empty array because webhook deliveries are not buffered.
+Payloads are HMAC-signed with `target.secret` (when provided) so receivers
+can verify authenticity before acting on them.
 
 ## Parameters
 
@@ -28,3 +30,26 @@ always returns an empty array because webhook deliveries are not buffered.
 [`MftAuditLog`](../interfaces/MftAuditLog.md)
 
 An audit log that delivers each `record` call to the webhook.
+
+## Example
+
+```ts
+import {
+  InMemoryAuditLog,
+  composeAuditLogs,
+  createWebhookAuditLog,
+} from "@zero-transfer/sdk";
+
+const memory = new InMemoryAuditLog();
+const webhook = createWebhookAuditLog({
+  target: {
+    url: "https://hooks.example.com/zt",
+    secret: { env: "ZT_WEBHOOK_SECRET" },
+    types: ["transfer.success", "transfer.failure"],
+  },
+  onDelivery: ({ result }) => console.log("delivered", result.statusCode),
+});
+
+const audit = composeAuditLogs(memory, webhook);
+await audit.record({ type: "transfer.success", receipt });
+```

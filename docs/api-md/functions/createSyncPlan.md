@@ -10,7 +10,7 @@
 function createSyncPlan(options): TransferPlan;
 ```
 
-Defined in: [src/sync/createSyncPlan.ts:84](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/sync/createSyncPlan.ts#L84)
+Defined in: [src/sync/createSyncPlan.ts:109](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/sync/createSyncPlan.ts#L109)
 
 Builds a [TransferPlan](../interfaces/TransferPlan.md) that reconciles two remote subtrees.
 
@@ -33,3 +33,29 @@ Transfer plan ready for `createTransferJobsFromPlan` or queue execution.
 ## Throws
 
 [ConfigurationError](../classes/ConfigurationError.md) When `conflictPolicy: "error"` encounters a conflict.
+
+## Example
+
+```ts
+import {
+  createSyncPlan,
+  diffRemoteTrees,
+  summarizeTransferPlan,
+} from "@zero-transfer/sdk";
+
+const diff = await diffRemoteTrees(
+  srcSession.fs, "/dist",
+  dstSession.fs, "/releases/current",
+);
+
+const plan = createSyncPlan({
+  id: "release-mirror",
+  diff,
+  source: { provider: "sftp", rootPath: "/dist" },
+  destination: { provider: "s3", rootPath: "/releases/current" },
+  deletePolicy: "mirror",
+  conflictPolicy: "overwrite",
+});
+
+console.table(summarizeTransferPlan(plan));
+```

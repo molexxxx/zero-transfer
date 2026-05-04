@@ -10,9 +10,12 @@
 function summarizeClientDiagnostics(client): ClientDiagnostics;
 ```
 
-Defined in: [src/diagnostics/index.ts:28](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/diagnostics/index.ts#L28)
+Defined in: [src/diagnostics/index.ts:40](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/diagnostics/index.ts#L40)
 
 Returns a redaction-safe snapshot of the providers registered with a client.
+
+Use this when rendering a setup screen, generating a support bundle, or
+asserting in tests that the expected provider factories were registered.
 
 ## Parameters
 
@@ -25,3 +28,13 @@ Returns a redaction-safe snapshot of the providers registered with a client.
 [`ClientDiagnostics`](../interfaces/ClientDiagnostics.md)
 
 Provider id and capability snapshot tuples.
+
+## Example
+
+```ts
+import { summarizeClientDiagnostics } from "@zero-transfer/sdk";
+
+for (const { id, capabilities } of summarizeClientDiagnostics(client).providers) {
+  console.log(`${id}: streaming=${capabilities.readStream} resume=${capabilities.resumeDownload}`);
+}
+```

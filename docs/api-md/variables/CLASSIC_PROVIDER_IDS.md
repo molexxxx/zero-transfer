@@ -10,6 +10,6 @@
 const CLASSIC_PROVIDER_IDS: readonly ["ftp", "ftps", "sftp"];
 ```
 
-Defined in: [src/core/ProviderId.ts:8](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/core/ProviderId.ts#L8)
+Defined in: [src/core/ProviderId.ts:8](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/core/ProviderId.ts#L8)
 
 Classic remote-transfer providers kept compatible with the original protocol field.

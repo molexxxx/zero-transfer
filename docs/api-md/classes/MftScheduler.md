@@ -6,9 +6,49 @@
 
 # Class: MftScheduler
 
-Defined in: [src/mft/MftScheduler.ts:65](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/mft/MftScheduler.ts#L65)
+Defined in: [src/mft/MftScheduler.ts:106](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/MftScheduler.ts#L106)
 
 Runs routes on configured schedules.
+
+Subscribes to a [ScheduleRegistry](ScheduleRegistry.md), computes the next fire time for
+each schedule (cron or interval), and dispatches the matching route through
+a runner of your choice (`runRoute` by default, or a wrapped runner for
+approvals / rate limiting / circuit breaking). Observers fire on each cycle
+for telemetry. Tests can inject a deterministic timer via `timer`.
+
+## Example
+
+```ts
+import {
+  ApprovalRegistry,
+  InMemoryAuditLog,
+  MftScheduler,
+  RouteRegistry,
+  ScheduleRegistry,
+  createApprovalGate,
+  runRoute,
+} from "@zero-transfer/sdk";
+
+const audit = new InMemoryAuditLog();
+const approvals = new ApprovalRegistry();
+
+const scheduler = new MftScheduler({
+  client,
+  routes: new RouteRegistry([route]),
+  schedules: new ScheduleRegistry([
+    { id: "nightly", routeId: route.id, cron: "0 2 * * *" },
+  ]),
+  runner: createApprovalGate({
+    registry: approvals,
+    approvalId: ({ route }) => `release:${route.id}`,
+    runner: ({ client: c, route: r, signal }) => runRoute({ client: c, route: r, signal }),
+  }),
+  onResult: ({ receipt }) => audit.record({ type: "transfer.success", receipt }),
+  onError:  ({ error })   => audit.record({ type: "transfer.failure", error }),
+});
+
+scheduler.start();
+```
 
 ## Accessors
 
@@ -20,7 +60,7 @@ Runs routes on configured schedules.
 get isRunning(): boolean;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:91](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/mft/MftScheduler.ts#L91)
+Defined in: [src/mft/MftScheduler.ts:132](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/MftScheduler.ts#L132)
 
 Whether the scheduler is currently running.
 
@@ -36,7 +76,7 @@ Whether the scheduler is currently running.
 new MftScheduler(options): MftScheduler;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:80](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/mft/MftScheduler.ts#L80)
+Defined in: [src/mft/MftScheduler.ts:121](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/MftScheduler.ts#L121)
 
 Creates a scheduler bound to a transfer client and registries.
 
@@ -58,7 +98,7 @@ Creates a scheduler bound to a transfer client and registries.
 start(): void;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:96](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/mft/MftScheduler.ts#L96)
+Defined in: [src/mft/MftScheduler.ts:137](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/MftScheduler.ts#L137)
 
 Starts the scheduler. No-op when already running.
 
@@ -74,7 +114,7 @@ Starts the scheduler. No-op when already running.
 stop(): Promise<void>;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:111](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/mft/MftScheduler.ts#L111)
+Defined in: [src/mft/MftScheduler.ts:152](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/MftScheduler.ts#L152)
 
 Stops the scheduler and aborts in-flight route executions.
 

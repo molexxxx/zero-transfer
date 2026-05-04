@@ -10,7 +10,7 @@
 function createPooledTransferClient(inner, options?): PooledTransferClient;
 ```
 
-Defined in: src/core/ConnectionPool.ts:111
+Defined in: [src/core/ConnectionPool.ts:111](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/core/ConnectionPool.ts#L111)
 
 Wraps a [TransferClient](../classes/TransferClient.md) with connection pooling.
 

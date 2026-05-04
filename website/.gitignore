@@ -1,0 +1,15 @@
+# build output
+dist/
+.astro/
+
+# generated typedoc output
+src/content/docs/api/
+
+# deps
+node_modules/
+
+# env / OS
+.env
+.env.*
+!.env.example
+.DS_Store

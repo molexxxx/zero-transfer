@@ -83,7 +83,41 @@ export interface TransferEngineOptions {
   now?: () => Date;
 }
 
-/** Executes transfer jobs and produces audit-friendly receipts. */
+/**
+ * Executes transfer jobs and produces audit-friendly receipts.
+ *
+ * The engine is the lowest-level entry point in the transfer stack: it owns
+ * retry policy, attempt history, abort propagation, progress event
+ * normalization, and receipt construction. Most callers reach the engine
+ * indirectly through {@link runRoute}, {@link uploadFile}, {@link downloadFile},
+ * {@link copyBetween}, or {@link TransferQueue}; instantiate it directly when
+ * you need full control over execution semantics.
+ *
+ * @example Execute a single job with a custom executor
+ * ```ts
+ * import { TransferEngine, type TransferExecutor, type TransferJob } from "@zero-transfer/sdk";
+ *
+ * const engine = new TransferEngine();
+ *
+ * const executor: TransferExecutor = async ({ job, signal, onProgress }) => {
+ *   onProgress?.({ jobId: job.id, bytesTransferred: 0 });
+ *   // … perform the bytes here, honoring `signal` …
+ *   return { jobId: job.id, bytesTransferred: 1234, completedAt: new Date() };
+ * };
+ *
+ * const job: TransferJob = {
+ *   id: "manual-1",
+ *   operation: "upload",
+ *   source: { profile: localProfile, path: "./data.bin" },
+ *   destination: { profile: s3Profile, path: "/data/data.bin" },
+ * };
+ *
+ * const receipt = await engine.execute(job, executor, {
+ *   retry: { maxAttempts: 3, baseDelayMs: 250 },
+ * });
+ * console.log(receipt.attempts.length); // 1 on success
+ * ```
+ */
 export class TransferEngine {
   private readonly now: () => Date;
 

@@ -63,7 +63,39 @@ export interface GcsProviderOptions {
   defaultHeaders?: Record<string, string>;
 }
 
-/** Creates a Google Cloud Storage provider factory. */
+/**
+ * Creates a Google Cloud Storage provider factory.
+ *
+ * Authentication is per-connection: pass a Google OAuth 2 access token via
+ * `profile.password`. `profile.host` is unused — the bucket is fixed at
+ * factory construction time so a single client can target multiple buckets
+ * by registering separate factories.
+ *
+ * @param options - Bucket plus optional fetch/transport overrides.
+ * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example Bearer-token upload
+ * ```ts
+ * import { createGcsProviderFactory, createTransferClient, uploadFile } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({
+ *   providers: [createGcsProviderFactory({ bucket: "my-bucket" })],
+ * });
+ *
+ * await uploadFile({
+ *   client,
+ *   localPath: "./build/app.tar.gz",
+ *   destination: {
+ *     path: "releases/2026.04/app.tar.gz",
+ *     profile: {
+ *       host: "my-bucket",
+ *       provider: "gcs",
+ *       password: { env: "GCP_OAUTH_ACCESS_TOKEN" },
+ *     },
+ *   },
+ * });
+ * ```
+ */
 export function createGcsProviderFactory(options: GcsProviderOptions): ProviderFactory {
   if (typeof options.bucket !== "string" || options.bucket === "") {
     throw new ConfigurationError({

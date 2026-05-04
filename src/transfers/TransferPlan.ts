@@ -76,7 +76,29 @@ export interface TransferPlanSummary {
   actions: Record<string, number>;
 }
 
-/** Creates a transfer plan from dry-run planning input. */
+/**
+ * Creates a transfer plan from dry-run planning input.
+ *
+ * Plans are immutable, structured descriptions of intended work. Pair with
+ * {@link createSyncPlan} or {@link createAtomicDeployPlan} for end-to-end
+ * planning, or build steps by hand when you need full control. Pass the plan
+ * to {@link createTransferJobsFromPlan} to materialize executable jobs.
+ *
+ * @example Build a plan with two upload steps and inspect it
+ * ```ts
+ * import { createTransferPlan, summarizeTransferPlan } from "@zero-transfer/sdk";
+ *
+ * const plan = createTransferPlan({
+ *   id: "manual-batch",
+ *   steps: [
+ *     { action: "upload", source: "./a.bin", destination: "/lake/a.bin", expectedBytes: 1024 },
+ *     { action: "upload", source: "./b.bin", destination: "/lake/b.bin", expectedBytes: 2048 },
+ *   ],
+ * });
+ *
+ * console.table(summarizeTransferPlan(plan));
+ * ```
+ */
 export function createTransferPlan(input: TransferPlanInput): TransferPlan {
   const plan: TransferPlan = {
     createdAt: input.now?.() ?? new Date(),
@@ -93,7 +115,23 @@ export function createTransferPlan(input: TransferPlanInput): TransferPlan {
   return plan;
 }
 
-/** Summarizes a transfer plan for diagnostics, previews, and tests. */
+/**
+ * Summarizes a transfer plan for diagnostics, previews, and tests.
+ *
+ * Returns aggregate counts (total / executable / skipped / destructive),
+ * total expected bytes, and a per-action histogram. Useful for printing a
+ * one-line plan summary before executing or for asserting plan shape in
+ * tests.
+ *
+ * @example Print a plan preview
+ * ```ts
+ * import { summarizeTransferPlan } from "@zero-transfer/sdk";
+ *
+ * const summary = summarizeTransferPlan(plan);
+ * console.log(`${summary.executableSteps} steps, ${summary.totalExpectedBytes} bytes total`);
+ * console.log("Actions:", summary.actions);
+ * ```
+ */
 export function summarizeTransferPlan(plan: TransferPlan): TransferPlanSummary {
   const actions: Record<string, number> = {};
   let destructiveSteps = 0;

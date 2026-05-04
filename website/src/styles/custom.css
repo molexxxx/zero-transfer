@@ -1,0 +1,46 @@
+/* Zero Transfer brand polish on top of Starlight defaults. */
+
+:root {
+  --sl-font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+:root[data-theme="dark"] {
+  --sl-color-accent-low: #0e1f3a;
+  --sl-color-accent: #3b82f6;
+  --sl-color-accent-high: #93c5fd;
+  --sl-color-bg-nav: var(--sl-color-bg);
+}
+
+:root[data-theme="light"] {
+  --sl-color-accent-low: #dbeafe;
+  --sl-color-accent: #2563eb;
+  --sl-color-accent-high: #1e3a8a;
+}
+
+/* Tighten code blocks a touch. */
+.expressive-code {
+  font-size: 0.9rem;
+}
+
+/* Soften the right-hand TOC. */
+starlight-toc nav ul li a {
+  font-size: 0.8125rem;
+}
+
+/* Header logo: keep the square mark crisp and consistently sized. */
+.site-title img {
+  height: 1.75rem;
+  width: 1.75rem;
+}
+
+/* Splash hero: the default vertical padding is huge on tall viewports
+   and floats the title in dead space. Tighten it. */
+@media (min-width: 50rem) {
+  .hero {
+    padding-block: 2rem !important;
+  }
+}
+
+.hero {
+  gap: 2rem;
+}

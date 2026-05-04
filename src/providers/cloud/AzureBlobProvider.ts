@@ -70,7 +70,48 @@ export interface AzureBlobProviderOptions {
   defaultHeaders?: Record<string, string>;
 }
 
-/** Creates an Azure Blob Storage provider factory. */
+/**
+ * Creates an Azure Blob Storage provider factory.
+ *
+ * The container is fixed at factory construction time. Authenticate per-connection
+ * with either a SAS token (configured at factory level via {@link AzureBlobProviderOptions.sasToken})
+ * or an AAD bearer token resolved from `profile.password`. Override `endpoint` for
+ * sovereign clouds or local Azurite testing.
+ *
+ * @param options - Container plus optional endpoint, SAS token, fetch override.
+ * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example AAD-bearer upload
+ * ```ts
+ * import { createAzureBlobProviderFactory, createTransferClient, uploadFile } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({
+ *   providers: [createAzureBlobProviderFactory({ container: "snapshots" })],
+ * });
+ *
+ * await uploadFile({
+ *   client,
+ *   localPath: "./snapshots/2026-04-28.tar.zst",
+ *   destination: {
+ *     path: "/2026/04/28/snapshot.tar.zst",
+ *     profile: {
+ *       host: "mystorageacct",
+ *       provider: "azure-blob",
+ *       password: { env: "AZURE_AAD_TOKEN" },
+ *     },
+ *   },
+ * });
+ * ```
+ *
+ * @example SAS-token + Azurite emulator
+ * ```ts
+ * createAzureBlobProviderFactory({
+ *   container: "devstoreaccount1",
+ *   endpoint: "http://127.0.0.1:10000/devstoreaccount1",
+ *   sasToken: "sv=2024-11-04&ss=b&srt=co&sp=rwdlac&se=...",
+ * });
+ * ```
+ */
 export function createAzureBlobProviderFactory(options: AzureBlobProviderOptions): ProviderFactory {
   if (typeof options.container !== "string" || options.container === "") {
     throw new ConfigurationError({

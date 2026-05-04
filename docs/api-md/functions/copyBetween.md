@@ -10,7 +10,7 @@
 function copyBetween(options): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/client/operations.ts:196](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/client/operations.ts#L196)
+Defined in: [src/client/operations.ts:196](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/client/operations.ts#L196)
 
 Copies a file between two remote endpoints in a single call.
 

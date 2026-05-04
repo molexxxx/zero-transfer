@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Zero Transfer">
+  <defs>
+    <linearGradient id="ztAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee">
+        <animate attributeName="stop-color"
+          values="#22d3ee;#818cf8;#22d3ee" dur="7s" repeatCount="indefinite"/>
+      </stop>
+      <stop offset="100%" stop-color="#c084fc">
+        <animate attributeName="stop-color"
+          values="#c084fc;#06b6d4;#c084fc" dur="7s" repeatCount="indefinite"/>
+      </stop>
+    </linearGradient>
+
+    <radialGradient id="ztCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0b1730"/>
+      <stop offset="100%" stop-color="#050912"/>
+    </radialGradient>
+
+    <filter id="ztGlow" x="-100%" y="-100%" width="300%" height="300%">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <g transform="translate(128,128)">
+    <!-- subtle outer halo -->
+    <circle r="118" fill="none" stroke="url(#ztAccent)" stroke-width="1" opacity="0.08">
+      <animate attributeName="r"       values="114;122;114" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.05;0.14;0.05" dur="6s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- three rotating orbits, each carrying one moving electron -->
+    <g>
+      <animateTransform attributeName="transform" type="rotate"
+        from="0" to="360" dur="22s" repeatCount="indefinite"/>
+      <ellipse rx="98" ry="38" fill="none" stroke="#22d3ee"
+               stroke-width="2.2" opacity="0.85" stroke-linecap="round"/>
+      <circle r="4.5" cx="98" cy="0" fill="#22d3ee" filter="url(#ztGlow)">
+        <animateMotion dur="6s" repeatCount="indefinite"
+          path="M 0,0 m -98,0 a 98,38 0 1,0 196,0 a 98,38 0 1,0 -196,0"/>
+      </circle>
+    </g>
+
+    <g>
+      <animateTransform attributeName="transform" type="rotate"
+        from="60" to="-300" dur="28s" repeatCount="indefinite"/>
+      <ellipse rx="98" ry="38" fill="none" stroke="#818cf8"
+               stroke-width="2.2" opacity="0.8" stroke-linecap="round"/>
+      <circle r="4" cx="98" cy="0" fill="#818cf8" filter="url(#ztGlow)">
+        <animateMotion dur="7.5s" repeatCount="indefinite"
+          path="M 0,0 m -98,0 a 98,38 0 1,0 196,0 a 98,38 0 1,0 -196,0"/>
+      </circle>
+    </g>
+
+    <g>
+      <animateTransform attributeName="transform" type="rotate"
+        from="120" to="480" dur="25s" repeatCount="indefinite"/>
+      <ellipse rx="98" ry="38" fill="none" stroke="#c084fc"
+               stroke-width="2.2" opacity="0.8" stroke-linecap="round"/>
+      <circle r="4" cx="98" cy="0" fill="#c084fc" filter="url(#ztGlow)">
+        <animateMotion dur="6.8s" repeatCount="indefinite"
+          path="M 0,0 m -98,0 a 98,38 0 1,0 196,0 a 98,38 0 1,0 -196,0"/>
+      </circle>
+    </g>
+
+    <!-- nucleus -->
+    <circle r="38" fill="url(#ztCore)"/>
+    <circle r="38" fill="none" stroke="url(#ztAccent)" stroke-width="2.6" filter="url(#ztGlow)">
+      <animate attributeName="r"             values="36;40;36" dur="4s" repeatCount="indefinite"/>
+      <animate attributeName="stroke-opacity" values="0.55;1;0.55" dur="4s" repeatCount="indefinite"/>
+    </circle>
+
+    <!-- Z mark: two stacked chevrons (top points right, bottom points right), reads as Z -->
+    <path d="M -18,-13 L 18,-13 L -18,13 L 18,13"
+          fill="none" stroke="url(#ztAccent)"
+          stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#ztGlow)">
+      <animate attributeName="opacity" values="0.7;1;0.7" dur="4s" repeatCount="indefinite"/>
+    </path>
+  </g>
+</svg>

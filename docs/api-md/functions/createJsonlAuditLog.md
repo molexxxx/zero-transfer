@@ -10,7 +10,7 @@
 function createJsonlAuditLog(writer): MftAuditLog;
 ```
 
-Defined in: [src/mft/audit.ts:88](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/mft/audit.ts#L88)
+Defined in: [src/mft/audit.ts:88](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/mft/audit.ts#L88)
 
 Creates an audit log that streams records as newline-delimited JSON.
 

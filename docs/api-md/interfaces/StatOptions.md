@@ -6,7 +6,7 @@
 
 # Interface: StatOptions
 
-Defined in: [src/types/public.ts:325](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/types/public.ts#L325)
+Defined in: [src/types/public.ts:325](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/types/public.ts#L325)
 
 Options for remote metadata lookup operations.
 
@@ -14,4 +14,4 @@ Options for remote metadata lookup operations.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal used to cancel the metadata operation. | [src/types/public.ts:327](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/types/public.ts#L327) |
+| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal used to cancel the metadata operation. | [src/types/public.ts:327](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/types/public.ts#L327) |

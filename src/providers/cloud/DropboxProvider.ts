@@ -68,7 +68,31 @@ export interface DropboxProviderOptions {
  *
  * The bearer token is resolved per-connection from `profile.password`. The
  * `profile.host` field is unused; Dropbox connections are identified solely by
- * their token.
+ * their token. Uploads go to `/2/files/upload` (single-shot); resumable upload
+ * sessions are not yet supported.
+ *
+ * @param options - Optional API base URL overrides and fetch implementation.
+ * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
+ *
+ * @example Upload a backup to Dropbox
+ * ```ts
+ * import { createDropboxProviderFactory, createTransferClient, uploadFile } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({ providers: [createDropboxProviderFactory()] });
+ *
+ * await uploadFile({
+ *   client,
+ *   localPath: "./backups/db.dump",
+ *   destination: {
+ *     path: "/Backups/2026-04-28/db.dump",
+ *     profile: {
+ *       host: "",
+ *       provider: "dropbox",
+ *       password: { env: "DROPBOX_ACCESS_TOKEN" },
+ *     },
+ *   },
+ * });
+ * ```
  */
 export function createDropboxProviderFactory(
   options: DropboxProviderOptions = {},

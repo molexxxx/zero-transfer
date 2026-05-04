@@ -10,9 +10,14 @@
 function summarizeTransferPlan(plan): TransferPlanSummary;
 ```
 
-Defined in: [src/transfers/TransferPlan.ts:97](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/transfers/TransferPlan.ts#L97)
+Defined in: [src/transfers/TransferPlan.ts:135](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferPlan.ts#L135)
 
 Summarizes a transfer plan for diagnostics, previews, and tests.
+
+Returns aggregate counts (total / executable / skipped / destructive),
+total expected bytes, and a per-action histogram. Useful for printing a
+one-line plan summary before executing or for asserting plan shape in
+tests.
 
 ## Parameters
 
@@ -23,3 +28,13 @@ Summarizes a transfer plan for diagnostics, previews, and tests.
 ## Returns
 
 [`TransferPlanSummary`](../interfaces/TransferPlanSummary.md)
+
+## Example
+
+```ts
+import { summarizeTransferPlan } from "@zero-transfer/sdk";
+
+const summary = summarizeTransferPlan(plan);
+console.log(`${summary.executableSteps} steps, ${summary.totalExpectedBytes} bytes total`);
+console.log("Actions:", summary.actions);
+```

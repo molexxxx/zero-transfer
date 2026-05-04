@@ -10,7 +10,7 @@
 type TransferQueueExecutorResolver = (job) => TransferExecutor;
 ```
 
-Defined in: [src/transfers/TransferQueue.ts:25](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/transfers/TransferQueue.ts#L25)
+Defined in: [src/transfers/TransferQueue.ts:25](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/TransferQueue.ts#L25)
 
 Resolver used when jobs do not provide an executor at enqueue time.
 

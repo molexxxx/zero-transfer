@@ -10,7 +10,7 @@
 function createBandwidthThrottle(limit, options?): BandwidthThrottle | undefined;
 ```
 
-Defined in: [src/transfers/BandwidthThrottle.ts:48](https://github.com/tonywied17/zero-transfer/blob/3d3b2aaf54158384a7e5d156ab1f42706eb1f6fb/src/transfers/BandwidthThrottle.ts#L48)
+Defined in: [src/transfers/BandwidthThrottle.ts:48](https://github.com/tonywied17/zero-transfer/blob/4bee5127df8da342eff2f25e80fce7db7a313deb/src/transfers/BandwidthThrottle.ts#L48)
 
 Creates a token-bucket throttle that paces an asynchronous data pipeline to
 a sustained [TransferBandwidthLimit](../interfaces/TransferBandwidthLimit.md).

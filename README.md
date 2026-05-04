@@ -71,7 +71,7 @@ Requires Node.js **>=20**.
 
 ## Scoped packages
 
-ZeroTransfer publishes 13 scoped packages under the [`@zero-transfer`](https://www.npmjs.com/org/zero-transfer) npm organization. [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) is the batteries-included distribution; the other 12 are **narrowly scoped** packages that publish only the symbols listed in their [scope page](docs/scopes/README.md). Pick one to keep your dependency tree tight, or install the SDK if you want every provider in one go.
+ZeroTransfer publishes 14 scoped packages under the [`@zero-transfer`](https://www.npmjs.com/org/zero-transfer) npm organization. [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) is the batteries-included distribution; the other 13 are **narrowly scoped** packages that publish only the symbols listed in their [scope page](docs/scopes/README.md). Pick one to keep your dependency tree tight, or install the SDK if you want every provider in one go.
 
 | Package                                                                                    | Summary                                                                       | Docs                                      |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ----------------------------------------- |
@@ -81,6 +81,7 @@ ZeroTransfer publishes 13 scoped packages under the [`@zero-transfer`](https://w
 | [`@zero-transfer/ftp`](https://www.npmjs.com/package/@zero-transfer/ftp)                   | Classic FTP with EPSV/PASV streaming and REST resume.                         | [Scope page](docs/scopes/ftp.md)          |
 | [`@zero-transfer/ftps`](https://www.npmjs.com/package/@zero-transfer/ftps)                 | Explicit + implicit FTPS with full TLS profile support.                       | [Scope page](docs/scopes/ftps.md)         |
 | [`@zero-transfer/sftp`](https://www.npmjs.com/package/@zero-transfer/sftp)                 | SFTP with SSH key auth, known_hosts, and jump-host support.                   | [Scope page](docs/scopes/sftp.md)         |
+| [`@zero-transfer/ssh`](https://www.npmjs.com/package/@zero-transfer/ssh)                   | Standalone SSH 2.0 transport, auth, and channel primitives (exec/subsystem).  | [Scope page](docs/scopes/ssh.md)          |
 | [`@zero-transfer/http`](https://www.npmjs.com/package/@zero-transfer/http)                 | HTTP(S) and signed-URL provider with ranged downloads.                        | [Scope page](docs/scopes/http.md)         |
 | [`@zero-transfer/webdav`](https://www.npmjs.com/package/@zero-transfer/webdav)             | WebDAV with PROPFIND listings and ranged downloads.                           | [Scope page](docs/scopes/webdav.md)       |
 | [`@zero-transfer/s3`](https://www.npmjs.com/package/@zero-transfer/s3)                     | S3-compatible storage with SigV4, multipart upload, and cross-process resume. | [Scope page](docs/scopes/s3.md)           |
@@ -120,7 +121,17 @@ await session.disconnect();
 ### 2. Move a file with one call
 
 ```ts
-import { uploadFile } from "@zero-transfer/sdk";
+import { uploadFile, type ConnectionProfile } from "@zero-transfer/sdk";
+
+const sftpProfile: ConnectionProfile = {
+  host: "files.example.com",
+  provider: "sftp",
+  username: { env: "ZT_USER" },
+  ssh: {
+    privateKey: { path: "./keys/id_ed25519" },
+    pinnedHostKeySha256: "SHA256:base64-encoded-host-key-digest",
+  },
+};
 
 await uploadFile({
   client,
@@ -129,6 +140,8 @@ await uploadFile({
   onProgress: (event) => console.log(`${event.bytesTransferred}/${event.totalBytes ?? "?"}`),
 });
 ```
+
+> The `profile` shape is the same provider-neutral [`ConnectionProfile`](docs/api-md/interfaces/ConnectionProfile.md) used by `client.connect()`. See **[Connection profiles](#connection-profiles)** below for the full field reference and security guidance.
 
 ### 3. Plan a sync without touching bytes
 
@@ -174,6 +187,114 @@ const scheduler = new MftScheduler({
 scheduler.start();
 ```
 
+## Connection profiles
+
+Every operation that touches a remote system takes a [`ConnectionProfile`](docs/api-md/interfaces/ConnectionProfile.md). Profiles are provider-neutral data — you build one once and pass it to `client.connect()`, `uploadFile()`, `downloadFile()`, `copyBetween()`, MFT routes, and diagnostics. The same shape works for every provider; only the optional auth blocks (`ssh`, `tls`, `oauth`, `s3`, …) change.
+
+### Required fields
+
+| Field      | Type                                                   | Notes                                                                                                                                                                                                       |
+| ---------- | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `host`     | `string`                                               | Remote hostname / IP / bucket / drive identifier (provider-specific). Always required.                                                                                                                      |
+| `provider` | [`ProviderId`](docs/api-md/type-aliases/ProviderId.md) | One of `"ftp"`, `"ftps"`, `"sftp"`, `"http"`, `"https"`, `"webdav"`, `"s3"`, `"azure-blob"`, `"gcs"`, `"google-drive"`, `"dropbox"`, `"one-drive"`, `"local"`, `"memory"`, or any custom id you registered. |
+
+### Optional top-level fields
+
+| Field       | Type                                                                 | Notes                                                                     |
+| ----------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `port`      | `number`                                                             | Provider applies a sensible default when omitted.                         |
+| `username`  | [`SecretSource`](docs/api-md/type-aliases/SecretSource.md)           | String, `{ env }`, `{ path }`, `{ base64Env }`, `{ value }`, or callback. |
+| `password`  | [`SecretSource`](docs/api-md/type-aliases/SecretSource.md)           | Same shapes as `username`. Used as bearer token for cloud providers.      |
+| `secure`    | `boolean`                                                            | Request encrypted transport when the protocol allows opt-in TLS.          |
+| `tls`       | [`TlsProfile`](docs/api-md/interfaces/TlsProfile.md)                 | CA bundle, mTLS cert/key, fingerprint pinning, min/max TLS version.       |
+| `ssh`       | [`SshProfile`](docs/api-md/interfaces/SshProfile.md)                 | Private key, passphrase, `known_hosts`, host-key pin, agent, algorithms.  |
+| `timeoutMs` | `number`                                                             | Connection / operation timeout.                                           |
+| `signal`    | `AbortSignal`                                                        | Cancels connection setup and long-running operations.                     |
+| `logger`    | [`ZeroTransferLogger`](docs/api-md/interfaces/ZeroTransferLogger.md) | Per-profile structured logger override (still redaction-safe).            |
+
+### Secret-bearing fields use `SecretSource`
+
+Every credential field (`username`, `password`, `tls.ca`, `tls.key`, `ssh.privateKey`, `ssh.knownHosts`, `ssh.passphrase`, …) accepts a [`SecretSource`](docs/api-md/type-aliases/SecretSource.md). Inline strings work for prototypes, but production code should pull from the environment, a file, or a callback so secrets stay out of source control and out of process memory dumps.
+
+```ts
+// Inline string — fine for tests, avoid in production.
+password: "hunter2";
+
+// Read from an environment variable.
+password: {
+  env: "SFTP_PASSWORD";
+}
+
+// Read from a file (e.g. a Docker / Kubernetes secret mount).
+privateKey: {
+  path: "/run/secrets/sftp_id_ed25519";
+}
+
+// Read base64-encoded binary from an environment variable.
+ca: {
+  base64Env: "FTPS_CA_BUNDLE_B64";
+}
+
+// Pull from your vault / credential broker on demand.
+password: async () => await vault.read("kv/sftp/deploy");
+```
+
+Profiles are run through [`redactConnectionProfile()`](docs/api-md/functions/redactConnectionProfile.md) before any log line is emitted, so secret values never appear in logs, audit entries, or diagnostics.
+
+### Worked examples
+
+```ts
+// SFTP with public-key auth + host-key pin (production-hardened)
+const sftpProfile: ConnectionProfile = {
+  host: "sftp.example.com",
+  provider: "sftp",
+  username: "deploy",
+  ssh: {
+    privateKey: { path: "./keys/id_ed25519" },
+    pinnedHostKeySha256: "SHA256:abc123basesixfourpinFromKnownHosts=",
+  },
+};
+
+// FTPS with mTLS + private CA bundle
+const ftpsProfile: ConnectionProfile = {
+  host: "ftps.internal.example",
+  provider: "ftps",
+  username: "audit",
+  tls: {
+    ca: { path: "./certs/ca-bundle.pem" },
+    cert: { path: "./certs/client.crt" },
+    key: { path: "./certs/client.key" },
+    pinnedFingerprint256:
+      "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99",
+  },
+};
+
+// S3-compatible bucket
+const s3Profile: ConnectionProfile = {
+  host: "data-lake-bronze",
+  provider: "s3",
+  username: { env: "AWS_ACCESS_KEY_ID" },
+  password: { env: "AWS_SECRET_ACCESS_KEY" },
+};
+
+// Cloud drive (OAuth bearer token in `password`)
+const dropboxProfile: ConnectionProfile = {
+  host: "",
+  provider: "dropbox",
+  password: { env: "DROPBOX_ACCESS_TOKEN" },
+};
+```
+
+### Security guidance
+
+- **Pin host keys for SSH/SFTP.** Without `ssh.knownHosts` or `ssh.pinnedHostKeySha256` the SSH session accepts any key the server presents — a MITM risk.
+- **Pin TLS fingerprints when you control the server.** `tls.pinnedFingerprint256` is defence-in-depth on top of `rejectUnauthorized: true` and a CA bundle.
+- **Never set `tls.rejectUnauthorized: false` in production.** Pair self-signed servers with `tls.ca` instead.
+- **Prefer `{ env }`, `{ path }`, or callback secrets** over inline strings or hard-coded values.
+- See [`examples/sftp-private-key.ts`](examples/sftp-private-key.ts), [`examples/ftps-client-certificate.ts`](examples/ftps-client-certificate.ts), and [`examples/profile-from-env.ts`](examples/profile-from-env.ts) for end-to-end hardened profile builds.
+
+Full per-field reference: [`ConnectionProfile`](docs/api-md/interfaces/ConnectionProfile.md), [`SshProfile`](docs/api-md/interfaces/SshProfile.md), [`TlsProfile`](docs/api-md/interfaces/TlsProfile.md), [`SecretSource`](docs/api-md/type-aliases/SecretSource.md).
+
 ## Capability matrix
 
 Every provider advertises its own [`CapabilitySet`](docs/api-md/interfaces/CapabilitySet.md). The full programmatic matrix is exposed via [`getBuiltinCapabilityMatrix()`](docs/api-md/functions/getBuiltinCapabilityMatrix.md) and renders to Markdown via [`formatCapabilityMatrixMarkdown()`](docs/api-md/functions/formatCapabilityMatrixMarkdown.md).
@@ -206,6 +327,7 @@ Real-world examples live in [`examples/`](https://github.com/tonywied17/zero-tra
 | [`ftps-client-certificate.ts`](examples/ftps-client-certificate.ts)         | FTPS hardened: mTLS + private CA bundle + fingerprint pinning.    |
 | [`sftp-basic.ts`](examples/sftp-basic.ts)                                   | Minimal SFTP with username/password (no host-key pinning).        |
 | [`sftp-private-key.ts`](examples/sftp-private-key.ts)                       | SFTP hardened: private-key auth + pinned host-key SHA-256.        |
+| [`ssh-exec-command.ts`](examples/ssh-exec-command.ts)                       | Standalone SSH stack: handshake, auth, run a remote command.      |
 | [`s3-compatible-upload.ts`](examples/s3-compatible-upload.ts)               | S3 multipart upload with cross-process resume store.              |
 | [`webdav-sync.ts`](examples/webdav-sync.ts)                                 | WebDAV diff + sync plan with deterministic ordering.              |
 | [`signed-url-download.ts`](examples/signed-url-download.ts)                 | HTTPS signed-URL download with progress reporting.                |

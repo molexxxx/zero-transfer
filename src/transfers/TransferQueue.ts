@@ -101,7 +101,41 @@ export interface TransferQueueSummary {
   failures: TransferQueueItem[];
 }
 
-/** Minimal transfer queue with concurrency, pause/resume, cancellation, and drain summaries. */
+/**
+ * Minimal transfer queue with concurrency, pause/resume, cancellation, and drain summaries.
+ *
+ * Wrap a {@link TransferEngine} with a queue when you need to run many transfers
+ * concurrently with bounded parallelism, observe per-job progress, or drive
+ * a UI from a single source of truth. Items are FIFO; failures and successes
+ * are surfaced via observers and in the final {@link TransferQueueSummary}.
+ *
+ * @example Run a batch of uploads with concurrency=4
+ * ```ts
+ * import {
+ *   TransferQueue,
+ *   createProviderTransferExecutor,
+ * } from "@zero-transfer/sdk";
+ *
+ * const queue = new TransferQueue({
+ *   concurrency: 4,
+ *   executor: createProviderTransferExecutor({ client }),
+ *   onProgress: (e) => console.log(`${e.jobId}: ${e.bytesTransferred}`),
+ *   onError: (item, err) => console.error(`${item.job.id} failed`, err),
+ * });
+ *
+ * for (const file of files) {
+ *   queue.enqueue({
+ *     id: file.name,
+ *     operation: "upload",
+ *     source: { profile: localProfile, path: file.path },
+ *     destination: { profile: s3Profile, path: `/lake/${file.name}` },
+ *   });
+ * }
+ *
+ * const summary = await queue.drain();
+ * console.log(`Completed ${summary.completed} / ${summary.total}`);
+ * ```
+ */
 export class TransferQueue {
   private readonly engine: TransferEngine;
   private readonly items: InternalTransferQueueItem[] = [];

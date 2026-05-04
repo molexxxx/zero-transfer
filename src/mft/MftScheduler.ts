@@ -61,7 +61,48 @@ interface ActiveTimer {
   scheduleId: string;
 }
 
-/** Runs routes on configured schedules. */
+/**
+ * Runs routes on configured schedules.
+ *
+ * Subscribes to a {@link ScheduleRegistry}, computes the next fire time for
+ * each schedule (cron or interval), and dispatches the matching route through
+ * a runner of your choice (`runRoute` by default, or a wrapped runner for
+ * approvals / rate limiting / circuit breaking). Observers fire on each cycle
+ * for telemetry. Tests can inject a deterministic timer via `timer`.
+ *
+ * @example Wire a cron schedule with audit + approval
+ * ```ts
+ * import {
+ *   ApprovalRegistry,
+ *   InMemoryAuditLog,
+ *   MftScheduler,
+ *   RouteRegistry,
+ *   ScheduleRegistry,
+ *   createApprovalGate,
+ *   runRoute,
+ * } from "@zero-transfer/sdk";
+ *
+ * const audit = new InMemoryAuditLog();
+ * const approvals = new ApprovalRegistry();
+ *
+ * const scheduler = new MftScheduler({
+ *   client,
+ *   routes: new RouteRegistry([route]),
+ *   schedules: new ScheduleRegistry([
+ *     { id: "nightly", routeId: route.id, cron: "0 2 * * *" },
+ *   ]),
+ *   runner: createApprovalGate({
+ *     registry: approvals,
+ *     approvalId: ({ route }) => `release:${route.id}`,
+ *     runner: ({ client: c, route: r, signal }) => runRoute({ client: c, route: r, signal }),
+ *   }),
+ *   onResult: ({ receipt }) => audit.record({ type: "transfer.success", receipt }),
+ *   onError:  ({ error })   => audit.record({ type: "transfer.failure", error }),
+ * });
+ *
+ * scheduler.start();
+ * ```
+ */
 export class MftScheduler {
   private readonly options: MftSchedulerOptions;
   private readonly now: () => Date;
