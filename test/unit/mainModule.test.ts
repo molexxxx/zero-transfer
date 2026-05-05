@@ -1,3 +1,5 @@
+import { pathToFileURL } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { isMainModule } from "../../src/utils/mainModule";
@@ -14,8 +16,7 @@ describe("isMainModule", () => {
       expect(isMainModule("file:///some/url.ts")).toBe(false);
       return;
     }
-    const entryUrl = `file:///${entry.replace(/\\/g, "/")}`;
-    expect(isMainModule(entryUrl)).toBe(true);
+    expect(isMainModule(pathToFileURL(entry).href)).toBe(true);
   });
 
   it("returns false for an invalid URL string", () => {
