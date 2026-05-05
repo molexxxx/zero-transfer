@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/dropbox",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "description": "Dropbox provider with content-hash verification.",
   "keywords": [
     "zero-transfer",
@@ -44,6 +44,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@zero-transfer/core": "^0.4.3"
+    "@zero-transfer/core": "^0.4.4"
   }
 }

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.3**](../README.md)
+[**ZeroTransfer SDK v0.4.4**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: PooledTransferClient
 
-Defined in: [src/core/ConnectionPool.ts:70](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/core/ConnectionPool.ts#L70)
+Defined in: [src/core/ConnectionPool.ts:70](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/core/ConnectionPool.ts#L70)
 
 Pool-aware [TransferClient](../classes/TransferClient.md) returned by
 [createPooledTransferClient](../functions/createPooledTransferClient.md).
@@ -19,7 +19,7 @@ Pool-aware [TransferClient](../classes/TransferClient.md) returned by
 connect(profile): Promise<TransferSession<unknown>>;
 ```
 
-Defined in: [src/core/ConnectionPool.ts:72](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/core/ConnectionPool.ts#L72)
+Defined in: [src/core/ConnectionPool.ts:72](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/core/ConnectionPool.ts#L72)
 
 Opens (or leases) a pooled provider session.
 
@@ -41,7 +41,7 @@ Opens (or leases) a pooled provider session.
 drainPool(): Promise<void>;
 ```
 
-Defined in: [src/core/ConnectionPool.ts:84](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/core/ConnectionPool.ts#L84)
+Defined in: [src/core/ConnectionPool.ts:84](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/core/ConnectionPool.ts#L84)
 
 Disconnects every idle session and prevents further pooling. After
 `drainPool()` resolves, subsequent `connect()` calls still work but
@@ -61,7 +61,7 @@ always create fresh sessions (and never return them to the pool).
 getCapabilities(): CapabilitySet[];
 ```
 
-Defined in: [src/core/ConnectionPool.ts:76](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/core/ConnectionPool.ts#L76)
+Defined in: [src/core/ConnectionPool.ts:76](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/core/ConnectionPool.ts#L76)
 
 Returns the registered capability snapshots (delegated).
 
@@ -75,7 +75,7 @@ Returns the registered capability snapshots (delegated).
 getCapabilities(providerId): CapabilitySet;
 ```
 
-Defined in: [src/core/ConnectionPool.ts:78](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/core/ConnectionPool.ts#L78)
+Defined in: [src/core/ConnectionPool.ts:78](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/core/ConnectionPool.ts#L78)
 
 Returns a specific capability snapshot (delegated).
 
@@ -97,7 +97,7 @@ Returns a specific capability snapshot (delegated).
 hasProvider(providerId): boolean;
 ```
 
-Defined in: [src/core/ConnectionPool.ts:74](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/core/ConnectionPool.ts#L74)
+Defined in: [src/core/ConnectionPool.ts:74](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/core/ConnectionPool.ts#L74)
 
 Inspects the registered providers (delegated to the underlying client).
 
@@ -119,7 +119,7 @@ Inspects the registered providers (delegated to the underlying client).
 poolSize(): number;
 ```
 
-Defined in: [src/core/ConnectionPool.ts:86](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/core/ConnectionPool.ts#L86)
+Defined in: [src/core/ConnectionPool.ts:86](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/core/ConnectionPool.ts#L86)
 
 Returns the number of idle sessions currently held in the pool.
 

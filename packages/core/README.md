@@ -22,7 +22,7 @@ import { createLocalProviderFactory } from "@zero-transfer/core";
 
 ## Public surface
 
-This package publishes a narrowed surface of **92** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
+This package publishes a narrowed surface of **93** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
 
 | Symbol                                                                                                                                                         | Kind         | Notes              |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------ |
@@ -118,6 +118,7 @@ This package publishes a narrowed surface of **92** exports. These symbols are a
 | [`ZeroTransferLogger`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/ZeroTransferLogger.md)                                     | Interface    | See API reference. |
 | [`noopLogger`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/variables/noopLogger.md)                                                      | Variable     | See API reference. |
 | [`emitLog`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/emitLog.md)                                                            | Function     | See API reference. |
+| [`isMainModule`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/isMainModule.md)                                                  | Function     | See API reference. |
 
 ## Examples
 

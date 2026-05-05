@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.3**](../README.md)
+[**ZeroTransfer SDK v0.4.4**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ConnectionDiagnosticTimings
 
-Defined in: [src/diagnostics/index.ts:48](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/diagnostics/index.ts#L48)
+Defined in: [src/diagnostics/index.ts:48](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/diagnostics/index.ts#L48)
 
 Per-step duration measurements collected by [runConnectionDiagnostics](../functions/runConnectionDiagnostics.md).
 
@@ -14,6 +14,6 @@ Per-step duration measurements collected by [runConnectionDiagnostics](../functi
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="connectms"></a> `connectMs?` | `number` | Total time spent inside `client.connect`. | [src/diagnostics/index.ts:50](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/diagnostics/index.ts#L50) |
-| <a id="disconnectms"></a> `disconnectMs?` | `number` | Time spent inside the optional `session.disconnect`. | [src/diagnostics/index.ts:54](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/diagnostics/index.ts#L54) |
-| <a id="listms"></a> `listMs?` | `number` | Time spent inside the optional `fs.list` probe. | [src/diagnostics/index.ts:52](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/diagnostics/index.ts#L52) |
+| <a id="connectms"></a> `connectMs?` | `number` | Total time spent inside `client.connect`. | [src/diagnostics/index.ts:50](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/diagnostics/index.ts#L50) |
+| <a id="disconnectms"></a> `disconnectMs?` | `number` | Time spent inside the optional `session.disconnect`. | [src/diagnostics/index.ts:54](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/diagnostics/index.ts#L54) |
+| <a id="listms"></a> `listMs?` | `number` | Time spent inside the optional `fs.list` probe. | [src/diagnostics/index.ts:52](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/diagnostics/index.ts#L52) |

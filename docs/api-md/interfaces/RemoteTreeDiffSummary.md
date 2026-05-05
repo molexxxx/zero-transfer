@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.3**](../README.md)
+[**ZeroTransfer SDK v0.4.4**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: RemoteTreeDiffSummary
 
-Defined in: [src/sync/diffRemoteTrees.ts:36](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L36)
+Defined in: [src/sync/diffRemoteTrees.ts:36](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/diffRemoteTrees.ts#L36)
 
 Compact summary of a diff result.
 
@@ -14,8 +14,8 @@ Compact summary of a diff result.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="added"></a> `added` | `number` | Number of entries present only on the source side. | [src/sync/diffRemoteTrees.ts:38](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L38) |
-| <a id="modified"></a> `modified` | `number` | Number of entries present on both sides whose contents differ. | [src/sync/diffRemoteTrees.ts:42](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L42) |
-| <a id="removed"></a> `removed` | `number` | Number of entries present only on the destination side. | [src/sync/diffRemoteTrees.ts:40](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L40) |
-| <a id="total"></a> `total` | `number` | Total entries inspected across both sides. | [src/sync/diffRemoteTrees.ts:46](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L46) |
-| <a id="unchanged"></a> `unchanged` | `number` | Number of entries present on both sides with identical contents. | [src/sync/diffRemoteTrees.ts:44](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L44) |
+| <a id="added"></a> `added` | `number` | Number of entries present only on the source side. | [src/sync/diffRemoteTrees.ts:38](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/diffRemoteTrees.ts#L38) |
+| <a id="modified"></a> `modified` | `number` | Number of entries present on both sides whose contents differ. | [src/sync/diffRemoteTrees.ts:42](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/diffRemoteTrees.ts#L42) |
+| <a id="removed"></a> `removed` | `number` | Number of entries present only on the destination side. | [src/sync/diffRemoteTrees.ts:40](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/diffRemoteTrees.ts#L40) |
+| <a id="total"></a> `total` | `number` | Total entries inspected across both sides. | [src/sync/diffRemoteTrees.ts:46](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/diffRemoteTrees.ts#L46) |
+| <a id="unchanged"></a> `unchanged` | `number` | Number of entries present on both sides with identical contents. | [src/sync/diffRemoteTrees.ts:44](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/diffRemoteTrees.ts#L44) |

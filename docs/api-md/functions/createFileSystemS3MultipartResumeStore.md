@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.3**](../README.md)
+[**ZeroTransfer SDK v0.4.4**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createFileSystemS3MultipartResumeStore(options): S3MultipartResumeStore;
 ```
 
-Defined in: [src/providers/web/S3Provider.ts:188](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/providers/web/S3Provider.ts#L188)
+Defined in: [src/providers/web/S3Provider.ts:188](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/providers/web/S3Provider.ts#L188)
 
 File-system backed [S3MultipartResumeStore](../interfaces/S3MultipartResumeStore.md) that survives process
 restarts. Each in-flight multipart upload is checkpointed to a single

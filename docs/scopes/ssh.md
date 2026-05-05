@@ -43,6 +43,9 @@ This is the actual surface published by [`@zero-transfer/ssh`](https://www.npmjs
 | [`matchKnownHostsEntry`](../api-md/functions/matchKnownHostsEntry.md) | Function | See API reference. |
 | [`KnownHostsEntry`](../api-md/interfaces/KnownHostsEntry.md) | Interface | See API reference. |
 | [`KnownHostsMarker`](../api-md/type-aliases/KnownHostsMarker.md) | Type | See API reference. |
+| [`runSshCommand`](../api-md/functions/runSshCommand.md) | Function | See API reference. |
+| [`RunSshCommandOptions`](../api-md/interfaces/RunSshCommandOptions.md) | Interface | See API reference. |
+| [`RunSshCommandResult`](../api-md/interfaces/RunSshCommandResult.md) | Interface | See API reference. |
 
 ## Examples
 

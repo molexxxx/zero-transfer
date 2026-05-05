@@ -26,7 +26,7 @@ import {
 
 ## Public surface
 
-This package publishes a narrowed surface of **23** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
+This package publishes a narrowed surface of **26** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
 
 | Symbol                                                                                                                                                  | Kind      | Notes              |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
@@ -53,6 +53,9 @@ This package publishes a narrowed surface of **23** exports. These symbols are a
 | [`matchKnownHostsEntry`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/matchKnownHostsEntry.md)                           | Function  | See API reference. |
 | [`KnownHostsEntry`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/KnownHostsEntry.md)                                    | Interface | See API reference. |
 | [`KnownHostsMarker`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/KnownHostsMarker.md)                                | Type      | See API reference. |
+| [`runSshCommand`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/runSshCommand.md)                                         | Function  | See API reference. |
+| [`RunSshCommandOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/RunSshCommandOptions.md)                          | Interface | See API reference. |
+| [`RunSshCommandResult`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/RunSshCommandResult.md)                            | Interface | See API reference. |
 
 ## Examples
 

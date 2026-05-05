@@ -1,8 +1,8 @@
-**ZeroTransfer SDK v0.4.3**
+**ZeroTransfer SDK v0.4.4**
 
 ***
 
-# ZeroTransfer SDK v0.4.3
+# ZeroTransfer SDK v0.4.4
 
 ZeroTransfer public API surface.
 
@@ -70,6 +70,7 @@ path safety utilities used by future protocol adapters.
 | [inboxFailedPath](functions/inboxFailedPath.md) | Computes the absolute path used to quarantine failed files. |
 | [inboxProcessedPath](functions/inboxProcessedPath.md) | Computes the absolute path used to archive successfully processed files. |
 | [isClassicProviderId](functions/isClassicProviderId.md) | Checks whether a provider id belongs to the classic FTP/FTPS/SFTP family. |
+| [isMainModule](functions/isMainModule.md) | Returns `true` when the file containing `import.meta.url` is the entry point of the current Node.js process. Returns `false` outside Node. |
 | [isSensitiveKey](functions/isSensitiveKey.md) | Checks whether an object key is likely to contain sensitive data. |
 | [joinRemotePath](functions/joinRemotePath.md) | Joins remote path segments and normalizes the result. |
 | [matchKnownHosts](functions/matchKnownHosts.md) | Filters parsed entries down to those that match the given host/port. Negations are honored. |
@@ -101,6 +102,7 @@ path safety utilities used by future protocol adapters.
 | [resolveSecret](functions/resolveSecret.md) | Resolves a secret source into a string or Buffer without logging the value. |
 | [runConnectionDiagnostics](functions/runConnectionDiagnostics.md) | Connects to a profile, captures capability and listing samples, and returns a redaction-safe report. |
 | [runRoute](functions/runRoute.md) | Executes an MFT route as a single transfer through the supplied client. |
+| [runSshCommand](functions/runSshCommand.md) | Connects, authenticates, runs `command` on a fresh exec channel, drains stdout, and disconnects. The TCP socket, transport, auth session, and channel are all owned by this helper and torn down before it returns. |
 | [serializeRemoteManifest](functions/serializeRemoteManifest.md) | Serializes a manifest to a JSON string suitable for persistence. |
 | [signWebhookPayload](functions/signWebhookPayload.md) | Computes the HMAC-SHA256 signature for a webhook payload. |
 | [sortRemoteEntries](functions/sortRemoteEntries.md) | Returns a copy of the supplied entries sorted by the requested key. Directories are grouped before files within ascending sorts, matching common file-manager UX. |
@@ -269,6 +271,8 @@ path safety utilities used by future protocol adapters.
 | [RmdirOptions](interfaces/RmdirOptions.md) | Options for removing a remote directory. |
 | [RunConnectionDiagnosticsOptions](interfaces/RunConnectionDiagnosticsOptions.md) | Options accepted by [runConnectionDiagnostics](functions/runConnectionDiagnostics.md). |
 | [RunRouteOptions](interfaces/RunRouteOptions.md) | Options accepted by [runRoute](functions/runRoute.md). |
+| [RunSshCommandOptions](interfaces/RunSshCommandOptions.md) | Options for [runSshCommand](functions/runSshCommand.md). |
+| [RunSshCommandResult](interfaces/RunSshCommandResult.md) | Result of [runSshCommand](functions/runSshCommand.md). The full captured stdout is provided as both a `Buffer` (for binary output) and as a UTF-8 decoded `string`. |
 | [S3MultipartCheckpoint](interfaces/S3MultipartCheckpoint.md) | Persisted multipart-upload checkpoint. |
 | [S3MultipartOptions](interfaces/S3MultipartOptions.md) | Multipart upload tuning for the S3 provider. |
 | [S3MultipartPart](interfaces/S3MultipartPart.md) | Single part recorded in a multipart-upload checkpoint. |

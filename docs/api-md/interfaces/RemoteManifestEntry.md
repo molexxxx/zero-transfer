@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.3**](../README.md)
+[**ZeroTransfer SDK v0.4.4**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: RemoteManifestEntry
 
-Defined in: [src/sync/manifest.ts:32](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/manifest.ts#L32)
+Defined in: [src/sync/manifest.ts:32](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/manifest.ts#L32)
 
 Manifest entry recorded for each visited remote node.
 
@@ -14,9 +14,9 @@ Manifest entry recorded for each visited remote node.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="modifiedat"></a> `modifiedAt?` | `string` | Last modification time as an ISO 8601 timestamp when known. | [src/sync/manifest.ts:40](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/manifest.ts#L40) |
-| <a id="path"></a> `path` | `string` | Path relative to [RemoteManifest.root](RemoteManifest.md#root), beginning with `/`. | [src/sync/manifest.ts:34](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/manifest.ts#L34) |
-| <a id="size"></a> `size?` | `number` | Entry size in bytes when known. | [src/sync/manifest.ts:38](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/manifest.ts#L38) |
-| <a id="symlinktarget"></a> `symlinkTarget?` | `string` | Target path for symbolic links when known. | [src/sync/manifest.ts:44](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/manifest.ts#L44) |
-| <a id="type"></a> `type` | [`RemoteEntryType`](../type-aliases/RemoteEntryType.md) | Entry kind. | [src/sync/manifest.ts:36](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/manifest.ts#L36) |
-| <a id="uniqueid"></a> `uniqueId?` | `string` | Protocol-specific stable identity when available. | [src/sync/manifest.ts:42](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/manifest.ts#L42) |
+| <a id="modifiedat"></a> `modifiedAt?` | `string` | Last modification time as an ISO 8601 timestamp when known. | [src/sync/manifest.ts:40](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/manifest.ts#L40) |
+| <a id="path"></a> `path` | `string` | Path relative to [RemoteManifest.root](RemoteManifest.md#root), beginning with `/`. | [src/sync/manifest.ts:34](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/manifest.ts#L34) |
+| <a id="size"></a> `size?` | `number` | Entry size in bytes when known. | [src/sync/manifest.ts:38](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/manifest.ts#L38) |
+| <a id="symlinktarget"></a> `symlinkTarget?` | `string` | Target path for symbolic links when known. | [src/sync/manifest.ts:44](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/manifest.ts#L44) |
+| <a id="type"></a> `type` | [`RemoteEntryType`](../type-aliases/RemoteEntryType.md) | Entry kind. | [src/sync/manifest.ts:36](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/manifest.ts#L36) |
+| <a id="uniqueid"></a> `uniqueId?` | `string` | Protocol-specific stable identity when available. | [src/sync/manifest.ts:42](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/manifest.ts#L42) |

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.3**](../README.md)
+[**ZeroTransfer SDK v0.4.4**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: CountRetentionPolicy
 
-Defined in: [src/mft/retention.ts:23](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/mft/retention.ts#L23)
+Defined in: [src/mft/retention.ts:23](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/retention.ts#L23)
 
 Retention policy that retains the newest `maxCount` entries.
 
@@ -14,6 +14,6 @@ Retention policy that retains the newest `maxCount` entries.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="kind"></a> `kind` | `"count"` | Discriminator. | [src/mft/retention.ts:25](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/mft/retention.ts#L25) |
-| <a id="maxcount"></a> `maxCount` | `number` | Maximum number of entries to retain. | [src/mft/retention.ts:27](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/mft/retention.ts#L27) |
-| <a id="sortby"></a> `sortBy?` | `"name"` \| `"modifiedAt"` | Field used to rank entries from newest to oldest. Defaults to `"modifiedAt"`. `"name"` sorts lexicographically (descending). | [src/mft/retention.ts:32](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/mft/retention.ts#L32) |
+| <a id="kind"></a> `kind` | `"count"` | Discriminator. | [src/mft/retention.ts:25](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/retention.ts#L25) |
+| <a id="maxcount"></a> `maxCount` | `number` | Maximum number of entries to retain. | [src/mft/retention.ts:27](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/retention.ts#L27) |
+| <a id="sortby"></a> `sortBy?` | `"name"` \| `"modifiedAt"` | Field used to rank entries from newest to oldest. Defaults to `"modifiedAt"`. `"name"` sorts lexicographically (descending). | [src/mft/retention.ts:32](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/retention.ts#L32) |

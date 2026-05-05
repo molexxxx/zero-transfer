@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.3**](../README.md)
+[**ZeroTransfer SDK v0.4.4**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: SshDataWriter
 
-Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:10](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/protocols/ssh/binary/SshDataWriter.ts#L10)
+Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:10](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/protocols/ssh/binary/SshDataWriter.ts#L10)
 
 Minimal SSH primitive encoder for transport and authentication packets.
 
@@ -30,7 +30,7 @@ new SshDataWriter(): SshDataWriter;
 toBuffer(): Buffer;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:83](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/protocols/ssh/binary/SshDataWriter.ts#L83)
+Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:83](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/protocols/ssh/binary/SshDataWriter.ts#L83)
 
 #### Returns
 
@@ -44,7 +44,7 @@ Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:83](https://github.com/to
 writeBoolean(value): this;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:21](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/protocols/ssh/binary/SshDataWriter.ts#L21)
+Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:21](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/protocols/ssh/binary/SshDataWriter.ts#L21)
 
 #### Parameters
 
@@ -64,7 +64,7 @@ Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:21](https://github.com/to
 writeByte(value): this;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:14](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/protocols/ssh/binary/SshDataWriter.ts#L14)
+Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:14](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/protocols/ssh/binary/SshDataWriter.ts#L14)
 
 #### Parameters
 
@@ -84,7 +84,7 @@ Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:14](https://github.com/to
 writeBytes(value): this;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:25](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/protocols/ssh/binary/SshDataWriter.ts#L25)
+Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:25](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/protocols/ssh/binary/SshDataWriter.ts#L25)
 
 #### Parameters
 
@@ -104,7 +104,7 @@ Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:25](https://github.com/to
 writeMpint(value): this;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:63](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/protocols/ssh/binary/SshDataWriter.ts#L63)
+Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:63](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/protocols/ssh/binary/SshDataWriter.ts#L63)
 
 #### Parameters
 
@@ -124,7 +124,7 @@ Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:63](https://github.com/to
 writeNameList(values): this;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:69](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/protocols/ssh/binary/SshDataWriter.ts#L69)
+Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:69](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/protocols/ssh/binary/SshDataWriter.ts#L69)
 
 #### Parameters
 
@@ -144,7 +144,7 @@ Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:69](https://github.com/to
 writeString(value, encoding?): this;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:57](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/protocols/ssh/binary/SshDataWriter.ts#L57)
+Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:57](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/protocols/ssh/binary/SshDataWriter.ts#L57)
 
 #### Parameters
 
@@ -165,7 +165,7 @@ Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:57](https://github.com/to
 writeUint32(value): this;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:29](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/protocols/ssh/binary/SshDataWriter.ts#L29)
+Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:29](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/protocols/ssh/binary/SshDataWriter.ts#L29)
 
 #### Parameters
 
@@ -185,7 +185,7 @@ Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:29](https://github.com/to
 writeUint64(value): this;
 ```
 
-Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:43](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/protocols/ssh/binary/SshDataWriter.ts#L43)
+Defined in: [src/protocols/ssh/binary/SshDataWriter.ts:43](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/protocols/ssh/binary/SshDataWriter.ts#L43)
 
 #### Parameters
 

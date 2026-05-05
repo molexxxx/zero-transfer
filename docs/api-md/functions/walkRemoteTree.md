@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.3**](../README.md)
+[**ZeroTransfer SDK v0.4.4**](../README.md)
 
 ***
 
@@ -13,7 +13,7 @@ function walkRemoteTree(
 options?): AsyncGenerator<RemoteTreeEntry>;
 ```
 
-Defined in: [src/sync/walkRemoteTree.ts:55](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/walkRemoteTree.ts#L55)
+Defined in: [src/sync/walkRemoteTree.ts:55](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/walkRemoteTree.ts#L55)
 
 Walks a remote file system depth-first, yielding entries in a stable order.
 

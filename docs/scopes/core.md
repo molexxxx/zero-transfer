@@ -112,6 +112,7 @@ This is the actual surface published by [`@zero-transfer/core`](https://www.npmj
 | [`ZeroTransferLogger`](../api-md/interfaces/ZeroTransferLogger.md) | Interface | See API reference. |
 | [`noopLogger`](../api-md/variables/noopLogger.md) | Variable | See API reference. |
 | [`emitLog`](../api-md/functions/emitLog.md) | Function | See API reference. |
+| [`isMainModule`](../api-md/functions/isMainModule.md) | Function | See API reference. |
 
 ## Examples
 

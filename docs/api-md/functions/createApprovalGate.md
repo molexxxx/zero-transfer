@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.3**](../README.md)
+[**ZeroTransfer SDK v0.4.4**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createApprovalGate(options): ScheduleRouteRunner;
 ```
 
-Defined in: [src/mft/approvals.ts:250](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/mft/approvals.ts#L250)
+Defined in: [src/mft/approvals.ts:250](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/approvals.ts#L250)
 
 Wraps a route runner with an approval gate.
 

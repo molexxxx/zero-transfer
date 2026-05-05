@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.3**](../README.md)
+[**ZeroTransfer SDK v0.4.4**](../README.md)
 
 ***
 
@@ -13,7 +13,7 @@ function matchKnownHosts(
    port?): KnownHostsEntry[];
 ```
 
-Defined in: [src/profiles/importers/KnownHostsParser.ts:133](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/profiles/importers/KnownHostsParser.ts#L133)
+Defined in: [src/profiles/importers/KnownHostsParser.ts:133](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/profiles/importers/KnownHostsParser.ts#L133)
 
 Filters parsed entries down to those that match the given host/port. Negations are honored.
 
