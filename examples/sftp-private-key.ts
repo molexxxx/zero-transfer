@@ -8,8 +8,12 @@
  * **optional but strongly recommended** — without it (or `ssh.knownHosts`) the
  * SSH session does not verify the server's host key.
  */
-import { createTransferClient, uploadFile, type ConnectionProfile } from "@zero-transfer/core";
-import { createSftpProviderFactory } from "@zero-transfer/sftp";
+import {
+  createSftpProviderFactory,
+  createTransferClient,
+  uploadFile,
+  type ConnectionProfile,
+} from "@zero-transfer/sftp";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {

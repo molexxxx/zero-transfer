@@ -10,12 +10,12 @@
 import { fileURLToPath } from "node:url";
 
 import {
+  createFtpProviderFactory,
   createTransferClient,
   downloadFile,
   uploadFile,
   type ConnectionProfile,
-} from "@zero-transfer/core";
-import { createFtpProviderFactory } from "@zero-transfer/ftp";
+} from "@zero-transfer/ftp";
 
 async function main(): Promise<void> {
   const client = createTransferClient({

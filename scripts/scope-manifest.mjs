@@ -17,6 +17,7 @@
  * @property {string} summary               One-line summary for tables/cards.
  * @property {string} description           Multi-line description for the package page.
  * @property {Record<string,string>} deps   Runtime npm dependencies for this scope (e.g. { "ssh2": "^1.17.0" }).
+ * @property {Record<string,string>} [peerDeps] Optional peer dependencies for this scope.
  * @property {string[]} exports             Names of exports (functions, types, classes) that belong to the eventual surface.
  * @property {string[]} examples            Example files relevant to this scope.
  */

@@ -15,12 +15,12 @@ import { join } from "node:path";
 import {
   createAtomicDeployPlan,
   createLocalProviderFactory,
+  createSftpProviderFactory,
   createTransferClient,
   diffRemoteTrees,
   type AtomicDeployActivateStep,
   type ConnectionProfile,
-} from "@zero-transfer/core";
-import { createSftpProviderFactory } from "@zero-transfer/sftp";
+} from "@zero-transfer/sftp";
 
 async function listExistingReleases(remoteRoot: string): Promise<string[]> {
   // Real SFTP impl would call session.fs.list; this stub demonstrates the shape.

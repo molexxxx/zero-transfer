@@ -6,12 +6,12 @@
  * Range-resume, and exposes the upstream ETag as the receipt checksum.
  */
 import {
+  createHttpProviderFactory,
   createLocalProviderFactory,
   createTransferClient,
   downloadFile,
   type ConnectionProfile,
-} from "@zero-transfer/core";
-import { createHttpProviderFactory } from "@zero-transfer/http";
+} from "@zero-transfer/http";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {

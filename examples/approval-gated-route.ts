@@ -13,12 +13,12 @@ import {
   RouteRegistry,
   ScheduleRegistry,
   createApprovalGate,
+  createSftpProviderFactory,
   createTransferClient,
   runRoute,
   type MftRoute,
   type MftSchedule,
-} from "@zero-transfer/mft";
-import { createSftpProviderFactory } from "@zero-transfer/sftp";
+} from "@zero-transfer/sdk";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {

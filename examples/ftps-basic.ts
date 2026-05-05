@@ -15,8 +15,12 @@
  * See `ftps-client-certificate.ts` for the production-hardened variant.
  */
 import { fileURLToPath } from "node:url";
-import { createTransferClient, uploadFile, type ConnectionProfile } from "@zero-transfer/core";
-import { createFtpsProviderFactory } from "@zero-transfer/ftps";
+import {
+  createFtpsProviderFactory,
+  createTransferClient,
+  uploadFile,
+  type ConnectionProfile,
+} from "@zero-transfer/ftps";
 
 async function main(): Promise<void> {
   const client = createTransferClient({

@@ -10,8 +10,12 @@
  * `tls.pinnedFingerprint256` is **optional but recommended** as defence in
  * depth against rogue certificates issued by an otherwise-trusted CA.
  */
-import { createTransferClient, uploadFile, type ConnectionProfile } from "@zero-transfer/core";
-import { createFtpsProviderFactory } from "@zero-transfer/ftps";
+import {
+  createFtpsProviderFactory,
+  createTransferClient,
+  uploadFile,
+  type ConnectionProfile,
+} from "@zero-transfer/ftps";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {

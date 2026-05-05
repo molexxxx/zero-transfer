@@ -12,8 +12,12 @@
  *   - add `ssh.knownHosts` or `ssh.pinnedHostKeySha256` to this profile.
  */
 import { fileURLToPath } from "node:url";
-import { createTransferClient, uploadFile, type ConnectionProfile } from "@zero-transfer/core";
-import { createSftpProviderFactory } from "@zero-transfer/sftp";
+import {
+  createSftpProviderFactory,
+  createTransferClient,
+  uploadFile,
+  type ConnectionProfile,
+} from "@zero-transfer/sftp";
 
 async function main(): Promise<void> {
   const client = createTransferClient({

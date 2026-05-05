@@ -5,8 +5,13 @@
  * persistent resume store, then upload a large file via the friendly helper.
  * Works against AWS S3, MinIO, R2, Wasabi, and other SigV4-compatible APIs.
  */
-import { createTransferClient, uploadFile, type ConnectionProfile } from "@zero-transfer/core";
-import { createMemoryS3MultipartResumeStore, createS3ProviderFactory } from "@zero-transfer/s3";
+import {
+  createMemoryS3MultipartResumeStore,
+  createS3ProviderFactory,
+  createTransferClient,
+  uploadFile,
+  type ConnectionProfile,
+} from "@zero-transfer/s3";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {

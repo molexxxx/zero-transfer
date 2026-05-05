@@ -9,12 +9,12 @@ import {
   MftScheduler,
   RouteRegistry,
   ScheduleRegistry,
+  createS3ProviderFactory,
+  createSftpProviderFactory,
   createTransferClient,
   type MftRoute,
   type MftSchedule,
-} from "@zero-transfer/mft";
-import { createS3ProviderFactory } from "@zero-transfer/s3";
-import { createSftpProviderFactory } from "@zero-transfer/sftp";
+} from "@zero-transfer/sdk";
 
 import { fileURLToPath } from "node:url";
 async function main(): Promise<void> {
