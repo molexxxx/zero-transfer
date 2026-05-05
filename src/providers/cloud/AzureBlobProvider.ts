@@ -12,6 +12,7 @@
 import type { CapabilitySet, ChecksumCapability } from "../../core/CapabilitySet";
 import type { ProviderId } from "../../core/ProviderId";
 import type { TransferSession } from "../../core/TransferSession";
+import { randomBytes as cryptoRandomBytes } from "node:crypto";
 import {
   AuthenticationError,
   ConfigurationError,
@@ -45,6 +46,10 @@ export type { HttpFetch };
 
 const AZURE_BLOB_API_VERSION = "2023-11-03";
 const AZURE_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["md5"];
+const DEFAULT_AZURE_PART_SIZE = 8 * 1024 * 1024;
+const DEFAULT_AZURE_THRESHOLD = 8 * 1024 * 1024;
+// Azure caps a single Put Block at 4000 MiB; we reject configs above that.
+const AZURE_MAX_PART_SIZE = 4000 * 1024 * 1024;
 
 /** Options accepted by {@link createAzureBlobProviderFactory}. */
 export interface AzureBlobProviderOptions {
@@ -68,6 +73,29 @@ export interface AzureBlobProviderOptions {
   fetch?: HttpFetch;
   /** Default headers applied before bearer auth on every request. */
   defaultHeaders?: Record<string, string>;
+  /** Multipart (staged-block) upload tuning. Enabled by default. */
+  multipart?: AzureBlobMultipartOptions;
+}
+
+/** Multipart (staged block) upload tuning for the Azure Blob provider. */
+export interface AzureBlobMultipartOptions {
+  /**
+   * Enable staged-block uploads via `Put Block` + `Put Block List`. **Defaults
+   * to `true`** so payloads above {@link AzureBlobMultipartOptions.thresholdBytes}
+   * stream in fixed-size blocks instead of being buffered into a single PUT.
+   * Set to `false` to force single-shot block-blob PUTs.
+   */
+  enabled?: boolean;
+  /** Object size threshold above which staged-block upload is used. Defaults to 8 MiB. */
+  thresholdBytes?: number;
+  /** Target block size in bytes. Defaults to 8 MiB. Maximum 4000 MiB per Azure. */
+  partSizeBytes?: number;
+}
+
+interface ResolvedAzureMultipartOptions {
+  enabled: boolean;
+  thresholdBytes: number;
+  partSizeBytes: number;
 }
 
 /**
@@ -129,6 +157,37 @@ export function createAzureBlobProviderFactory(options: AzureBlobProviderOptions
   }
   const endpoint = resolveAzureEndpoint(options);
   const apiVersion = options.apiVersion ?? AZURE_BLOB_API_VERSION;
+  const multipartEnabled = options.multipart?.enabled ?? true;
+  const partSizeBytes = options.multipart?.partSizeBytes ?? DEFAULT_AZURE_PART_SIZE;
+  const thresholdBytes = options.multipart?.thresholdBytes ?? DEFAULT_AZURE_THRESHOLD;
+  if (multipartEnabled) {
+    if (!Number.isInteger(partSizeBytes) || partSizeBytes <= 0) {
+      throw new ConfigurationError({
+        details: { partSizeBytes },
+        message: "AzureBlobMultipartOptions.partSizeBytes must be a positive integer",
+        retryable: false,
+      });
+    }
+    if (partSizeBytes > AZURE_MAX_PART_SIZE) {
+      throw new ConfigurationError({
+        details: { maxBytes: AZURE_MAX_PART_SIZE, partSizeBytes },
+        message: `AzureBlobMultipartOptions.partSizeBytes must not exceed ${String(AZURE_MAX_PART_SIZE)} bytes (4000 MiB)`,
+        retryable: false,
+      });
+    }
+    if (!Number.isInteger(thresholdBytes) || thresholdBytes < 0) {
+      throw new ConfigurationError({
+        details: { thresholdBytes },
+        message: "AzureBlobMultipartOptions.thresholdBytes must be a non-negative integer",
+        retryable: false,
+      });
+    }
+  }
+  const multipart: ResolvedAzureMultipartOptions = {
+    enabled: multipartEnabled,
+    partSizeBytes,
+    thresholdBytes,
+  };
 
   const capabilities: CapabilitySet = {
     atomicRename: false,
@@ -139,13 +198,19 @@ export function createAzureBlobProviderFactory(options: AzureBlobProviderOptions
     list: true,
     maxConcurrency: 4,
     metadata: ["modifiedAt", "uniqueId"],
-    notes: [
-      "Azure Blob provider performs single-shot block-blob uploads via PUT; staged-block + Put Block List uploads are not yet supported.",
-    ],
+    notes: multipartEnabled
+      ? [
+          `Azure Blob staged-block upload enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`,
+          "Payloads at or below the threshold automatically fall back to single-shot block-blob PUT.",
+          "Pass `multipart: { enabled: false }` to force the legacy single-shot behaviour.",
+        ]
+      : [
+          "Azure Blob provider performs single-shot block-blob uploads via PUT; entire object is buffered in memory before transmission.",
+        ],
     provider: id,
     readStream: true,
     resumeDownload: true,
-    resumeUpload: false,
+    resumeUpload: multipartEnabled,
     serverSideCopy: false,
     serverSideMove: false,
     stat: true,
@@ -164,6 +229,7 @@ export function createAzureBlobProviderFactory(options: AzureBlobProviderOptions
         endpoint,
         fetch: fetchImpl,
         id,
+        multipart,
         ...(options.sasToken !== undefined ? { sasToken: options.sasToken } : {}),
       }),
     id,
@@ -191,6 +257,7 @@ interface AzureBlobInternalOptions {
   endpoint: string;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedAzureMultipartOptions;
   sasToken?: string;
 }
 
@@ -224,6 +291,7 @@ class AzureBlobProvider implements TransferProvider {
       endpoint: this.internals.endpoint,
       fetch: this.internals.fetch,
       id: this.internals.id,
+      multipart: this.internals.multipart,
     };
     if (bearerToken !== undefined) sessionOptions.bearerToken = bearerToken;
     if (this.internals.sasToken !== undefined) sessionOptions.sasToken = this.internals.sasToken;
@@ -241,6 +309,7 @@ interface AzureBlobSessionOptions {
   endpoint: string;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedAzureMultipartOptions;
   sasToken?: string;
   timeoutMs?: number;
 }
@@ -374,12 +443,25 @@ class AzureBlobTransferOperations implements ProviderTransferOperations {
     if (request.offset !== undefined && request.offset > 0) {
       throw new UnsupportedFeatureError({
         details: { offset: request.offset },
-        message: "Azure Blob provider does not yet support staged-block resumable uploads",
+        message:
+          "Azure Blob provider does not yet support cross-attempt resume of staged-block uploads",
         retryable: false,
       });
     }
     const normalized = normalizeRemotePath(request.endpoint.path);
-    const buffered = await collectChunks(request.content);
+    const multipart = this.options.multipart;
+    if (!multipart.enabled) {
+      const buffered = await collectChunks(request.content);
+      return this.singleShotPut(request, normalized, buffered);
+    }
+    return this.writeStagedBlocks(request, normalized);
+  }
+
+  private async singleShotPut(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+    buffered: Uint8Array,
+  ): Promise<ProviderTransferWriteResult> {
     const url = buildBlobUrl(this.options, normalized);
     const response = await azureFetch(this.options, "PUT", url, {
       ...(request.signal !== undefined ? { signal: request.signal } : {}),
@@ -398,6 +480,105 @@ class AzureBlobTransferOperations implements ProviderTransferOperations {
       totalBytes: buffered.byteLength,
     };
     const md5 = response.headers.get("content-md5");
+    if (md5 !== null && md5 !== "") result.checksum = md5;
+    return result;
+  }
+
+  private async writeStagedBlocks(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+  ): Promise<ProviderTransferWriteResult> {
+    const multipart = this.options.multipart;
+    const partSize = multipart.partSizeBytes;
+    const iterator = request.content[Symbol.asyncIterator]();
+    // Per-upload nonce keeps block ids unique across concurrent writers targeting
+    // the same blob path (uncommitted blocks linger for 7 days on Azure).
+    const uploadNonce = generateUploadNonce();
+
+    // Buffer up to thresholdBytes so small payloads fall back to single-shot PUT.
+    const initialBuffer: Uint8Array[] = [];
+    let initialSize = 0;
+    while (initialSize <= multipart.thresholdBytes) {
+      const next = await iterator.next();
+      if (next.done === true) break;
+      const chunk = next.value;
+      if (chunk.byteLength === 0) continue;
+      initialBuffer.push(chunk);
+      initialSize += chunk.byteLength;
+    }
+    if (initialSize <= multipart.thresholdBytes) {
+      return this.singleShotPut(request, normalized, concatChunks(initialBuffer, initialSize));
+    }
+
+    const blockIds: string[] = [];
+    let bytesTransferred = 0;
+    let partNumber = 1;
+    let buffer: Uint8Array[] = [...initialBuffer];
+    let bufferSize = initialSize;
+
+    const flushBlocks = async (final: boolean): Promise<void> => {
+      while (bufferSize >= partSize || (final && bufferSize > 0)) {
+        const take = Math.min(bufferSize, partSize);
+        const sliced = sliceFromBuffers(buffer, take);
+        buffer = sliced.remaining;
+        bufferSize -= sliced.bytes.byteLength;
+        const blockId = encodeBlockId(uploadNonce, partNumber);
+        const blockUrl = buildBlobUrl(this.options, normalized, {
+          blockid: blockId,
+          comp: "block",
+        });
+        const response = await azureFetch(this.options, "PUT", blockUrl, {
+          ...(request.signal !== undefined ? { signal: request.signal } : {}),
+          body: sliced.bytes,
+          extraHeaders: { "content-type": "application/octet-stream" },
+        });
+        if (!response.ok) {
+          throw mapAzureResponseError(response, normalized, await safeReadText(response));
+        }
+        blockIds.push(blockId);
+        bytesTransferred += sliced.bytes.byteLength;
+        request.reportProgress(bytesTransferred, undefined);
+        partNumber += 1;
+      }
+    };
+
+    await flushBlocks(false);
+    while (true) {
+      request.throwIfAborted();
+      const next = await iterator.next();
+      if (next.done === true) break;
+      if (next.value.byteLength === 0) continue;
+      buffer.push(next.value);
+      bufferSize += next.value.byteLength;
+      await flushBlocks(false);
+    }
+    await flushBlocks(true);
+
+    if (blockIds.length === 0) {
+      throw new ConnectionError({
+        message: "Azure Blob staged-block upload completed with zero blocks",
+        retryable: false,
+      });
+    }
+
+    const commitUrl = buildBlobUrl(this.options, normalized, { comp: "blocklist" });
+    const xmlBody = buildBlockListXml(blockIds);
+    const commitResponse = await azureFetch(this.options, "PUT", commitUrl, {
+      ...(request.signal !== undefined ? { signal: request.signal } : {}),
+      body: new TextEncoder().encode(xmlBody),
+      extraHeaders: {
+        "content-type": "application/xml",
+        "x-ms-blob-content-type": "application/octet-stream",
+      },
+    });
+    if (!commitResponse.ok) {
+      throw mapAzureResponseError(commitResponse, normalized, await safeReadText(commitResponse));
+    }
+    const result: ProviderTransferWriteResult = {
+      bytesTransferred,
+      totalBytes: bytesTransferred,
+    };
+    const md5 = commitResponse.headers.get("content-md5");
     if (md5 !== null && md5 !== "") result.checksum = md5;
     return result;
   }
@@ -463,17 +644,24 @@ function buildContainerUrl(
   return `${options.endpoint}/${encodeURIComponent(options.container)}?${search.toString()}`;
 }
 
-function buildBlobUrl(options: AzureBlobSessionOptions, normalized: string): string {
+function buildBlobUrl(
+  options: AzureBlobSessionOptions,
+  normalized: string,
+  extraParams?: Record<string, string>,
+): string {
   const blobPath = normalized.replace(/^\/+/u, "");
   const encoded = blobPath
     .split("/")
     .map((segment) => encodeURIComponent(segment))
     .join("/");
   const base = `${options.endpoint}/${encodeURIComponent(options.container)}/${encoded}`;
-  if (options.sasToken !== undefined && options.sasToken !== "") {
-    return `${base}?${options.sasToken}`;
+  const search = new URLSearchParams();
+  if (extraParams !== undefined) {
+    for (const [k, v] of Object.entries(extraParams)) search.set(k, v);
   }
-  return base;
+  appendSas(search, options.sasToken);
+  const query = search.toString();
+  return query === "" ? base : `${base}?${query}`;
 }
 
 function appendSas(search: URLSearchParams, sasToken: string | undefined): void {
@@ -666,4 +854,79 @@ async function collectChunks(source: AsyncIterable<Uint8Array>): Promise<Uint8Ar
     offset += chunk.byteLength;
   }
   return out;
+}
+
+function concatChunks(chunks: Uint8Array[], totalSize: number): Uint8Array {
+  const out = new Uint8Array(totalSize);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
+function sliceFromBuffers(
+  buffers: Uint8Array[],
+  size: number,
+): { bytes: Uint8Array; remaining: Uint8Array[] } {
+  const out = new Uint8Array(size);
+  let offset = 0;
+  let i = 0;
+  while (offset < size && i < buffers.length) {
+    const chunk = buffers[i];
+    if (chunk === undefined) {
+      i += 1;
+      continue;
+    }
+    const remaining = size - offset;
+    if (chunk.byteLength <= remaining) {
+      out.set(chunk, offset);
+      offset += chunk.byteLength;
+      i += 1;
+    } else {
+      out.set(chunk.subarray(0, remaining), offset);
+      const leftover = chunk.subarray(remaining);
+      const next = buffers.slice(i + 1);
+      next.unshift(leftover);
+      return { bytes: out, remaining: next };
+    }
+  }
+  return { bytes: out.subarray(0, offset), remaining: buffers.slice(i) };
+}
+
+/**
+ * Builds an Azure block id. Azure requires every block id within a blob to
+ * be the same byte length pre-base64-encoding (≤64 bytes). We use a
+ * fixed-length `${nonce}-NNNNNNNNN` layout (8-hex-char nonce + dash +
+ * 9-digit padded part number = 18 bytes) so concurrent uploads to the same
+ * blob path do not share block ids; uncommitted blocks live for 7 days on
+ * Azure and a stale uploader reusing a deterministic id could otherwise
+ * commit the wrong bytes.
+ */
+function encodeBlockId(nonce: string, partNumber: number): string {
+  const padded = String(partNumber).padStart(9, "0");
+  const raw = `${nonce}-${padded}`;
+  return Buffer.from(raw, "utf8").toString("base64");
+}
+
+/**
+ * 8-hex-char per-upload nonce sourced from `node:crypto.randomBytes`.
+ */
+function generateUploadNonce(): string {
+  return cryptoRandomBytes(4).toString("hex");
+}
+
+function buildBlockListXml(blockIds: ReadonlyArray<string>): string {
+  const items = blockIds.map((id) => `<Latest>${escapeXml(id)}</Latest>`).join("");
+  return `<?xml version="1.0" encoding="utf-8"?><BlockList>${items}</BlockList>`;
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }

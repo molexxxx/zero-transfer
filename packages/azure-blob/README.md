@@ -1,6 +1,6 @@
 # @zero-transfer/azure-blob
 
-> Azure Blob Storage with SAS or AAD bearer auth.
+> Azure Blob Storage with SAS / AAD auth and staged-block uploads.
 
 ## Install
 
@@ -12,7 +12,7 @@ Installing this package automatically pulls in [`@zero-transfer/core`](https://w
 
 ## Overview
 
-Azure Blob Storage provider - SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, and single-shot block-blob uploads. Wire OAuth refresh via `createOAuthTokenSecretSource()`.
+Azure Blob Storage provider - SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, staged-block (multipart) uploads via `Put Block` + `Put Block List` with single-shot fallback under threshold, and `content-md5` exposed as `checksum`. Wire OAuth refresh via `createOAuthTokenSecretSource()`.
 
 ## Usage
 
@@ -27,12 +27,13 @@ import {
 
 ## Public surface
 
-This package publishes a narrowed surface of **2** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
+This package publishes a narrowed surface of **3** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
 
 | Symbol                                                                                                                                            | Kind      | Notes              |
 | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
 | [`createAzureBlobProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createAzureBlobProviderFactory.md) | Function  | See API reference. |
 | [`AzureBlobProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/AzureBlobProviderOptions.md)            | Interface | See API reference. |
+| [`AzureBlobMultipartOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/AzureBlobMultipartOptions.md)          | Interface | See API reference. |
 
 ## Examples
 

@@ -3498,6 +3498,22 @@ interface AzureBlobProviderOptions {
     fetch?: HttpFetch;
     /** Default headers applied before bearer auth on every request. */
     defaultHeaders?: Record<string, string>;
+    /** Multipart (staged-block) upload tuning. Enabled by default. */
+    multipart?: AzureBlobMultipartOptions;
+}
+/** Multipart (staged block) upload tuning for the Azure Blob provider. */
+interface AzureBlobMultipartOptions {
+    /**
+     * Enable staged-block uploads via `Put Block` + `Put Block List`. **Defaults
+     * to `true`** so payloads above {@link AzureBlobMultipartOptions.thresholdBytes}
+     * stream in fixed-size blocks instead of being buffered into a single PUT.
+     * Set to `false` to force single-shot block-blob PUTs.
+     */
+    enabled?: boolean;
+    /** Object size threshold above which staged-block upload is used. Defaults to 8 MiB. */
+    thresholdBytes?: number;
+    /** Target block size in bytes. Defaults to 8 MiB. Maximum 4000 MiB per Azure. */
+    partSizeBytes?: number;
 }
 /**
  * Creates an Azure Blob Storage provider factory.

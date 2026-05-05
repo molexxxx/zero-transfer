@@ -10,7 +10,7 @@
 function createTransferJobsFromPlan(plan): TransferJob[];
 ```
 
-Defined in: [src/transfers/TransferPlan.ts:161](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferPlan.ts#L161)
+Defined in: [src/transfers/TransferPlan.ts:161](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferPlan.ts#L161)
 
 Converts executable plan steps into transfer jobs while preserving order.
 

@@ -6,7 +6,7 @@
 
 # Class: SshTransportHandshake
 
-Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:72](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/protocols/ssh/transport/SshTransportHandshake.ts#L72)
+Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:72](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/protocols/ssh/transport/SshTransportHandshake.ts#L72)
 
 Client-side SSH handshake coordinator for version exchange and KEXINIT negotiation.
 
@@ -18,7 +18,7 @@ Client-side SSH handshake coordinator for version exchange and KEXINIT negotiati
 new SshTransportHandshake(options?): SshTransportHandshake;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:105](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/protocols/ssh/transport/SshTransportHandshake.ts#L105)
+Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:105](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/protocols/ssh/transport/SshTransportHandshake.ts#L105)
 
 #### Parameters
 
@@ -43,7 +43,7 @@ Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:105](https://g
 createInitialClientBytes(): Buffer;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:139](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/protocols/ssh/transport/SshTransportHandshake.ts#L139)
+Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:139](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/protocols/ssh/transport/SshTransportHandshake.ts#L139)
 
 Creates the first outbound bytes (client identification line).
 
@@ -59,7 +59,7 @@ Creates the first outbound bytes (client identification line).
 getServerBannerLines(): readonly string[];
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:175](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/protocols/ssh/transport/SshTransportHandshake.ts#L175)
+Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:175](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/protocols/ssh/transport/SshTransportHandshake.ts#L175)
 
 #### Returns
 
@@ -73,7 +73,7 @@ readonly `string`[]
 isComplete(): boolean;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:179](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/protocols/ssh/transport/SshTransportHandshake.ts#L179)
+Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:179](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/protocols/ssh/transport/SshTransportHandshake.ts#L179)
 
 #### Returns
 
@@ -90,7 +90,7 @@ pushServerBytes(chunk): {
 };
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:146](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/protocols/ssh/transport/SshTransportHandshake.ts#L146)
+Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:146](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/protocols/ssh/transport/SshTransportHandshake.ts#L146)
 
 Feeds raw server bytes into the handshake state machine.
 
@@ -111,8 +111,8 @@ Feeds raw server bytes into the handshake state machine.
 
 | Name | Type | Defined in |
 | ------ | ------ | ------ |
-| `outbound` | `Buffer`\<`ArrayBufferLike`\>[] | [src/protocols/ssh/transport/SshTransportHandshake.ts:147](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/protocols/ssh/transport/SshTransportHandshake.ts#L147) |
-| `result?` | [`SshTransportHandshakeResult`](../interfaces/SshTransportHandshakeResult.md) | [src/protocols/ssh/transport/SshTransportHandshake.ts:148](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/protocols/ssh/transport/SshTransportHandshake.ts#L148) |
+| `outbound` | `Buffer`\<`ArrayBufferLike`\>[] | [src/protocols/ssh/transport/SshTransportHandshake.ts:147](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/protocols/ssh/transport/SshTransportHandshake.ts#L147) |
+| `result?` | [`SshTransportHandshakeResult`](../interfaces/SshTransportHandshakeResult.md) | [src/protocols/ssh/transport/SshTransportHandshake.ts:148](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/protocols/ssh/transport/SshTransportHandshake.ts#L148) |
 
 ***
 
@@ -122,7 +122,7 @@ Feeds raw server bytes into the handshake state machine.
 takeRemainingBytes(): Buffer;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:188](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/protocols/ssh/transport/SshTransportHandshake.ts#L188)
+Defined in: [src/protocols/ssh/transport/SshTransportHandshake.ts:188](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/protocols/ssh/transport/SshTransportHandshake.ts#L188)
 
 Returns any bytes received after the last complete handshake packet and clears the buffer.
 Call this once after `pushServerBytes` returns a result to drain bytes that belong to the

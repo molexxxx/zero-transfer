@@ -312,12 +312,16 @@ export const scopes = [
   },
   {
     description:
-      "Azure Blob Storage provider - SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, and single-shot block-blob uploads. Wire OAuth refresh via `createOAuthTokenSecretSource()`.",
+      "Azure Blob Storage provider - SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, staged-block (multipart) uploads via `Put Block` + `Put Block List` with single-shot fallback under threshold, and `content-md5` exposed as `checksum`. Wire OAuth refresh via `createOAuthTokenSecretSource()`.",
     examples: ["multi-cloud-orchestration.ts"],
-    exports: ["createAzureBlobProviderFactory", "AzureBlobProviderOptions"],
+    exports: [
+      "createAzureBlobProviderFactory",
+      "AzureBlobProviderOptions",
+      "AzureBlobMultipartOptions",
+    ],
     deps: {},
     name: "azure-blob",
-    summary: "Azure Blob Storage with SAS or AAD bearer auth.",
+    summary: "Azure Blob Storage with SAS / AAD auth and staged-block uploads.",
     title: "Azure Blob",
   },
   {

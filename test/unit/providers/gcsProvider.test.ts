@@ -22,7 +22,7 @@ describe("createGcsProviderFactory", () => {
       provider: "gcs",
       readStream: true,
       resumeDownload: true,
-      resumeUpload: false,
+      resumeUpload: true,
       stat: true,
       writeStream: true,
     });
@@ -503,5 +503,234 @@ describe("createGcsProviderFactory edge cases", () => {
     const ctrl = new AbortController();
     await transfers.read({ ...makeReadRequest("/r"), signal: ctrl.signal });
     expect(captured[0]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+});
+
+describe("GCS resumable upload sessions", () => {
+  it("initiates a resumable session and PUTs Content-Range chunks when payload exceeds threshold", async () => {
+    const calls: Array<{
+      url: string;
+      method: string;
+      headers: Record<string, string>;
+      bodySize: number;
+    }> = [];
+    const sessionUri = "https://upload.example/session-abc";
+    const fetchImpl: HttpFetch = (input, init) => {
+      const method = String(init?.method ?? "GET");
+      const headers = (init?.headers ?? {}) as Record<string, string>;
+      const body = init?.body as Uint8Array | undefined;
+      calls.push({ bodySize: body?.byteLength ?? 0, headers, method, url: input });
+      if (input.includes("uploadType=resumable")) {
+        return Promise.resolve(
+          new Response(null, {
+            headers: { location: sessionUri },
+            status: 200,
+          }),
+        );
+      }
+      if (input === sessionUri) {
+        const range = headers["content-range"] ?? "";
+        if (range.endsWith("/*")) {
+          return Promise.resolve(new Response(null, { status: 308 }));
+        }
+        return Promise.resolve(
+          new Response(JSON.stringify({ md5Hash: "md5-final", name: "big.bin" }), {
+            headers: { "content-type": "application/json" },
+            status: 200,
+          }),
+        );
+      }
+      return Promise.reject(new Error(`unexpected url: ${input}`));
+    };
+    const factory = createGcsProviderFactory({
+      bucket: "data",
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 256 * 1024, thresholdBytes: 4 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    // Build a payload of 256KiB + 5 bytes so we get one full chunk + a final chunk.
+    const part = new Uint8Array(256 * 1024).fill(7);
+    const tail = new TextEncoder().encode("final");
+    const combined = new Uint8Array(part.byteLength + tail.byteLength);
+    combined.set(part, 0);
+    combined.set(tail, part.byteLength);
+    const result = await transfers.write(makeWriteRequest("/big.bin", combined));
+
+    const initiate = calls.find((c) => c.url.includes("uploadType=resumable"));
+    expect(initiate).toBeDefined();
+    expect(initiate?.method).toBe("POST");
+    const sessionPuts = calls.filter((c) => c.url === sessionUri);
+    expect(sessionPuts.length).toBeGreaterThanOrEqual(2);
+    expect(sessionPuts[0]?.headers["content-range"]).toMatch(/bytes 0-\d+\/\*/);
+    const last = sessionPuts.at(-1);
+    expect(last?.headers["content-range"]).toMatch(/\/\d+$/);
+    expect(result.bytesTransferred).toBe(combined.byteLength);
+    expect(result.checksum).toBe("md5-final");
+  });
+
+  it("falls back to single-shot media upload when payload <= threshold", async () => {
+    let calls = 0;
+    let lastUrl = "";
+    const fetchImpl: HttpFetch = (input) => {
+      calls += 1;
+      lastUrl = input;
+      return Promise.resolve(
+        new Response(JSON.stringify({ md5Hash: "small-md5" }), {
+          headers: { "content-type": "application/json" },
+          status: 200,
+        }),
+      );
+    };
+    const factory = createGcsProviderFactory({
+      bucket: "data",
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 256 * 1024, thresholdBytes: 256 * 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.write(
+      makeWriteRequest("/tiny.bin", new TextEncoder().encode("hi")),
+    );
+    expect(calls).toBe(1);
+    expect(lastUrl).toContain("uploadType=media");
+    expect(result.checksum).toBe("small-md5");
+  });
+
+  it("rejects partSizeBytes that is not a multiple of 256 KiB", () => {
+    expect(() =>
+      createGcsProviderFactory({
+        bucket: "data",
+        fetch: notImplementedFetch,
+        multipart: { partSizeBytes: 1000 },
+      }),
+    ).toThrow(ConfigurationError);
+  });
+});
+
+describe("GCS multipart hardening", () => {
+  it("rejects partSizeBytes <= 0", () => {
+    expect(() =>
+      createGcsProviderFactory({
+        bucket: "data",
+        fetch: notImplementedFetch,
+        multipart: { partSizeBytes: 0 },
+      }),
+    ).toThrow(ConfigurationError);
+  });
+
+  it("rejects negative thresholdBytes", () => {
+    expect(() =>
+      createGcsProviderFactory({
+        bucket: "data",
+        fetch: notImplementedFetch,
+        multipart: { thresholdBytes: -1 },
+      }),
+    ).toThrow(ConfigurationError);
+  });
+
+  it("throws ConnectionError when initiate response omits Location header", async () => {
+    const fetchImpl: HttpFetch = () => Promise.resolve(new Response(null, { status: 200 }));
+    const factory = createGcsProviderFactory({
+      bucket: "data",
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 256 * 1024, thresholdBytes: 0 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(
+      transfers.write(makeWriteRequest("/x", new TextEncoder().encode("hi"))),
+    ).rejects.toBeInstanceOf(ConnectionError);
+  });
+
+  it("issues best-effort DELETE on the session URI when a chunk PUT fails", async () => {
+    const sessionUri = "https://upload.example/abort-sess";
+    let deleted = false;
+    const fetchImpl: HttpFetch = (input, init) => {
+      const method = String(init?.method ?? "GET");
+      if (input.includes("uploadType=resumable")) {
+        return Promise.resolve(
+          new Response(null, { headers: { location: sessionUri }, status: 200 }),
+        );
+      }
+      if (input === sessionUri && method === "PUT") {
+        return Promise.resolve(new Response("forbid", { status: 403 }));
+      }
+      if (input === sessionUri && method === "DELETE") {
+        deleted = true;
+        return Promise.resolve(new Response(null, { status: 200 }));
+      }
+      return Promise.reject(new Error(`unexpected url: ${input}`));
+    };
+    const factory = createGcsProviderFactory({
+      bucket: "data",
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 256 * 1024, thresholdBytes: 0 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const big = new Uint8Array(256 * 1024 + 5);
+    await expect(transfers.write(makeWriteRequest("/x.bin", big))).rejects.toBeInstanceOf(
+      PermissionDeniedError,
+    );
+    expect(deleted).toBe(true);
+  });
+
+  it("propagates AbortSignal during multipart upload", async () => {
+    const ctrl = new AbortController();
+    const sessionUri = "https://upload.example/aborted";
+    const fetchImpl: HttpFetch = (input, init) => {
+      const method = String(init?.method ?? "GET");
+      if (input.includes("uploadType=resumable")) {
+        return Promise.resolve(
+          new Response(null, { headers: { location: sessionUri }, status: 200 }),
+        );
+      }
+      if (input === sessionUri && method === "PUT") {
+        ctrl.abort(new Error("user-abort"));
+        const reason: unknown = init?.signal?.reason;
+        return Promise.reject(reason instanceof Error ? reason : new Error("aborted"));
+      }
+      if (input === sessionUri && method === "DELETE") {
+        return Promise.resolve(new Response(null, { status: 200 }));
+      }
+      return Promise.reject(new Error(`unexpected url: ${input}`));
+    };
+    const factory = createGcsProviderFactory({
+      bucket: "data",
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 256 * 1024, thresholdBytes: 0 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const big = new Uint8Array(256 * 1024 + 5);
+    const req = { ...makeWriteRequest("/x.bin", big), signal: ctrl.signal };
+    await expect(transfers.write(req)).rejects.toBeDefined();
   });
 });

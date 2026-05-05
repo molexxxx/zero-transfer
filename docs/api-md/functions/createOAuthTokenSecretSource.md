@@ -10,7 +10,7 @@
 function createOAuthTokenSecretSource(refresh, options?): SecretProvider;
 ```
 
-Defined in: [src/profiles/OAuthTokenSource.ts:71](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/profiles/OAuthTokenSource.ts#L71)
+Defined in: [src/profiles/OAuthTokenSource.ts:71](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/profiles/OAuthTokenSource.ts#L71)
 
 Builds a [SecretProvider](../type-aliases/SecretProvider.md) that exchanges a refresh callback for
 cached, auto-renewing access tokens.

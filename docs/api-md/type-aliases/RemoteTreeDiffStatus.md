@@ -10,6 +10,6 @@
 type RemoteTreeDiffStatus = "added" | "removed" | "modified" | "unchanged";
 ```
 
-Defined in: [src/sync/diffRemoteTrees.ts:16](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/sync/diffRemoteTrees.ts#L16)
+Defined in: [src/sync/diffRemoteTrees.ts:16](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/sync/diffRemoteTrees.ts#L16)
 
 Outcome category for an entry across the two compared trees.

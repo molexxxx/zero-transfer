@@ -13,7 +13,7 @@ function sortRemoteEntries(
    order?): RemoteEntry[];
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:123](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/sync/createRemoteBrowser.ts#L123)
+Defined in: [src/sync/createRemoteBrowser.ts:123](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/sync/createRemoteBrowser.ts#L123)
 
 Returns a copy of the supplied entries sorted by the requested key. Directories
 are grouped before files within ascending sorts, matching common file-manager UX.

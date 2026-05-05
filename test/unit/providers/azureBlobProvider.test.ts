@@ -26,7 +26,7 @@ describe("createAzureBlobProviderFactory", () => {
       provider: "azure-blob",
       readStream: true,
       resumeDownload: true,
-      resumeUpload: false,
+      resumeUpload: true,
       stat: true,
       writeStream: true,
     });
@@ -606,5 +606,267 @@ describe("createAzureBlobProviderFactory edge cases", () => {
     const ctrl = new AbortController();
     await transfers.read({ ...makeReadRequest("/x"), signal: ctrl.signal });
     expect(captured[0]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+});
+
+describe("Azure Blob multipart (staged-block) upload", () => {
+  it("stages blocks and commits via Put Block List when payload exceeds threshold", async () => {
+    const blockPuts: Array<{ url: string; size: number }> = [];
+    let commitBody = "";
+    const fetchImpl: HttpFetch = (input, init) => {
+      const url = new URL(input);
+      const comp = url.searchParams.get("comp");
+      if (comp === "block") {
+        const body = init?.body as Uint8Array;
+        blockPuts.push({ size: body.byteLength, url: input });
+        return Promise.resolve(new Response(null, { status: 201 }));
+      }
+      if (comp === "blocklist") {
+        const body = init?.body as Uint8Array;
+        commitBody = new TextDecoder().decode(body);
+        return Promise.resolve(
+          new Response(null, { headers: { "content-md5": "md5-final" }, status: 201 }),
+        );
+      }
+      return Promise.reject(new Error(`unexpected url: ${input}`));
+    };
+    const factory = createAzureBlobProviderFactory({
+      account: "acct",
+      container: "data",
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 4, thresholdBytes: 4 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    const payload = new TextEncoder().encode("abcdefghi"); // 9 bytes -> 4+4+1
+    const result = await transfers.write(makeWriteRequest("/big.bin", payload));
+
+    expect(blockPuts).toHaveLength(3);
+    expect(blockPuts[0]?.size).toBe(4);
+    expect(blockPuts[1]?.size).toBe(4);
+    expect(blockPuts[2]?.size).toBe(1);
+    expect(commitBody).toContain("<BlockList>");
+    expect(commitBody).toContain("<Latest>");
+    expect(result.bytesTransferred).toBe(9);
+    expect(result.checksum).toBe("md5-final");
+  });
+
+  it("falls back to single-shot PUT when payload <= threshold", async () => {
+    let calls = 0;
+    let lastUrl = "";
+    const fetchImpl: HttpFetch = (input) => {
+      calls += 1;
+      lastUrl = input;
+      return Promise.resolve(new Response(null, { status: 201 }));
+    };
+    const factory = createAzureBlobProviderFactory({
+      account: "acct",
+      container: "data",
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 4, thresholdBytes: 4 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await transfers.write(makeWriteRequest("/small.bin", new TextEncoder().encode("abcd")));
+    expect(calls).toBe(1);
+    expect(lastUrl).not.toContain("comp=block");
+  });
+
+  it("uses single-shot PUT when multipart is disabled", async () => {
+    let calls = 0;
+    const fetchImpl: HttpFetch = () => {
+      calls += 1;
+      return Promise.resolve(new Response(null, { status: 201 }));
+    };
+    const factory = createAzureBlobProviderFactory({
+      account: "acct",
+      container: "data",
+      fetch: fetchImpl,
+      multipart: { enabled: false },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await transfers.write(
+      makeWriteRequest("/big.bin", new TextEncoder().encode("abcdefghijklmno")),
+    );
+    expect(calls).toBe(1);
+    expect(factory.capabilities.resumeUpload).toBe(false);
+  });
+});
+
+describe("Azure Blob multipart hardening", () => {
+  it("rejects partSizeBytes <= 0", () => {
+    expect(() =>
+      createAzureBlobProviderFactory({
+        account: "acct",
+        container: "data",
+        fetch: () => Promise.resolve(new Response(null, { status: 200 })),
+        multipart: { partSizeBytes: 0 },
+      }),
+    ).toThrow(ConfigurationError);
+    expect(() =>
+      createAzureBlobProviderFactory({
+        account: "acct",
+        container: "data",
+        fetch: () => Promise.resolve(new Response(null, { status: 200 })),
+        multipart: { partSizeBytes: -1 },
+      }),
+    ).toThrow(ConfigurationError);
+  });
+
+  it("rejects partSizeBytes above the Azure 4000 MiB per-block limit", () => {
+    expect(() =>
+      createAzureBlobProviderFactory({
+        account: "acct",
+        container: "data",
+        fetch: () => Promise.resolve(new Response(null, { status: 200 })),
+        multipart: { partSizeBytes: 4000 * 1024 * 1024 + 1 },
+      }),
+    ).toThrow(ConfigurationError);
+  });
+
+  it("rejects negative thresholdBytes", () => {
+    expect(() =>
+      createAzureBlobProviderFactory({
+        account: "acct",
+        container: "data",
+        fetch: () => Promise.resolve(new Response(null, { status: 200 })),
+        multipart: { thresholdBytes: -1 },
+      }),
+    ).toThrow(ConfigurationError);
+  });
+
+  it("respects partSize on the final flush instead of emitting one oversized block", async () => {
+    const blockSizes: number[] = [];
+    const fetchImpl: HttpFetch = (input, init) => {
+      const url = new URL(input);
+      const comp = url.searchParams.get("comp");
+      if (comp === "block") {
+        blockSizes.push((init?.body as Uint8Array).byteLength);
+        return Promise.resolve(new Response(null, { status: 201 }));
+      }
+      if (comp === "blocklist") {
+        return Promise.resolve(new Response(null, { status: 201 }));
+      }
+      return Promise.reject(new Error(`unexpected url: ${input}`));
+    };
+    const factory = createAzureBlobProviderFactory({
+      account: "acct",
+      container: "data",
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 4, thresholdBytes: 0 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    // Streaming a single large chunk that exceeds partSize should still split
+    // into partSize-sized blocks (no oversized final block).
+    const payload = new Uint8Array(13);
+    await transfers.write(makeWriteRequest("/ten.bin", payload));
+    expect(blockSizes).toEqual([4, 4, 4, 1]);
+  });
+
+  it("maps a non-OK Put Block response to a typed error", async () => {
+    const fetchImpl: HttpFetch = (input) => {
+      const url = new URL(input);
+      if (url.searchParams.get("comp") === "block") {
+        return Promise.resolve(new Response("denied", { status: 403 }));
+      }
+      return Promise.reject(new Error(`unexpected url: ${input}`));
+    };
+    const factory = createAzureBlobProviderFactory({
+      account: "acct",
+      container: "data",
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 4, thresholdBytes: 0 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(
+      transfers.write(makeWriteRequest("/x.bin", new TextEncoder().encode("abcdefghi"))),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+  });
+
+  it("maps a non-OK Put Block List commit to a typed error", async () => {
+    const fetchImpl: HttpFetch = (input) => {
+      const url = new URL(input);
+      const comp = url.searchParams.get("comp");
+      if (comp === "block") return Promise.resolve(new Response(null, { status: 201 }));
+      if (comp === "blocklist") return Promise.resolve(new Response("nope", { status: 403 }));
+      return Promise.reject(new Error(`unexpected url: ${input}`));
+    };
+    const factory = createAzureBlobProviderFactory({
+      account: "acct",
+      container: "data",
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 4, thresholdBytes: 0 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await expect(
+      transfers.write(makeWriteRequest("/x.bin", new TextEncoder().encode("abcdefghi"))),
+    ).rejects.toBeInstanceOf(PermissionDeniedError);
+  });
+
+  it("uses distinct per-upload nonces so concurrent writers do not share block ids", async () => {
+    const blockIds: string[] = [];
+    const fetchImpl: HttpFetch = (input) => {
+      const url = new URL(input);
+      const comp = url.searchParams.get("comp");
+      if (comp === "block") {
+        const id = url.searchParams.get("blockid");
+        if (id !== null) blockIds.push(id);
+        return Promise.resolve(new Response(null, { status: 201 }));
+      }
+      if (comp === "blocklist") return Promise.resolve(new Response(null, { status: 201 }));
+      return Promise.reject(new Error(`unexpected url: ${input}`));
+    };
+    const factory = createAzureBlobProviderFactory({
+      account: "acct",
+      container: "data",
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 4, thresholdBytes: 0 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    await transfers.write(makeWriteRequest("/a.bin", new TextEncoder().encode("abcd")));
+    await transfers.write(makeWriteRequest("/b.bin", new TextEncoder().encode("abcd")));
+    expect(blockIds).toHaveLength(2);
+    expect(blockIds[0]).not.toEqual(blockIds[1]);
   });
 });

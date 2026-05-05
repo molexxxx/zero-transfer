@@ -6,7 +6,7 @@
 
 # Interface: ZeroTransferCapabilities
 
-Defined in: [src/client/ZeroTransfer.ts:45](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/client/ZeroTransfer.ts#L45)
+Defined in: [src/client/ZeroTransfer.ts:45](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/client/ZeroTransfer.ts#L45)
 
 Lightweight capability snapshot for the current client instance.
 
@@ -14,5 +14,5 @@ Lightweight capability snapshot for the current client instance.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="adapterready"></a> `adapterReady` | `boolean` | Whether a concrete protocol adapter has been supplied. | [src/client/ZeroTransfer.ts:49](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/client/ZeroTransfer.ts#L49) |
-| <a id="protocol"></a> `protocol` | `"ftp"` \| `"ftps"` \| `"sftp"` | The protocol selected for this client facade. | [src/client/ZeroTransfer.ts:47](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/client/ZeroTransfer.ts#L47) |
+| <a id="adapterready"></a> `adapterReady` | `boolean` | Whether a concrete protocol adapter has been supplied. | [src/client/ZeroTransfer.ts:49](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/client/ZeroTransfer.ts#L49) |
+| <a id="protocol"></a> `protocol` | `"ftp"` \| `"ftps"` \| `"sftp"` | The protocol selected for this client facade. | [src/client/ZeroTransfer.ts:47](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/client/ZeroTransfer.ts#L47) |

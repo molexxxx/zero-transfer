@@ -10,7 +10,7 @@
 function createFtpsProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/classic/ftp/FtpProvider.ts:241](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/providers/classic/ftp/FtpProvider.ts#L241)
+Defined in: [src/providers/classic/ftp/FtpProvider.ts:241](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/providers/classic/ftp/FtpProvider.ts#L241)
 
 Creates a provider factory for explicit or implicit FTPS connections.
 

@@ -15,7 +15,7 @@ Per-scope documentation for every package in the [`@zero-transfer/*`](../../pack
 | [`@zero-transfer/s3`](./s3.md) | S3-compatible storage with SigV4, multipart upload, and resume. |
 | [`@zero-transfer/google-drive`](./google-drive.md) | Google Drive provider with OAuth, folder paths, and md5 checksums. |
 | [`@zero-transfer/dropbox`](./dropbox.md) | Dropbox provider with content-hash verification. |
-| [`@zero-transfer/azure-blob`](./azure-blob.md) | Azure Blob Storage with SAS or AAD bearer auth. |
+| [`@zero-transfer/azure-blob`](./azure-blob.md) | Azure Blob Storage with SAS / AAD auth and staged-block uploads. |
 | [`@zero-transfer/mft`](./mft.md) | Routes, schedules, audit logs, webhooks, approval gates. |
 
 Each page lists the public surface for that package, capability notes, and the examples that exercise it.

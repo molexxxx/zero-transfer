@@ -6,7 +6,7 @@
 
 # Interface: TransferEngineExecuteOptions
 
-Defined in: [src/transfers/TransferEngine.ts:67](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L67)
+Defined in: [src/transfers/TransferEngine.ts:67](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L67)
 
 Options used by [TransferEngine.execute](../classes/TransferEngine.md#execute).
 
@@ -18,7 +18,7 @@ Options used by [TransferEngine.execute](../classes/TransferEngine.md#execute).
 optional onProgress(event): void;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:73](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L73)
+Defined in: [src/transfers/TransferEngine.ts:73](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L73)
 
 Progress observer for normalized transfer progress events.
 
@@ -36,7 +36,7 @@ Progress observer for normalized transfer progress events.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="bandwidthlimit"></a> `bandwidthLimit?` | [`TransferBandwidthLimit`](TransferBandwidthLimit.md) | Optional throughput limit shape passed through to concrete executors. | [src/transfers/TransferEngine.ts:77](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L77) |
-| <a id="retry"></a> `retry?` | [`TransferRetryPolicy`](TransferRetryPolicy.md) | Retry policy used for failed attempts. | [src/transfers/TransferEngine.ts:71](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L71) |
-| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal used to cancel the job. | [src/transfers/TransferEngine.ts:69](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L69) |
-| <a id="timeout"></a> `timeout?` | [`TransferTimeoutPolicy`](TransferTimeoutPolicy.md) | Timeout policy enforced by the engine. | [src/transfers/TransferEngine.ts:75](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L75) |
+| <a id="bandwidthlimit"></a> `bandwidthLimit?` | [`TransferBandwidthLimit`](TransferBandwidthLimit.md) | Optional throughput limit shape passed through to concrete executors. | [src/transfers/TransferEngine.ts:77](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L77) |
+| <a id="retry"></a> `retry?` | [`TransferRetryPolicy`](TransferRetryPolicy.md) | Retry policy used for failed attempts. | [src/transfers/TransferEngine.ts:71](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L71) |
+| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal used to cancel the job. | [src/transfers/TransferEngine.ts:69](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L69) |
+| <a id="timeout"></a> `timeout?` | [`TransferTimeoutPolicy`](TransferTimeoutPolicy.md) | Timeout policy enforced by the engine. | [src/transfers/TransferEngine.ts:75](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L75) |

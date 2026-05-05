@@ -6,7 +6,7 @@
 
 # Interface: RenameOptions
 
-Defined in: [src/types/public.ts:343](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/types/public.ts#L343)
+Defined in: [src/types/public.ts:343](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/types/public.ts#L343)
 
 Options for renaming or moving a remote entry.
 
@@ -14,5 +14,5 @@ Options for renaming or moving a remote entry.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="overwrite"></a> `overwrite?` | `boolean` | Allow overwriting an existing destination when the provider supports it. | [src/types/public.ts:347](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/types/public.ts#L347) |
-| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal used to cancel the operation. | [src/types/public.ts:345](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/types/public.ts#L345) |
+| <a id="overwrite"></a> `overwrite?` | `boolean` | Allow overwriting an existing destination when the provider supports it. | [src/types/public.ts:347](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/types/public.ts#L347) |
+| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal used to cancel the operation. | [src/types/public.ts:345](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/types/public.ts#L345) |

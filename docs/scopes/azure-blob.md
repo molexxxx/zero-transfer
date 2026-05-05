@@ -1,6 +1,6 @@
 # Azure Blob
 
-> Azure Blob Storage with SAS or AAD bearer auth.
+> Azure Blob Storage with SAS / AAD auth and staged-block uploads.
 
 ## Install
 
@@ -12,7 +12,7 @@ Installing this package automatically pulls in [`@zero-transfer/core`](https://w
 
 ## Overview
 
-Azure Blob Storage provider - SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, and single-shot block-blob uploads. Wire OAuth refresh via `createOAuthTokenSecretSource()`.
+Azure Blob Storage provider - SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, staged-block (multipart) uploads via `Put Block` + `Put Block List` with single-shot fallback under threshold, and `content-md5` exposed as `checksum`. Wire OAuth refresh via `createOAuthTokenSecretSource()`.
 
 ## Public surface
 
@@ -22,6 +22,7 @@ This is the actual surface published by [`@zero-transfer/azure-blob`](https://ww
 | --- | --- | --- |
 | [`createAzureBlobProviderFactory`](../api-md/functions/createAzureBlobProviderFactory.md) | Function | See API reference. |
 | [`AzureBlobProviderOptions`](../api-md/interfaces/AzureBlobProviderOptions.md) | Interface | See API reference. |
+| [`AzureBlobMultipartOptions`](../api-md/interfaces/AzureBlobMultipartOptions.md) | Interface | See API reference. |
 
 ## Examples
 

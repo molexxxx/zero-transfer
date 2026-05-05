@@ -6,7 +6,7 @@
 
 # Interface: RemoteManifest
 
-Defined in: [src/sync/manifest.ts:48](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/sync/manifest.ts#L48)
+Defined in: [src/sync/manifest.ts:48](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/sync/manifest.ts#L48)
 
 Persisted snapshot of a remote subtree.
 
@@ -14,8 +14,8 @@ Persisted snapshot of a remote subtree.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="entries"></a> `entries` | [`RemoteManifestEntry`](RemoteManifestEntry.md)[] | Manifest entries sorted by path. | [src/sync/manifest.ts:58](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/sync/manifest.ts#L58) |
-| <a id="formatversion"></a> `formatVersion` | `number` | Schema version. Must equal [REMOTE\_MANIFEST\_FORMAT\_VERSION](../variables/REMOTE_MANIFEST_FORMAT_VERSION.md). | [src/sync/manifest.ts:50](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/sync/manifest.ts#L50) |
-| <a id="generatedat"></a> `generatedAt` | `string` | ISO 8601 timestamp recording when the manifest was generated. | [src/sync/manifest.ts:52](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/sync/manifest.ts#L52) |
-| <a id="provider"></a> `provider?` | [`ProviderId`](../type-aliases/ProviderId.md) | Optional provider identifier the snapshot was captured from. | [src/sync/manifest.ts:56](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/sync/manifest.ts#L56) |
-| <a id="root"></a> `root` | `string` | Normalized absolute root path the manifest snapshot is anchored to. | [src/sync/manifest.ts:54](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/sync/manifest.ts#L54) |
+| <a id="entries"></a> `entries` | [`RemoteManifestEntry`](RemoteManifestEntry.md)[] | Manifest entries sorted by path. | [src/sync/manifest.ts:58](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/sync/manifest.ts#L58) |
+| <a id="formatversion"></a> `formatVersion` | `number` | Schema version. Must equal [REMOTE\_MANIFEST\_FORMAT\_VERSION](../variables/REMOTE_MANIFEST_FORMAT_VERSION.md). | [src/sync/manifest.ts:50](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/sync/manifest.ts#L50) |
+| <a id="generatedat"></a> `generatedAt` | `string` | ISO 8601 timestamp recording when the manifest was generated. | [src/sync/manifest.ts:52](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/sync/manifest.ts#L52) |
+| <a id="provider"></a> `provider?` | [`ProviderId`](../type-aliases/ProviderId.md) | Optional provider identifier the snapshot was captured from. | [src/sync/manifest.ts:56](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/sync/manifest.ts#L56) |
+| <a id="root"></a> `root` | `string` | Normalized absolute root path the manifest snapshot is anchored to. | [src/sync/manifest.ts:54](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/sync/manifest.ts#L54) |

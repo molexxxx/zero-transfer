@@ -6,7 +6,7 @@
 
 # Class: ProviderRegistry
 
-Defined in: [src/core/ProviderRegistry.ts:12](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderRegistry.ts#L12)
+Defined in: [src/core/ProviderRegistry.ts:12](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/core/ProviderRegistry.ts#L12)
 
 Mutable registry of provider factories available to a transfer client.
 
@@ -18,7 +18,7 @@ Mutable registry of provider factories available to a transfer client.
 new ProviderRegistry(providers?): ProviderRegistry;
 ```
 
-Defined in: [src/core/ProviderRegistry.ts:20](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderRegistry.ts#L20)
+Defined in: [src/core/ProviderRegistry.ts:20](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/core/ProviderRegistry.ts#L20)
 
 Creates a registry and optionally seeds it with provider factories.
 
@@ -42,7 +42,7 @@ get(providerId):
   | undefined;
 ```
 
-Defined in: [src/core/ProviderRegistry.ts:72](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderRegistry.ts#L72)
+Defined in: [src/core/ProviderRegistry.ts:72](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/core/ProviderRegistry.ts#L72)
 
 Gets a provider factory when registered.
 
@@ -67,7 +67,7 @@ The provider factory, or `undefined` when missing.
 getCapabilities(providerId): CapabilitySet | undefined;
 ```
 
-Defined in: [src/core/ProviderRegistry.ts:103](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderRegistry.ts#L103)
+Defined in: [src/core/ProviderRegistry.ts:103](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/core/ProviderRegistry.ts#L103)
 
 Gets a provider capability snapshot when registered.
 
@@ -91,7 +91,7 @@ Capability snapshot, or `undefined` when missing.
 has(providerId): boolean;
 ```
 
-Defined in: [src/core/ProviderRegistry.ts:62](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderRegistry.ts#L62)
+Defined in: [src/core/ProviderRegistry.ts:62](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/core/ProviderRegistry.ts#L62)
 
 Checks whether a provider id is registered.
 
@@ -115,7 +115,7 @@ Checks whether a provider id is registered.
 list(): ProviderFactory<TransferProvider<TransferSession<unknown>>>[];
 ```
 
-Defined in: [src/core/ProviderRegistry.ts:123](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderRegistry.ts#L123)
+Defined in: [src/core/ProviderRegistry.ts:123](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/core/ProviderRegistry.ts#L123)
 
 Lists registered provider factories in insertion order.
 
@@ -133,7 +133,7 @@ Registered provider factories.
 listCapabilities(): CapabilitySet[];
 ```
 
-Defined in: [src/core/ProviderRegistry.ts:132](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderRegistry.ts#L132)
+Defined in: [src/core/ProviderRegistry.ts:132](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/core/ProviderRegistry.ts#L132)
 
 Lists registered provider capabilities in insertion order.
 
@@ -151,7 +151,7 @@ Capability snapshots for every registered provider.
 register(provider): this;
 ```
 
-Defined in: [src/core/ProviderRegistry.ts:33](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderRegistry.ts#L33)
+Defined in: [src/core/ProviderRegistry.ts:33](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/core/ProviderRegistry.ts#L33)
 
 Registers a provider factory.
 
@@ -179,7 +179,7 @@ This registry for fluent setup.
 require(providerId): ProviderFactory;
 ```
 
-Defined in: [src/core/ProviderRegistry.ts:83](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderRegistry.ts#L83)
+Defined in: [src/core/ProviderRegistry.ts:83](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/core/ProviderRegistry.ts#L83)
 
 Gets a registered provider factory or throws a typed SDK error.
 
@@ -207,7 +207,7 @@ The registered provider factory.
 requireCapabilities(providerId): CapabilitySet;
 ```
 
-Defined in: [src/core/ProviderRegistry.ts:114](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderRegistry.ts#L114)
+Defined in: [src/core/ProviderRegistry.ts:114](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/core/ProviderRegistry.ts#L114)
 
 Gets a provider capability snapshot or throws a typed SDK error.
 
@@ -235,7 +235,7 @@ Capability snapshot for the registered provider.
 unregister(providerId): boolean;
 ```
 
-Defined in: [src/core/ProviderRegistry.ts:52](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderRegistry.ts#L52)
+Defined in: [src/core/ProviderRegistry.ts:52](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/core/ProviderRegistry.ts#L52)
 
 Removes a provider factory from the registry.
 

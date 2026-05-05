@@ -48,6 +48,9 @@ export type { HttpFetch };
 
 const ONEDRIVE_DRIVE_BASE = "https://graph.microsoft.com/v1.0/me/drive";
 const ONEDRIVE_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["sha1", "sha256", "quickxorhash"];
+const ONEDRIVE_CHUNK_ALIGNMENT = 320 * 1024;
+const DEFAULT_ONEDRIVE_PART_SIZE = 10 * 1024 * 1024;
+const DEFAULT_ONEDRIVE_THRESHOLD = 4 * 1024 * 1024;
 
 /** Options accepted by {@link createOneDriveProviderFactory}. */
 export interface OneDriveProviderOptions {
@@ -63,6 +66,32 @@ export interface OneDriveProviderOptions {
   fetch?: HttpFetch;
   /** Default headers applied before bearer auth on every request. */
   defaultHeaders?: Record<string, string>;
+  /** Resumable upload session tuning. Enabled by default. */
+  multipart?: OneDriveMultipartOptions;
+}
+
+/** Resumable-upload session tuning for the OneDrive provider. */
+export interface OneDriveMultipartOptions {
+  /**
+   * Enable Microsoft Graph upload sessions. **Defaults to `true`** so payloads
+   * above {@link OneDriveMultipartOptions.thresholdBytes} stream in fixed-size
+   * chunks via `createUploadSession` instead of being buffered into a single
+   * `PUT /content`. Set to `false` to force the legacy single-shot behaviour.
+   */
+  enabled?: boolean;
+  /** Object size threshold above which an upload session is used. Defaults to 4 MiB. */
+  thresholdBytes?: number;
+  /**
+   * Target chunk size in bytes. Must be a multiple of 320 KiB per the Graph
+   * protocol (the final chunk is exempt). Defaults to 10 MiB.
+   */
+  partSizeBytes?: number;
+}
+
+interface ResolvedOneDriveMultipartOptions {
+  enabled: boolean;
+  thresholdBytes: number;
+  partSizeBytes: number;
 }
 
 /**
@@ -118,6 +147,38 @@ export function createOneDriveProviderFactory(
     });
   }
 
+  const multipartEnabled = options.multipart?.enabled ?? true;
+  const partSizeBytes = options.multipart?.partSizeBytes ?? DEFAULT_ONEDRIVE_PART_SIZE;
+  const thresholdBytes = options.multipart?.thresholdBytes ?? DEFAULT_ONEDRIVE_THRESHOLD;
+  if (multipartEnabled) {
+    if (!Number.isInteger(partSizeBytes) || partSizeBytes <= 0) {
+      throw new ConfigurationError({
+        details: { partSizeBytes },
+        message: "OneDriveMultipartOptions.partSizeBytes must be a positive integer",
+        retryable: false,
+      });
+    }
+    if (partSizeBytes % ONEDRIVE_CHUNK_ALIGNMENT !== 0) {
+      throw new ConfigurationError({
+        details: { partSizeBytes },
+        message: `OneDrive multipart partSizeBytes must be a multiple of ${String(ONEDRIVE_CHUNK_ALIGNMENT)} bytes (320 KiB)`,
+        retryable: false,
+      });
+    }
+    if (!Number.isInteger(thresholdBytes) || thresholdBytes < 0) {
+      throw new ConfigurationError({
+        details: { thresholdBytes },
+        message: "OneDriveMultipartOptions.thresholdBytes must be a non-negative integer",
+        retryable: false,
+      });
+    }
+  }
+  const multipart: ResolvedOneDriveMultipartOptions = {
+    enabled: multipartEnabled,
+    partSizeBytes,
+    thresholdBytes,
+  };
+
   const capabilities: CapabilitySet = {
     atomicRename: false,
     authentication: ["token", "oauth"],
@@ -127,13 +188,19 @@ export function createOneDriveProviderFactory(
     list: true,
     maxConcurrency: 4,
     metadata: ["modifiedAt", "createdAt", "uniqueId"],
-    notes: [
-      "OneDrive provider performs single-shot uploads via PUT /content; resumable upload sessions are not yet supported.",
-    ],
+    notes: multipartEnabled
+      ? [
+          `OneDrive upload session enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`,
+          "Payloads at or below the threshold automatically fall back to single-shot PUT /content.",
+          "Pass `multipart: { enabled: false }` to force the legacy single-shot behaviour.",
+        ]
+      : [
+          "OneDrive provider performs single-shot uploads via PUT /content; resumable upload sessions are disabled.",
+        ],
     provider: id,
     readStream: true,
     resumeDownload: true,
-    resumeUpload: false,
+    resumeUpload: multipartEnabled,
     serverSideCopy: false,
     serverSideMove: false,
     stat: true,
@@ -150,6 +217,7 @@ export function createOneDriveProviderFactory(
         driveBaseUrl,
         fetch: fetchImpl,
         id,
+        multipart,
       }),
     id,
   };
@@ -161,6 +229,7 @@ interface OneDriveInternalOptions {
   driveBaseUrl: string;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedOneDriveMultipartOptions;
 }
 
 class OneDriveProvider implements TransferProvider {
@@ -192,6 +261,7 @@ class OneDriveProvider implements TransferProvider {
       driveBaseUrl: this.internals.driveBaseUrl,
       fetch: this.internals.fetch,
       id: this.internals.id,
+      multipart: this.internals.multipart,
       token,
     };
     if (profile.timeoutMs !== undefined) sessionOptions.timeoutMs = profile.timeoutMs;
@@ -205,6 +275,7 @@ interface OneDriveSessionOptions {
   driveBaseUrl: string;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedOneDriveMultipartOptions;
   timeoutMs?: number;
   token: string;
 }
@@ -339,12 +410,24 @@ class OneDriveTransferOperations implements ProviderTransferOperations {
     if (request.offset !== undefined && request.offset > 0) {
       throw new UnsupportedFeatureError({
         details: { offset: request.offset },
-        message: "OneDrive provider does not yet support resumable upload sessions",
+        message: "OneDrive provider does not yet support cross-attempt resume of upload sessions",
         retryable: false,
       });
     }
     const normalized = normalizeRemotePath(request.endpoint.path);
+    const multipart = this.options.multipart;
     const buffered = await collectChunks(request.content);
+    if (!multipart.enabled || buffered.byteLength <= multipart.thresholdBytes) {
+      return this.singleShotPut(request, normalized, buffered);
+    }
+    return this.writeUploadSession(request, normalized, buffered);
+  }
+
+  private async singleShotPut(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+    buffered: Uint8Array,
+  ): Promise<ProviderTransferWriteResult> {
     const url = `${this.options.driveBaseUrl}${itemSegment(normalized)}/content`;
     const response = await graphFetch(this.options, "PUT", url, {
       ...(request.signal !== undefined ? { signal: request.signal } : {}),
@@ -361,6 +444,84 @@ class OneDriveTransferOperations implements ProviderTransferOperations {
       totalBytes: buffered.byteLength,
     };
     const checksum = preferHash(item.file?.hashes);
+    if (checksum !== undefined) result.checksum = checksum;
+    return result;
+  }
+
+  private async writeUploadSession(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+    buffered: Uint8Array,
+  ): Promise<ProviderTransferWriteResult> {
+    const partSize = this.options.multipart.partSizeBytes;
+    const total = buffered.byteLength;
+    const sessionUrl = `${this.options.driveBaseUrl}${itemSegment(normalized)}/createUploadSession`;
+    const initiate = await graphFetch(this.options, "POST", sessionUrl, {
+      ...(request.signal !== undefined ? { signal: request.signal } : {}),
+      body: new TextEncoder().encode(
+        JSON.stringify({ item: { "@microsoft.graph.conflictBehavior": "replace" } }),
+      ),
+      extraHeaders: { "content-type": "application/json" },
+    });
+    if (!initiate.ok) {
+      throw mapOneDriveResponseError(initiate, normalized, await safeReadText(initiate));
+    }
+    const initiateBody = (await initiate.json()) as { uploadUrl?: string };
+    const uploadUrl = initiateBody.uploadUrl;
+    if (typeof uploadUrl !== "string" || uploadUrl === "") {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: "OneDrive createUploadSession returned no uploadUrl",
+        retryable: true,
+      });
+    }
+
+    let bytesTransferred = 0;
+    let finalItem: DriveItem | undefined;
+    try {
+      while (bytesTransferred < total) {
+        request.throwIfAborted();
+        const chunkEnd = Math.min(bytesTransferred + partSize, total);
+        const chunk = buffered.subarray(bytesTransferred, chunkEnd);
+        const response = await graphSessionFetch(this.options, uploadUrl, {
+          ...(request.signal !== undefined ? { signal: request.signal } : {}),
+          body: chunk,
+          extraHeaders: {
+            "content-length": String(chunk.byteLength),
+            "content-range": `bytes ${String(bytesTransferred)}-${String(chunkEnd - 1)}/${String(total)}`,
+            "content-type": "application/octet-stream",
+          },
+        });
+        if (response.status === 202) {
+          bytesTransferred = chunkEnd;
+          request.reportProgress(bytesTransferred, total);
+          continue;
+        }
+        if (response.status === 200 || response.status === 201) {
+          bytesTransferred = chunkEnd;
+          request.reportProgress(bytesTransferred, total);
+          finalItem = (await response.json()) as DriveItem;
+          break;
+        }
+        throw mapOneDriveResponseError(response, normalized, await safeReadText(response));
+      }
+    } catch (error) {
+      void graphSessionFetch(this.options, uploadUrl, { method: "DELETE" }).catch(() => undefined);
+      throw error;
+    }
+
+    if (finalItem === undefined) {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: "OneDrive upload session did not return a final DriveItem",
+        retryable: true,
+      });
+    }
+    const result: ProviderTransferWriteResult = {
+      bytesTransferred,
+      totalBytes: bytesTransferred,
+    };
+    const checksum = preferHash(finalItem.file?.hashes);
     if (checksum !== undefined) result.checksum = checksum;
     return result;
   }
@@ -422,6 +583,68 @@ async function graphFetch(
   } finally {
     if (timer !== undefined) clearTimeout(timer);
   }
+}
+
+interface GraphSessionFetchOptions {
+  method?: string;
+  body?: Uint8Array;
+  extraHeaders?: Record<string, string>;
+  signal?: AbortSignal;
+}
+
+/**
+ * Fetcher for the pre-signed `uploadUrl` returned by `createUploadSession`.
+ * The upload URL embeds its own auth token, so we deliberately do **not**
+ * send the Graph bearer token (which would be rejected as a malformed
+ * Authorization header on the upload endpoint).
+ */
+async function graphSessionFetch(
+  options: OneDriveSessionOptions,
+  uploadUrl: string,
+  fetchOptions: GraphSessionFetchOptions = {},
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    ...(fetchOptions.extraHeaders ?? {}),
+  };
+  const init: RequestInit = { headers, method: fetchOptions.method ?? "PUT" };
+  if (fetchOptions.body !== undefined) {
+    (init as { body: Uint8Array }).body = fetchOptions.body;
+  }
+  const controller = new AbortController();
+  const upstream = fetchOptions.signal ?? null;
+  if (upstream !== null) {
+    if (upstream.aborted) controller.abort(upstream.reason);
+    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  if (options.timeoutMs !== undefined && options.timeoutMs > 0) {
+    timer = setTimeout(
+      () => controller.abort(new Error("OneDrive upload session request timed out")),
+      options.timeoutMs,
+    );
+  }
+  try {
+    return await options.fetch(uploadUrl, { ...init, signal: controller.signal });
+  } catch (error) {
+    const safeUrl = redactSessionUrl(uploadUrl);
+    throw new ConnectionError({
+      cause: error,
+      details: { url: safeUrl },
+      message: `OneDrive upload session request to ${safeUrl} failed`,
+      retryable: true,
+    });
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+/**
+ * Strips the query string from a pre-signed upload URL before logging it,
+ * since the query carries the upload-session credential.
+ */
+function redactSessionUrl(url: string): string {
+  const queryStart = url.indexOf("?");
+  return queryStart === -1 ? url : `${url.slice(0, queryStart)}?<redacted>`;
 }
 
 function mapOneDriveResponseError(

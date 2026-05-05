@@ -10,7 +10,7 @@
 function isMainModule(importMetaUrl): boolean;
 ```
 
-Defined in: [src/utils/mainModule.ts:19](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/utils/mainModule.ts#L19)
+Defined in: [src/utils/mainModule.ts:19](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/utils/mainModule.ts#L19)
 
 Returns `true` when the file containing `import.meta.url` is the entry point
 of the current Node.js process. Returns `false` outside Node.

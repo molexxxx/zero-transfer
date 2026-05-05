@@ -8,6 +8,18 @@ export {
   createGoogleDriveProviderFactory,
   type GoogleDriveProviderOptions,
 } from "./GoogleDriveProvider";
-export { createOneDriveProviderFactory, type OneDriveProviderOptions } from "./OneDriveProvider";
-export { createAzureBlobProviderFactory, type AzureBlobProviderOptions } from "./AzureBlobProvider";
-export { createGcsProviderFactory, type GcsProviderOptions } from "./GcsProvider";
+export {
+  createOneDriveProviderFactory,
+  type OneDriveMultipartOptions,
+  type OneDriveProviderOptions,
+} from "./OneDriveProvider";
+export {
+  createAzureBlobProviderFactory,
+  type AzureBlobMultipartOptions,
+  type AzureBlobProviderOptions,
+} from "./AzureBlobProvider";
+export {
+  createGcsProviderFactory,
+  type GcsMultipartOptions,
+  type GcsProviderOptions,
+} from "./GcsProvider";

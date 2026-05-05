@@ -22,7 +22,7 @@ describe("createOneDriveProviderFactory", () => {
       provider: "one-drive",
       readStream: true,
       resumeDownload: true,
-      resumeUpload: false,
+      resumeUpload: true,
       stat: true,
       writeStream: true,
     });
@@ -539,5 +539,225 @@ describe("createOneDriveProviderFactory edge cases", () => {
     const ctrl = new AbortController();
     await transfers.read({ ...makeReadRequest("/r"), signal: ctrl.signal });
     expect(captured[1]?.init?.signal).toBeInstanceOf(AbortSignal);
+  });
+});
+
+describe("OneDrive upload sessions", () => {
+  it("creates an upload session and PUTs Content-Range chunks when payload exceeds threshold", async () => {
+    const calls: Array<{
+      url: string;
+      method: string;
+      headers: Record<string, string>;
+      bodySize: number;
+    }> = [];
+    const uploadUrl = "https://upload.example/upload-session-xyz";
+    const fetchImpl: HttpFetch = (input, init) => {
+      const method = String(init?.method ?? "GET");
+      const headers = (init?.headers ?? {}) as Record<string, string>;
+      const body = init?.body as Uint8Array | undefined;
+      calls.push({ bodySize: body?.byteLength ?? 0, headers, method, url: input });
+      if (input.endsWith("/createUploadSession")) {
+        return Promise.resolve(jsonResponse({ uploadUrl }));
+      }
+      if (input === uploadUrl) {
+        const range = headers["content-range"] ?? "";
+        const match = /bytes (\d+)-(\d+)\/(\d+)/.exec(range);
+        if (match === null) return Promise.reject(new Error(`bad range: ${range}`));
+        const end = Number(match[2]);
+        const total = Number(match[3]);
+        if (end + 1 < total) return Promise.resolve(new Response(null, { status: 202 }));
+        return Promise.resolve(
+          jsonResponse({
+            file: { hashes: { sha256Hash: "sha-final" } },
+            id: "id-1",
+            name: "big.bin",
+          }),
+        );
+      }
+      return Promise.reject(new Error(`unexpected url: ${input}`));
+    };
+    const factory = createOneDriveProviderFactory({
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 320 * 1024, thresholdBytes: 4 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    // 320 KiB + 5 bytes -> two PUTs (one full chunk + a final chunk).
+    const part = new Uint8Array(320 * 1024).fill(3);
+    const tail = new TextEncoder().encode("final");
+    const combined = new Uint8Array(part.byteLength + tail.byteLength);
+    combined.set(part, 0);
+    combined.set(tail, part.byteLength);
+    const result = await transfers.write(makeWriteRequest("/big.bin", combined));
+
+    const initiate = calls.find((c) => c.url.endsWith("/createUploadSession"));
+    expect(initiate?.method).toBe("POST");
+    const sessionPuts = calls.filter((c) => c.url === uploadUrl);
+    expect(sessionPuts).toHaveLength(2);
+    // The pre-signed upload URL must NOT carry the Graph bearer token.
+    expect(sessionPuts[0]?.headers.authorization).toBeUndefined();
+    expect(sessionPuts[0]?.headers["content-range"]).toBe(
+      `bytes 0-${String(320 * 1024 - 1)}/${String(combined.byteLength)}`,
+    );
+    expect(result.bytesTransferred).toBe(combined.byteLength);
+    expect(result.checksum).toBe("sha-final");
+  });
+
+  it("falls back to single-shot PUT when payload <= threshold", async () => {
+    let calls = 0;
+    let lastUrl = "";
+    const fetchImpl: HttpFetch = (input) => {
+      calls += 1;
+      lastUrl = input;
+      return Promise.resolve(jsonResponse({ file: { hashes: { sha256Hash: "small" } } }));
+    };
+    const factory = createOneDriveProviderFactory({
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 320 * 1024, thresholdBytes: 1024 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const result = await transfers.write(
+      makeWriteRequest("/x.bin", new TextEncoder().encode("hi")),
+    );
+    expect(calls).toBe(1);
+    expect(lastUrl).toContain("/content");
+    expect(result.checksum).toBe("small");
+  });
+
+  it("rejects partSizeBytes that is not a multiple of 320 KiB", () => {
+    expect(() =>
+      createOneDriveProviderFactory({
+        fetch: notImplementedFetch,
+        multipart: { partSizeBytes: 1000 },
+      }),
+    ).toThrow(ConfigurationError);
+  });
+});
+
+describe("OneDrive multipart hardening", () => {
+  it("rejects partSizeBytes <= 0", () => {
+    expect(() =>
+      createOneDriveProviderFactory({
+        fetch: notImplementedFetch,
+        multipart: { partSizeBytes: 0 },
+      }),
+    ).toThrow(ConfigurationError);
+  });
+
+  it("rejects negative thresholdBytes", () => {
+    expect(() =>
+      createOneDriveProviderFactory({
+        fetch: notImplementedFetch,
+        multipart: { thresholdBytes: -1 },
+      }),
+    ).toThrow(ConfigurationError);
+  });
+
+  it("throws ConnectionError when createUploadSession returns no uploadUrl", async () => {
+    const fetchImpl: HttpFetch = () => Promise.resolve(jsonResponse({}));
+    const factory = createOneDriveProviderFactory({
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 320 * 1024, thresholdBytes: 0 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const big = new Uint8Array(320 * 1024 + 5);
+    await expect(transfers.write(makeWriteRequest("/x.bin", big))).rejects.toBeInstanceOf(
+      ConnectionError,
+    );
+  });
+
+  it("issues best-effort DELETE on the uploadUrl when a chunk PUT fails", async () => {
+    const uploadUrl = "https://upload.example/abort-od";
+    let deleted = false;
+    const fetchImpl: HttpFetch = (input, init) => {
+      const method = String(init?.method ?? "GET");
+      if (input.endsWith("/createUploadSession")) {
+        return Promise.resolve(jsonResponse({ uploadUrl }));
+      }
+      if (input === uploadUrl && method === "PUT") {
+        return Promise.resolve(new Response("forbid", { status: 403 }));
+      }
+      if (input === uploadUrl && method === "DELETE") {
+        deleted = true;
+        return Promise.resolve(new Response(null, { status: 204 }));
+      }
+      return Promise.reject(new Error(`unexpected url: ${input}`));
+    };
+    const factory = createOneDriveProviderFactory({
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 320 * 1024, thresholdBytes: 0 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const big = new Uint8Array(320 * 1024 + 5);
+    await expect(transfers.write(makeWriteRequest("/x.bin", big))).rejects.toBeInstanceOf(
+      PermissionDeniedError,
+    );
+    expect(deleted).toBe(true);
+  });
+
+  it("does not forward the Graph bearer token to the pre-signed uploadUrl", async () => {
+    const uploadUrl = "https://upload.example/no-bearer";
+    const sessionAuthHeaders: Array<string | undefined> = [];
+    const fetchImpl: HttpFetch = (input, init) => {
+      const headers = (init?.headers ?? {}) as Record<string, string>;
+      const method = String(init?.method ?? "GET");
+      if (input.endsWith("/createUploadSession")) {
+        // Initial request must carry the bearer token.
+        expect(headers.authorization).toMatch(/^Bearer /u);
+        return Promise.resolve(jsonResponse({ uploadUrl }));
+      }
+      if (input === uploadUrl && method === "PUT") {
+        sessionAuthHeaders.push(headers.authorization);
+        const range = headers["content-range"] ?? "";
+        const match = /bytes (\d+)-(\d+)\/(\d+)/.exec(range);
+        if (match === null) return Promise.reject(new Error(`bad range: ${range}`));
+        const end = Number(match[2]);
+        const total = Number(match[3]);
+        if (end + 1 < total) return Promise.resolve(new Response(null, { status: 202 }));
+        return Promise.resolve(jsonResponse({ file: { hashes: { sha256Hash: "x" } } }));
+      }
+      return Promise.reject(new Error(`unexpected url: ${input}`));
+    };
+    const factory = createOneDriveProviderFactory({
+      fetch: fetchImpl,
+      multipart: { partSizeBytes: 320 * 1024, thresholdBytes: 0 },
+    });
+    const session = await factory.create().connect({
+      host: "",
+      password: "tok",
+      protocol: "ftp",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+    const big = new Uint8Array(320 * 1024 + 5);
+    await transfers.write(makeWriteRequest("/x.bin", big));
+    expect(sessionAuthHeaders.length).toBeGreaterThanOrEqual(2);
+    for (const auth of sessionAuthHeaders) {
+      expect(auth).toBeUndefined();
+    }
   });
 });

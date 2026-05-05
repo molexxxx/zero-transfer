@@ -6,7 +6,7 @@
 
 # Interface: FileZillaSite
 
-Defined in: [src/profiles/importers/FileZillaImporter.ts:15](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/profiles/importers/FileZillaImporter.ts#L15)
+Defined in: [src/profiles/importers/FileZillaImporter.ts:15](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/profiles/importers/FileZillaImporter.ts#L15)
 
 Imported FileZilla site with the folder hierarchy that contained it.
 
@@ -14,8 +14,8 @@ Imported FileZilla site with the folder hierarchy that contained it.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="folder"></a> `folder` | readonly `string`[] | Ordered folder names leading to the site (top-level first). Empty for root sites. | [src/profiles/importers/FileZillaImporter.ts:19](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/profiles/importers/FileZillaImporter.ts#L19) |
-| <a id="logontype"></a> `logonType?` | `number` | Logon type code preserved from the file (`0`=anonymous, `1`=normal, etc.). | [src/profiles/importers/FileZillaImporter.ts:25](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/profiles/importers/FileZillaImporter.ts#L25) |
-| <a id="name"></a> `name` | `string` | Site display name. | [src/profiles/importers/FileZillaImporter.ts:17](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/profiles/importers/FileZillaImporter.ts#L17) |
-| <a id="password"></a> `password?` | `string` | Encoded password value retained from the file, if any. | [src/profiles/importers/FileZillaImporter.ts:23](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/profiles/importers/FileZillaImporter.ts#L23) |
-| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Generated connection profile. | [src/profiles/importers/FileZillaImporter.ts:21](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/profiles/importers/FileZillaImporter.ts#L21) |
+| <a id="folder"></a> `folder` | readonly `string`[] | Ordered folder names leading to the site (top-level first). Empty for root sites. | [src/profiles/importers/FileZillaImporter.ts:19](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/profiles/importers/FileZillaImporter.ts#L19) |
+| <a id="logontype"></a> `logonType?` | `number` | Logon type code preserved from the file (`0`=anonymous, `1`=normal, etc.). | [src/profiles/importers/FileZillaImporter.ts:25](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/profiles/importers/FileZillaImporter.ts#L25) |
+| <a id="name"></a> `name` | `string` | Site display name. | [src/profiles/importers/FileZillaImporter.ts:17](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/profiles/importers/FileZillaImporter.ts#L17) |
+| <a id="password"></a> `password?` | `string` | Encoded password value retained from the file, if any. | [src/profiles/importers/FileZillaImporter.ts:23](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/profiles/importers/FileZillaImporter.ts#L23) |
+| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Generated connection profile. | [src/profiles/importers/FileZillaImporter.ts:21](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/profiles/importers/FileZillaImporter.ts#L21) |

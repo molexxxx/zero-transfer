@@ -307,11 +307,11 @@ Every provider advertises its own [`CapabilitySet`](docs/api-md/interfaces/Capab
 | HTTP(S)       | ✅ (read) |           ⬇ via Range            |        -         |        -         |           ETag           |
 | WebDAV        |    ✅     |           ⬇ via Range            |       COPY       |        -         |           ETag           |
 | S3-compatible |    ✅     | ⬆ via multipart resume / ⬇ Range |    CopyObject    |        ✅        |      SHA-256 / md5       |
-| Azure Blob    |    ✅     |           ⬇ via Range            |        -         |    (planned)     |           md5            |
-| GCS           |    ✅     |           ⬇ via Range            |        -         |    (planned)     |       crc32c / md5       |
+| Azure Blob    |    ✅     |           ⬇ via Range            |        -         |        ✅        |           md5            |
+| GCS           |    ✅     |           ⬇ via Range            |        -         |        ✅        |       crc32c / md5       |
 | Google Drive  |    ✅     |           ⬇ via Range            |        -         |        -         |           md5            |
 | Dropbox       |    ✅     |           ⬇ via Range            |        -         |        -         |       content_hash       |
-| OneDrive      |    ✅     |           ⬇ via Range            |        -         |    (planned)     | sha256 / sha1 / quickXor |
+| OneDrive      |    ✅     |           ⬇ via Range            |        -         |        ✅        | sha256 / sha1 / quickXor |
 | Local         |    ✅     |               ⬆/⬇                |        -         |        -         |            -             |
 | Memory        |    ✅     |               ⬆/⬇                |        -         |        -         |            -             |
 
@@ -358,7 +358,7 @@ npm run docs:all      # HTML + Markdown api refs + per-scope pages + per-package
 
 ## Project status
 
-ZeroTransfer is in **alpha** under the `alpha` npm dist-tag. The provider-neutral foundation, transfer engine, queue, sync planner, atomic deploy planner, MFT layer, friendly client surface, and diagnostics module are stable. Phase work in progress: resumable upload sessions for Azure / GCS / OneDrive, broader real-server compatibility coverage, and the push to higher coverage targets.
+ZeroTransfer is in **alpha** under the `alpha` npm dist-tag. The provider-neutral foundation, transfer engine, queue, sync planner, atomic deploy planner, MFT layer, friendly client surface, and diagnostics module are stable. Multipart / resumable upload sessions are now wired up across S3, Azure Blob, GCS, and OneDrive. Phase work in progress: broader real-server compatibility coverage and the push to higher coverage targets.
 
 ## Contributing
 

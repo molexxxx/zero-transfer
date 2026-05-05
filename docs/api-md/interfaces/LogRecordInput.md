@@ -6,7 +6,7 @@
 
 # Interface: LogRecordInput
 
-Defined in: [src/logging/Logger.ts:45](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/logging/Logger.ts#L45)
+Defined in: [src/logging/Logger.ts:45](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/logging/Logger.ts#L45)
 
 Log record input accepted by [emitLog](../functions/emitLog.md); the helper adds the level.
 
@@ -28,4 +28,4 @@ Log record input accepted by [emitLog](../functions/emitLog.md); the helper adds
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="message"></a> `message` | `string` | Human-readable summary message. | [src/logging/Logger.ts:47](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/logging/Logger.ts#L47) |
+| <a id="message"></a> `message` | `string` | Human-readable summary message. | [src/logging/Logger.ts:47](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/logging/Logger.ts#L47) |

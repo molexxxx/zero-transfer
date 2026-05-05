@@ -6,7 +6,7 @@
 
 # Interface: TransferExecutionContext
 
-Defined in: [src/transfers/TransferEngine.ts:26](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L26)
+Defined in: [src/transfers/TransferEngine.ts:26](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L26)
 
 Context passed to a concrete transfer operation.
 
@@ -22,7 +22,7 @@ Context passed to a concrete transfer operation.
 reportProgress(bytesTransferred, totalBytes?): TransferProgressEvent;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:38](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L38)
+Defined in: [src/transfers/TransferEngine.ts:38](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L38)
 
 Emits a normalized progress event through engine options.
 
@@ -45,7 +45,7 @@ Emits a normalized progress event through engine options.
 throwIfAborted(): void;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:36](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L36)
+Defined in: [src/transfers/TransferEngine.ts:36](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L36)
 
 Throws an SDK abort error when the active signal has been cancelled.
 
@@ -57,7 +57,7 @@ Throws an SDK abort error when the active signal has been cancelled.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="attempt"></a> `attempt` | `number` | One-based attempt number. | [src/transfers/TransferEngine.ts:30](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L30) |
-| <a id="bandwidthlimit"></a> `bandwidthLimit?` | [`TransferBandwidthLimit`](TransferBandwidthLimit.md) | Optional throughput limit shape for concrete executors to honor. | [src/transfers/TransferEngine.ts:34](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L34) |
-| <a id="job"></a> `job` | [`TransferJob`](TransferJob.md) | Job being executed. | [src/transfers/TransferEngine.ts:28](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L28) |
-| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal active for this execution when supplied. | [src/transfers/TransferEngine.ts:32](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/transfers/TransferEngine.ts#L32) |
+| <a id="attempt"></a> `attempt` | `number` | One-based attempt number. | [src/transfers/TransferEngine.ts:30](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L30) |
+| <a id="bandwidthlimit"></a> `bandwidthLimit?` | [`TransferBandwidthLimit`](TransferBandwidthLimit.md) | Optional throughput limit shape for concrete executors to honor. | [src/transfers/TransferEngine.ts:34](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L34) |
+| <a id="job"></a> `job` | [`TransferJob`](TransferJob.md) | Job being executed. | [src/transfers/TransferEngine.ts:28](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L28) |
+| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal active for this execution when supplied. | [src/transfers/TransferEngine.ts:32](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/transfers/TransferEngine.ts#L32) |

@@ -16,6 +16,6 @@ type SecretSource =
   | FileSecretSource;
 ```
 
-Defined in: [src/profiles/SecretSource.ts:44](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/profiles/SecretSource.ts#L44)
+Defined in: [src/profiles/SecretSource.ts:44](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/profiles/SecretSource.ts#L44)
 
 Secret source accepted by profile credential fields.

@@ -87,10 +87,13 @@ export {
   createGcsProviderFactory,
   createGoogleDriveProviderFactory,
   createOneDriveProviderFactory,
+  type AzureBlobMultipartOptions,
   type AzureBlobProviderOptions,
   type DropboxProviderOptions,
+  type GcsMultipartOptions,
   type GcsProviderOptions,
   type GoogleDriveProviderOptions,
+  type OneDriveMultipartOptions,
   type OneDriveProviderOptions,
 } from "./providers/cloud";
 export {

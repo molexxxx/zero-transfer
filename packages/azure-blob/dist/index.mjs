@@ -233,7 +233,7 @@ function emitLog(logger, level, record) {
 }
 
 // src/profiles/ProfileValidator.ts
-import { Buffer } from "buffer";
+import { Buffer as Buffer2 } from "buffer";
 
 // src/core/ProviderId.ts
 var CLASSIC_PROVIDER_IDS = ["ftp", "ftps", "sftp"];
@@ -413,7 +413,7 @@ function isSshHostKeySha256Fingerprint(value) {
     return false;
   }
   try {
-    return Buffer.from(padded, "base64").byteLength === SHA256_DIGEST_BYTE_LENGTH;
+    return Buffer2.from(padded, "base64").byteLength === SHA256_DIGEST_BYTE_LENGTH;
   } catch {
     return false;
   }
@@ -1583,7 +1583,7 @@ function redactObject(input) {
 }
 
 // src/profiles/SecretSource.ts
-import { Buffer as Buffer2 } from "buffer";
+import { Buffer as Buffer3 } from "buffer";
 import { readFile } from "fs/promises";
 async function resolveSecret(source, options = {}) {
   if (isSecretValue(source)) {
@@ -1615,13 +1615,13 @@ async function resolveSecret(source, options = {}) {
         source.base64Env
       );
     }
-    return Buffer2.from(value, "base64");
+    return Buffer3.from(value, "base64");
   }
   if (isFileSecretSource(source)) {
     const fileReader = options.readFile ?? readFile;
     const value = await fileReader(source.path);
     if (source.encoding === "buffer") {
-      return Buffer2.from(value);
+      return Buffer3.from(value);
     }
     return value.toString(source.encoding ?? "utf8");
   }
@@ -1638,7 +1638,7 @@ function redactSecretSource(source) {
   return REDACTED;
 }
 function isSecretValue(value) {
-  return typeof value === "string" || Buffer2.isBuffer(value);
+  return typeof value === "string" || Buffer3.isBuffer(value);
 }
 function isValueSecretSource(value) {
   return isRecord(value) && "value" in value && isSecretValue(value.value);
@@ -1656,7 +1656,7 @@ function isRecord(value) {
   return typeof value === "object" && value !== null;
 }
 function cloneSecretValue(value) {
-  return Buffer2.isBuffer(value) ? Buffer2.from(value) : value;
+  return Buffer3.isBuffer(value) ? Buffer3.from(value) : value;
 }
 function createSecretConfigurationError(message, sourceType, sourceName) {
   return new ConfigurationError({
@@ -2419,7 +2419,7 @@ function getErrorCode(error) {
 }
 
 // src/providers/memory/MemoryProvider.ts
-import { Buffer as Buffer3 } from "buffer";
+import { Buffer as Buffer4 } from "buffer";
 var MEMORY_PROVIDER_ID = "memory";
 var MEMORY_PROVIDER_CAPABILITIES = {
   provider: MEMORY_PROVIDER_ID,
@@ -2710,7 +2710,7 @@ function normalizeMemoryContent(content) {
   if (content === void 0) {
     return void 0;
   }
-  return typeof content === "string" ? Buffer3.from(content) : new Uint8Array(content);
+  return typeof content === "string" ? Buffer4.from(content) : new Uint8Array(content);
 }
 function createWrittenFileEntry(path2, size) {
   return {
@@ -3006,7 +3006,7 @@ function isFresh(token, skewMs, now) {
 }
 
 // src/profiles/importers/KnownHostsParser.ts
-import { Buffer as Buffer4 } from "buffer";
+import { Buffer as Buffer5 } from "buffer";
 import { createHmac } from "crypto";
 function parseKnownHosts(text) {
   const entries = [];
@@ -3096,7 +3096,7 @@ function globMatch(pattern, value) {
   return regex.test(value);
 }
 function matchesHashedEntry(salt, hash, host, port) {
-  const saltBuffer = Buffer4.from(salt, "base64");
+  const saltBuffer = Buffer5.from(salt, "base64");
   if (saltBuffer.length === 0) return false;
   const candidates = port === DEFAULT_SSH_PORT ? [host] : [`[${host}]:${String(port)}`, host];
   for (const candidate of candidates) {
@@ -3269,7 +3269,7 @@ function expandAlgorithms(values) {
 }
 
 // src/profiles/importers/FileZillaImporter.ts
-import { Buffer as Buffer5 } from "buffer";
+import { Buffer as Buffer6 } from "buffer";
 function importFileZillaSites(xml) {
   const events = tokenizeXml(xml);
   if (events.length === 0) {
@@ -3374,7 +3374,7 @@ function buildSiteFromFields(fields, passwordEncoding) {
   const rawPass = fields["Pass"];
   if (rawPass !== void 0 && rawPass !== "") {
     if (passwordEncoding === "base64") {
-      password = Buffer5.from(rawPass, "base64").toString("utf8");
+      password = Buffer6.from(rawPass, "base64").toString("utf8");
     } else {
       password = rawPass;
     }
@@ -4798,8 +4798,11 @@ function isMainModule(importMetaUrl) {
   }
 }
 
+// src/providers/cloud/AzureBlobProvider.ts
+import { randomBytes as cryptoRandomBytes } from "crypto";
+
 // src/providers/web/httpInternals.ts
-import { Buffer as Buffer6 } from "buffer";
+import { Buffer as Buffer7 } from "buffer";
 function parseContentRangeTotal(value) {
   const match = /\/(\d+)\s*$/.exec(value);
   if (match === null) return void 0;
@@ -4839,8 +4842,8 @@ async function* webStreamToAsyncIterable(body) {
 }
 function secretToString(value) {
   if (typeof value === "string") return value;
-  if (value instanceof Uint8Array || Buffer6.isBuffer(value)) {
-    return Buffer6.from(value).toString("utf8");
+  if (value instanceof Uint8Array || Buffer7.isBuffer(value)) {
+    return Buffer7.from(value).toString("utf8");
   }
   return String(value);
 }
@@ -4848,6 +4851,9 @@ function secretToString(value) {
 // src/providers/cloud/AzureBlobProvider.ts
 var AZURE_BLOB_API_VERSION = "2023-11-03";
 var AZURE_CHECKSUM_CAPABILITIES = ["md5"];
+var DEFAULT_AZURE_PART_SIZE = 8 * 1024 * 1024;
+var DEFAULT_AZURE_THRESHOLD = 8 * 1024 * 1024;
+var AZURE_MAX_PART_SIZE = 4e3 * 1024 * 1024;
 function createAzureBlobProviderFactory(options) {
   if (typeof options.container !== "string" || options.container === "") {
     throw new ConfigurationError({
@@ -4865,6 +4871,37 @@ function createAzureBlobProviderFactory(options) {
   }
   const endpoint = resolveAzureEndpoint(options);
   const apiVersion = options.apiVersion ?? AZURE_BLOB_API_VERSION;
+  const multipartEnabled = options.multipart?.enabled ?? true;
+  const partSizeBytes = options.multipart?.partSizeBytes ?? DEFAULT_AZURE_PART_SIZE;
+  const thresholdBytes = options.multipart?.thresholdBytes ?? DEFAULT_AZURE_THRESHOLD;
+  if (multipartEnabled) {
+    if (!Number.isInteger(partSizeBytes) || partSizeBytes <= 0) {
+      throw new ConfigurationError({
+        details: { partSizeBytes },
+        message: "AzureBlobMultipartOptions.partSizeBytes must be a positive integer",
+        retryable: false
+      });
+    }
+    if (partSizeBytes > AZURE_MAX_PART_SIZE) {
+      throw new ConfigurationError({
+        details: { maxBytes: AZURE_MAX_PART_SIZE, partSizeBytes },
+        message: `AzureBlobMultipartOptions.partSizeBytes must not exceed ${String(AZURE_MAX_PART_SIZE)} bytes (4000 MiB)`,
+        retryable: false
+      });
+    }
+    if (!Number.isInteger(thresholdBytes) || thresholdBytes < 0) {
+      throw new ConfigurationError({
+        details: { thresholdBytes },
+        message: "AzureBlobMultipartOptions.thresholdBytes must be a non-negative integer",
+        retryable: false
+      });
+    }
+  }
+  const multipart = {
+    enabled: multipartEnabled,
+    partSizeBytes,
+    thresholdBytes
+  };
   const capabilities = {
     atomicRename: false,
     authentication: ["token", "oauth"],
@@ -4874,13 +4911,17 @@ function createAzureBlobProviderFactory(options) {
     list: true,
     maxConcurrency: 4,
     metadata: ["modifiedAt", "uniqueId"],
-    notes: [
-      "Azure Blob provider performs single-shot block-blob uploads via PUT; staged-block + Put Block List uploads are not yet supported."
+    notes: multipartEnabled ? [
+      `Azure Blob staged-block upload enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`,
+      "Payloads at or below the threshold automatically fall back to single-shot block-blob PUT.",
+      "Pass `multipart: { enabled: false }` to force the legacy single-shot behaviour."
+    ] : [
+      "Azure Blob provider performs single-shot block-blob uploads via PUT; entire object is buffered in memory before transmission."
     ],
     provider: id,
     readStream: true,
     resumeDownload: true,
-    resumeUpload: false,
+    resumeUpload: multipartEnabled,
     serverSideCopy: false,
     serverSideMove: false,
     stat: true,
@@ -4897,6 +4938,7 @@ function createAzureBlobProviderFactory(options) {
       endpoint,
       fetch: fetchImpl,
       id,
+      multipart,
       ...options.sasToken !== void 0 ? { sasToken: options.sasToken } : {}
     }),
     id
@@ -4942,7 +4984,8 @@ var AzureBlobProvider = class {
       defaultHeaders: this.internals.defaultHeaders,
       endpoint: this.internals.endpoint,
       fetch: this.internals.fetch,
-      id: this.internals.id
+      id: this.internals.id,
+      multipart: this.internals.multipart
     };
     if (bearerToken !== void 0) sessionOptions.bearerToken = bearerToken;
     if (this.internals.sasToken !== void 0) sessionOptions.sasToken = this.internals.sasToken;
@@ -5077,12 +5120,19 @@ var AzureBlobTransferOperations = class {
     if (request.offset !== void 0 && request.offset > 0) {
       throw new UnsupportedFeatureError({
         details: { offset: request.offset },
-        message: "Azure Blob provider does not yet support staged-block resumable uploads",
+        message: "Azure Blob provider does not yet support cross-attempt resume of staged-block uploads",
         retryable: false
       });
     }
     const normalized = normalizeRemotePath(request.endpoint.path);
-    const buffered = await collectChunks(request.content);
+    const multipart = this.options.multipart;
+    if (!multipart.enabled) {
+      const buffered = await collectChunks(request.content);
+      return this.singleShotPut(request, normalized, buffered);
+    }
+    return this.writeStagedBlocks(request, normalized);
+  }
+  async singleShotPut(request, normalized, buffered) {
     const url = buildBlobUrl(this.options, normalized);
     const response = await azureFetch(this.options, "PUT", url, {
       ...request.signal !== void 0 ? { signal: request.signal } : {},
@@ -5101,6 +5151,92 @@ var AzureBlobTransferOperations = class {
       totalBytes: buffered.byteLength
     };
     const md5 = response.headers.get("content-md5");
+    if (md5 !== null && md5 !== "") result.checksum = md5;
+    return result;
+  }
+  async writeStagedBlocks(request, normalized) {
+    const multipart = this.options.multipart;
+    const partSize = multipart.partSizeBytes;
+    const iterator = request.content[Symbol.asyncIterator]();
+    const uploadNonce = generateUploadNonce();
+    const initialBuffer = [];
+    let initialSize = 0;
+    while (initialSize <= multipart.thresholdBytes) {
+      const next = await iterator.next();
+      if (next.done === true) break;
+      const chunk = next.value;
+      if (chunk.byteLength === 0) continue;
+      initialBuffer.push(chunk);
+      initialSize += chunk.byteLength;
+    }
+    if (initialSize <= multipart.thresholdBytes) {
+      return this.singleShotPut(request, normalized, concatChunks3(initialBuffer, initialSize));
+    }
+    const blockIds = [];
+    let bytesTransferred = 0;
+    let partNumber = 1;
+    let buffer = [...initialBuffer];
+    let bufferSize = initialSize;
+    const flushBlocks = async (final) => {
+      while (bufferSize >= partSize || final && bufferSize > 0) {
+        const take = Math.min(bufferSize, partSize);
+        const sliced = sliceFromBuffers(buffer, take);
+        buffer = sliced.remaining;
+        bufferSize -= sliced.bytes.byteLength;
+        const blockId = encodeBlockId(uploadNonce, partNumber);
+        const blockUrl = buildBlobUrl(this.options, normalized, {
+          blockid: blockId,
+          comp: "block"
+        });
+        const response = await azureFetch(this.options, "PUT", blockUrl, {
+          ...request.signal !== void 0 ? { signal: request.signal } : {},
+          body: sliced.bytes,
+          extraHeaders: { "content-type": "application/octet-stream" }
+        });
+        if (!response.ok) {
+          throw mapAzureResponseError(response, normalized, await safeReadText(response));
+        }
+        blockIds.push(blockId);
+        bytesTransferred += sliced.bytes.byteLength;
+        request.reportProgress(bytesTransferred, void 0);
+        partNumber += 1;
+      }
+    };
+    await flushBlocks(false);
+    while (true) {
+      request.throwIfAborted();
+      const next = await iterator.next();
+      if (next.done === true) break;
+      if (next.value.byteLength === 0) continue;
+      buffer.push(next.value);
+      bufferSize += next.value.byteLength;
+      await flushBlocks(false);
+    }
+    await flushBlocks(true);
+    if (blockIds.length === 0) {
+      throw new ConnectionError({
+        message: "Azure Blob staged-block upload completed with zero blocks",
+        retryable: false
+      });
+    }
+    const commitUrl = buildBlobUrl(this.options, normalized, { comp: "blocklist" });
+    const xmlBody = buildBlockListXml(blockIds);
+    const commitResponse = await azureFetch(this.options, "PUT", commitUrl, {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      body: new TextEncoder().encode(xmlBody),
+      extraHeaders: {
+        "content-type": "application/xml",
+        "x-ms-blob-content-type": "application/octet-stream"
+      }
+    });
+    if (!commitResponse.ok) {
+      throw mapAzureResponseError(commitResponse, normalized, await safeReadText(commitResponse));
+    }
+    const result = {
+      bytesTransferred,
+      totalBytes: bytesTransferred
+    };
+    const md5 = commitResponse.headers.get("content-md5");
     if (md5 !== null && md5 !== "") result.checksum = md5;
     return result;
   }
@@ -5149,14 +5285,17 @@ function buildContainerUrl(options, params) {
   appendSas(search, options.sasToken);
   return `${options.endpoint}/${encodeURIComponent(options.container)}?${search.toString()}`;
 }
-function buildBlobUrl(options, normalized) {
+function buildBlobUrl(options, normalized, extraParams) {
   const blobPath = normalized.replace(/^\/+/u, "");
   const encoded = blobPath.split("/").map((segment) => encodeURIComponent(segment)).join("/");
   const base = `${options.endpoint}/${encodeURIComponent(options.container)}/${encoded}`;
-  if (options.sasToken !== void 0 && options.sasToken !== "") {
-    return `${base}?${options.sasToken}`;
+  const search = new URLSearchParams();
+  if (extraParams !== void 0) {
+    for (const [k, v] of Object.entries(extraParams)) search.set(k, v);
   }
-  return base;
+  appendSas(search, options.sasToken);
+  const query = search.toString();
+  return query === "" ? base : `${base}?${query}`;
 }
 function appendSas(search, sasToken) {
   if (sasToken === void 0 || sasToken === "") return;
@@ -5307,6 +5446,55 @@ async function collectChunks(source) {
     offset += chunk.byteLength;
   }
   return out;
+}
+function concatChunks3(chunks, totalSize) {
+  const out = new Uint8Array(totalSize);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+function sliceFromBuffers(buffers, size) {
+  const out = new Uint8Array(size);
+  let offset = 0;
+  let i = 0;
+  while (offset < size && i < buffers.length) {
+    const chunk = buffers[i];
+    if (chunk === void 0) {
+      i += 1;
+      continue;
+    }
+    const remaining = size - offset;
+    if (chunk.byteLength <= remaining) {
+      out.set(chunk, offset);
+      offset += chunk.byteLength;
+      i += 1;
+    } else {
+      out.set(chunk.subarray(0, remaining), offset);
+      const leftover = chunk.subarray(remaining);
+      const next = buffers.slice(i + 1);
+      next.unshift(leftover);
+      return { bytes: out, remaining: next };
+    }
+  }
+  return { bytes: out.subarray(0, offset), remaining: buffers.slice(i) };
+}
+function encodeBlockId(nonce, partNumber) {
+  const padded = String(partNumber).padStart(9, "0");
+  const raw = `${nonce}-${padded}`;
+  return Buffer.from(raw, "utf8").toString("base64");
+}
+function generateUploadNonce() {
+  return cryptoRandomBytes(4).toString("hex");
+}
+function buildBlockListXml(blockIds) {
+  const items = blockIds.map((id) => `<Latest>${escapeXml(id)}</Latest>`).join("");
+  return `<?xml version="1.0" encoding="utf-8"?><BlockList>${items}</BlockList>`;
+}
+function escapeXml(value) {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 }
 export {
   AbortError,

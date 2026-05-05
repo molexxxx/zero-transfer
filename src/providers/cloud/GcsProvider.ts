@@ -46,6 +46,9 @@ export type { HttpFetch };
 const GCS_JSON_API_BASE = "https://storage.googleapis.com/storage/v1";
 const GCS_UPLOAD_API_BASE = "https://storage.googleapis.com/upload/storage/v1";
 const GCS_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["md5", "crc32c"];
+const GCS_CHUNK_ALIGNMENT = 256 * 1024;
+const DEFAULT_GCS_PART_SIZE = 8 * 1024 * 1024;
+const DEFAULT_GCS_THRESHOLD = 8 * 1024 * 1024;
 
 /** Options accepted by {@link createGcsProviderFactory}. */
 export interface GcsProviderOptions {
@@ -61,6 +64,33 @@ export interface GcsProviderOptions {
   fetch?: HttpFetch;
   /** Default headers applied before bearer auth on every request. */
   defaultHeaders?: Record<string, string>;
+  /** Resumable upload session tuning. Enabled by default. */
+  multipart?: GcsMultipartOptions;
+}
+
+/** Resumable-upload session tuning for the GCS provider. */
+export interface GcsMultipartOptions {
+  /**
+   * Enable resumable upload sessions. **Defaults to `true`** so payloads above
+   * {@link GcsMultipartOptions.thresholdBytes} stream in fixed-size chunks via
+   * the resumable session endpoint instead of being buffered into a single
+   * `uploadType=media` POST. Set to `false` to force the legacy single-shot
+   * behaviour.
+   */
+  enabled?: boolean;
+  /** Object size threshold above which a resumable session is used. Defaults to 8 MiB. */
+  thresholdBytes?: number;
+  /**
+   * Target chunk size in bytes. Must be a multiple of 256 KiB per the GCS
+   * protocol (the final chunk is exempt). Defaults to 8 MiB.
+   */
+  partSizeBytes?: number;
+}
+
+interface ResolvedGcsMultipartOptions {
+  enabled: boolean;
+  thresholdBytes: number;
+  partSizeBytes: number;
 }
 
 /**
@@ -113,6 +143,37 @@ export function createGcsProviderFactory(options: GcsProviderOptions): ProviderF
   }
   const apiBaseUrl = (options.apiBaseUrl ?? GCS_JSON_API_BASE).replace(/\/+$/u, "");
   const uploadBaseUrl = (options.uploadBaseUrl ?? GCS_UPLOAD_API_BASE).replace(/\/+$/u, "");
+  const multipartEnabled = options.multipart?.enabled ?? true;
+  const partSizeBytes = options.multipart?.partSizeBytes ?? DEFAULT_GCS_PART_SIZE;
+  const thresholdBytes = options.multipart?.thresholdBytes ?? DEFAULT_GCS_THRESHOLD;
+  if (multipartEnabled) {
+    if (!Number.isInteger(partSizeBytes) || partSizeBytes <= 0) {
+      throw new ConfigurationError({
+        details: { partSizeBytes },
+        message: "GcsMultipartOptions.partSizeBytes must be a positive integer",
+        retryable: false,
+      });
+    }
+    if (partSizeBytes % GCS_CHUNK_ALIGNMENT !== 0) {
+      throw new ConfigurationError({
+        details: { partSizeBytes },
+        message: `GCS multipart partSizeBytes must be a multiple of ${String(GCS_CHUNK_ALIGNMENT)} bytes (256 KiB)`,
+        retryable: false,
+      });
+    }
+    if (!Number.isInteger(thresholdBytes) || thresholdBytes < 0) {
+      throw new ConfigurationError({
+        details: { thresholdBytes },
+        message: "GcsMultipartOptions.thresholdBytes must be a non-negative integer",
+        retryable: false,
+      });
+    }
+  }
+  const multipart: ResolvedGcsMultipartOptions = {
+    enabled: multipartEnabled,
+    partSizeBytes,
+    thresholdBytes,
+  };
 
   const capabilities: CapabilitySet = {
     atomicRename: false,
@@ -123,13 +184,19 @@ export function createGcsProviderFactory(options: GcsProviderOptions): ProviderF
     list: true,
     maxConcurrency: 4,
     metadata: ["modifiedAt", "createdAt", "uniqueId"],
-    notes: [
-      "GCS provider performs single-shot media uploads via /upload?uploadType=media; resumable upload sessions are not yet supported.",
-    ],
+    notes: multipartEnabled
+      ? [
+          `GCS resumable-upload session enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`,
+          "Payloads at or below the threshold automatically fall back to single-shot uploadType=media POST.",
+          "Pass `multipart: { enabled: false }` to force the legacy single-shot behaviour.",
+        ]
+      : [
+          "GCS provider performs single-shot media uploads via /upload?uploadType=media; resumable upload sessions are disabled.",
+        ],
     provider: id,
     readStream: true,
     resumeDownload: true,
-    resumeUpload: false,
+    resumeUpload: multipartEnabled,
     serverSideCopy: false,
     serverSideMove: false,
     stat: true,
@@ -147,6 +214,7 @@ export function createGcsProviderFactory(options: GcsProviderOptions): ProviderF
         defaultHeaders: { ...(options.defaultHeaders ?? {}) },
         fetch: fetchImpl,
         id,
+        multipart,
         uploadBaseUrl,
       }),
     id,
@@ -160,6 +228,7 @@ interface GcsInternalOptions {
   defaultHeaders: Record<string, string>;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedGcsMultipartOptions;
   uploadBaseUrl: string;
 }
 
@@ -193,6 +262,7 @@ class GcsProvider implements TransferProvider {
       defaultHeaders: this.internals.defaultHeaders,
       fetch: this.internals.fetch,
       id: this.internals.id,
+      multipart: this.internals.multipart,
       token,
       uploadBaseUrl: this.internals.uploadBaseUrl,
     };
@@ -208,6 +278,7 @@ interface GcsSessionOptions {
   defaultHeaders: Record<string, string>;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedGcsMultipartOptions;
   timeoutMs?: number;
   token: string;
   uploadBaseUrl: string;
@@ -346,13 +417,26 @@ class GcsTransferOperations implements ProviderTransferOperations {
     if (request.offset !== undefined && request.offset > 0) {
       throw new UnsupportedFeatureError({
         details: { offset: request.offset },
-        message: "GCS provider does not yet support resumable upload sessions",
+        message: "GCS provider does not yet support cross-attempt resume of upload sessions",
         retryable: false,
       });
     }
     const normalized = normalizeRemotePath(request.endpoint.path);
     const objectName = toGcsObjectName(normalized);
-    const buffered = await collectChunks(request.content);
+    const multipart = this.options.multipart;
+    if (!multipart.enabled) {
+      const buffered = await collectChunks(request.content);
+      return this.singleShotMedia(request, normalized, objectName, buffered);
+    }
+    return this.writeResumableSession(request, normalized, objectName);
+  }
+
+  private async singleShotMedia(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+    objectName: string,
+    buffered: Uint8Array,
+  ): Promise<ProviderTransferWriteResult> {
     const url = `${this.options.uploadBaseUrl}/b/${encodeURIComponent(this.options.bucket)}/o?uploadType=media&name=${encodeURIComponent(objectName)}`;
     const response = await gcsFetch(this.options, "POST", url, {
       ...(request.signal !== undefined ? { signal: request.signal } : {}),
@@ -369,6 +453,139 @@ class GcsTransferOperations implements ProviderTransferOperations {
       totalBytes: buffered.byteLength,
     };
     if (typeof item.md5Hash === "string" && item.md5Hash !== "") result.checksum = item.md5Hash;
+    return result;
+  }
+
+  private async writeResumableSession(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+    objectName: string,
+  ): Promise<ProviderTransferWriteResult> {
+    const multipart = this.options.multipart;
+    const partSize = multipart.partSizeBytes;
+    const iterator = request.content[Symbol.asyncIterator]();
+
+    // Buffer up to thresholdBytes so small payloads fall back to single-shot.
+    const initialBuffer: Uint8Array[] = [];
+    let initialSize = 0;
+    while (initialSize <= multipart.thresholdBytes) {
+      const next = await iterator.next();
+      if (next.done === true) break;
+      const chunk = next.value;
+      if (chunk.byteLength === 0) continue;
+      initialBuffer.push(chunk);
+      initialSize += chunk.byteLength;
+    }
+    if (initialSize <= multipart.thresholdBytes) {
+      return this.singleShotMedia(
+        request,
+        normalized,
+        objectName,
+        concatChunks(initialBuffer, initialSize),
+      );
+    }
+
+    // Initiate resumable session.
+    const initiateUrl = `${this.options.uploadBaseUrl}/b/${encodeURIComponent(this.options.bucket)}/o?uploadType=resumable&name=${encodeURIComponent(objectName)}`;
+    const initiateResponse = await gcsFetch(this.options, "POST", initiateUrl, {
+      ...(request.signal !== undefined ? { signal: request.signal } : {}),
+      body: new TextEncoder().encode("{}"),
+      extraHeaders: {
+        "content-type": "application/json; charset=UTF-8",
+        "x-upload-content-type": "application/octet-stream",
+      },
+    });
+    if (!initiateResponse.ok) {
+      throw mapGcsResponseError(initiateResponse, normalized, await safeReadText(initiateResponse));
+    }
+    const sessionUri = initiateResponse.headers.get("location");
+    if (sessionUri === null || sessionUri === "") {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: "GCS resumable session initiation returned no Location header",
+        retryable: true,
+      });
+    }
+
+    let bytesTransferred = 0;
+    let buffer: Uint8Array[] = [...initialBuffer];
+    let bufferSize = initialSize;
+    let sourceExhausted = false;
+    let finalItem: GcsObject | undefined;
+
+    const flushChunks = async (final: boolean): Promise<void> => {
+      while (bufferSize >= partSize || (final && bufferSize > 0)) {
+        const take = final ? bufferSize : partSize;
+        const sliced = sliceFromBuffers(buffer, take);
+        buffer = sliced.remaining;
+        bufferSize -= sliced.bytes.byteLength;
+        const chunkStart = bytesTransferred;
+        const chunkEnd = chunkStart + sliced.bytes.byteLength - 1;
+        const totalRange = final ? String(chunkEnd + 1) : "*";
+        const headers: Record<string, string> = {
+          "content-length": String(sliced.bytes.byteLength),
+          "content-range": `bytes ${String(chunkStart)}-${String(chunkEnd)}/${totalRange}`,
+          "content-type": "application/octet-stream",
+        };
+        const response = await gcsSessionFetch(this.options, sessionUri, {
+          ...(request.signal !== undefined ? { signal: request.signal } : {}),
+          body: sliced.bytes,
+          extraHeaders: headers,
+        });
+        if (response.status === 308) {
+          // Resume Incomplete - server accepted bytes; continue.
+          bytesTransferred += sliced.bytes.byteLength;
+          request.reportProgress(bytesTransferred, undefined);
+          continue;
+        }
+        if (response.status === 200 || response.status === 201) {
+          bytesTransferred += sliced.bytes.byteLength;
+          request.reportProgress(bytesTransferred, bytesTransferred);
+          finalItem = (await response.json()) as GcsObject;
+          return;
+        }
+        throw mapGcsResponseError(response, normalized, await safeReadText(response));
+      }
+    };
+
+    try {
+      await flushChunks(false);
+      while (!sourceExhausted) {
+        request.throwIfAborted();
+        const next = await iterator.next();
+        if (next.done === true) {
+          sourceExhausted = true;
+          break;
+        }
+        if (next.value.byteLength === 0) continue;
+        buffer.push(next.value);
+        bufferSize += next.value.byteLength;
+        await flushChunks(false);
+        if (finalItem !== undefined) break;
+      }
+      if (finalItem === undefined) {
+        await flushChunks(true);
+      }
+    } catch (error) {
+      // Best-effort abort: DELETE the session URI cancels an in-flight upload.
+      void gcsSessionFetch(this.options, sessionUri, { method: "DELETE" }).catch(() => undefined);
+      throw error;
+    }
+
+    if (finalItem === undefined) {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: "GCS resumable upload did not return a final object",
+        retryable: true,
+      });
+    }
+    const result: ProviderTransferWriteResult = {
+      bytesTransferred,
+      totalBytes: bytesTransferred,
+    };
+    if (typeof finalItem.md5Hash === "string" && finalItem.md5Hash !== "") {
+      result.checksum = finalItem.md5Hash;
+    }
     return result;
   }
 }
@@ -554,4 +771,101 @@ async function collectChunks(source: AsyncIterable<Uint8Array>): Promise<Uint8Ar
     offset += chunk.byteLength;
   }
   return out;
+}
+
+function concatChunks(chunks: Uint8Array[], totalSize: number): Uint8Array {
+  const out = new Uint8Array(totalSize);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
+function sliceFromBuffers(
+  buffers: Uint8Array[],
+  size: number,
+): { bytes: Uint8Array; remaining: Uint8Array[] } {
+  const out = new Uint8Array(size);
+  let offset = 0;
+  let i = 0;
+  while (offset < size && i < buffers.length) {
+    const chunk = buffers[i];
+    if (chunk === undefined) {
+      i += 1;
+      continue;
+    }
+    const remaining = size - offset;
+    if (chunk.byteLength <= remaining) {
+      out.set(chunk, offset);
+      offset += chunk.byteLength;
+      i += 1;
+    } else {
+      out.set(chunk.subarray(0, remaining), offset);
+      const leftover = chunk.subarray(remaining);
+      const next = buffers.slice(i + 1);
+      next.unshift(leftover);
+      return { bytes: out, remaining: next };
+    }
+  }
+  return { bytes: out.subarray(0, offset), remaining: buffers.slice(i) };
+}
+
+interface GcsSessionFetchOptions {
+  method?: string;
+  body?: Uint8Array;
+  extraHeaders?: Record<string, string>;
+  signal?: AbortSignal;
+}
+
+async function gcsSessionFetch(
+  options: GcsSessionOptions,
+  sessionUri: string,
+  fetchOptions: GcsSessionFetchOptions = {},
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    ...options.defaultHeaders,
+    ...(fetchOptions.extraHeaders ?? {}),
+    authorization: `Bearer ${options.token}`,
+  };
+  const init: RequestInit = { headers, method: fetchOptions.method ?? "PUT" };
+  if (fetchOptions.body !== undefined) {
+    (init as { body: Uint8Array }).body = fetchOptions.body;
+  }
+  const controller = new AbortController();
+  const upstream = fetchOptions.signal ?? null;
+  if (upstream !== null) {
+    if (upstream.aborted) controller.abort(upstream.reason);
+    else upstream.addEventListener("abort", () => controller.abort(upstream.reason));
+  }
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  if (options.timeoutMs !== undefined && options.timeoutMs > 0) {
+    timer = setTimeout(
+      () => controller.abort(new Error("GCS resumable session request timed out")),
+      options.timeoutMs,
+    );
+  }
+  try {
+    return await options.fetch(sessionUri, { ...init, signal: controller.signal });
+  } catch (error) {
+    const safeUrl = redactSessionUrl(sessionUri);
+    throw new ConnectionError({
+      cause: error,
+      details: { url: safeUrl },
+      message: `GCS resumable session request to ${safeUrl} failed`,
+      retryable: true,
+    });
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+/**
+ * Strips the query string from a pre-signed session URI before logging it,
+ * since the query commonly carries upload-session credentials.
+ */
+function redactSessionUrl(url: string): string {
+  const queryStart = url.indexOf("?");
+  return queryStart === -1 ? url : `${url.slice(0, queryStart)}?<redacted>`;
 }

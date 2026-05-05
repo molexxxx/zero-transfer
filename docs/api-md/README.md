@@ -163,6 +163,7 @@ path safety utilities used by future protocol adapters.
 | [AtomicDeployActivateStep](interfaces/AtomicDeployActivateStep.md) | Kind of activation step described by the plan. |
 | [AtomicDeployPlan](interfaces/AtomicDeployPlan.md) | Result returned by [createAtomicDeployPlan](functions/createAtomicDeployPlan.md). |
 | [AtomicDeployPruneStep](interfaces/AtomicDeployPruneStep.md) | Pruning step describing an old release directory marked for deletion. |
+| [AzureBlobMultipartOptions](interfaces/AzureBlobMultipartOptions.md) | Multipart (staged block) upload tuning for the Azure Blob provider. |
 | [AzureBlobProviderOptions](interfaces/AzureBlobProviderOptions.md) | Options accepted by [createAzureBlobProviderFactory](functions/createAzureBlobProviderFactory.md). |
 | [BandwidthThrottle](interfaces/BandwidthThrottle.md) | Token-bucket throttle used to pace transfer chunks. |
 | [BandwidthThrottleOptions](interfaces/BandwidthThrottleOptions.md) | Construction overrides for deterministic tests. |
@@ -203,6 +204,7 @@ path safety utilities used by future protocol adapters.
 | [FtpReplyErrorInput](interfaces/FtpReplyErrorInput.md) | Input used to map an FTP reply into a structured ZeroTransfer error. |
 | [FtpResponse](interfaces/FtpResponse.md) | Complete parsed FTP response. |
 | [FtpsProviderOptions](interfaces/FtpsProviderOptions.md) | Options used to create the FTPS provider factory. |
+| [GcsMultipartOptions](interfaces/GcsMultipartOptions.md) | Resumable-upload session tuning for the GCS provider. |
 | [GcsProviderOptions](interfaces/GcsProviderOptions.md) | Options accepted by [createGcsProviderFactory](functions/createGcsProviderFactory.md). |
 | [GoogleDriveProviderOptions](interfaces/GoogleDriveProviderOptions.md) | Options accepted by [createGoogleDriveProviderFactory](functions/createGoogleDriveProviderFactory.md). |
 | [HttpProviderOptions](interfaces/HttpProviderOptions.md) | Options accepted by [createHttpProviderFactory](functions/createHttpProviderFactory.md). |
@@ -232,6 +234,7 @@ path safety utilities used by future protocol adapters.
 | [NegotiatedSshAlgorithms](interfaces/NegotiatedSshAlgorithms.md) | Selected algorithms after intersecting client preferences with server capabilities. |
 | [OAuthAccessToken](interfaces/OAuthAccessToken.md) | Token material returned by [OAuthRefreshCallback](type-aliases/OAuthRefreshCallback.md). |
 | [OAuthTokenSecretSourceOptions](interfaces/OAuthTokenSecretSourceOptions.md) | Options accepted by [createOAuthTokenSecretSource](functions/createOAuthTokenSecretSource.md). |
+| [OneDriveMultipartOptions](interfaces/OneDriveMultipartOptions.md) | Resumable-upload session tuning for the OneDrive provider. |
 | [OneDriveProviderOptions](interfaces/OneDriveProviderOptions.md) | Options accepted by [createOneDriveProviderFactory](functions/createOneDriveProviderFactory.md). |
 | [OpenSshConfigEntry](interfaces/OpenSshConfigEntry.md) | Parsed `Host` block from an OpenSSH config file. |
 | [PooledTransferClient](interfaces/PooledTransferClient.md) | Pool-aware [TransferClient](classes/TransferClient.md) returned by [createPooledTransferClient](functions/createPooledTransferClient.md). |
