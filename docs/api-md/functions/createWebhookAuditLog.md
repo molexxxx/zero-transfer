@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.2**](../README.md)
+[**ZeroTransfer SDK v0.4.3**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createWebhookAuditLog(options): MftAuditLog;
 ```
 
-Defined in: [src/mft/webhooks.ts:191](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/webhooks.ts#L191)
+Defined in: [src/mft/webhooks.ts:191](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/mft/webhooks.ts#L191)
 
 Wraps a webhook target as an [MftAuditLog](../interfaces/MftAuditLog.md).
 

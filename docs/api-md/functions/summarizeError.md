@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.2**](../README.md)
+[**ZeroTransfer SDK v0.4.3**](../README.md)
 
 ***
 
@@ -14,7 +14,7 @@ function summarizeError(error): {
 };
 ```
 
-Defined in: [src/mft/audit.ts:137](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/audit.ts#L137)
+Defined in: [src/mft/audit.ts:137](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/mft/audit.ts#L137)
 
 Serializes an unknown error into the audit-friendly `{ message, name, code }` shape.
 
@@ -38,6 +38,6 @@ A plain object suitable for [MftAuditEntry.error](../interfaces/MftAuditEntry.md
 
 | Name | Type | Defined in |
 | ------ | ------ | ------ |
-| `code?` | `string` | [src/mft/audit.ts:137](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/audit.ts#L137) |
-| `message` | `string` | [src/mft/audit.ts:137](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/audit.ts#L137) |
-| `name?` | `string` | [src/mft/audit.ts:137](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/mft/audit.ts#L137) |
+| `code?` | `string` | [src/mft/audit.ts:137](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/mft/audit.ts#L137) |
+| `message` | `string` | [src/mft/audit.ts:137](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/mft/audit.ts#L137) |
+| `name?` | `string` | [src/mft/audit.ts:137](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/mft/audit.ts#L137) |

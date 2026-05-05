@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/s3",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "S3-compatible storage with SigV4, multipart upload, and resume.",
   "keywords": [
     "zero-transfer",
@@ -46,6 +46,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@zero-transfer/core": "^0.4.2"
+    "@zero-transfer/core": "^0.4.3"
   }
 }

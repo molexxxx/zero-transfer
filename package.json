@@ -1,6 +1,6 @@
 {
   "name": "@zero-transfer/sdk",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Unified TypeScript file transfer SDK for Node.js",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

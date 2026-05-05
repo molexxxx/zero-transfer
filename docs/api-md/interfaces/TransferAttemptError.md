@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.2**](../README.md)
+[**ZeroTransfer SDK v0.4.3**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: TransferAttemptError
 
-Defined in: [src/transfers/TransferJob.ts:95](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L95)
+Defined in: [src/transfers/TransferJob.ts:95](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/transfers/TransferJob.ts#L95)
 
 Serializable error summary retained in failed attempts.
 
@@ -14,7 +14,7 @@ Serializable error summary retained in failed attempts.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="code"></a> `code?` | `string` | Stable SDK error code when available. | [src/transfers/TransferJob.ts:101](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L101) |
-| <a id="message"></a> `message` | `string` | Human-readable error message. | [src/transfers/TransferJob.ts:99](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L99) |
-| <a id="name"></a> `name` | `string` | Error class or constructor name. | [src/transfers/TransferJob.ts:97](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L97) |
-| <a id="retryable"></a> `retryable?` | `boolean` | Whether retry policy may retry the failure. | [src/transfers/TransferJob.ts:103](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferJob.ts#L103) |
+| <a id="code"></a> `code?` | `string` | Stable SDK error code when available. | [src/transfers/TransferJob.ts:101](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/transfers/TransferJob.ts#L101) |
+| <a id="message"></a> `message` | `string` | Human-readable error message. | [src/transfers/TransferJob.ts:99](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/transfers/TransferJob.ts#L99) |
+| <a id="name"></a> `name` | `string` | Error class or constructor name. | [src/transfers/TransferJob.ts:97](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/transfers/TransferJob.ts#L97) |
+| <a id="retryable"></a> `retryable?` | `boolean` | Whether retry policy may retry the failure. | [src/transfers/TransferJob.ts:103](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/transfers/TransferJob.ts#L103) |

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.2**](../README.md)
+[**ZeroTransfer SDK v0.4.3**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ProviderTransferReadRequest
 
-Defined in: [src/providers/ProviderTransferOperations.ts:34](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/ProviderTransferOperations.ts#L34)
+Defined in: [src/providers/ProviderTransferOperations.ts:34](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/providers/ProviderTransferOperations.ts#L34)
 
 Request passed to provider read implementations.
 
@@ -22,7 +22,7 @@ Request passed to provider read implementations.
 reportProgress(bytesTransferred, totalBytes?): TransferProgressEvent;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:38](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferEngine.ts#L38)
+Defined in: [src/transfers/TransferEngine.ts:38](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/transfers/TransferEngine.ts#L38)
 
 Emits a normalized progress event through engine options.
 
@@ -49,7 +49,7 @@ Emits a normalized progress event through engine options.
 throwIfAborted(): void;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:36](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferEngine.ts#L36)
+Defined in: [src/transfers/TransferEngine.ts:36](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/transfers/TransferEngine.ts#L36)
 
 Throws an SDK abort error when the active signal has been cancelled.
 
@@ -65,9 +65,9 @@ Throws an SDK abort error when the active signal has been cancelled.
 
 | Property | Type | Description | Inherited from | Defined in |
 | ------ | ------ | ------ | ------ | ------ |
-| <a id="attempt"></a> `attempt` | `number` | One-based attempt number. | [`ProviderTransferRequest`](ProviderTransferRequest.md).[`attempt`](ProviderTransferRequest.md#attempt) | [src/transfers/TransferEngine.ts:30](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferEngine.ts#L30) |
-| <a id="bandwidthlimit"></a> `bandwidthLimit?` | [`TransferBandwidthLimit`](TransferBandwidthLimit.md) | Optional throughput limit shape for concrete executors to honor. | [`ProviderTransferRequest`](ProviderTransferRequest.md).[`bandwidthLimit`](ProviderTransferRequest.md#bandwidthlimit) | [src/transfers/TransferEngine.ts:34](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferEngine.ts#L34) |
-| <a id="endpoint"></a> `endpoint` | [`TransferEndpoint`](TransferEndpoint.md) | Endpoint owned by the provider handling this request. | [`ProviderTransferRequest`](ProviderTransferRequest.md).[`endpoint`](ProviderTransferRequest.md#endpoint) | [src/providers/ProviderTransferOperations.ts:30](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/ProviderTransferOperations.ts#L30) |
-| <a id="job"></a> `job` | [`TransferJob`](TransferJob.md) | Job being executed. | [`ProviderTransferRequest`](ProviderTransferRequest.md).[`job`](ProviderTransferRequest.md#job) | [src/transfers/TransferEngine.ts:28](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferEngine.ts#L28) |
-| <a id="range"></a> `range?` | [`TransferByteRange`](TransferByteRange.md) | Optional byte range for resumed or partial reads. | - | [src/providers/ProviderTransferOperations.ts:36](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/ProviderTransferOperations.ts#L36) |
-| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal active for this execution when supplied. | [`ProviderTransferRequest`](ProviderTransferRequest.md).[`signal`](ProviderTransferRequest.md#signal) | [src/transfers/TransferEngine.ts:32](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/transfers/TransferEngine.ts#L32) |
+| <a id="attempt"></a> `attempt` | `number` | One-based attempt number. | [`ProviderTransferRequest`](ProviderTransferRequest.md).[`attempt`](ProviderTransferRequest.md#attempt) | [src/transfers/TransferEngine.ts:30](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/transfers/TransferEngine.ts#L30) |
+| <a id="bandwidthlimit"></a> `bandwidthLimit?` | [`TransferBandwidthLimit`](TransferBandwidthLimit.md) | Optional throughput limit shape for concrete executors to honor. | [`ProviderTransferRequest`](ProviderTransferRequest.md).[`bandwidthLimit`](ProviderTransferRequest.md#bandwidthlimit) | [src/transfers/TransferEngine.ts:34](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/transfers/TransferEngine.ts#L34) |
+| <a id="endpoint"></a> `endpoint` | [`TransferEndpoint`](TransferEndpoint.md) | Endpoint owned by the provider handling this request. | [`ProviderTransferRequest`](ProviderTransferRequest.md).[`endpoint`](ProviderTransferRequest.md#endpoint) | [src/providers/ProviderTransferOperations.ts:30](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/providers/ProviderTransferOperations.ts#L30) |
+| <a id="job"></a> `job` | [`TransferJob`](TransferJob.md) | Job being executed. | [`ProviderTransferRequest`](ProviderTransferRequest.md).[`job`](ProviderTransferRequest.md#job) | [src/transfers/TransferEngine.ts:28](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/transfers/TransferEngine.ts#L28) |
+| <a id="range"></a> `range?` | [`TransferByteRange`](TransferByteRange.md) | Optional byte range for resumed or partial reads. | - | [src/providers/ProviderTransferOperations.ts:36](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/providers/ProviderTransferOperations.ts#L36) |
+| <a id="signal"></a> `signal?` | `AbortSignal` | Abort signal active for this execution when supplied. | [`ProviderTransferRequest`](ProviderTransferRequest.md).[`signal`](ProviderTransferRequest.md#signal) | [src/transfers/TransferEngine.ts:32](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/transfers/TransferEngine.ts#L32) |

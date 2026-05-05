@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.2**](../README.md)
+[**ZeroTransfer SDK v0.4.3**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: SftpProviderOptions
 
-Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:153](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/native/sftp/NativeSftpProvider.ts#L153)
+Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:153](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/providers/native/sftp/NativeSftpProvider.ts#L153)
 
 Options for [createNativeSftpProviderFactory](../functions/createSftpProviderFactory.md).
 
@@ -20,6 +20,6 @@ SFTP v3 client protocol multiplexed over a single channel.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="keepaliveintervalms"></a> `keepaliveIntervalMs?` | `number` | Default interval (milliseconds) between SSH-level keepalive pings sent once the transport is connected and idle. Prevents stateful firewalls / NAT devices from dropping long-lived sessions. The timer is reset on every outbound payload so active transfers do not generate extra traffic. Disabled when omitted or `0`. | [src/providers/native/sftp/NativeSftpProvider.ts:168](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/native/sftp/NativeSftpProvider.ts#L168) |
-| <a id="maxconcurrency"></a> `maxConcurrency?` | `number` | Maximum concurrent file-transfer operations the engine should schedule against a single SFTP session. Each in-flight read/write occupies an outstanding SFTP request slot multiplexed over the same SSH channel; the default of `8` keeps memory bounded on commodity servers, but high-RTT links and modern OpenSSH builds can comfortably handle 16\u201364. Must be a positive integer. | [src/providers/native/sftp/NativeSftpProvider.ts:177](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/native/sftp/NativeSftpProvider.ts#L177) |
-| <a id="readytimeoutms"></a> `readyTimeoutMs?` | `number` | Default connection timeout in milliseconds when the profile omits `timeoutMs`. Bounds both the TCP connect *and* the SSH identification + key-exchange handshake, so a hung server cannot stall `connect()` indefinitely after the socket is accepted. | [src/providers/native/sftp/NativeSftpProvider.ts:160](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/providers/native/sftp/NativeSftpProvider.ts#L160) |
+| <a id="keepaliveintervalms"></a> `keepaliveIntervalMs?` | `number` | Default interval (milliseconds) between SSH-level keepalive pings sent once the transport is connected and idle. Prevents stateful firewalls / NAT devices from dropping long-lived sessions. The timer is reset on every outbound payload so active transfers do not generate extra traffic. Disabled when omitted or `0`. | [src/providers/native/sftp/NativeSftpProvider.ts:168](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/providers/native/sftp/NativeSftpProvider.ts#L168) |
+| <a id="maxconcurrency"></a> `maxConcurrency?` | `number` | Maximum concurrent file-transfer operations the engine should schedule against a single SFTP session. Each in-flight read/write occupies an outstanding SFTP request slot multiplexed over the same SSH channel; the default of `8` keeps memory bounded on commodity servers, but high-RTT links and modern OpenSSH builds can comfortably handle 16\u201364. Must be a positive integer. | [src/providers/native/sftp/NativeSftpProvider.ts:177](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/providers/native/sftp/NativeSftpProvider.ts#L177) |
+| <a id="readytimeoutms"></a> `readyTimeoutMs?` | `number` | Default connection timeout in milliseconds when the profile omits `timeoutMs`. Bounds both the TCP connect *and* the SSH identification + key-exchange handshake, so a hung server cannot stall `connect()` indefinitely after the socket is accepted. | [src/providers/native/sftp/NativeSftpProvider.ts:160](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/providers/native/sftp/NativeSftpProvider.ts#L160) |

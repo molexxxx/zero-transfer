@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.2**](../README.md)
+[**ZeroTransfer SDK v0.4.3**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: DiffRemoteTreesOptions
 
-Defined in: [src/sync/diffRemoteTrees.ts:58](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L58)
+Defined in: [src/sync/diffRemoteTrees.ts:58](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L58)
 
 Options accepted by [diffRemoteTrees](../functions/diffRemoteTrees.md).
 
@@ -14,12 +14,12 @@ Options accepted by [diffRemoteTrees](../functions/diffRemoteTrees.md).
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="comparemodifiedat"></a> `compareModifiedAt?` | `boolean` | Whether modification timestamps participate in the comparison. Defaults to `true`. | [src/sync/diffRemoteTrees.ts:73](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L73) |
-| <a id="comparesize"></a> `compareSize?` | `boolean` | Whether sizes participate in the comparison. Defaults to `true`. | [src/sync/diffRemoteTrees.ts:75](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L75) |
-| <a id="compareuniqueid"></a> `compareUniqueId?` | `boolean` | Whether to require matching `uniqueId` checksums when both entries expose one. Defaults to `false`. | [src/sync/diffRemoteTrees.ts:77](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L77) |
-| <a id="destinationfilter"></a> `destinationFilter?` | [`RemoteTreeFilter`](../type-aliases/RemoteTreeFilter.md) | Filter applied only to the destination side. Overrides `walk.filter` when set. | [src/sync/diffRemoteTrees.ts:67](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L67) |
-| <a id="includeunchanged"></a> `includeUnchanged?` | `boolean` | Whether unchanged entries are included in `entries`. Defaults to `false`. | [src/sync/diffRemoteTrees.ts:69](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L69) |
-| <a id="modifiedattolerancems"></a> `modifiedAtToleranceMs?` | `number` | Tolerance in milliseconds when comparing modification timestamps. Defaults to `1000`. | [src/sync/diffRemoteTrees.ts:71](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L71) |
-| <a id="signal"></a> `signal?` | `AbortSignal` | Optional abort signal threaded through both walks. | [src/sync/diffRemoteTrees.ts:79](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L79) |
-| <a id="sourcefilter"></a> `sourceFilter?` | [`RemoteTreeFilter`](../type-aliases/RemoteTreeFilter.md) | Filter applied only to the source side. Overrides `walk.filter` when set. | [src/sync/diffRemoteTrees.ts:65](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L65) |
-| <a id="walk"></a> `walk?` | `Pick`\<[`WalkRemoteTreeOptions`](WalkRemoteTreeOptions.md), \| `"filter"` \| `"recursive"` \| `"followSymlinks"` \| `"includeDirectories"` \| `"includeFiles"` \| `"maxDepth"`\> | Optional traversal controls applied to both sides. | [src/sync/diffRemoteTrees.ts:60](https://github.com/tonywied17/zero-transfer/blob/f871bd1a1c01caee1df080b7e6cf2b4686fe7ef7/src/sync/diffRemoteTrees.ts#L60) |
+| <a id="comparemodifiedat"></a> `compareModifiedAt?` | `boolean` | Whether modification timestamps participate in the comparison. Defaults to `true`. | [src/sync/diffRemoteTrees.ts:73](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L73) |
+| <a id="comparesize"></a> `compareSize?` | `boolean` | Whether sizes participate in the comparison. Defaults to `true`. | [src/sync/diffRemoteTrees.ts:75](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L75) |
+| <a id="compareuniqueid"></a> `compareUniqueId?` | `boolean` | Whether to require matching `uniqueId` checksums when both entries expose one. Defaults to `false`. | [src/sync/diffRemoteTrees.ts:77](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L77) |
+| <a id="destinationfilter"></a> `destinationFilter?` | [`RemoteTreeFilter`](../type-aliases/RemoteTreeFilter.md) | Filter applied only to the destination side. Overrides `walk.filter` when set. | [src/sync/diffRemoteTrees.ts:67](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L67) |
+| <a id="includeunchanged"></a> `includeUnchanged?` | `boolean` | Whether unchanged entries are included in `entries`. Defaults to `false`. | [src/sync/diffRemoteTrees.ts:69](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L69) |
+| <a id="modifiedattolerancems"></a> `modifiedAtToleranceMs?` | `number` | Tolerance in milliseconds when comparing modification timestamps. Defaults to `1000`. | [src/sync/diffRemoteTrees.ts:71](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L71) |
+| <a id="signal"></a> `signal?` | `AbortSignal` | Optional abort signal threaded through both walks. | [src/sync/diffRemoteTrees.ts:79](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L79) |
+| <a id="sourcefilter"></a> `sourceFilter?` | [`RemoteTreeFilter`](../type-aliases/RemoteTreeFilter.md) | Filter applied only to the source side. Overrides `walk.filter` when set. | [src/sync/diffRemoteTrees.ts:65](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L65) |
+| <a id="walk"></a> `walk?` | `Pick`\<[`WalkRemoteTreeOptions`](WalkRemoteTreeOptions.md), \| `"filter"` \| `"recursive"` \| `"followSymlinks"` \| `"includeDirectories"` \| `"includeFiles"` \| `"maxDepth"`\> | Optional traversal controls applied to both sides. | [src/sync/diffRemoteTrees.ts:60](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/sync/diffRemoteTrees.ts#L60) |
