@@ -1,0 +1,102 @@
+name: Remove npm dist-tag
+
+# Manual escape hatch to remove a dist-tag (e.g. `alpha`) from every
+# @zero-transfer/* package on npmjs using the NPM_TOKEN automation secret
+# (which bypasses 2FA).
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Dist-tag to remove (e.g. alpha, next)"
+        required: true
+        default: alpha
+      dry_run:
+        description: "Print actions without modifying npm"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+
+jobs:
+  remove-tag:
+    name: Remove ${{ github.event.inputs.tag }} from @zero-transfer/*
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+
+      - name: Remove dist-tag from every scoped package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          TAG: ${{ github.event.inputs.tag }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+        run: |
+          set -u
+          packages=(
+            "@zero-transfer/sdk"
+            "@zero-transfer/core"
+            "@zero-transfer/classic"
+            "@zero-transfer/ftp"
+            "@zero-transfer/ftps"
+            "@zero-transfer/sftp"
+            "@zero-transfer/ssh"
+            "@zero-transfer/http"
+            "@zero-transfer/webdav"
+            "@zero-transfer/s3"
+            "@zero-transfer/google-drive"
+            "@zero-transfer/dropbox"
+            "@zero-transfer/azure-blob"
+            "@zero-transfer/mft"
+          )
+          for pkg in "${packages[@]}"; do
+            current=$(npm dist-tag ls "$pkg" 2>/dev/null || true)
+            if echo "$current" | grep -qE "^${TAG}:"; then
+              echo "::group::Removing ${TAG} from ${pkg}"
+              echo "$current"
+              if [ "$DRY_RUN" = "true" ]; then
+                echo "(dry-run) npm dist-tag rm $pkg $TAG"
+              else
+                npm dist-tag rm "$pkg" "$TAG"
+              fi
+              echo "::endgroup::"
+            else
+              echo "Skip ${pkg}: no '${TAG}' tag present"
+            fi
+          done
+
+      - name: Summary
+        env:
+          TAG: ${{ github.event.inputs.tag }}
+        run: |
+          {
+            echo "## Removed dist-tag '$TAG' from @zero-transfer/*"
+            echo ""
+            packages=(
+              "@zero-transfer/sdk"
+              "@zero-transfer/core"
+              "@zero-transfer/classic"
+              "@zero-transfer/ftp"
+              "@zero-transfer/ftps"
+              "@zero-transfer/sftp"
+              "@zero-transfer/ssh"
+              "@zero-transfer/http"
+              "@zero-transfer/webdav"
+              "@zero-transfer/s3"
+              "@zero-transfer/google-drive"
+              "@zero-transfer/dropbox"
+              "@zero-transfer/azure-blob"
+              "@zero-transfer/mft"
+            )
+            for pkg in "${packages[@]}"; do
+              echo "### $pkg"
+              echo '```'
+              npm dist-tag ls "$pkg" 2>&1 || true
+              echo '```'
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
