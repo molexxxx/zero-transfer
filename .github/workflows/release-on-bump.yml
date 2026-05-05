@@ -4,8 +4,13 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "package.json"
+  # NOTE: We deliberately do NOT use a `paths:` filter here. In practice GitHub
+  # has been silently dropping this workflow on the very release-bump pushes it
+  # is meant to handle (commits that touch ~400 files including the root
+  # `package.json`); the resulting "no run" leaves the version bumped on
+  # `main` but nothing tagged or published. The `detect` job below diffs the
+  # version itself and short-circuits when it hasn't changed, so unconditional
+  # firing on `main` is cheap and reliable.
 
 permissions:
   contents: write
