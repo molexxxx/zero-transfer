@@ -289,3 +289,4 @@ export {
   joinRemotePath,
   normalizeRemotePath,
 } from "../utils/path";
+export { isMainModule } from "../utils/mainModule";

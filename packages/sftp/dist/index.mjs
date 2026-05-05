@@ -4785,6 +4785,19 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   return Math.abs(sourceTime - destinationTime) > toleranceMs;
 }
 
+// src/utils/mainModule.ts
+import { fileURLToPath } from "url";
+function isMainModule(importMetaUrl) {
+  if (typeof process === "undefined" || !process.argv || process.argv.length < 2) {
+    return false;
+  }
+  try {
+    return process.argv[1] === fileURLToPath(importMetaUrl);
+  } catch {
+    return false;
+  }
+}
+
 // src/providers/native/sftp/NativeSftpProvider.ts
 import { Buffer as Buffer21 } from "buffer";
 import { createHash as createHash3, createPrivateKey } from "crypto";
@@ -7070,7 +7083,7 @@ var SshTransportPacketUnprotector = class {
   }
   /**
    * Feeds raw encrypted bytes from the socket and returns any fully decoded payloads.
-   * Maintains internal framing state across calls — pass each `data` event chunk directly.
+   * Maintains internal framing state across calls - pass each `data` event chunk directly.
    */
   pushBytes(chunk) {
     this.framePendingRaw = Buffer17.concat([this.framePendingRaw, chunk]);
@@ -7578,7 +7591,7 @@ var SshTransportConnection = class {
   assertConnected() {
     if (!this.connected) {
       throw new ProtocolError({
-        message: "SshTransportConnection is not yet connected \u2014 call connect() first",
+        message: "SshTransportConnection is not yet connected - call connect() first",
         protocol: "sftp",
         retryable: false
       });
@@ -7918,14 +7931,14 @@ function sftpStatusToError(status, path2) {
     case SFTP_STATUS.NO_SUCH_FILE:
       return new PathNotFoundError({
         details: { path: path2, sftpMessage: status.errorMessage },
-        message: `SFTP: no such file or directory${path2 !== void 0 ? ` \u2014 ${path2}` : ""}`,
+        message: `SFTP: no such file or directory${path2 !== void 0 ? ` - ${path2}` : ""}`,
         protocol: "sftp",
         retryable: false
       });
     case SFTP_STATUS.PERMISSION_DENIED:
       return new PermissionDeniedError({
         details: { path: path2, sftpMessage: status.errorMessage },
-        message: `SFTP: permission denied${path2 !== void 0 ? ` \u2014 ${path2}` : ""}`,
+        message: `SFTP: permission denied${path2 !== void 0 ? ` - ${path2}` : ""}`,
         protocol: "sftp",
         retryable: false
       });
@@ -7933,21 +7946,21 @@ function sftpStatusToError(status, path2) {
     case SFTP_STATUS.CONNECTION_LOST:
       return new ConnectionError({
         details: { sftpMessage: status.errorMessage, statusCode: status.statusCode },
-        message: `SFTP: connection error \u2014 ${status.errorMessage}`,
+        message: `SFTP: connection error - ${status.errorMessage}`,
         protocol: "sftp",
         retryable: true
       });
     case SFTP_STATUS.OP_UNSUPPORTED:
       return new UnsupportedFeatureError({
         details: { sftpMessage: status.errorMessage },
-        message: `SFTP: operation unsupported \u2014 ${status.errorMessage}`,
+        message: `SFTP: operation unsupported - ${status.errorMessage}`,
         protocol: "sftp",
         retryable: false
       });
     case SFTP_STATUS.BAD_MESSAGE:
       return new ProtocolError({
         details: { sftpMessage: status.errorMessage },
-        message: `SFTP: bad message \u2014 ${status.errorMessage}`,
+        message: `SFTP: bad message - ${status.errorMessage}`,
         protocol: "sftp",
         retryable: false
       });
@@ -7955,7 +7968,7 @@ function sftpStatusToError(status, path2) {
       return new ZeroTransferError({
         code: "SFTP_FAILURE",
         details: { sftpMessage: status.errorMessage, statusCode: status.statusCode },
-        message: `SFTP: operation failed (status ${status.statusCode}) \u2014 ${status.errorMessage}`,
+        message: `SFTP: operation failed (status ${status.statusCode}) - ${status.errorMessage}`,
         protocol: "sftp",
         retryable: false
       });
@@ -9076,6 +9089,7 @@ export {
   importOpenSshConfig,
   importWinScpSessions,
   isClassicProviderId,
+  isMainModule,
   isSensitiveKey,
   joinRemotePath,
   matchKnownHosts,

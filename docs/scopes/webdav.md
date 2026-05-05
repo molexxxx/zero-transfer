@@ -12,7 +12,7 @@ Installing this package automatically pulls in [`@zero-transfer/core`](https://w
 
 ## Overview
 
-WebDAV provider — PROPFIND-based `list`/`stat`, ranged GET, PUT uploads, Basic auth, and ETag preservation. Speaks remote filesystem semantics over HTTP.
+WebDAV provider - PROPFIND-based `list`/`stat`, ranged GET, PUT uploads, Basic auth, and ETag preservation. Speaks remote filesystem semantics over HTTP.
 
 ## Public surface
 

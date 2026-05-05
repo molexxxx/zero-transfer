@@ -12,7 +12,7 @@ Installing this package automatically pulls in [`@zero-transfer/core`](https://w
 
 ## Overview
 
-Dropbox provider — RPC + content-host APIs, list-folder cursor pagination, ranged downloads, single-shot uploads in `overwrite` mode, and `content_hash` exposed as both `uniqueId` and `checksum`.
+Dropbox provider - RPC + content-host APIs, list-folder cursor pagination, ranged downloads, single-shot uploads in `overwrite` mode, and `content_hash` exposed as both `uniqueId` and `checksum`.
 
 ## Public surface
 
@@ -25,7 +25,7 @@ This is the actual surface published by [`@zero-transfer/dropbox`](https://www.n
 
 ## Examples
 
-_No dedicated example yet — see the [examples directory](../../examples/) for cross-scope showcases._
+_No dedicated example yet - see the [examples directory](../../examples/) for cross-scope showcases._
 
 ## See also
 

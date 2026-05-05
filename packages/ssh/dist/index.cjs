@@ -92,6 +92,7 @@ __export(ssh_exports, {
   importOpenSshConfig: () => importOpenSshConfig,
   importWinScpSessions: () => importWinScpSessions,
   isClassicProviderId: () => isClassicProviderId,
+  isMainModule: () => isMainModule,
   isSensitiveKey: () => isSensitiveKey,
   joinRemotePath: () => joinRemotePath,
   matchKnownHosts: () => matchKnownHosts,
@@ -113,6 +114,7 @@ __export(ssh_exports, {
   resolveProviderId: () => resolveProviderId,
   resolveSecret: () => resolveSecret,
   runConnectionDiagnostics: () => runConnectionDiagnostics,
+  runSshCommand: () => runSshCommand,
   serializeRemoteManifest: () => serializeRemoteManifest,
   sortRemoteEntries: () => sortRemoteEntries,
   summarizeClientDiagnostics: () => summarizeClientDiagnostics,
@@ -4901,6 +4903,19 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   return Math.abs(sourceTime - destinationTime) > toleranceMs;
 }
 
+// src/utils/mainModule.ts
+var import_node_url = require("url");
+function isMainModule(importMetaUrl) {
+  if (typeof process === "undefined" || !process.argv || process.argv.length < 2) {
+    return false;
+  }
+  try {
+    return process.argv[1] === (0, import_node_url.fileURLToPath)(importMetaUrl);
+  } catch {
+    return false;
+  }
+}
+
 // src/protocols/ssh/transport/SshTransportConnection.ts
 var import_node_buffer15 = require("buffer");
 
@@ -6271,7 +6286,7 @@ var SshTransportPacketUnprotector = class {
   }
   /**
    * Feeds raw encrypted bytes from the socket and returns any fully decoded payloads.
-   * Maintains internal framing state across calls — pass each `data` event chunk directly.
+   * Maintains internal framing state across calls - pass each `data` event chunk directly.
    */
   pushBytes(chunk) {
     this.framePendingRaw = import_node_buffer14.Buffer.concat([this.framePendingRaw, chunk]);
@@ -6779,7 +6794,7 @@ var SshTransportConnection = class {
   assertConnected() {
     if (!this.connected) {
       throw new ProtocolError({
-        message: "SshTransportConnection is not yet connected \u2014 call connect() first",
+        message: "SshTransportConnection is not yet connected - call connect() first",
         protocol: "sftp",
         retryable: false
       });
@@ -7735,6 +7750,84 @@ var SshConnectionManager = class {
     }
   }
 };
+
+// src/protocols/ssh/runSshCommand.ts
+var import_node_net = require("net");
+var DEFAULT_PORT = 22;
+var DEFAULT_CONNECT_TIMEOUT_MS = 1e4;
+var DEFAULT_HANDSHAKE_TIMEOUT_MS = 1e4;
+var DEFAULT_MAX_OUTPUT_BYTES = 16 * 1024 * 1024;
+async function runSshCommand(options) {
+  const {
+    host,
+    port = DEFAULT_PORT,
+    command,
+    auth,
+    transport: transportOptions,
+    connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MS,
+    maxOutputBytes = DEFAULT_MAX_OUTPUT_BYTES
+  } = options;
+  const socket = await openTcpSocket(host, port, connectTimeoutMs);
+  const transport = new SshTransportConnection({
+    handshakeTimeoutMs: DEFAULT_HANDSHAKE_TIMEOUT_MS,
+    ...transportOptions
+  });
+  try {
+    const handshake = await transport.connect(socket);
+    const authSession = new SshAuthSession(transport);
+    await authSession.authenticate({
+      credential: auth,
+      sessionId: handshake.keyExchange.sessionId
+    });
+    const conn = new SshConnectionManager(transport);
+    const channel = await conn.openExecChannel(command);
+    const pump = conn.start();
+    pump.catch(() => {
+    });
+    const chunks = [];
+    let bytesReceived = 0;
+    try {
+      for await (const chunk of channel.receiveData()) {
+        bytesReceived += chunk.length;
+        if (bytesReceived > maxOutputBytes) {
+          throw new Error(
+            `runSshCommand: stdout exceeded ${maxOutputBytes} bytes (set maxOutputBytes to allow more)`
+          );
+        }
+        chunks.push(chunk);
+      }
+    } finally {
+      channel.close();
+    }
+    const stdout = Buffer.concat(chunks);
+    return {
+      stdout,
+      stdoutText: stdout.toString("utf8"),
+      bytesReceived
+    };
+  } finally {
+    transport.disconnect();
+  }
+}
+function openTcpSocket(host, port, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const socket = (0, import_node_net.connect)({ host, port });
+    const timer = setTimeout(() => {
+      socket.destroy();
+      reject(
+        new Error(`runSshCommand: TCP connect to ${host}:${port} timed out after ${timeoutMs}ms`)
+      );
+    }, timeoutMs);
+    socket.once("connect", () => {
+      clearTimeout(timer);
+      resolve(socket);
+    });
+    socket.once("error", (error) => {
+      clearTimeout(timer);
+      reject(error);
+    });
+  });
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   AbortError,
@@ -7799,6 +7892,7 @@ var SshConnectionManager = class {
   importOpenSshConfig,
   importWinScpSessions,
   isClassicProviderId,
+  isMainModule,
   isSensitiveKey,
   joinRemotePath,
   matchKnownHosts,
@@ -7820,6 +7914,7 @@ var SshConnectionManager = class {
   resolveProviderId,
   resolveSecret,
   runConnectionDiagnostics,
+  runSshCommand,
   serializeRemoteManifest,
   sortRemoteEntries,
   summarizeClientDiagnostics,

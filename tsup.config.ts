@@ -12,7 +12,7 @@ const shared: Options = {
   },
 };
 
-/** Scoped entry points; no third-party SSH/SFTP dependency — native stack ships in-bundle. */
+/** Scoped entry points; no third-party SSH/SFTP dependency - native stack ships in-bundle. */
 const scopedEntries: Options[] = [
   "core",
   "ftp",

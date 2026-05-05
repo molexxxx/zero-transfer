@@ -85,6 +85,7 @@ __export(s3_exports, {
   importOpenSshConfig: () => importOpenSshConfig,
   importWinScpSessions: () => importWinScpSessions,
   isClassicProviderId: () => isClassicProviderId,
+  isMainModule: () => isMainModule,
   isSensitiveKey: () => isSensitiveKey,
   joinRemotePath: () => joinRemotePath,
   matchKnownHosts: () => matchKnownHosts,
@@ -4893,6 +4894,19 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   return Math.abs(sourceTime - destinationTime) > toleranceMs;
 }
 
+// src/utils/mainModule.ts
+var import_node_url = require("url");
+function isMainModule(importMetaUrl) {
+  if (typeof process === "undefined" || !process.argv || process.argv.length < 2) {
+    return false;
+  }
+  try {
+    return process.argv[1] === (0, import_node_url.fileURLToPath)(importMetaUrl);
+  } catch {
+    return false;
+  }
+}
+
 // src/providers/web/S3Provider.ts
 var import_node_crypto3 = require("crypto");
 var import_promises3 = require("fs/promises");
@@ -5790,6 +5804,7 @@ function innerText(xml, tag) {
   importOpenSshConfig,
   importWinScpSessions,
   isClassicProviderId,
+  isMainModule,
   isSensitiveKey,
   joinRemotePath,
   matchKnownHosts,

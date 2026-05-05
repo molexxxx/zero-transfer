@@ -4,7 +4,7 @@
  * Talks to the Microsoft Graph v1.0 API. The provider is path-addressed
  * (`/drive/root:/path/to/file`) and uses a bearer token sourced from
  * `profile.password` (resolved as a `SecretSource`). The drive root can be
- * scoped via {@link OneDriveProviderOptions.driveBaseUrl} — the default is
+ * scoped via {@link OneDriveProviderOptions.driveBaseUrl} - the default is
  * `https://graph.microsoft.com/v1.0/me/drive`, which targets the signed-in
  * user's OneDrive. SharePoint document libraries are addressed by overriding
  * `driveBaseUrl` to `https://graph.microsoft.com/v1.0/drives/{driveId}` or

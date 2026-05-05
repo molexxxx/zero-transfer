@@ -75,7 +75,7 @@ export type SshCredential =
 
 export interface SshAuthOptions {
   credential: SshCredential;
-  /** SSH session id (exchange hash) from key exchange — required for publickey signing. */
+  /** SSH session id (exchange hash) from key exchange - required for publickey signing. */
   sessionId: Uint8Array;
   /** Maximum number of USERAUTH_FAILURE retries before giving up. Defaults to 4. */
   maxAttempts?: number;
@@ -232,7 +232,7 @@ export class SshAuthSession {
           });
         }
 
-        // Server rejected this attempt but allows retry — loop.
+        // Server rejected this attempt but allows retry - loop.
         continue;
       }
 
@@ -284,7 +284,7 @@ export class SshAuthSession {
         continue;
       }
 
-      // Put the payload back in the caller's view by re-emitting — handled by returning.
+      // Put the payload back in the caller's view by re-emitting - handled by returning.
       this.pendingPayload = payload;
       return;
     }

@@ -89,3 +89,10 @@ export {
   type KnownHostsEntry,
   type KnownHostsMarker,
 } from "../profiles/importers/KnownHostsParser";
+
+// -- High-level helpers ------------------------------------------------------
+export {
+  runSshCommand,
+  type RunSshCommandOptions,
+  type RunSshCommandResult,
+} from "../protocols/ssh/runSshCommand";

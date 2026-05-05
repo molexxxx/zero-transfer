@@ -523,7 +523,7 @@ describe("createS3ProviderFactory", () => {
     expect(result.bytesTransferred).toBe(partSize * 3);
     expect(result.checksum).toBe('"final"');
 
-    // No CreateMultipartUpload should have been issued — we resumed.
+    // No CreateMultipartUpload should have been issued - we resumed.
     const initiates = captured.filter((c) => c.method === "POST" && c.url.includes("uploads="));
     expect(initiates).toHaveLength(0);
 

@@ -141,7 +141,7 @@ export class SshTransportPacketUnprotector {
 
   /**
    * Feeds raw encrypted bytes from the socket and returns any fully decoded payloads.
-   * Maintains internal framing state across calls — pass each `data` event chunk directly.
+   * Maintains internal framing state across calls - pass each `data` event chunk directly.
    */
   pushBytes(chunk: Buffer): Buffer[] {
     this.framePendingRaw = Buffer.concat([this.framePendingRaw, chunk]);

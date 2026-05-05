@@ -12,7 +12,7 @@ Installing this package automatically pulls in [`@zero-transfer/core`](https://w
 
 ## Overview
 
-Dropbox provider — RPC + content-host APIs, list-folder cursor pagination, ranged downloads, single-shot uploads in `overwrite` mode, and `content_hash` exposed as both `uniqueId` and `checksum`.
+Dropbox provider - RPC + content-host APIs, list-folder cursor pagination, ranged downloads, single-shot uploads in `overwrite` mode, and `content_hash` exposed as both `uniqueId` and `checksum`.
 
 ## Usage
 
@@ -36,7 +36,7 @@ This package publishes a narrowed surface of **2** exports. These symbols are al
 
 ## Examples
 
-_No dedicated example yet — see the [examples directory](https://github.com/tonywied17/zero-transfer/tree/main/examples) for cross-scope showcases._
+_No dedicated example yet - see the [examples directory](https://github.com/tonywied17/zero-transfer/tree/main/examples) for cross-scope showcases._
 
 ## Documentation
 

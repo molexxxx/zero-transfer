@@ -143,7 +143,7 @@ export class SshConnectionManager {
     // Intercept transport.receivePayloads to route through our setup-phase consumer.
     // We achieve this by temporarily wrapping the channel's nextPayload calls via
     // `nextSetupPayload`.  SshSessionChannel's private `nextPayload()` already calls
-    // `transport.receivePayloads().next()` — so we cannot intercept it without changing
+    // `transport.receivePayloads().next()` - so we cannot intercept it without changing
     // the design.  Instead, we create a shim transport that the channel talks to.
     await setup();
   }

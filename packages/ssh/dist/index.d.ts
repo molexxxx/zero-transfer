@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import { SecureVersion, PeerCertificate } from 'node:tls';
 import { Readable } from 'node:stream';
-import { Buffer } from 'node:buffer';
+import { Buffer as Buffer$1 } from 'node:buffer';
 import { Socket } from 'node:net';
 import { KeyObject } from 'node:crypto';
 
@@ -183,7 +183,7 @@ interface CapabilitySet {
  */
 
 /** Resolved secret value accepted by profile credential fields. */
-type SecretValue = string | Buffer;
+type SecretValue = string | Buffer$1;
 /** Callback source used by applications to integrate vaults or credential brokers. */
 type SecretProvider = () => SecretValue | Promise<SecretValue>;
 /** Inline secret descriptor. Prefer env, path, or callback sources for real applications. */
@@ -215,7 +215,7 @@ interface ResolveSecretOptions {
     /** Environment source. Defaults to `process.env`. */
     env?: NodeJS.ProcessEnv;
     /** File reader. Defaults to `fs.promises.readFile`. */
-    readFile?: (path: string) => Promise<Buffer> | Buffer;
+    readFile?: (path: string) => Promise<Buffer$1> | Buffer$1;
 }
 /**
  * Resolves a secret source into a string or Buffer without logging the value.
@@ -396,7 +396,7 @@ interface TlsProfile {
      * hex form with or without colons. When present, the TLS handshake additionally requires the
      * leaf certificate's SHA-256 fingerprint to match one of these values.
      *
-     * Not required for normal CA-trusted endpoints — public CAs and `ca` bundles already gate
+     * Not required for normal CA-trusted endpoints - public CAs and `ca` bundles already gate
      * trust via `rejectUnauthorized`. Pinning is **recommended for production** when you control
      * the server and want defence-in-depth against rogue certificates issued by trusted CAs.
      *
@@ -1724,7 +1724,7 @@ interface ConnectionPoolOptions {
     /**
      * Maximum number of *idle* sessions retained per pool key.
      *
-     * Active leases are not counted against this limit — the cap only applies
+     * Active leases are not counted against this limit - the cap only applies
      * to sessions waiting in the pool. When more than `maxIdlePerKey` sessions
      * become idle simultaneously, the oldest ones are disconnected. Defaults
      * to `4`.
@@ -3004,7 +3004,7 @@ interface DiffRemoteTreesOptions {
  * Compares two remote subtrees and produces an entry-level diff.
  *
  * Source and destination paths are walked independently; entries are then aligned by
- * the relative path from each tree root. Directory equality is structural — directories
+ * the relative path from each tree root. Directory equality is structural - directories
  * are equal when their relative paths match and the entry types agree.
  *
  * @param source - Source-side remote file system.
@@ -3249,7 +3249,7 @@ interface CreateAtomicDeployPlanOptions {
  *  2. Atomically swap the `current` symlink/rename to point at the new release.
  *  3. Optionally prune old releases beyond `retain`.
  *
- * No I/O is performed — the host executes the plan steps. Pair with
+ * No I/O is performed - the host executes the plan steps. Pair with
  * {@link createTransferPlan} or {@link createTransferJobsFromPlan} to execute.
  *
  * @param options - Inputs and policies that shape the deploy.
@@ -3469,6 +3469,12 @@ declare function joinRemotePath(...segments: string[]): string;
  */
 declare function basenameRemotePath(input: string): string;
 
+/**
+ * Returns `true` when the file containing `import.meta.url` is the entry point
+ * of the current Node.js process. Returns `false` outside Node.
+ */
+declare function isMainModule(importMetaUrl: string): boolean;
+
 /** Algorithm lists exchanged during SSH KEXINIT negotiation. */
 interface SshAlgorithmPreferences {
     compressionClientToServer: readonly string[];
@@ -3514,7 +3520,7 @@ interface SshIdentification {
 
 /** Parsed SSH_MSG_KEXINIT payload. */
 interface SshKexInitMessage extends SshAlgorithmPreferences {
-    cookie: Buffer;
+    cookie: Buffer$1;
     firstKexPacketFollows: boolean;
     messageType: number;
     reserved: number;
@@ -3522,31 +3528,31 @@ interface SshKexInitMessage extends SshAlgorithmPreferences {
 
 /** Directional key material used after SSH NEWKEYS. */
 interface SshTransportDirectionKeys {
-    encryptionKey: Buffer;
-    iv: Buffer;
-    macKey: Buffer;
+    encryptionKey: Buffer$1;
+    iv: Buffer$1;
+    macKey: Buffer$1;
 }
 /** Session key bundle derived from K, H, and session id. */
 interface SshDerivedSessionKeys {
     clientToServer: SshTransportDirectionKeys;
-    exchangeHash: Buffer;
+    exchangeHash: Buffer$1;
     serverToClient: SshTransportDirectionKeys;
-    sessionId: Buffer;
+    sessionId: Buffer$1;
 }
 
 /** Initial client-side handshake state before key exchange math starts. */
 interface SshTransportHandshakeResult {
     keyExchange: {
         algorithm: string;
-        clientKexInitPayload: Buffer;
-        clientPublicKey: Buffer;
-        exchangeHash: Buffer;
-        serverHostKey: Buffer;
-        serverKexInitPayload: Buffer;
-        serverPublicKey: Buffer;
-        serverSignature: Buffer;
-        sessionId: Buffer;
-        sharedSecret: Buffer;
+        clientKexInitPayload: Buffer$1;
+        clientPublicKey: Buffer$1;
+        exchangeHash: Buffer$1;
+        serverHostKey: Buffer$1;
+        serverKexInitPayload: Buffer$1;
+        serverPublicKey: Buffer$1;
+        serverSignature: Buffer$1;
+        sessionId: Buffer$1;
+        sharedSecret: Buffer$1;
         transportKeys: {
             clientToServer: SshDerivedSessionKeys["clientToServer"];
             serverToClient: SshDerivedSessionKeys["serverToClient"];
@@ -3599,18 +3605,18 @@ declare class SshTransportHandshake {
          * to enforce known_hosts or pinned-fingerprint policies.
          */
         verifyHostKey?: (input: {
-            hostKeyBlob: Buffer;
-            hostKeySha256: Buffer;
+            hostKeyBlob: Buffer$1;
+            hostKeySha256: Buffer$1;
             algorithmName: string;
         }) => void | Promise<void>;
     });
     /** Creates the first outbound bytes (client identification line). */
-    createInitialClientBytes(): Buffer;
+    createInitialClientBytes(): Buffer$1;
     /**
      * Feeds raw server bytes into the handshake state machine.
      */
     pushServerBytes(chunk: Uint8Array): {
-        outbound: Buffer[];
+        outbound: Buffer$1[];
         result?: SshTransportHandshakeResult;
     };
     getServerBannerLines(): readonly string[];
@@ -3620,7 +3626,7 @@ declare class SshTransportHandshake {
      * Call this once after `pushServerBytes` returns a result to drain bytes that belong to the
      * post-NEWKEYS encrypted phase but arrived in the same TCP segment as NEWKEYS.
      */
-    takeRemainingBytes(): Buffer;
+    takeRemainingBytes(): Buffer$1;
     private pushServerBytesWithPhase;
 }
 
@@ -3668,8 +3674,8 @@ interface SshTransportConnectionOptions {
      * exchange hash is verified. Throw to reject the server's identity.
      */
     verifyHostKey?: (input: {
-        hostKeyBlob: Buffer;
-        hostKeySha256: Buffer;
+        hostKeyBlob: Buffer$1;
+        hostKeySha256: Buffer$1;
         algorithmName: string;
     }) => void;
 }
@@ -3716,7 +3722,7 @@ declare class SshTransportConnection {
      * Sends an SSH payload over the encrypted transport.
      * The payload must start with the SSH message type byte.
      */
-    sendPayload(payload: Buffer | Uint8Array): void;
+    sendPayload(payload: Buffer$1 | Uint8Array): void;
     /**
      * Async generator that yields inbound SSH payloads (post-NEWKEYS).
      *
@@ -3725,7 +3731,7 @@ declare class SshTransportConnection {
      * - SSH_MSG_DISCONNECT (1) from the server throws a `ConnectionError`.
      * - Socket error or close terminates the generator.
      */
-    receivePayloads(): AsyncGenerator<Buffer>;
+    receivePayloads(): AsyncGenerator<Buffer$1>;
     /**
      * Sends SSH_MSG_DISCONNECT and ends the socket.
      * Safe to call multiple times; subsequent calls are no-ops.
@@ -3775,7 +3781,7 @@ interface SshKeyboardInteractiveCredential {
 type SshCredential = SshPasswordCredential | SshPublickeyCredential | SshKeyboardInteractiveCredential;
 interface SshAuthOptions {
     credential: SshCredential;
-    /** SSH session id (exchange hash) from key exchange — required for publickey signing. */
+    /** SSH session id (exchange hash) from key exchange - required for publickey signing. */
     sessionId: Uint8Array;
     /** Maximum number of USERAUTH_FAILURE retries before giving up. Defaults to 4. */
     maxAttempts?: number;
@@ -3892,7 +3898,7 @@ declare class SshSessionChannel {
      * Async generator that yields raw data buffers from the channel.
      * Returns (done) when the channel receives EOF or CLOSE.
      */
-    receiveData(): AsyncGenerator<Buffer, void, undefined>;
+    receiveData(): AsyncGenerator<Buffer$1, void, undefined>;
     /**
      * Sends EOF and CLOSE.  Should be called when the client is done sending.
      */
@@ -3901,7 +3907,7 @@ declare class SshSessionChannel {
      * Feed an inbound transport payload to this channel.
      * Called by the channel multiplexer (`SshConnectionManager`).
      */
-    dispatch(payload: Buffer): void;
+    dispatch(payload: Buffer$1): void;
     dispatchError(error: Error): void;
     private consumeLocalWindow;
     private enqueueInbound;
@@ -3941,7 +3947,7 @@ declare class SshConnectionManager {
      * Channel setup happens sequentially before `start()` begins pumping, so we
      * pull directly from the transport iterator here.
      */
-    nextSetupPayload(): Promise<Buffer>;
+    nextSetupPayload(): Promise<Buffer$1>;
     /**
      * Opens a session channel and starts the SFTP subsystem on it.
      * Must be called before `start()`.
@@ -3982,10 +3988,10 @@ declare class SshDataReader {
     hasMore(): boolean;
     readByte(): number;
     readBoolean(): boolean;
-    readBytes(length: number): Buffer;
+    readBytes(length: number): Buffer$1;
     readUint32(): number;
     readUint64(): bigint;
-    readString(): Buffer;
+    readString(): Buffer$1;
     readUtf8String(): string;
     readNameList(): string[];
     /**
@@ -3993,7 +3999,7 @@ declare class SshDataReader {
      * big-endian integer. Returns the raw magnitude bytes (non-negative integers
      * may have a leading 0x00 byte preserved by the caller as needed).
      */
-    readMpint(): Buffer;
+    readMpint(): Buffer$1;
     assertFinished(): void;
     private ensureAvailable;
 }
@@ -4012,9 +4018,74 @@ declare class SshDataWriter {
     writeString(value: string | Uint8Array, encoding?: BufferEncoding): this;
     writeMpint(value: Uint8Array): this;
     writeNameList(values: readonly string[]): this;
-    toBuffer(): Buffer;
+    toBuffer(): Buffer$1;
     private push;
     private assertByte;
 }
 
-export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionPoolOptions, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, DEFAULT_SSH_ALGORITHM_PREFERENCES, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type NegotiatedSshAlgorithms, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type PooledTransferClient, type ProgressEventInput, ProtocolError, type AuthenticationCapability as ProviderAuthenticationCapability, type CapabilitySet as ProviderCapabilities, type ChecksumCapability as ProviderChecksumCapability, type ProviderFactory, type ProviderId, type MetadataCapability as ProviderMetadataCapability, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type SecretProvider, type SecretSource, type SecretValue, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithmPreferences, type SshAlgorithms, SshAuthSession, SshConnectionManager, SshDataReader, SshDataWriter, SshDisconnectReason, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveCredential, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshPasswordCredential, type SshProfile, type SshPublickeyCredential, SshSessionChannel, type SshSocketFactory, type SshSocketFactoryContext, SshTransportConnection, type SshTransportConnectionOptions, SshTransportHandshake, type SshTransportHandshakeResult, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildPublickeyCredential, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createLocalProviderFactory, createMemoryProviderFactory, createOAuthTokenSecretSource, createPooledTransferClient, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, negotiateSshAlgorithms, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactObject, redactSecretSource, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };
+/**
+ * Options for {@link runSshCommand}.
+ */
+interface RunSshCommandOptions {
+    /** Hostname or IP of the SSH server. */
+    host: string;
+    /** TCP port. Defaults to `22`. */
+    port?: number;
+    /** Command to execute on the remote shell. */
+    command: string;
+    /**
+     * Authentication credential. Use one of:
+     *
+     * - `{ type: "password", username, password }`
+     * - `{ type: "publickey", username, algorithmName, publicKeyBlob, sign }`
+     *   (build one from a private-key file with `buildPublickeyCredential`)
+     * - `{ type: "keyboard-interactive", username, respond }`
+     */
+    auth: SshCredential;
+    /**
+     * Forwarded to {@link SshTransportConnection}; covers host-key pinning,
+     * algorithm overrides, and handshake timeout. The default
+     * `handshakeTimeoutMs` is 10 seconds.
+     */
+    transport?: SshTransportConnectionOptions;
+    /** TCP connect timeout in milliseconds. Defaults to 10 000. */
+    connectTimeoutMs?: number;
+    /** Maximum total bytes captured from stdout. Defaults to 16 MiB. */
+    maxOutputBytes?: number;
+}
+/**
+ * Result of {@link runSshCommand}. The full captured stdout is provided as
+ * both a `Buffer` (for binary output) and as a UTF-8 decoded `string`.
+ *
+ * Note: stderr (CHANNEL_EXTENDED_DATA) and exit-status are not currently
+ * surfaced - drop down to {@link SshConnectionManager}/{@link SshSessionChannel}
+ * directly if you need them.
+ */
+interface RunSshCommandResult {
+    /** Captured stdout as raw bytes. */
+    stdout: Buffer;
+    /** Captured stdout decoded as UTF-8. */
+    stdoutText: string;
+    /** Bytes received before the channel closed. */
+    bytesReceived: number;
+}
+/**
+ * Connects, authenticates, runs `command` on a fresh exec channel, drains
+ * stdout, and disconnects. The TCP socket, transport, auth session, and
+ * channel are all owned by this helper and torn down before it returns.
+ *
+ * @example Run `uname -a` with a password credential
+ * ```ts
+ * import { runSshCommand } from "@zero-transfer/ssh";
+ *
+ * const { stdoutText } = await runSshCommand({
+ *   host: "ssh.example.com",
+ *   auth: { type: "password", username: "deploy", password: process.env.SSH_PASSWORD! },
+ *   command: "uname -a",
+ * });
+ * console.log(stdoutText);
+ * ```
+ */
+declare function runSshCommand(options: RunSshCommandOptions): Promise<RunSshCommandResult>;
+
+export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionPoolOptions, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, DEFAULT_SSH_ALGORITHM_PREFERENCES, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type NegotiatedSshAlgorithms, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type PooledTransferClient, type ProgressEventInput, ProtocolError, type AuthenticationCapability as ProviderAuthenticationCapability, type CapabilitySet as ProviderCapabilities, type ChecksumCapability as ProviderChecksumCapability, type ProviderFactory, type ProviderId, type MetadataCapability as ProviderMetadataCapability, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type RunSshCommandOptions, type RunSshCommandResult, type SecretProvider, type SecretSource, type SecretValue, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithmPreferences, type SshAlgorithms, SshAuthSession, SshConnectionManager, SshDataReader, SshDataWriter, SshDisconnectReason, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveCredential, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshPasswordCredential, type SshProfile, type SshPublickeyCredential, SshSessionChannel, type SshSocketFactory, type SshSocketFactoryContext, SshTransportConnection, type SshTransportConnectionOptions, SshTransportHandshake, type SshTransportHandshakeResult, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildPublickeyCredential, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createLocalProviderFactory, createMemoryProviderFactory, createOAuthTokenSecretSource, createPooledTransferClient, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isMainModule, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, negotiateSshAlgorithms, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactObject, redactSecretSource, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, runSshCommand, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };

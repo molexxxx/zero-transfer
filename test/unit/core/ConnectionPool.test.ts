@@ -259,7 +259,7 @@ describe("createPooledTransferClient", () => {
     const realConnect = inner.connect.bind(inner);
     vi.spyOn(inner, "connect").mockImplementation(async (profile) => {
       const session = await realConnect(profile);
-      // Synchronous throw from the underlying provider — the pool's guard
+      // Synchronous throw from the underlying provider - the pool's guard
       // converts this into a rejected promise instead of crashing.
       session.fs.list = () => {
         throw new TypeError("boom");

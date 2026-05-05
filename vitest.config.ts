@@ -7,7 +7,7 @@ export default defineConfig({
       // Exclude pure type-only declaration files, barrel re-exports, and the
       // scope entry points (build-only re-export files). v8 reports them as
       // 0% because they contain no executable statements that survive
-      // TypeScript erasure — counting them depresses the totals without
+      // TypeScript erasure - counting them depresses the totals without
       // meaningfully reflecting test quality.
       exclude: [
         "src/**/index.ts",
@@ -60,7 +60,7 @@ export default defineConfig({
     environment: "node",
     include: ["test/**/*.test.ts"],
     // Integration tests require live credentials or docker and are run via
-    // dedicated scripts (test:integration:*) — exclude them from the default
+    // dedicated scripts (test:integration:*) - exclude them from the default
     // suite so CI shows 0 skipped.
     exclude: ["**/node_modules/**", "**/dist/**", "test/integration/**"],
   },

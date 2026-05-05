@@ -1,6 +1,6 @@
 ---
 title: Capability matrix
-description: What each provider can and can't do — streaming, resume, server-side copy, multipart upload, checksum exposure.
+description: What each provider can and can't do - streaming, resume, server-side copy, multipart upload, checksum exposure.
 ---
 
 Every provider advertises its own [`CapabilitySet`](../../api/interfaces/capabilityset/). The full programmatic matrix is exposed via [`getBuiltinCapabilityMatrix()`](../../api/functions/getbuiltincapabilitymatrix/) and renders to Markdown via [`formatCapabilityMatrixMarkdown()`](../../api/functions/formatcapabilitymatrixmarkdown/).
@@ -30,4 +30,4 @@ const matrix = getBuiltinCapabilityMatrix();
 console.table(matrix);
 ```
 
-Operations branch on capabilities at runtime — for example, `copyBetween()` will use server-side copy when both ends support it on the same provider, falling back to a streaming copy otherwise. You don't have to special-case providers in your own code.
+Operations branch on capabilities at runtime - for example, `copyBetween()` will use server-side copy when both ends support it on the same provider, falling back to a streaming copy otherwise. You don't have to special-case providers in your own code.

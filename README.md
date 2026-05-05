@@ -18,7 +18,7 @@
   <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D20-339933?style=for-the-badge&labelColor=0d1117&logo=nodedotjs&logoColor=white" alt="Node.js"></a>
 </p>
 
-ZeroTransfer is a unified, TypeScript-first file transfer SDK for Node.js. One typed API speaks to every backend you actually deploy against — classic protocols, web endpoints, object storage, cloud drives, and local disks — with streaming, resume, verification, dry-run plans, MFT-style scheduling, audit logs, and webhook delivery built in.
+ZeroTransfer is a unified, TypeScript-first file transfer SDK for Node.js. One typed API speaks to every backend you actually deploy against - classic protocols, web endpoints, object storage, cloud drives, and local disks - with streaming, resume, verification, dry-run plans, MFT-style scheduling, audit logs, and webhook delivery built in.
 
 ```ts
 import { createS3ProviderFactory, createTransferClient, uploadFile } from "@zero-transfer/sdk";
@@ -189,7 +189,7 @@ scheduler.start();
 
 ## Connection profiles
 
-Every operation that touches a remote system takes a [`ConnectionProfile`](docs/api-md/interfaces/ConnectionProfile.md). Profiles are provider-neutral data — you build one once and pass it to `client.connect()`, `uploadFile()`, `downloadFile()`, `copyBetween()`, MFT routes, and diagnostics. The same shape works for every provider; only the optional auth blocks (`ssh`, `tls`, `oauth`, `s3`, …) change.
+Every operation that touches a remote system takes a [`ConnectionProfile`](docs/api-md/interfaces/ConnectionProfile.md). Profiles are provider-neutral data - you build one once and pass it to `client.connect()`, `uploadFile()`, `downloadFile()`, `copyBetween()`, MFT routes, and diagnostics. The same shape works for every provider; only the optional auth blocks (`ssh`, `tls`, `oauth`, `s3`, …) change.
 
 ### Required fields
 
@@ -217,7 +217,7 @@ Every operation that touches a remote system takes a [`ConnectionProfile`](docs/
 Every credential field (`username`, `password`, `tls.ca`, `tls.key`, `ssh.privateKey`, `ssh.knownHosts`, `ssh.passphrase`, …) accepts a [`SecretSource`](docs/api-md/type-aliases/SecretSource.md). Inline strings work for prototypes, but production code should pull from the environment, a file, or a callback so secrets stay out of source control and out of process memory dumps.
 
 ```ts
-// Inline string — fine for tests, avoid in production.
+// Inline string - fine for tests, avoid in production.
 password: "hunter2";
 
 // Read from an environment variable.
@@ -287,7 +287,7 @@ const dropboxProfile: ConnectionProfile = {
 
 ### Security guidance
 
-- **Pin host keys for SSH/SFTP.** Without `ssh.knownHosts` or `ssh.pinnedHostKeySha256` the SSH session accepts any key the server presents — a MITM risk.
+- **Pin host keys for SSH/SFTP.** Without `ssh.knownHosts` or `ssh.pinnedHostKeySha256` the SSH session accepts any key the server presents - a MITM risk.
 - **Pin TLS fingerprints when you control the server.** `tls.pinnedFingerprint256` is defence-in-depth on top of `rejectUnauthorized: true` and a CA bundle.
 - **Never set `tls.rejectUnauthorized: false` in production.** Pair self-signed servers with `tls.ca` instead.
 - **Prefer `{ env }`, `{ path }`, or callback secrets** over inline strings or hard-coded values.
@@ -301,19 +301,19 @@ Every provider advertises its own [`CapabilitySet`](docs/api-md/interfaces/Capab
 
 | Provider      | Streaming |              Resume              | Server-side copy | Multipart upload |     Checksum exposed     |
 | ------------- | :-------: | :------------------------------: | :--------------: | :--------------: | :----------------------: |
-| FTP           |    ✅     |           ⬆/⬇ via REST           |        —         |        —         |            —             |
-| FTPS          |    ✅     |           ⬆/⬇ via REST           |        —         |        —         |            —             |
-| SFTP          |    ✅     |               ⬆/⬇                |      rename      |        —         |            —             |
-| HTTP(S)       | ✅ (read) |           ⬇ via Range            |        —         |        —         |           ETag           |
-| WebDAV        |    ✅     |           ⬇ via Range            |       COPY       |        —         |           ETag           |
+| FTP           |    ✅     |           ⬆/⬇ via REST           |        -         |        -         |            -             |
+| FTPS          |    ✅     |           ⬆/⬇ via REST           |        -         |        -         |            -             |
+| SFTP          |    ✅     |               ⬆/⬇                |      rename      |        -         |            -             |
+| HTTP(S)       | ✅ (read) |           ⬇ via Range            |        -         |        -         |           ETag           |
+| WebDAV        |    ✅     |           ⬇ via Range            |       COPY       |        -         |           ETag           |
 | S3-compatible |    ✅     | ⬆ via multipart resume / ⬇ Range |    CopyObject    |        ✅        |      SHA-256 / md5       |
-| Azure Blob    |    ✅     |           ⬇ via Range            |        —         |    (planned)     |           md5            |
-| GCS           |    ✅     |           ⬇ via Range            |        —         |    (planned)     |       crc32c / md5       |
-| Google Drive  |    ✅     |           ⬇ via Range            |        —         |        —         |           md5            |
-| Dropbox       |    ✅     |           ⬇ via Range            |        —         |        —         |       content_hash       |
-| OneDrive      |    ✅     |           ⬇ via Range            |        —         |    (planned)     | sha256 / sha1 / quickXor |
-| Local         |    ✅     |               ⬆/⬇                |        —         |        —         |            —             |
-| Memory        |    ✅     |               ⬆/⬇                |        —         |        —         |            —             |
+| Azure Blob    |    ✅     |           ⬇ via Range            |        -         |    (planned)     |           md5            |
+| GCS           |    ✅     |           ⬇ via Range            |        -         |    (planned)     |       crc32c / md5       |
+| Google Drive  |    ✅     |           ⬇ via Range            |        -         |        -         |           md5            |
+| Dropbox       |    ✅     |           ⬇ via Range            |        -         |        -         |       content_hash       |
+| OneDrive      |    ✅     |           ⬇ via Range            |        -         |    (planned)     | sha256 / sha1 / quickXor |
+| Local         |    ✅     |               ⬆/⬇                |        -         |        -         |            -             |
+| Memory        |    ✅     |               ⬆/⬇                |        -         |        -         |            -             |
 
 ## Examples
 
@@ -342,10 +342,10 @@ Real-world examples live in [`examples/`](https://github.com/tonywied17/zero-tra
 
 ## Documentation
 
-- [Full API reference (HTML)](https://tonywied17.github.io/zero-transfer/) — TypeDoc HTML site, deployed from `main` on every push.
-- [Full API reference (Markdown)](docs/api-md/README.md) — every public symbol with parameter / property / type tables.
-- [Per-scope pages](docs/scopes/README.md) — one page per `@zero-transfer/*` package.
-- [Examples directory](https://github.com/tonywied17/zero-transfer/tree/main/examples) — runnable real-world flows.
+- [Full API reference (HTML)](https://tonywied17.github.io/zero-transfer/) - TypeDoc HTML site, deployed from `main` on every push.
+- [Full API reference (Markdown)](docs/api-md/README.md) - every public symbol with parameter / property / type tables.
+- [Per-scope pages](docs/scopes/README.md) - one page per `@zero-transfer/*` package.
+- [Examples directory](https://github.com/tonywied17/zero-transfer/tree/main/examples) - runnable real-world flows.
 
 Regenerate everything locally:
 
@@ -367,7 +367,7 @@ npm run ci          # lint, format check, typecheck, tests with coverage, build,
 npm run test:watch  # iterate
 ```
 
-Issues and PRs welcome. Provider integration tests are gated behind opt-in env vars — see [`test/integration/`](https://github.com/tonywied17/zero-transfer/tree/main/test/integration) for the full list.
+Issues and PRs welcome. Provider integration tests are gated behind opt-in env vars - see [`test/integration/`](https://github.com/tonywied17/zero-transfer/tree/main/test/integration) for the full list.
 
 ## License
 

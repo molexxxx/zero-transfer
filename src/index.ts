@@ -219,6 +219,11 @@ export { SshSessionChannel } from "./protocols/ssh/connection/SshSessionChannel"
 export { SshDataReader } from "./protocols/ssh/binary/SshDataReader";
 export { SshDataWriter } from "./protocols/ssh/binary/SshDataWriter";
 export {
+  runSshCommand,
+  type RunSshCommandOptions,
+  type RunSshCommandResult,
+} from "./protocols/ssh/runSshCommand";
+export {
   FtpResponseParser,
   createFtpProviderFactory,
   createFtpsProviderFactory,
@@ -455,3 +460,4 @@ export {
   joinRemotePath,
   normalizeRemotePath,
 } from "./utils/path";
+export { isMainModule } from "./utils/mainModule";

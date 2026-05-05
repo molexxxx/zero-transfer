@@ -49,4 +49,4 @@ npm run build
 npx tsx examples/sftp-private-key.ts
 ```
 
-Most examples read connection details from environment variables — see the top of each file for the expected names. Use [`examples/profile-from-env.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/profile-from-env.ts) as a template for your own integrations.
+Most examples read connection details from environment variables - see the top of each file for the expected names. Use [`examples/profile-from-env.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/profile-from-env.ts) as a template for your own integrations.

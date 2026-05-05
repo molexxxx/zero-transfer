@@ -4784,6 +4784,19 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   if (Number.isNaN(sourceTime) || Number.isNaN(destinationTime)) return false;
   return Math.abs(sourceTime - destinationTime) > toleranceMs;
 }
+
+// src/utils/mainModule.ts
+import { fileURLToPath } from "url";
+function isMainModule(importMetaUrl) {
+  if (typeof process === "undefined" || !process.argv || process.argv.length < 2) {
+    return false;
+  }
+  try {
+    return process.argv[1] === fileURLToPath(importMetaUrl);
+  } catch {
+    return false;
+  }
+}
 export {
   AbortError,
   AuthenticationError,
@@ -4837,6 +4850,7 @@ export {
   importOpenSshConfig,
   importWinScpSessions,
   isClassicProviderId,
+  isMainModule,
   isSensitiveKey,
   joinRemotePath,
   matchKnownHosts,

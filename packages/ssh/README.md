@@ -12,7 +12,7 @@ Installing this package automatically pulls in [`@zero-transfer/core`](https://w
 
 ## Overview
 
-Standalone, zero-dependency SSH 2.0 stack — RFC 4253 transport (curve25519-sha256 KEX, AES-CTR + HMAC-SHA2), RFC 4252 user authentication (password, keyboard-interactive, publickey for Ed25519 / RSA-SHA2-256/512), RFC 5656 ECDSA host keys (P-256/384/521), RFC 4254 channels, OpenSSH `known_hosts` parsing, and host-key pinning. The same protocol stack that powers the SFTP provider, exposed for callers that need direct SSH features (custom subsystems, exec channels, port forwarding, custom RPC) — capabilities the Node.js ecosystem otherwise lacks a maintained pure-JS solution for.
+Standalone, zero-dependency SSH 2.0 stack - RFC 4253 transport (curve25519-sha256 KEX, AES-CTR + HMAC-SHA2), RFC 4252 user authentication (password, keyboard-interactive, publickey for Ed25519 / RSA-SHA2-256/512), RFC 5656 ECDSA host keys (P-256/384/521), RFC 4254 channels, OpenSSH `known_hosts` parsing, and host-key pinning. The same protocol stack that powers the SFTP provider, exposed for callers that need direct SSH features (custom subsystems, exec channels, port forwarding, custom RPC) - capabilities the Node.js ecosystem otherwise lacks a maintained pure-JS solution for.
 
 ## Usage
 

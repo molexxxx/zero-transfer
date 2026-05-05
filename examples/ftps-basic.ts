@@ -14,7 +14,6 @@
  *   - `tls.minVersion` \u2014 raise the floor above the Node default.
  * See `ftps-client-certificate.ts` for the production-hardened variant.
  */
-import { fileURLToPath } from "node:url";
 import {
   createFtpsProviderFactory,
   createTransferClient,
@@ -22,31 +21,23 @@ import {
   type ConnectionProfile,
 } from "@zero-transfer/ftps";
 
-async function main(): Promise<void> {
-  const client = createTransferClient({
-    providers: [createFtpsProviderFactory()],
-  });
+const client = createTransferClient({
+  providers: [createFtpsProviderFactory()],
+});
 
-  const profile: ConnectionProfile = {
-    host: "ftps.example.com",
-    password: { env: "FTPS_PASSWORD" },
-    port: 21,
-    provider: "ftps",
-    username: "deploy",
-    // Optional. Omit entirely for public-CA endpoints \u2014 TLS still applies.
-    //   tls: { minVersion: "TLSv1.2" }
-  };
+const profile: ConnectionProfile = {
+  host: "ftps.example.com",
+  password: { env: "FTPS_PASSWORD" },
+  port: 21,
+  provider: "ftps",
+  username: "deploy",
+  // Optional. Omit entirely for public-CA endpoints \u2014 TLS still applies.
+  //   tls: { minVersion: "TLSv1.2" }
+};
 
-  await uploadFile({
-    client,
-    destination: { path: "/uploads/report.csv", profile },
-    localPath: "./out/report.csv",
-  });
-  console.log("FTPS upload completed.");
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  void main();
-}
-
-export { main };
+await uploadFile({
+  client,
+  destination: { path: "/uploads/report.csv", profile },
+  localPath: "./out/report.csv",
+});
+console.log("FTPS upload completed.");

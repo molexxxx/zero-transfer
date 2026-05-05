@@ -20,7 +20,7 @@
  *   6. Stage everything, commit `chore(release): v<version>`, push to origin/main.
  *
  * Each scoped package is a self-contained bundle (no peerDep on @zero-transfer/sdk)
- * with zero runtime npm dependencies — SFTP/classic ship the native SSH stack
+ * with zero runtime npm dependencies - SFTP/classic ship the native SSH stack
  * in-bundle.
  *
  * Pushing the bumped package.json triggers the `release-on-bump.yml` workflow,

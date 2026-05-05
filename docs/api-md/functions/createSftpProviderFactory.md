@@ -13,7 +13,7 @@ function createSftpProviderFactory(options?): ProviderFactory;
 Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:243](https://github.com/tonywied17/zero-transfer/blob/fce0f6887e2aa69b47367b655ef1898ffa904508/src/providers/native/sftp/NativeSftpProvider.ts#L243)
 
 Creates a [ProviderFactory](../interfaces/ProviderFactory.md) backed by the native SSH/SFTP protocol
-stack — no `ssh2` dependency required.
+stack - no `ssh2` dependency required.
 
 **Supported algorithms**
 - Key exchange: `curve25519-sha256`, `curve25519-sha256@libssh.org`

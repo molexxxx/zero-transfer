@@ -67,7 +67,7 @@ export interface GcsProviderOptions {
  * Creates a Google Cloud Storage provider factory.
  *
  * Authentication is per-connection: pass a Google OAuth 2 access token via
- * `profile.password`. `profile.host` is unused — the bucket is fixed at
+ * `profile.password`. `profile.host` is unused - the bucket is fixed at
  * factory construction time so a single client can target multiple buckets
  * by registering separate factories.
  *

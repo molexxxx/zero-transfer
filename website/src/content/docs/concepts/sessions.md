@@ -3,7 +3,7 @@ title: Sessions & operations
 description: How TransferClient, TransferSession, and the unified fs facade fit together.
 ---
 
-A `TransferClient` is the central registry — it owns the provider registry, the connection pool, and any logger / capability overrides. You'll typically create exactly one per process.
+A `TransferClient` is the central registry - it owns the provider registry, the connection pool, and any logger / capability overrides. You'll typically create exactly one per process.
 
 ```ts
 import { createTransferClient } from "@zero-transfer/sdk";
@@ -31,7 +31,7 @@ await session.disconnect();
 
 ## Connection pooling
 
-`uploadFile`, `downloadFile`, `copyBetween`, `runRoute`, etc. all accept a `client` plus a `profile` (or two profiles) — they look up an existing pooled session or open a new one and reuse it for follow-up operations on the same profile. You usually don't need to call `client.connect()` directly unless you want a session handle for ad-hoc filesystem calls.
+`uploadFile`, `downloadFile`, `copyBetween`, `runRoute`, etc. all accept a `client` plus a `profile` (or two profiles) - they look up an existing pooled session or open a new one and reuse it for follow-up operations on the same profile. You usually don't need to call `client.connect()` directly unless you want a session handle for ad-hoc filesystem calls.
 
 ## Cancellation
 

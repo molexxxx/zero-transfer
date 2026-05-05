@@ -20,7 +20,7 @@ await uploadFile({
 });
 ```
 
-When both ends are on the same provider and that provider supports server-side copy, `copyBetween` will use it automatically — no bytes traverse your machine.
+When both ends are on the same provider and that provider supports server-side copy, `copyBetween` will use it automatically - no bytes traverse your machine.
 
 ## Bounded-concurrency queue
 

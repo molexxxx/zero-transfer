@@ -8,7 +8,7 @@
  * an opt-in wrapper: workloads that prefer fresh sessions per call should
  * keep using `TransferClient` directly.
  *
- * Pooling preserves the public {@link TransferSession} surface — callers
+ * Pooling preserves the public {@link TransferSession} surface - callers
  * still call `disconnect()` when finished, but rather than tearing down the
  * underlying transport the wrapper marks the session idle and returns it to
  * the pool for reuse. Idle sessions are evicted automatically after
@@ -39,7 +39,7 @@ export interface ConnectionPoolOptions {
   /**
    * Maximum number of *idle* sessions retained per pool key.
    *
-   * Active leases are not counted against this limit — the cap only applies
+   * Active leases are not counted against this limit - the cap only applies
    * to sessions waiting in the pool. When more than `maxIdlePerKey` sessions
    * become idle simultaneously, the oldest ones are disconnected. Defaults
    * to `4`.
@@ -205,7 +205,7 @@ export function createPooledTransferClient(
   };
 }
 
-/** Default pool key — never includes secrets. */
+/** Default pool key - never includes secrets. */
 function defaultKeyOf(profile: ConnectionProfile): string {
   const provider = profile.provider ?? profile.protocol ?? "unknown";
   const host = profile.host ?? "";

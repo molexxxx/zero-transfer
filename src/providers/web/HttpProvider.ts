@@ -3,7 +3,7 @@
  *
  * Connects to a remote web origin and exposes downloads via standard `GET` with
  * `Range` resume support and metadata via `HEAD`. The provider is intentionally
- * read-only — uploads should target a `webdav` or `s3` provider once those land.
+ * read-only - uploads should target a `webdav` or `s3` provider once those land.
  *
  * @module providers/web/HttpProvider
  */
@@ -63,7 +63,7 @@ const HTTP_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["etag"];
 /**
  * Creates a provider factory backed by HTTP(S) GET/HEAD.
  *
- * Read-only by design — use it to fetch artifacts from public URLs, signed
+ * Read-only by design - use it to fetch artifacts from public URLs, signed
  * URLs, or HTTP-only artifact servers. Range-based resume is supported when
  * the server advertises `Accept-Ranges: bytes`. To upload to an HTTP endpoint,
  * use the WebDAV provider, the S3 provider, or a cloud-specific provider.

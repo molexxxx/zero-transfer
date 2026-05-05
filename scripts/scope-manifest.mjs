@@ -127,15 +127,16 @@ export const scopes = [
       "ZeroTransferLogger",
       "noopLogger",
       "emitLog",
+      "isMainModule",
     ],
     deps: {},
     name: "core",
     summary: "Provider-neutral contracts, transfer engine, queue, profiles, and errors.",
-    title: "Core — provider-neutral SDK",
+    title: "Core - provider-neutral SDK",
   },
   {
     description:
-      "Bundle of the three classic providers: FTP, FTPS, and SFTP. Wire `createFtpProviderFactory()`, `createFtpsProviderFactory()`, and `createSftpProviderFactory()` into a single `TransferClient` to talk to traditional file servers. Zero runtime dependencies — SFTP is implemented on top of the first-party native SSH stack.",
+      "Bundle of the three classic providers: FTP, FTPS, and SFTP. Wire `createFtpProviderFactory()`, `createFtpsProviderFactory()`, and `createSftpProviderFactory()` into a single `TransferClient` to talk to traditional file servers. Zero runtime dependencies - SFTP is implemented on top of the first-party native SSH stack.",
     examples: ["sftp-private-key.ts", "ftps-client-certificate.ts"],
     exports: [
       "createFtpProviderFactory",
@@ -148,7 +149,7 @@ export const scopes = [
     deps: {},
     name: "classic",
     summary: "FTP, FTPS, and SFTP providers in one install.",
-    title: "Classic — FTP / FTPS / SFTP",
+    title: "Classic - FTP / FTPS / SFTP",
   },
   {
     description:
@@ -209,7 +210,7 @@ export const scopes = [
   },
   {
     description:
-      "Standalone, zero-dependency SSH 2.0 stack — RFC 4253 transport (curve25519-sha256 KEX, AES-CTR + HMAC-SHA2), RFC 4252 user authentication (password, keyboard-interactive, publickey for Ed25519 / RSA-SHA2-256/512), RFC 5656 ECDSA host keys (P-256/384/521), RFC 4254 channels, OpenSSH `known_hosts` parsing, and host-key pinning. The same protocol stack that powers the SFTP provider, exposed for callers that need direct SSH features (custom subsystems, exec channels, port forwarding, custom RPC) — capabilities the Node.js ecosystem otherwise lacks a maintained pure-JS solution for.",
+      "Standalone, zero-dependency SSH 2.0 stack - RFC 4253 transport (curve25519-sha256 KEX, AES-CTR + HMAC-SHA2), RFC 4252 user authentication (password, keyboard-interactive, publickey for Ed25519 / RSA-SHA2-256/512), RFC 5656 ECDSA host keys (P-256/384/521), RFC 4254 channels, OpenSSH `known_hosts` parsing, and host-key pinning. The same protocol stack that powers the SFTP provider, exposed for callers that need direct SSH features (custom subsystems, exec channels, port forwarding, custom RPC) - capabilities the Node.js ecosystem otherwise lacks a maintained pure-JS solution for.",
     examples: ["ssh-exec-command.ts", "sftp-private-key.ts"],
     exports: [
       "SshTransportConnection",
@@ -235,11 +236,14 @@ export const scopes = [
       "matchKnownHostsEntry",
       "KnownHostsEntry",
       "KnownHostsMarker",
+      "runSshCommand",
+      "RunSshCommandOptions",
+      "RunSshCommandResult",
     ],
     deps: {},
     name: "ssh",
     summary: "Zero-dependency SSH 2.0 transport, auth, and channel primitives.",
-    title: "SSH — standalone protocol stack",
+    title: "SSH - standalone protocol stack",
   },
   {
     description:
@@ -253,7 +257,7 @@ export const scopes = [
   },
   {
     description:
-      "WebDAV provider — PROPFIND-based `list`/`stat`, ranged GET, PUT uploads, Basic auth, and ETag preservation. Speaks remote filesystem semantics over HTTP.",
+      "WebDAV provider - PROPFIND-based `list`/`stat`, ranged GET, PUT uploads, Basic auth, and ETag preservation. Speaks remote filesystem semantics over HTTP.",
     examples: ["webdav-sync.ts"],
     exports: ["createWebDavProviderFactory", "WebDavProviderOptions"],
     deps: {},
@@ -282,7 +286,7 @@ export const scopes = [
   },
   {
     description:
-      "Google Drive provider over OAuth bearer tokens — paginated folder listings from a configurable root folder id, ranged downloads via `alt=media`, single-shot multipart uploads, and `md5Checksum` exposed as both `uniqueId` and `checksum`.",
+      "Google Drive provider over OAuth bearer tokens - paginated folder listings from a configurable root folder id, ranged downloads via `alt=media`, single-shot multipart uploads, and `md5Checksum` exposed as both `uniqueId` and `checksum`.",
     examples: ["multi-cloud-orchestration.ts"],
     exports: ["createGoogleDriveProviderFactory", "GoogleDriveProviderOptions"],
     deps: {},
@@ -292,7 +296,7 @@ export const scopes = [
   },
   {
     description:
-      "Dropbox provider — RPC + content-host APIs, list-folder cursor pagination, ranged downloads, single-shot uploads in `overwrite` mode, and `content_hash` exposed as both `uniqueId` and `checksum`.",
+      "Dropbox provider - RPC + content-host APIs, list-folder cursor pagination, ranged downloads, single-shot uploads in `overwrite` mode, and `content_hash` exposed as both `uniqueId` and `checksum`.",
     examples: [],
     exports: ["createDropboxProviderFactory", "DropboxProviderOptions"],
     deps: {},
@@ -302,7 +306,7 @@ export const scopes = [
   },
   {
     description:
-      "Azure Blob Storage provider — SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, and single-shot block-blob uploads. Wire OAuth refresh via `createOAuthTokenSecretSource()`.",
+      "Azure Blob Storage provider - SAS-token or AAD bearer auth, container-scoped paginated listings, HEAD-based stat, ranged downloads, and single-shot block-blob uploads. Wire OAuth refresh via `createOAuthTokenSecretSource()`.",
     examples: ["multi-cloud-orchestration.ts"],
     exports: ["createAzureBlobProviderFactory", "AzureBlobProviderOptions"],
     deps: {},
@@ -349,6 +353,6 @@ export const scopes = [
     deps: {},
     name: "mft",
     summary: "Routes, schedules, audit logs, webhooks, approval gates.",
-    title: "MFT — Managed File Transfer workflows",
+    title: "MFT - Managed File Transfer workflows",
   },
 ];

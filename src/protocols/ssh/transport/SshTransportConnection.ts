@@ -435,7 +435,7 @@ export class SshTransportConnection {
   private assertConnected(): void {
     if (!this.connected) {
       throw new ProtocolError({
-        message: "SshTransportConnection is not yet connected — call connect() first",
+        message: "SshTransportConnection is not yet connected - call connect() first",
         protocol: "sftp",
         retryable: false,
       });
@@ -446,7 +446,7 @@ export class SshTransportConnection {
     const intervalMs = this.options.keepaliveIntervalMs;
     if (intervalMs === undefined || intervalMs <= 0) return;
     this.keepaliveTimer = setInterval(() => this.sendKeepalivePing(), intervalMs);
-    // Don't keep the Node event loop alive solely for keepalives — when the
+    // Don't keep the Node event loop alive solely for keepalives - when the
     // process is otherwise idle the consumer should be free to exit.
     this.keepaliveTimer.unref?.();
   }

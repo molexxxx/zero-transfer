@@ -84,6 +84,7 @@ __export(ftp_exports, {
   importOpenSshConfig: () => importOpenSshConfig,
   importWinScpSessions: () => importWinScpSessions,
   isClassicProviderId: () => isClassicProviderId,
+  isMainModule: () => isMainModule,
   isSensitiveKey: () => isSensitiveKey,
   joinRemotePath: () => joinRemotePath,
   matchKnownHosts: () => matchKnownHosts,
@@ -4899,6 +4900,19 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   return Math.abs(sourceTime - destinationTime) > toleranceMs;
 }
 
+// src/utils/mainModule.ts
+var import_node_url = require("url");
+function isMainModule(importMetaUrl) {
+  if (typeof process === "undefined" || !process.argv || process.argv.length < 2) {
+    return false;
+  }
+  try {
+    return process.argv[1] === (0, import_node_url.fileURLToPath)(importMetaUrl);
+  } catch {
+    return false;
+  }
+}
+
 // src/providers/classic/ftp/FtpProvider.ts
 var import_node_buffer6 = require("buffer");
 var import_node_net = require("net");
@@ -6601,6 +6615,7 @@ function normalizeFeatureLines(input) {
   importOpenSshConfig,
   importWinScpSessions,
   isClassicProviderId,
+  isMainModule,
   isSensitiveKey,
   joinRemotePath,
   matchKnownHosts,

@@ -1,9 +1,9 @@
 // @ts-check
 /**
  * Generates per-scope documentation:
- *   - docs/scopes/<name>.md            — long-form scope page with API table.
- *   - docs/scopes/README.md            — index of all scopes.
- *   - packages/<name>/README.md        — richer per-package readme.
+ *   - docs/scopes/<name>.md            - long-form scope page with API table.
+ *   - docs/scopes/README.md            - index of all scopes.
+ *   - packages/<name>/README.md        - richer per-package readme.
  *
  * Run after `npm run docs:md` so the typedoc-plugin-markdown output exists,
  * because the API-reference table links into docs/api-md/.
@@ -77,7 +77,7 @@ function exportsTableAbsolute(exportNames) {
   if (exportNames.length === 0) return "_None._";
   const rows = exportNames.map((name) => {
     const hit = symbolIndex.get(name);
-    if (!hit) return `| \`${name}\` | _unresolved_ | — |`;
+    if (!hit) return `| \`${name}\` | _unresolved_ | - |`;
     const href = `${GITHUB_BLOB_URL}/docs/api-md/${hit.file}`;
     return `| [\`${name}\`](${href}) | ${hit.kind} | See API reference. |`;
   });
@@ -90,7 +90,7 @@ function exportsTableAbsolute(exportNames) {
  */
 function describeExamplesAbsolute(examples) {
   if (examples.length === 0) {
-    return `_No dedicated example yet — see the [examples directory](${GITHUB_TREE_URL}/examples) for cross-scope showcases._`;
+    return `_No dedicated example yet - see the [examples directory](${GITHUB_TREE_URL}/examples) for cross-scope showcases._`;
   }
   const rows = examples.map((file) => {
     const path = join(examplesDir, file);
@@ -110,7 +110,7 @@ function describeExamplesAbsolute(examples) {
 /** @param {string[]} examples */
 function describeExamples(examples) {
   if (examples.length === 0)
-    return "_No dedicated example yet — see the [examples directory](../../examples/) for cross-scope showcases._";
+    return "_No dedicated example yet - see the [examples directory](../../examples/) for cross-scope showcases._";
   const rows = examples.map((file) => {
     const path = join(examplesDir, file);
     let summary = "";
@@ -131,7 +131,7 @@ function exportsTable(exportNames, fromFile) {
   if (exportNames.length === 0) return "_None._";
   const rows = exportNames.map((name) => {
     const hit = symbolIndex.get(name);
-    if (!hit) return `| \`${name}\` | _unresolved_ | — |`;
+    if (!hit) return `| \`${name}\` | _unresolved_ | - |`;
     const linkTarget = relPosix(dirname(fromFile), join(apiMdRoot, hit.file));
     return `| [\`${name}\`](${linkTarget}) | ${hit.kind} | See API reference. |`;
   });
@@ -153,7 +153,7 @@ function pickUsageImport(scope) {
   const factory = scope.exports.find((n) => /^create[A-Z].*ProviderFactory$/.test(n));
   // Every scoped package re-exports the full @zero-transfer/core surface, so
   // we always show core symbols + the provider factory imported from a single
-  // package — no separate `@zero-transfer/core` install required.
+  // package - no separate `@zero-transfer/core` install required.
   const coreSymbols = ["createTransferClient", "uploadFile", "downloadFile"];
   if (factory && scope.name !== "core") {
     return `import { ${[...coreSymbols, factory].join(", ")} } from "@zero-transfer/${scope.name}";`;
@@ -174,7 +174,7 @@ for (const scope of scopes) {
 
   const installNote =
     scope.name === "core"
-      ? "This is the shared foundation used by every other `@zero-transfer/*` package. You usually do **not** install it directly — pick a protocol package (e.g. [`@zero-transfer/ftp`](https://www.npmjs.com/package/@zero-transfer/ftp)) or the umbrella [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk), and core comes along automatically."
+      ? "This is the shared foundation used by every other `@zero-transfer/*` package. You usually do **not** install it directly - pick a protocol package (e.g. [`@zero-transfer/ftp`](https://www.npmjs.com/package/@zero-transfer/ftp)) or the umbrella [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk), and core comes along automatically."
       : `Installing this package automatically pulls in [\`@zero-transfer/core\`](https://www.npmjs.com/package/@zero-transfer/core) as a transitive dependency. The full core surface (\`createTransferClient\`, \`uploadFile\`, \`downloadFile\`, profiles, errors, sync planner, …) is re-exported from this package, so a single \`import { … } from "@zero-transfer/${scope.name}"\` is all you need. If your app uses multiple protocols, install the umbrella [\`@zero-transfer/sdk\`](https://www.npmjs.com/package/@zero-transfer/sdk) instead of multiple scoped packages.`;
 
   const body = [
@@ -212,7 +212,7 @@ for (const scope of scopes) {
 
   writeFileSync(scopePageFile, frontmatterless(scope.title, body));
 
-  // Per-package README — full mirror of the scope page using absolute GitHub
+  // Per-package README - full mirror of the scope page using absolute GitHub
   // links so it renders correctly on npmjs.com.
   const packageExportsBlock = exportsTableAbsolute(scope.exports);
   const packageExamplesBlock = describeExamplesAbsolute(scope.examples);

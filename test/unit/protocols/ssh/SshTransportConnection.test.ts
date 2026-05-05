@@ -35,7 +35,7 @@ import {
 import { SshDataWriter } from "../../../../src/protocols/ssh/binary/SshDataWriter";
 
 // ---------------------------------------------------------------------------
-// Algorithm preferences for the fake server (CTR only — our protection layer
+// Algorithm preferences for the fake server (CTR only - our protection layer
 // currently supports AES-CTR + HMAC; chacha/gcm are planned for later waves).
 // ---------------------------------------------------------------------------
 const FAKE_SERVER_ALGOS = {
@@ -353,7 +353,7 @@ describe("SshTransportConnection", () => {
     const [clientSocket, serverSocket] = await waitForConnection(server, serverPort);
     openSockets.push(clientSocket, serverSocket);
 
-    // Server accepts but never sends anything — the handshake should time out.
+    // Server accepts but never sends anything - the handshake should time out.
     const conn = new SshTransportConnection({
       algorithms: CLIENT_ALGOS,
       handshakeTimeoutMs: 50,
@@ -377,7 +377,7 @@ describe("SshTransportConnection", () => {
     const { protection } = await handshakePromise;
 
     // Drain inbound keepalives. They are SSH_MSG_IGNORE (type 2) which the
-    // transport drops silently — receivePayloads() never yields them — so we
+    // transport drops silently - receivePayloads() never yields them - so we
     // intercept on the server side instead.
     let ignoreCount = 0;
     serverSocket.on("data", (chunk: Buffer | string) => {

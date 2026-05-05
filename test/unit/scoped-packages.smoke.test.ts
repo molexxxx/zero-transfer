@@ -48,7 +48,7 @@ const packageDirs = readdirSync(join(repoRoot, "packages"), { withFileTypes: tru
   .map((entry) => entry.name)
   .sort();
 
-/** Cheap textual probe — `\b<name>\b` against the SDK's bundled .d.ts. */
+/** Cheap textual probe - `\b<name>\b` against the SDK's bundled .d.ts. */
 function sdkDeclaresType(name: string): boolean {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return new RegExp(`\\b${escaped}\\b`).test(sdkDts);
@@ -66,7 +66,7 @@ for (const scope of scopeList) {
   }
 }
 
-describe("scripts/scope-manifest.mjs — manifest integrity", () => {
+describe("scripts/scope-manifest.mjs - manifest integrity", () => {
   it("declares unique scope names", () => {
     const names = scopeList.map((s) => s.name);
     expect(new Set(names).size).toBe(names.length);
@@ -119,7 +119,7 @@ describe("scripts/scope-manifest.mjs — manifest integrity", () => {
   });
 });
 
-describe("packages/* — self-contained scoped packages", () => {
+describe("packages/* - self-contained scoped packages", () => {
   it("workspace has one folder per manifest scope", () => {
     const scopeNames = scopeList.map((s) => s.name).sort();
     expect(packageDirs).toEqual(scopeNames);
@@ -202,7 +202,7 @@ describe("packages/* — self-contained scoped packages", () => {
         const peer = pkg.peerDependencies as Record<string, string> | undefined;
         expect(peer?.["@zero-transfer/sdk"]).toBeUndefined();
 
-        // No scoped package depends on ssh2 — the native SSH stack ships in-bundle.
+        // No scoped package depends on ssh2 - the native SSH stack ships in-bundle.
         const deps = pkg.dependencies as Record<string, string> | undefined;
         expect(deps?.["ssh2"], `${scope.name} must not declare ssh2`).toBeUndefined();
 

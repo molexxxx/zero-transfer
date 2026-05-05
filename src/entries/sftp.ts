@@ -7,7 +7,7 @@
  * HMAC-SHA2), host-key verification for Ed25519 / RSA-SHA2-256/512 / ECDSA
  * P-256/384/521, host-key pinning, OpenSSH `known_hosts`, password /
  * keyboard-interactive / public-key (Ed25519 + RSA) authentication, handshake
- * timeout, and idle NAT keepalive — all without any third-party SSH library.
+ * timeout, and idle NAT keepalive - all without any third-party SSH library.
  *
  * Includes the complete `@zero-transfer/core` surface.
  *

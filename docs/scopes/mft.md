@@ -1,4 +1,4 @@
-# MFT — Managed File Transfer workflows
+# MFT - Managed File Transfer workflows
 
 > Routes, schedules, audit logs, webhooks, approval gates.
 

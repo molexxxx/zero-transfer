@@ -4785,6 +4785,19 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   return Math.abs(sourceTime - destinationTime) > toleranceMs;
 }
 
+// src/utils/mainModule.ts
+import { fileURLToPath } from "url";
+function isMainModule(importMetaUrl) {
+  if (typeof process === "undefined" || !process.argv || process.argv.length < 2) {
+    return false;
+  }
+  try {
+    return process.argv[1] === fileURLToPath(importMetaUrl);
+  } catch {
+    return false;
+  }
+}
+
 // src/providers/web/HttpProvider.ts
 import { Buffer as Buffer7 } from "buffer";
 
@@ -5176,6 +5189,7 @@ export {
   importOpenSshConfig,
   importWinScpSessions,
   isClassicProviderId,
+  isMainModule,
   isSensitiveKey,
   joinRemotePath,
   matchKnownHosts,

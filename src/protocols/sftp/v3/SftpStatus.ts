@@ -66,7 +66,7 @@ export function sftpStatusToError(status: SftpStatusResponse, path?: string): Er
     case SFTP_STATUS.NO_SUCH_FILE:
       return new PathNotFoundError({
         details: { path, sftpMessage: status.errorMessage },
-        message: `SFTP: no such file or directory${path !== undefined ? ` — ${path}` : ""}`,
+        message: `SFTP: no such file or directory${path !== undefined ? ` - ${path}` : ""}`,
         protocol: "sftp",
         retryable: false,
       });
@@ -74,7 +74,7 @@ export function sftpStatusToError(status: SftpStatusResponse, path?: string): Er
     case SFTP_STATUS.PERMISSION_DENIED:
       return new PermissionDeniedError({
         details: { path, sftpMessage: status.errorMessage },
-        message: `SFTP: permission denied${path !== undefined ? ` — ${path}` : ""}`,
+        message: `SFTP: permission denied${path !== undefined ? ` - ${path}` : ""}`,
         protocol: "sftp",
         retryable: false,
       });
@@ -83,7 +83,7 @@ export function sftpStatusToError(status: SftpStatusResponse, path?: string): Er
     case SFTP_STATUS.CONNECTION_LOST:
       return new ConnectionError({
         details: { sftpMessage: status.errorMessage, statusCode: status.statusCode },
-        message: `SFTP: connection error — ${status.errorMessage}`,
+        message: `SFTP: connection error - ${status.errorMessage}`,
         protocol: "sftp",
         retryable: true,
       });
@@ -91,7 +91,7 @@ export function sftpStatusToError(status: SftpStatusResponse, path?: string): Er
     case SFTP_STATUS.OP_UNSUPPORTED:
       return new UnsupportedFeatureError({
         details: { sftpMessage: status.errorMessage },
-        message: `SFTP: operation unsupported — ${status.errorMessage}`,
+        message: `SFTP: operation unsupported - ${status.errorMessage}`,
         protocol: "sftp",
         retryable: false,
       });
@@ -99,7 +99,7 @@ export function sftpStatusToError(status: SftpStatusResponse, path?: string): Er
     case SFTP_STATUS.BAD_MESSAGE:
       return new ProtocolError({
         details: { sftpMessage: status.errorMessage },
-        message: `SFTP: bad message — ${status.errorMessage}`,
+        message: `SFTP: bad message - ${status.errorMessage}`,
         protocol: "sftp",
         retryable: false,
       });
@@ -108,7 +108,7 @@ export function sftpStatusToError(status: SftpStatusResponse, path?: string): Er
       return new ZeroTransferError({
         code: "SFTP_FAILURE",
         details: { sftpMessage: status.errorMessage, statusCode: status.statusCode },
-        message: `SFTP: operation failed (status ${status.statusCode}) — ${status.errorMessage}`,
+        message: `SFTP: operation failed (status ${status.statusCode}) - ${status.errorMessage}`,
         protocol: "sftp",
         retryable: false,
       });
@@ -123,7 +123,7 @@ export function throwIfSftpError(status: SftpStatusResponse, path?: string): voi
   if (status.statusCode === SFTP_STATUS.OK) return;
   const err = sftpStatusToError(status, path);
   if (err !== null) throw err;
-  // EOF reached here — treat as an unexpected-EOF protocol error.
+  // EOF reached here - treat as an unexpected-EOF protocol error.
   throw new ProtocolError({
     message: "SFTP: unexpected SSH_FX_EOF in non-data response",
     protocol: "sftp",

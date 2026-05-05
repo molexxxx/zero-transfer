@@ -3,7 +3,7 @@ title: Connection profiles
 description: The provider-neutral ConnectionProfile shape, every SecretSource variant, and the security knobs that matter.
 ---
 
-Every operation that touches a remote system takes a [`ConnectionProfile`](../../api/interfaces/connectionprofile/). Profiles are provider-neutral data — build one once and pass it to `client.connect()`, `uploadFile()`, `downloadFile()`, `copyBetween()`, MFT routes, and diagnostics. The same shape works for every provider; only the optional auth blocks (`ssh`, `tls`, `oauth`, `s3`, …) change.
+Every operation that touches a remote system takes a [`ConnectionProfile`](../../api/interfaces/connectionprofile/). Profiles are provider-neutral data - build one once and pass it to `client.connect()`, `uploadFile()`, `downloadFile()`, `copyBetween()`, MFT routes, and diagnostics. The same shape works for every provider; only the optional auth blocks (`ssh`, `tls`, `oauth`, `s3`, …) change.
 
 ## Required fields
 
@@ -31,7 +31,7 @@ Every operation that touches a remote system takes a [`ConnectionProfile`](../..
 Every credential field (`username`, `password`, `tls.ca`, `tls.key`, `ssh.privateKey`, `ssh.knownHosts`, `ssh.passphrase`, …) accepts a [`SecretSource`](../../api/type-aliases/secretsource/). Inline strings work for prototypes, but production code should pull from the environment, a file, or a callback so secrets stay out of source control and out of process memory dumps.
 
 ```ts
-// Inline string — fine for tests, avoid in production.
+// Inline string - fine for tests, avoid in production.
 password: "hunter2";
 
 // Read from an environment variable.
@@ -111,7 +111,7 @@ const dropbox: ConnectionProfile = {
 
 ## Security guidance
 
-- **Pin host keys for SSH/SFTP.** Without `ssh.knownHosts` or `ssh.pinnedHostKeySha256` the SSH session accepts any key the server presents — a MITM risk.
+- **Pin host keys for SSH/SFTP.** Without `ssh.knownHosts` or `ssh.pinnedHostKeySha256` the SSH session accepts any key the server presents - a MITM risk.
 - **Pin TLS fingerprints when you control the server.** `tls.pinnedFingerprint256` is defence-in-depth on top of `rejectUnauthorized: true` and a CA bundle.
 - **Never set `tls.rejectUnauthorized: false` in production.** Pair self-signed servers with `tls.ca` instead.
 - **Prefer `{ env }`, `{ path }`, or callback secrets** over inline strings or hard-coded values.

@@ -31,9 +31,9 @@ This package publishes a narrowed surface of **11** exports. These symbols are a
 
 | Symbol                                                                                                                                  | Kind         | Notes              |
 | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------ |
-| `createNativeSftpProviderFactory`                                                                                                       | _unresolved_ | —                  |
-| `NativeSftpProviderOptions`                                                                                                             | _unresolved_ | —                  |
-| `NativeSftpRawSession`                                                                                                                  | _unresolved_ | —                  |
+| `createNativeSftpProviderFactory`                                                                                                       | _unresolved_ | -                  |
+| `NativeSftpProviderOptions`                                                                                                             | _unresolved_ | -                  |
+| `NativeSftpRawSession`                                                                                                                  | _unresolved_ | -                  |
 | [`createSftpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createSftpProviderFactory.md) | Function     | See API reference. |
 | [`SftpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpProviderOptions.md)            | Interface    | See API reference. |
 | [`SftpRawSession`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpRawSession.md)                      | Interface    | See API reference. |

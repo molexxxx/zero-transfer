@@ -185,7 +185,7 @@ export interface TlsProfile {
    * hex form with or without colons. When present, the TLS handshake additionally requires the
    * leaf certificate's SHA-256 fingerprint to match one of these values.
    *
-   * Not required for normal CA-trusted endpoints — public CAs and `ca` bundles already gate
+   * Not required for normal CA-trusted endpoints - public CAs and `ca` bundles already gate
    * trust via `rejectUnauthorized`. Pinning is **recommended for production** when you control
    * the server and want defence-in-depth against rogue certificates issued by trusted CAs.
    *

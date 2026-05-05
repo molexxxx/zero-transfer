@@ -8,7 +8,7 @@
 npm install @zero-transfer/core
 ```
 
-This is the shared foundation used by every other `@zero-transfer/*` package. You usually do **not** install it directly — pick a protocol package (e.g. [`@zero-transfer/ftp`](https://www.npmjs.com/package/@zero-transfer/ftp)) or the umbrella [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk), and core comes along automatically.
+This is the shared foundation used by every other `@zero-transfer/*` package. You usually do **not** install it directly - pick a protocol package (e.g. [`@zero-transfer/ftp`](https://www.npmjs.com/package/@zero-transfer/ftp)) or the umbrella [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk), and core comes along automatically.
 
 ## Overview
 
@@ -32,7 +32,7 @@ This package publishes a narrowed surface of **92** exports. These symbols are a
 | [`ProviderRegistry`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/classes/ProviderRegistry.md)                                            | Class        | See API reference. |
 | [`TransferSession`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/TransferSession.md)                                           | Interface    | See API reference. |
 | [`TransferProvider`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/TransferProvider.md)                                         | Interface    | See API reference. |
-| `ProviderCapabilities`                                                                                                                                         | _unresolved_ | —                  |
+| `ProviderCapabilities`                                                                                                                                         | _unresolved_ | -                  |
 | [`ProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/ProviderFactory.md)                                           | Interface    | See API reference. |
 | [`ProviderTransferOperations`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/ProviderTransferOperations.md)                     | Interface    | See API reference. |
 | [`RemoteFileSystem`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/RemoteFileSystem.md)                                         | Interface    | See API reference. |

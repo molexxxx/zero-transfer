@@ -20,9 +20,9 @@ This is the actual surface published by [`@zero-transfer/sftp`](https://www.npmj
 
 | Symbol | Kind | Notes |
 | --- | --- | --- |
-| `createNativeSftpProviderFactory` | _unresolved_ | — |
-| `NativeSftpProviderOptions` | _unresolved_ | — |
-| `NativeSftpRawSession` | _unresolved_ | — |
+| `createNativeSftpProviderFactory` | _unresolved_ | - |
+| `NativeSftpProviderOptions` | _unresolved_ | - |
+| `NativeSftpRawSession` | _unresolved_ | - |
 | [`createSftpProviderFactory`](../api-md/functions/createSftpProviderFactory.md) | Function | See API reference. |
 | [`SftpProviderOptions`](../api-md/interfaces/SftpProviderOptions.md) | Interface | See API reference. |
 | [`SftpRawSession`](../api-md/interfaces/SftpRawSession.md) | Interface | See API reference. |

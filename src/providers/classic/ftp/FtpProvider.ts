@@ -170,7 +170,7 @@ export interface FtpsProviderOptions extends FtpProviderOptions {
  * @param options - Optional provider defaults.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
  *
- * @example Plain FTP (cleartext — prefer FTPS or SFTP whenever possible)
+ * @example Plain FTP (cleartext - prefer FTPS or SFTP whenever possible)
  * ```ts
  * import { createFtpProviderFactory, createTransferClient } from "@zero-transfer/sdk";
  *
@@ -506,7 +506,7 @@ class FtpFileSystem implements RemoteFileSystem {
       current = `${current}/${segment}`;
       const response = await this.control.sendCommand(`MKD ${current}`);
       if (response.completion) continue;
-      // 550 here is typically "directory already exists" — tolerated for recursive create.
+      // 550 here is typically "directory already exists" - tolerated for recursive create.
       if (response.code === 550) continue;
       assertPathCommandSucceeded(response, "MKD", current, this.control.providerId);
     }

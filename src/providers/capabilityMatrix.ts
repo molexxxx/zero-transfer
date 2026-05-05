@@ -3,9 +3,9 @@
  *
  * Aggregates the {@link CapabilitySet} advertised by every shipped provider
  * factory so applications, docs, and diagnostics can compare features across
- * providers without instantiating each one. The S3 entry is captured twice —
+ * providers without instantiating each one. The S3 entry is captured twice -
  * once with the new multipart-by-default configuration and once with
- * `multipart.enabled: false` for the legacy single-shot variant — because
+ * `multipart.enabled: false` for the legacy single-shot variant - because
  * that flag flips `resumeUpload`.
  *
  * @module providers/capabilityMatrix
@@ -153,8 +153,8 @@ export function formatCapabilityMatrixMarkdown(
     const c = entry.capabilities;
     const yesNo = (value: boolean): string => (value ? "✅" : "❌");
     const sideways = `${yesNo(c.serverSideCopy)} / ${yesNo(c.serverSideMove)}`;
-    const checksums = c.checksum.length === 0 ? "—" : c.checksum.join(", ");
-    const auth = c.authentication.length === 0 ? "—" : c.authentication.join(", ");
+    const checksums = c.checksum.length === 0 ? "-" : c.checksum.join(", ");
+    const auth = c.authentication.length === 0 ? "-" : c.authentication.join(", ");
     return `| ${entry.label} | ${yesNo(c.list)} | ${yesNo(c.stat)} | ${yesNo(c.readStream)} | ${yesNo(c.writeStream)} | ${yesNo(c.resumeDownload)} | ${yesNo(c.resumeUpload)} | ${sideways} | ${checksums} | ${auth} |`;
   });
   return [header, divider, ...rows].join("\n");

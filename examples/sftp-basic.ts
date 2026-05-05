@@ -11,7 +11,6 @@
  *   - `sftp-private-key.ts` (key + host pin), or
  *   - add `ssh.knownHosts` or `ssh.pinnedHostKeySha256` to this profile.
  */
-import { fileURLToPath } from "node:url";
 import {
   createSftpProviderFactory,
   createTransferClient,
@@ -19,33 +18,25 @@ import {
   type ConnectionProfile,
 } from "@zero-transfer/sftp";
 
-async function main(): Promise<void> {
-  const client = createTransferClient({
-    providers: [createSftpProviderFactory()],
-  });
+const client = createTransferClient({
+  providers: [createSftpProviderFactory()],
+});
 
-  const profile: ConnectionProfile = {
-    host: "sftp.example.com",
-    password: { env: "SFTP_PASSWORD" },
-    port: 22,
-    provider: "sftp",
-    username: "deploy",
-    // Optional but recommended for production:
-    //   ssh: { pinnedHostKeySha256: "SHA256:abc123..." }
-    //   ssh: { knownHosts: { path: "./known_hosts" } }
-  };
+const profile: ConnectionProfile = {
+  host: "sftp.example.com",
+  password: { env: "SFTP_PASSWORD" },
+  port: 22,
+  provider: "sftp",
+  username: "deploy",
+  // Optional but recommended for production:
+  //   ssh: { pinnedHostKeySha256: "SHA256:abc123..." }
+  //   ssh: { knownHosts: { path: "./known_hosts" } }
+};
 
-  const receipt = await uploadFile({
-    client,
-    destination: { path: "/uploads/report.csv", profile },
-    localPath: "./out/report.csv",
-  });
+const receipt = await uploadFile({
+  client,
+  destination: { path: "/uploads/report.csv", profile },
+  localPath: "./out/report.csv",
+});
 
-  console.log(`Uploaded ${receipt.bytesTransferred} bytes (job=${receipt.jobId}).`);
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  void main();
-}
-
-export { main };
+console.log(`Uploaded ${receipt.bytesTransferred} bytes (job=${receipt.jobId}).`);

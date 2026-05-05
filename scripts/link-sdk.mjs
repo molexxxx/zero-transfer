@@ -2,8 +2,8 @@
 /**
  * Replace `node_modules/@zero-transfer/sdk` (which npm fetches from the
  * registry as a regular dependency of the workspace packages) with a junction
- * back to the repo root. This lets scoped workspace packages — which all
- * declare `@zero-transfer/sdk` as a dependency — resolve to the *local*
+ * back to the repo root. This lets scoped workspace packages - which all
+ * declare `@zero-transfer/sdk` as a dependency - resolve to the *local*
  * built `dist/` of this repo instead of the published version.
  *
  * Runs from `postinstall` so it is invoked after `npm install` / `npm ci` in

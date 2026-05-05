@@ -101,6 +101,7 @@ __export(mft_exports, {
   inboxFailedPath: () => inboxFailedPath,
   inboxProcessedPath: () => inboxProcessedPath,
   isClassicProviderId: () => isClassicProviderId,
+  isMainModule: () => isMainModule,
   isSensitiveKey: () => isSensitiveKey,
   joinRemotePath: () => joinRemotePath,
   matchKnownHosts: () => matchKnownHosts,
@@ -4916,6 +4917,19 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   return Math.abs(sourceTime - destinationTime) > toleranceMs;
 }
 
+// src/utils/mainModule.ts
+var import_node_url = require("url");
+function isMainModule(importMetaUrl) {
+  if (typeof process === "undefined" || !process.argv || process.argv.length < 2) {
+    return false;
+  }
+  try {
+    return process.argv[1] === (0, import_node_url.fileURLToPath)(importMetaUrl);
+  } catch {
+    return false;
+  }
+}
+
 // src/mft/RouteRegistry.ts
 var RouteRegistry = class {
   routes = /* @__PURE__ */ new Map();
@@ -5866,6 +5880,7 @@ var defaultRunner = ({ client, route, signal }) => {
   inboxFailedPath,
   inboxProcessedPath,
   isClassicProviderId,
+  isMainModule,
   isSensitiveKey,
   joinRemotePath,
   matchKnownHosts,

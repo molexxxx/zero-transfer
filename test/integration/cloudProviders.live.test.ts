@@ -5,15 +5,15 @@
  * isolating them from default CI runs and ensuring no live credentials are
  * required to clone the repo:
  *
- * - `ZT_DROPBOX_TOKEN` — Dropbox OAuth access token. Optional `ZT_DROPBOX_PATH`
+ * - `ZT_DROPBOX_TOKEN` - Dropbox OAuth access token. Optional `ZT_DROPBOX_PATH`
  *   selects the folder to list (defaults to `/`).
- * - `ZT_GDRIVE_TOKEN` — Google Drive OAuth access token. Optional
+ * - `ZT_GDRIVE_TOKEN` - Google Drive OAuth access token. Optional
  *   `ZT_GDRIVE_FOLDER_ID` scopes path resolution to a folder id.
- * - `ZT_ONEDRIVE_TOKEN` — Microsoft Graph OAuth access token. Optional
+ * - `ZT_ONEDRIVE_TOKEN` - Microsoft Graph OAuth access token. Optional
  *   `ZT_ONEDRIVE_DRIVE_BASE_URL` overrides the drive base.
- * - `ZT_GCS_TOKEN` + `ZT_GCS_BUCKET` — Google Cloud Storage credentials.
+ * - `ZT_GCS_TOKEN` + `ZT_GCS_BUCKET` - Google Cloud Storage credentials.
  * - `ZT_AZURE_BLOB_CONTAINER` + `ZT_AZURE_BLOB_ACCOUNT` + (`ZT_AZURE_BLOB_SAS`
- *   or `ZT_AZURE_BLOB_TOKEN`) — Azure Blob credentials.
+ *   or `ZT_AZURE_BLOB_TOKEN`) - Azure Blob credentials.
  *
  * Every covered provider issues a single `list("/")` call against live
  * credentials and asserts the call succeeds. The tests intentionally avoid

@@ -46,7 +46,7 @@ path safety utilities used by future protocol adapters.
 | [createRemoteBrowser](functions/createRemoteBrowser.md) | Creates a stateful directory browser around a remote file system. |
 | [createRemoteManifest](functions/createRemoteManifest.md) | Walks a remote subtree and produces a serializable manifest snapshot. |
 | [createS3ProviderFactory](functions/createS3ProviderFactory.md) | Creates an S3-compatible provider factory. |
-| [createSftpProviderFactory](functions/createSftpProviderFactory.md) | Creates a [ProviderFactory](interfaces/ProviderFactory.md) backed by the native SSH/SFTP protocol stack — no `ssh2` dependency required. |
+| [createSftpProviderFactory](functions/createSftpProviderFactory.md) | Creates a [ProviderFactory](interfaces/ProviderFactory.md) backed by the native SSH/SFTP protocol stack - no `ssh2` dependency required. |
 | [createSyncPlan](functions/createSyncPlan.md) | Builds a [TransferPlan](interfaces/TransferPlan.md) that reconciles two remote subtrees. |
 | [createTransferClient](functions/createTransferClient.md) | Creates a provider-neutral transfer client. |
 | [createTransferJobsFromPlan](functions/createTransferJobsFromPlan.md) | Converts executable plan steps into transfer jobs while preserving order. |

@@ -1,5 +1,5 @@
 /**
- * Unit tests for NativeSftpProvider — option validation, credential building,
+ * Unit tests for NativeSftpProvider - option validation, credential building,
  * attribute mapping, and error handling. No TCP connections are made.
  */
 import { afterEach, beforeEach, describe, expect, it } from "vitest";

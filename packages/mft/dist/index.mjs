@@ -4785,6 +4785,19 @@ function isModifiedAtDifferent2(source, destination, toleranceMs) {
   return Math.abs(sourceTime - destinationTime) > toleranceMs;
 }
 
+// src/utils/mainModule.ts
+import { fileURLToPath } from "url";
+function isMainModule(importMetaUrl) {
+  if (typeof process === "undefined" || !process.argv || process.argv.length < 2) {
+    return false;
+  }
+  try {
+    return process.argv[1] === fileURLToPath(importMetaUrl);
+  } catch {
+    return false;
+  }
+}
+
 // src/mft/RouteRegistry.ts
 var RouteRegistry = class {
   routes = /* @__PURE__ */ new Map();
@@ -5734,6 +5747,7 @@ export {
   inboxFailedPath,
   inboxProcessedPath,
   isClassicProviderId,
+  isMainModule,
   isSensitiveKey,
   joinRemotePath,
   matchKnownHosts,

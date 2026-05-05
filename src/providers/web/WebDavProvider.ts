@@ -60,18 +60,18 @@ export interface WebDavProviderOptions {
   /**
    * Streaming policy for `PUT` request bodies.
    *
-   * - `"when-known-size"` (default) — stream when the caller declares
+   * - `"when-known-size"` (default) - stream when the caller declares
    *   `request.totalBytes` (an explicit `Content-Length` is sent so all
    *   WebDAV servers accept the upload); otherwise buffer the entire body in
    *   memory before sending. This is the safe default that does not require
    *   the server to accept HTTP/1.1 chunked transfer-encoding.
-   * - `"always"` — always stream the body, even when the size is unknown
+   * - `"always"` - always stream the body, even when the size is unknown
    *   (the runtime will use chunked transfer-encoding). Some legacy WebDAV
    *   servers reject `Transfer-Encoding: chunked` and will respond `411
    *   Length Required` or `501 Not Implemented`; only enable this for
    *   servers known to accept chunked uploads (modern Apache/nginx, IIS
    *   with chunked transfer enabled, Nextcloud, ownCloud, sabre/dav).
-   * - `"never"` — always buffer (legacy behaviour pre-0.4.0). Use for
+   * - `"never"` - always buffer (legacy behaviour pre-0.4.0). Use for
    *   maximum compatibility at the cost of memory.
    */
   uploadStreaming?: "when-known-size" | "always" | "never";

@@ -322,7 +322,7 @@ export class SshTransportHandshake {
         if (verifyHook !== undefined) {
           // The hook may throw to reject; we surface that as a ProtocolError below.
           // Promise-returning hooks are not awaited inside this synchronous
-          // state machine — callers requiring async policy must perform it
+          // state machine - callers requiring async policy must perform it
           // before initiating connect().
           const maybe = verifyHook({
             algorithmName: hostKeyVerification.algorithmName,

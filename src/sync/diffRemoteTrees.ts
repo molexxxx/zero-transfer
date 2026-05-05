@@ -83,7 +83,7 @@ export interface DiffRemoteTreesOptions {
  * Compares two remote subtrees and produces an entry-level diff.
  *
  * Source and destination paths are walked independently; entries are then aligned by
- * the relative path from each tree root. Directory equality is structural — directories
+ * the relative path from each tree root. Directory equality is structural - directories
  * are equal when their relative paths match and the entry types agree.
  *
  * @param source - Source-side remote file system.

@@ -84,7 +84,7 @@ describeDocker("S3 provider Docker integration (MinIO)", () => {
   it("performs multipart upload for payloads above the threshold", async () => {
     // 12 MiB payload split across two 8 MiB-and-4 MiB parts (default partSize=8 MiB,
     // threshold=8 MiB). The S3 provider buffers up to threshold then begins
-    // multipart upload — this exercises CreateMultipartUpload, UploadPart,
+    // multipart upload - this exercises CreateMultipartUpload, UploadPart,
     // and CompleteMultipartUpload against MinIO.
     const partSize = 5 * 1024 * 1024; // 5 MiB (S3 minimum part size)
     const totalBytes = partSize * 2 + 1024;

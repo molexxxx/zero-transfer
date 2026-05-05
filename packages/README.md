@@ -1,11 +1,11 @@
-# `packages/*` — Scoped @zero-transfer packages
+# `packages/*` - Scoped @zero-transfer packages
 
 This directory holds the npm workspace folders for every package in the
 [`@zero-transfer/*`](https://www.npmjs.com/org/zero-transfer) family.
 
 Each package is **self-contained**: its `dist/index.{mjs,cjs,d.ts}` bundles the
 complete `@zero-transfer/core` surface plus only the protocol code and dependencies
-for that scope. Consumers install **one package** and get everything they need —
+for that scope. Consumers install **one package** and get everything they need -
 no separate `@zero-transfer/sdk` install required.
 
 Only `@zero-transfer/sftp` and `@zero-transfer/classic` declare a runtime npm
@@ -14,7 +14,7 @@ dependency (`ssh2`). All other scopes have zero npm dependencies (they use
 
 | Package                       | Public surface                                                 |
 | ----------------------------- | -------------------------------------------------------------- |
-| `@zero-transfer/sdk`          | Batteries-included — every provider and helper                 |
+| `@zero-transfer/sdk`          | Batteries-included - every provider and helper                 |
 | `@zero-transfer/core`         | `TransferClient`, providers, profiles, errors, transfer engine |
 | `@zero-transfer/classic`      | FTP + FTPS + SFTP                                              |
 | `@zero-transfer/ftp`          | `createFtpProviderFactory` + parsers                           |

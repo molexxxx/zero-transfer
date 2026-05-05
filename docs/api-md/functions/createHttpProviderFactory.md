@@ -14,7 +14,7 @@ Defined in: [src/providers/web/HttpProvider.ts:106](https://github.com/tonywied1
 
 Creates a provider factory backed by HTTP(S) GET/HEAD.
 
-Read-only by design — use it to fetch artifacts from public URLs, signed
+Read-only by design - use it to fetch artifacts from public URLs, signed
 URLs, or HTTP-only artifact servers. Range-based resume is supported when
 the server advertises `Accept-Ranges: bytes`. To upload to an HTTP endpoint,
 use the WebDAV provider, the S3 provider, or a cloud-specific provider.

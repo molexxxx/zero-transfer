@@ -65,7 +65,7 @@ interface UserauthRequestBase {
   username: string;
 }
 
-/** SSH_MSG_USERAUTH_REQUEST with method "none" — probes allowed methods. */
+/** SSH_MSG_USERAUTH_REQUEST with method "none" - probes allowed methods. */
 export function encodeUserauthRequestNone(args: UserauthRequestBase): Buffer {
   return new SshDataWriter()
     .writeByte(SSH_MSG_USERAUTH_REQUEST)
@@ -90,7 +90,7 @@ export function encodeUserauthRequestPassword(
 }
 
 /**
- * SSH_MSG_USERAUTH_REQUEST with method "publickey" — pre-auth query.
+ * SSH_MSG_USERAUTH_REQUEST with method "publickey" - pre-auth query.
  * Asks the server if it would accept a signature from this key, without providing one.
  */
 export function encodeUserauthRequestPublickeyQuery(
@@ -108,7 +108,7 @@ export function encodeUserauthRequestPublickeyQuery(
 }
 
 /**
- * SSH_MSG_USERAUTH_REQUEST with method "publickey" — actual signature.
+ * SSH_MSG_USERAUTH_REQUEST with method "publickey" - actual signature.
  * sessionId is the exchange hash / session identifier from key exchange.
  */
 export function encodeUserauthRequestPublickeySign(

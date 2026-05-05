@@ -3,7 +3,7 @@ title: MFT routes
 description: Compose transfers into routes, schedules, approvals, and audit logs.
 ---
 
-The MFT (Managed File Transfer) layer is for production orchestration — not just "upload one file" but "run this defined transfer on a schedule, with approvals and audit trail."
+The MFT (Managed File Transfer) layer is for production orchestration - not just "upload one file" but "run this defined transfer on a schedule, with approvals and audit trail."
 
 ## Routes
 

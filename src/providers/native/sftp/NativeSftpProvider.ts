@@ -1,5 +1,5 @@
 /**
- * Native SSH/SFTP provider — uses the project's own SSH/SFTP protocol stack
+ * Native SSH/SFTP provider - uses the project's own SSH/SFTP protocol stack
  * (Waves 1-3) instead of the `ssh2` third-party library.
  *
  * Supported auth methods: password, keyboard-interactive.
@@ -79,7 +79,7 @@ import {
 const NATIVE_SFTP_PROVIDER_ID = "sftp";
 const NATIVE_SFTP_DEFAULT_PORT = 22;
 
-/** SFTP read chunk size — stay within a single SSH channel max-packet. */
+/** SFTP read chunk size - stay within a single SSH channel max-packet. */
 const SFTP_READ_CHUNK_BYTES = 32_768;
 
 /**
@@ -193,7 +193,7 @@ export interface NativeSftpRawSession {
 
 /**
  * Creates a {@link ProviderFactory} backed by the native SSH/SFTP protocol
- * stack — no `ssh2` dependency required.
+ * stack - no `ssh2` dependency required.
  *
  * **Supported algorithms**
  * - Key exchange: `curve25519-sha256`, `curve25519-sha256@libssh.org`
@@ -428,7 +428,7 @@ class NativeSftpFileSystem implements RemoteFileSystem {
       } catch (error) {
         // If the directory already exists, that's fine for recursive creation.
         if (error instanceof ZeroTransferError && error.code === "ZERO_TRANSFER_PATH_NOT_FOUND") {
-          // Re-throw — the parent is missing unexpectedly.
+          // Re-throw - the parent is missing unexpectedly.
           throw error;
         }
         // Verify it's actually a directory before swallowing the error.
@@ -438,7 +438,7 @@ class NativeSftpFileSystem implements RemoteFileSystem {
           if (nativeSftpEntryTypeFromMode(mode) !== "directory") {
             throw error;
           }
-          // It exists and is a directory — continue.
+          // It exists and is a directory - continue.
         } catch {
           throw error;
         }
@@ -703,7 +703,7 @@ function buildNativeSftpCredential(
   const keyboardInteractive = profile.ssh?.keyboardInteractive;
   const privateKey = profile.ssh?.privateKey;
 
-  // Public-key auth wins over password when supplied — matches OpenSSH's default
+  // Public-key auth wins over password when supplied - matches OpenSSH's default
   // ordering and the legacy ssh2-backed provider's behaviour.
   if (privateKey !== undefined) {
     return buildNativePublickeyCredential(profile, username);
@@ -972,7 +972,7 @@ function parseNativeKnownHosts(
  * Builds the host-key verification hook combining `pinnedHostKeySha256` and
  * `knownHosts` policies. When neither is supplied returns `undefined`, leaving
  * the transport with signature-only verification (a working but
- * unauthenticated trust model — production deployments should pin or use
+ * unauthenticated trust model - production deployments should pin or use
  * known_hosts).
  *
  * Both gates apply when both are configured: the key must satisfy every
@@ -1023,7 +1023,7 @@ function buildNativeHostKeyVerifier(input: {
         if (entry.marker === undefined) {
           matched = true;
         }
-        // `cert-authority` entries are not yet supported — they require
+        // `cert-authority` entries are not yet supported - they require
         // OpenSSH certificate parsing. Treat them as no-match for now.
       }
       if (!matched) {

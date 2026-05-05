@@ -1,4 +1,4 @@
-# Core — provider-neutral SDK
+# Core - provider-neutral SDK
 
 > Provider-neutral contracts, transfer engine, queue, profiles, and errors.
 
@@ -8,7 +8,7 @@
 npm install @zero-transfer/core
 ```
 
-This is the shared foundation used by every other `@zero-transfer/*` package. You usually do **not** install it directly — pick a protocol package (e.g. [`@zero-transfer/ftp`](https://www.npmjs.com/package/@zero-transfer/ftp)) or the umbrella [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk), and core comes along automatically.
+This is the shared foundation used by every other `@zero-transfer/*` package. You usually do **not** install it directly - pick a protocol package (e.g. [`@zero-transfer/ftp`](https://www.npmjs.com/package/@zero-transfer/ftp)) or the umbrella [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk), and core comes along automatically.
 
 ## Overview
 
@@ -26,7 +26,7 @@ This is the actual surface published by [`@zero-transfer/core`](https://www.npmj
 | [`ProviderRegistry`](../api-md/classes/ProviderRegistry.md) | Class | See API reference. |
 | [`TransferSession`](../api-md/interfaces/TransferSession.md) | Interface | See API reference. |
 | [`TransferProvider`](../api-md/interfaces/TransferProvider.md) | Interface | See API reference. |
-| `ProviderCapabilities` | _unresolved_ | — |
+| `ProviderCapabilities` | _unresolved_ | - |
 | [`ProviderFactory`](../api-md/interfaces/ProviderFactory.md) | Interface | See API reference. |
 | [`ProviderTransferOperations`](../api-md/interfaces/ProviderTransferOperations.md) | Interface | See API reference. |
 | [`RemoteFileSystem`](../api-md/interfaces/RemoteFileSystem.md) | Interface | See API reference. |

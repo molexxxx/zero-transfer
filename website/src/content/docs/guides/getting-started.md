@@ -19,7 +19,7 @@ The umbrella package brings every built-in provider:
 npm install @zero-transfer/sdk
 ```
 
-If you only need one or two providers, use the scoped packages instead — they pull in just that provider's transitive deps:
+If you only need one or two providers, use the scoped packages instead - they pull in just that provider's transitive deps:
 
 ```bash
 npm install @zero-transfer/sftp
@@ -31,7 +31,7 @@ The scoped packages re-export the same `createTransferClient`, `uploadFile`, etc
 
 ## 3. Build a connection profile
 
-Every operation that touches a remote system takes a [`ConnectionProfile`](../../api/interfaces/connectionprofile/). The shape is provider-neutral — you describe the destination once and reuse it.
+Every operation that touches a remote system takes a [`ConnectionProfile`](../../api/interfaces/connectionprofile/). The shape is provider-neutral - you describe the destination once and reuse it.
 
 ```ts
 import type { ConnectionProfile } from "@zero-transfer/sdk";
@@ -42,7 +42,7 @@ const sftp: ConnectionProfile = {
   username: "deploy",
   ssh: {
     privateKey: { path: "./keys/id_ed25519" },
-    // Pin the server's host key — without this the SSH session
+    // Pin the server's host key - without this the SSH session
     // accepts any key the server presents (MITM risk).
     pinnedHostKeySha256: "SHA256:abc123basesixfourpinFromKnownHosts=",
   },
@@ -83,7 +83,7 @@ await uploadFile({
 
 ## 6. Where to next
 
-- **[Connection profiles](../../guides/connection-profiles/)** — every field, every secret variant, every security knob.
-- **[Capability matrix](../../guides/capabilities/)** — what each provider can and can't do.
-- **[Examples](../../guides/examples/)** — runnable end-to-end scripts (sync, MFT, atomic deploy, signed URLs, …).
-- **[API reference](../../api/)** — auto-generated from the source.
+- **[Connection profiles](../../guides/connection-profiles/)** - every field, every secret variant, every security knob.
+- **[Capability matrix](../../guides/capabilities/)** - what each provider can and can't do.
+- **[Examples](../../guides/examples/)** - runnable end-to-end scripts (sync, MFT, atomic deploy, signed URLs, …).
+- **[API reference](../../api/)** - auto-generated from the source.

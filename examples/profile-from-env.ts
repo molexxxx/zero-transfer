@@ -12,7 +12,6 @@ import {
   type ConnectionProfile,
 } from "@zero-transfer/core";
 
-import { fileURLToPath } from "node:url";
 function buildSftpProfile(): ConnectionProfile {
   return {
     host: process.env["SFTP_HOST"] ?? "sftp.example.com",
@@ -30,18 +29,10 @@ function buildSftpProfile(): ConnectionProfile {
   };
 }
 
-async function main(): Promise<void> {
-  const profile = validateConnectionProfile(buildSftpProfile());
-  console.log("Loaded profile:", redactConnectionProfile(profile));
+const profile = validateConnectionProfile(buildSftpProfile());
+console.log("Loaded profile:", redactConnectionProfile(profile));
 
-  const resolved = await resolveConnectionProfileSecrets(profile);
-  console.log(
-    `Resolved secrets for host ${resolved.host}: privateKey ${resolved.ssh?.privateKey ? "present" : "missing"}`,
-  );
-}
-
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  void main();
-}
-
-export { main };
+const resolved = await resolveConnectionProfileSecrets(profile);
+console.log(
+  `Resolved secrets for host ${resolved.host}: privateKey ${resolved.ssh?.privateKey ? "present" : "missing"}`,
+);

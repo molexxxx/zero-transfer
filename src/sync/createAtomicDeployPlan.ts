@@ -130,7 +130,7 @@ const DEFAULT_RETAIN = 3;
  *  2. Atomically swap the `current` symlink/rename to point at the new release.
  *  3. Optionally prune old releases beyond `retain`.
  *
- * No I/O is performed — the host executes the plan steps. Pair with
+ * No I/O is performed - the host executes the plan steps. Pair with
  * {@link createTransferPlan} or {@link createTransferJobsFromPlan} to execute.
  *
  * @param options - Inputs and policies that shape the deploy.
