@@ -8,6 +8,8 @@
 npm install @zero-transfer/core
 ```
 
+This is the shared foundation used by every other `@zero-transfer/*` package. You usually do **not** install it directly — pick a protocol package (e.g. [`@zero-transfer/ftp`](https://www.npmjs.com/package/@zero-transfer/ftp)) or the umbrella [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk), and core comes along automatically.
+
 ## Overview
 
 The provider-neutral foundation: `TransferClient`, `createTransferClient`, the provider registry, capability sets, transfer engine, queue, planning primitives, profile resolution, secret redaction, structured logging, and typed errors. Every other scoped package builds on this surface.

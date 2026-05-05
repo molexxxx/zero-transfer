@@ -42,5 +42,8 @@
     "provenance": true,
     "access": "public"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "dependencies": {
+    "@zero-transfer/core": "^0.4.2"
+  }
 }

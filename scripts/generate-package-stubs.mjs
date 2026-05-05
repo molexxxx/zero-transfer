@@ -25,6 +25,14 @@ for (const scope of scopes) {
   const dir = join(repoRoot, "packages", scope.name);
   mkdirSync(dir, { recursive: true });
 
+  // Every non-core scoped package depends on @zero-transfer/core so that
+  // `npm i @zero-transfer/<protocol>` auto-installs the shared foundation.
+  // Manifest-declared deps win on conflict, but we never ship duplicate keys.
+  const dependencies = {
+    ...(scope.name === "core" ? {} : { "@zero-transfer/core": `^${sdkVersion}` }),
+    ...scope.deps,
+  };
+
   const pkg = {
     name: `@zero-transfer/${scope.name}`,
     version: sdkVersion,
@@ -58,7 +66,7 @@ for (const scope of scopes) {
       access: "public",
     },
     sideEffects: false,
-    ...(Object.keys(scope.deps).length > 0 ? { dependencies: scope.deps } : {}),
+    ...(Object.keys(dependencies).length > 0 ? { dependencies } : {}),
     ...(scope.peerDeps && Object.keys(scope.peerDeps).length > 0
       ? {
           peerDependencies: scope.peerDeps,

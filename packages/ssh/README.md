@@ -8,6 +8,8 @@
 npm install @zero-transfer/ssh
 ```
 
+Installing this package automatically pulls in [`@zero-transfer/core`](https://www.npmjs.com/package/@zero-transfer/core) as a transitive dependency. The full core surface (`createTransferClient`, `uploadFile`, `downloadFile`, profiles, errors, sync planner, …) is re-exported from this package, so a single `import { … } from "@zero-transfer/ssh"` is all you need. If your app uses multiple protocols, install the umbrella [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk) instead of multiple scoped packages.
+
 ## Overview
 
 Standalone, zero-dependency SSH 2.0 stack — RFC 4253 transport (curve25519-sha256 KEX, AES-CTR + HMAC-SHA2), RFC 4252 user authentication (password, keyboard-interactive, publickey for Ed25519 / RSA-SHA2-256/512), RFC 5656 ECDSA host keys (P-256/384/521), RFC 4254 channels, OpenSSH `known_hosts` parsing, and host-key pinning. The same protocol stack that powers the SFTP provider, exposed for callers that need direct SSH features (custom subsystems, exec channels, port forwarding, custom RPC) — capabilities the Node.js ecosystem otherwise lacks a maintained pure-JS solution for.

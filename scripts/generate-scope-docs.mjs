@@ -151,6 +151,13 @@ function frontmatterless(title, body) {
  */
 function pickUsageImport(scope) {
   const factory = scope.exports.find((n) => /^create[A-Z].*ProviderFactory$/.test(n));
+  // Every scoped package re-exports the full @zero-transfer/core surface, so
+  // we always show core symbols + the provider factory imported from a single
+  // package — no separate `@zero-transfer/core` install required.
+  const coreSymbols = ["createTransferClient", "uploadFile", "downloadFile"];
+  if (factory && scope.name !== "core") {
+    return `import { ${[...coreSymbols, factory].join(", ")} } from "@zero-transfer/${scope.name}";`;
+  }
   if (factory) {
     return `import { ${factory} } from "@zero-transfer/${scope.name}";`;
   }
@@ -165,6 +172,11 @@ for (const scope of scopes) {
   const examplesBlock = describeExamples(scope.examples);
   const exportsBlock = exportsTable(scope.exports, scopePageFile);
 
+  const installNote =
+    scope.name === "core"
+      ? "This is the shared foundation used by every other `@zero-transfer/*` package. You usually do **not** install it directly — pick a protocol package (e.g. [`@zero-transfer/ftp`](https://www.npmjs.com/package/@zero-transfer/ftp)) or the umbrella [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk), and core comes along automatically."
+      : `Installing this package automatically pulls in [\`@zero-transfer/core\`](https://www.npmjs.com/package/@zero-transfer/core) as a transitive dependency. The full core surface (\`createTransferClient\`, \`uploadFile\`, \`downloadFile\`, profiles, errors, sync planner, …) is re-exported from this package, so a single \`import { … } from "@zero-transfer/${scope.name}"\` is all you need. If your app uses multiple protocols, install the umbrella [\`@zero-transfer/sdk\`](https://www.npmjs.com/package/@zero-transfer/sdk) instead of multiple scoped packages.`;
+
   const body = [
     `> ${scope.summary}`,
     "",
@@ -173,6 +185,8 @@ for (const scope of scopes) {
     "```bash",
     `npm install @zero-transfer/${scope.name}`,
     "```",
+    "",
+    installNote,
     "",
     "## Overview",
     "",
@@ -212,6 +226,8 @@ for (const scope of scopes) {
     "```bash",
     `npm install @zero-transfer/${scope.name}`,
     "```",
+    "",
+    installNote,
     "",
     "## Overview",
     "",
