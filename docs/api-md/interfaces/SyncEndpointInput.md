@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.4**](../README.md)
+[**ZeroTransfer SDK v0.4.5**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: SyncEndpointInput
 
-Defined in: [src/sync/createSyncPlan.ts:40](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/createSyncPlan.ts#L40)
+Defined in: [src/sync/createSyncPlan.ts:40](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/sync/createSyncPlan.ts#L40)
 
 Endpoint shape supplied to [createSyncPlan](../functions/createSyncPlan.md).
 
@@ -14,5 +14,5 @@ Endpoint shape supplied to [createSyncPlan](../functions/createSyncPlan.md).
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="provider"></a> `provider?` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider that owns the endpoint when known. | [src/sync/createSyncPlan.ts:42](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/createSyncPlan.ts#L42) |
-| <a id="rootpath"></a> `rootPath` | `string` | Root path on the provider being synced. | [src/sync/createSyncPlan.ts:44](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/sync/createSyncPlan.ts#L44) |
+| <a id="provider"></a> `provider?` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider that owns the endpoint when known. | [src/sync/createSyncPlan.ts:42](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/sync/createSyncPlan.ts#L42) |
+| <a id="rootpath"></a> `rootPath` | `string` | Root path on the provider being synced. | [src/sync/createSyncPlan.ts:44](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/sync/createSyncPlan.ts#L44) |

@@ -1,9 +1,9 @@
 /**
- * @file `isMainModule` — small helper for the rare case a script needs to
+ * @file `isMainModule` - small helper for the rare case a script needs to
  * branch on whether it is the process entry point.
  *
  * Most code does not need this. Examples and CLIs should just put their work
- * at the top level of an ES module — top-level `await` is allowed, and any
+ * at the top level of an ES module - top-level `await` is allowed, and any
  * thrown error propagates up so Node prints it and exits non-zero. No guard,
  * no wrapper, no `import.meta.url` plumbing required.
  *

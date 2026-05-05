@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.4**](../README.md)
+[**ZeroTransfer SDK v0.4.5**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ProviderSelection
 
-Defined in: [src/core/ProviderId.ts:32](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/core/ProviderId.ts#L32)
+Defined in: [src/core/ProviderId.ts:32](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderId.ts#L32)
 
 Minimal shape used to resolve a provider from new and compatibility profile fields.
 
@@ -14,5 +14,5 @@ Minimal shape used to resolve a provider from new and compatibility profile fiel
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="protocol"></a> `protocol?` | `"ftp"` \| `"ftps"` \| `"sftp"` | Compatibility protocol field accepted while the provider-neutral API rolls out. | [src/core/ProviderId.ts:36](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/core/ProviderId.ts#L36) |
-| <a id="provider"></a> `provider?` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id for provider-neutral ZeroTransfer profiles. | [src/core/ProviderId.ts:34](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/core/ProviderId.ts#L34) |
+| <a id="protocol"></a> `protocol?` | `"ftp"` \| `"ftps"` \| `"sftp"` | Compatibility protocol field accepted while the provider-neutral API rolls out. | [src/core/ProviderId.ts:36](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderId.ts#L36) |
+| <a id="provider"></a> `provider?` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id for provider-neutral ZeroTransfer profiles. | [src/core/ProviderId.ts:34](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/core/ProviderId.ts#L34) |

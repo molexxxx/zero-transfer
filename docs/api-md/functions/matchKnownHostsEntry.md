@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.4**](../README.md)
+[**ZeroTransfer SDK v0.4.5**](../README.md)
 
 ***
 
@@ -13,7 +13,7 @@ function matchKnownHostsEntry(
    port?): boolean;
 ```
 
-Defined in: [src/profiles/importers/KnownHostsParser.ts:105](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/profiles/importers/KnownHostsParser.ts#L105)
+Defined in: [src/profiles/importers/KnownHostsParser.ts:105](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/profiles/importers/KnownHostsParser.ts#L105)
 
 Returns true when the given host (and optional port) matches the entry's host patterns.
 Hashed entries use HMAC-SHA1 verification per OpenSSH semantics.

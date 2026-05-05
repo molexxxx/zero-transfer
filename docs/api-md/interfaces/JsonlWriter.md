@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.4**](../README.md)
+[**ZeroTransfer SDK v0.4.5**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: JsonlWriter
 
-Defined in: [src/mft/audit.ts:73](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/audit.ts#L73)
+Defined in: [src/mft/audit.ts:73](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/mft/audit.ts#L73)
 
 Output sink consumed by [createJsonlAuditLog](../functions/createJsonlAuditLog.md).
 
@@ -18,7 +18,7 @@ Output sink consumed by [createJsonlAuditLog](../functions/createJsonlAuditLog.m
 write(line): Promise<void>;
 ```
 
-Defined in: [src/mft/audit.ts:75](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/audit.ts#L75)
+Defined in: [src/mft/audit.ts:75](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/mft/audit.ts#L75)
 
 Writes a UTF-8 line that already includes a trailing newline.
 

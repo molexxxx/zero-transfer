@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.4**](../README.md)
+[**ZeroTransfer SDK v0.4.5**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: WebhookTarget
 
-Defined in: [src/mft/webhooks.ts:19](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/webhooks.ts#L19)
+Defined in: [src/mft/webhooks.ts:19](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/mft/webhooks.ts#L19)
 
 Webhook destination.
 
@@ -14,7 +14,7 @@ Webhook destination.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="headers"></a> `headers?` | `Record`\<`string`, `string`\> | Additional headers merged into every request. | [src/mft/webhooks.ts:23](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/webhooks.ts#L23) |
-| <a id="secret"></a> `secret?` | `string` | Shared secret used to compute the HMAC signature header. | [src/mft/webhooks.ts:25](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/webhooks.ts#L25) |
-| <a id="types"></a> `types?` | readonly [`MftAuditEntryType`](../type-aliases/MftAuditEntryType.md)[] | Audit entry types to deliver. Defaults to all types. | [src/mft/webhooks.ts:27](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/webhooks.ts#L27) |
-| <a id="url"></a> `url` | `string` | Absolute HTTP(S) URL that receives `POST` deliveries. | [src/mft/webhooks.ts:21](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/mft/webhooks.ts#L21) |
+| <a id="headers"></a> `headers?` | `Record`\<`string`, `string`\> | Additional headers merged into every request. | [src/mft/webhooks.ts:23](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/mft/webhooks.ts#L23) |
+| <a id="secret"></a> `secret?` | `string` | Shared secret used to compute the HMAC signature header. | [src/mft/webhooks.ts:25](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/mft/webhooks.ts#L25) |
+| <a id="types"></a> `types?` | readonly [`MftAuditEntryType`](../type-aliases/MftAuditEntryType.md)[] | Audit entry types to deliver. Defaults to all types. | [src/mft/webhooks.ts:27](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/mft/webhooks.ts#L27) |
+| <a id="url"></a> `url` | `string` | Absolute HTTP(S) URL that receives `POST` deliveries. | [src/mft/webhooks.ts:21](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/mft/webhooks.ts#L21) |

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.4**](../README.md)
+[**ZeroTransfer SDK v0.4.5**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: EnvSecretSource
 
-Defined in: [src/profiles/SecretSource.ts:24](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/profiles/SecretSource.ts#L24)
+Defined in: [src/profiles/SecretSource.ts:24](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/profiles/SecretSource.ts#L24)
 
 Environment variable descriptor for text secrets.
 
@@ -14,4 +14,4 @@ Environment variable descriptor for text secrets.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="env"></a> `env` | `string` | Environment variable containing the secret. | [src/profiles/SecretSource.ts:26](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/profiles/SecretSource.ts#L26) |
+| <a id="env"></a> `env` | `string` | Environment variable containing the secret. | [src/profiles/SecretSource.ts:26](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/profiles/SecretSource.ts#L26) |

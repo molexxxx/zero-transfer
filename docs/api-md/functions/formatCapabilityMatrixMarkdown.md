@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.4**](../README.md)
+[**ZeroTransfer SDK v0.4.5**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function formatCapabilityMatrixMarkdown(matrix?): string;
 ```
 
-Defined in: [src/providers/capabilityMatrix.ts:146](https://github.com/tonywied17/zero-transfer/blob/68dfa4400774749583a618e74b7d5b51047394be/src/providers/capabilityMatrix.ts#L146)
+Defined in: [src/providers/capabilityMatrix.ts:146](https://github.com/tonywied17/zero-transfer/blob/6b0c0b0820cf5eac6e4cf75fd3bc783ddbf448fa/src/providers/capabilityMatrix.ts#L146)
 
 Renders the matrix returned by [getBuiltinCapabilityMatrix](getBuiltinCapabilityMatrix.md) as a
 GitHub-flavored Markdown table covering the most commonly-compared
