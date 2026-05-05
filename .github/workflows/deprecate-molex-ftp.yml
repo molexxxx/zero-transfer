@@ -1,0 +1,52 @@
+name: Deprecate molex-ftp
+
+# Manual workflow to publish an npm deprecation notice on the legacy
+# `molex-ftp` package, pointing users at the @zero-transfer/* successors.
+# Uses the NPM_TOKEN automation secret (bypasses 2FA).
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: "Deprecation message"
+        required: true
+        default: "molex-ftp is deprecated and no longer maintained. It has been rewritten and expanded as the provider-neutral Zero Transfer SDK. Install @zero-transfer/sdk for the full multi-protocol surface (FTP, FTPS, SFTP, SSH, HTTP, WebDAV, S3, Google Drive, Dropbox, Azure Blob, MFT), or @zero-transfer/ftp for just the classic FTP provider. Repo: https://github.com/tonywied17/zero-transfer"
+      undo:
+        description: "Undeprecate instead (pass empty string to npm deprecate)"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+
+jobs:
+  deprecate:
+    name: npm deprecate molex-ftp
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+
+      - name: Run npm deprecate
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          MESSAGE: ${{ github.event.inputs.message }}
+          UNDO: ${{ github.event.inputs.undo }}
+        run: |
+          set -euo pipefail
+          if [ "$UNDO" = "true" ]; then
+            echo "Undeprecating molex-ftp (all versions)"
+            npm deprecate "molex-ftp@*" ""
+          else
+            echo "Deprecating molex-ftp (all versions) with message:"
+            echo "$MESSAGE"
+            npm deprecate "molex-ftp@*" "$MESSAGE"
+          fi
+
+      - name: Verify
+        run: |
+          npm view molex-ftp versions --json
+          npm view molex-ftp deprecated || true
