@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.5**](../README.md)
+[**ZeroTransfer SDK v0.4.6**](../README.md)
 
 ***
 
@@ -13,7 +13,7 @@ function compareRemoteManifests(
    options?): RemoteTreeDiff;
 ```
 
-Defined in: [src/sync/manifest.ts:225](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/sync/manifest.ts#L225)
+Defined in: [src/sync/manifest.ts:225](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/sync/manifest.ts#L225)
 
 Compares two manifests and produces an entry-level diff.
 

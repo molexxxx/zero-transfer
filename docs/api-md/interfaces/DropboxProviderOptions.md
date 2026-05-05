@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.5**](../README.md)
+[**ZeroTransfer SDK v0.4.6**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: DropboxProviderOptions
 
-Defined in: [src/providers/cloud/DropboxProvider.ts:53](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/providers/cloud/DropboxProvider.ts#L53)
+Defined in: [src/providers/cloud/DropboxProvider.ts:53](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/cloud/DropboxProvider.ts#L53)
 
 Options accepted by [createDropboxProviderFactory](../functions/createDropboxProviderFactory.md).
 
@@ -14,8 +14,8 @@ Options accepted by [createDropboxProviderFactory](../functions/createDropboxPro
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="apibaseurl"></a> `apiBaseUrl?` | `string` | Override the RPC base URL. Defaults to `https://api.dropboxapi.com`. | [src/providers/cloud/DropboxProvider.ts:57](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/providers/cloud/DropboxProvider.ts#L57) |
-| <a id="contentbaseurl"></a> `contentBaseUrl?` | `string` | Override the content base URL. Defaults to `https://content.dropboxapi.com`. | [src/providers/cloud/DropboxProvider.ts:59](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/providers/cloud/DropboxProvider.ts#L59) |
-| <a id="defaultheaders"></a> `defaultHeaders?` | `Record`\<`string`, `string`\> | Default headers applied to every request before bearer auth. | [src/providers/cloud/DropboxProvider.ts:63](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/providers/cloud/DropboxProvider.ts#L63) |
-| <a id="fetch"></a> `fetch?` | [`HttpFetch`](../type-aliases/HttpFetch.md) | Custom fetch implementation. Defaults to global `fetch`. | [src/providers/cloud/DropboxProvider.ts:61](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/providers/cloud/DropboxProvider.ts#L61) |
-| <a id="id"></a> `id?` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id to register. Defaults to `"dropbox"`. | [src/providers/cloud/DropboxProvider.ts:55](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/providers/cloud/DropboxProvider.ts#L55) |
+| <a id="apibaseurl"></a> `apiBaseUrl?` | `string` | Override the RPC base URL. Defaults to `https://api.dropboxapi.com`. | [src/providers/cloud/DropboxProvider.ts:57](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/cloud/DropboxProvider.ts#L57) |
+| <a id="contentbaseurl"></a> `contentBaseUrl?` | `string` | Override the content base URL. Defaults to `https://content.dropboxapi.com`. | [src/providers/cloud/DropboxProvider.ts:59](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/cloud/DropboxProvider.ts#L59) |
+| <a id="defaultheaders"></a> `defaultHeaders?` | `Record`\<`string`, `string`\> | Default headers applied to every request before bearer auth. | [src/providers/cloud/DropboxProvider.ts:63](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/cloud/DropboxProvider.ts#L63) |
+| <a id="fetch"></a> `fetch?` | [`HttpFetch`](../type-aliases/HttpFetch.md) | Custom fetch implementation. Defaults to global `fetch`. | [src/providers/cloud/DropboxProvider.ts:61](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/cloud/DropboxProvider.ts#L61) |
+| <a id="id"></a> `id?` | [`ProviderId`](../type-aliases/ProviderId.md) | Provider id to register. Defaults to `"dropbox"`. | [src/providers/cloud/DropboxProvider.ts:55](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/cloud/DropboxProvider.ts#L55) |

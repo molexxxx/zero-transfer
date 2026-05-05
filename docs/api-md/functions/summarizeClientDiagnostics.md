@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.5**](../README.md)
+[**ZeroTransfer SDK v0.4.6**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function summarizeClientDiagnostics(client): ClientDiagnostics;
 ```
 
-Defined in: [src/diagnostics/index.ts:40](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/diagnostics/index.ts#L40)
+Defined in: [src/diagnostics/index.ts:40](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/diagnostics/index.ts#L40)
 
 Returns a redaction-safe snapshot of the providers registered with a client.
 

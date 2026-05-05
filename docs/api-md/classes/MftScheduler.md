@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.5**](../README.md)
+[**ZeroTransfer SDK v0.4.6**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: MftScheduler
 
-Defined in: [src/mft/MftScheduler.ts:106](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/mft/MftScheduler.ts#L106)
+Defined in: [src/mft/MftScheduler.ts:106](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/mft/MftScheduler.ts#L106)
 
 Runs routes on configured schedules.
 
@@ -60,7 +60,7 @@ scheduler.start();
 get isRunning(): boolean;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:132](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/mft/MftScheduler.ts#L132)
+Defined in: [src/mft/MftScheduler.ts:132](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/mft/MftScheduler.ts#L132)
 
 Whether the scheduler is currently running.
 
@@ -76,7 +76,7 @@ Whether the scheduler is currently running.
 new MftScheduler(options): MftScheduler;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:121](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/mft/MftScheduler.ts#L121)
+Defined in: [src/mft/MftScheduler.ts:121](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/mft/MftScheduler.ts#L121)
 
 Creates a scheduler bound to a transfer client and registries.
 
@@ -98,7 +98,7 @@ Creates a scheduler bound to a transfer client and registries.
 start(): void;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:137](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/mft/MftScheduler.ts#L137)
+Defined in: [src/mft/MftScheduler.ts:137](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/mft/MftScheduler.ts#L137)
 
 Starts the scheduler. No-op when already running.
 
@@ -114,7 +114,7 @@ Starts the scheduler. No-op when already running.
 stop(): Promise<void>;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:152](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/mft/MftScheduler.ts#L152)
+Defined in: [src/mft/MftScheduler.ts:152](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/mft/MftScheduler.ts#L152)
 
 Stops the scheduler and aborts in-flight route executions.
 

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.5**](../README.md)
+[**ZeroTransfer SDK v0.4.6**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function negotiateSshAlgorithms(client, server): NegotiatedSshAlgorithms;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshAlgorithmNegotiation.ts:69](https://github.com/tonywied17/zero-transfer/blob/cfa015b5b1ada51d6e05dc06e48a6f0190e17bf3/src/protocols/ssh/transport/SshAlgorithmNegotiation.ts#L69)
+Defined in: [src/protocols/ssh/transport/SshAlgorithmNegotiation.ts:69](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/protocols/ssh/transport/SshAlgorithmNegotiation.ts#L69)
 
 Intersects client and server algorithm lists using SSH's client-priority selection model.
 
