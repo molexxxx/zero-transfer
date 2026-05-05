@@ -30,6 +30,7 @@ This is the actual surface published by [`@zero-transfer/ftps`](https://www.npmj
 | Example | What it shows |
 | --- | --- |
 | [`examples/ftps-client-certificate.ts`](../../examples/ftps-client-certificate.ts) | FTPS client-certificate (mutual TLS) example with certificate pinning. |
+| [`examples/ftps-directory-ops.ts`](../../examples/ftps-directory-ops.ts) | FTPS directory operations: list, stat, mkdir, rename, remove, rmdir. |
 
 ## See also
 

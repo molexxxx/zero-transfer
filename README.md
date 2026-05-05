@@ -323,10 +323,13 @@ Real-world examples live in [`examples/`](https://github.com/tonywied17/zero-tra
 | --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | [`local-copy-file.ts`](examples/local-copy-file.ts)                         | Zero-config local-to-local copy via `copyBetween`.                |
 | [`ftp-basic.ts`](examples/ftp-basic.ts)                                     | Plain FTP upload + download round-trip with username/password.    |
+| [`ftp-directory-ops.ts`](examples/ftp-directory-ops.ts)                     | FTP `session.fs`: list, stat, mkdir, rename, remove, rmdir.       |
 | [`ftps-basic.ts`](examples/ftps-basic.ts)                                   | FTPS with username/password over a public-CA endpoint.            |
 | [`ftps-client-certificate.ts`](examples/ftps-client-certificate.ts)         | FTPS hardened: mTLS + private CA bundle + fingerprint pinning.    |
+| [`ftps-directory-ops.ts`](examples/ftps-directory-ops.ts)                   | FTPS `session.fs`: list, stat, mkdir, rename, remove, rmdir.      |
 | [`sftp-basic.ts`](examples/sftp-basic.ts)                                   | Minimal SFTP with username/password (no host-key pinning).        |
 | [`sftp-private-key.ts`](examples/sftp-private-key.ts)                       | SFTP hardened: private-key auth + pinned host-key SHA-256.        |
+| [`sftp-directory-ops.ts`](examples/sftp-directory-ops.ts)                   | SFTP `session.fs`: list, stat, mkdir, rename, remove, rmdir.      |
 | [`ssh-exec-command.ts`](examples/ssh-exec-command.ts)                       | Standalone SSH stack: handshake, auth, run a remote command.      |
 | [`s3-compatible-upload.ts`](examples/s3-compatible-upload.ts)               | S3 multipart upload with cross-process resume store.              |
 | [`webdav-sync.ts`](examples/webdav-sync.ts)                                 | WebDAV diff + sync plan with deterministic ordering.              |

@@ -32,7 +32,10 @@ This is the actual surface published by [`@zero-transfer/classic`](https://www.n
 | Example | What it shows |
 | --- | --- |
 | [`examples/sftp-private-key.ts`](../../examples/sftp-private-key.ts) | SFTP private-key authentication example with host-key pinning. |
+| [`examples/sftp-directory-ops.ts`](../../examples/sftp-directory-ops.ts) | SFTP directory operations: list, stat, mkdir, rename, remove, rmdir. |
 | [`examples/ftps-client-certificate.ts`](../../examples/ftps-client-certificate.ts) | FTPS client-certificate (mutual TLS) example with certificate pinning. |
+| [`examples/ftps-directory-ops.ts`](../../examples/ftps-directory-ops.ts) | FTPS directory operations: list, stat, mkdir, rename, remove, rmdir. |
+| [`examples/ftp-directory-ops.ts`](../../examples/ftp-directory-ops.ts) | FTP directory operations: list, stat, mkdir, rename, remove, rmdir. |
 
 ## See also
 

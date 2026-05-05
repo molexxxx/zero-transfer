@@ -45,9 +45,10 @@ This package publishes a narrowed surface of **11** exports. These symbols are a
 
 ## Examples
 
-| Example                                                                                                              | What it shows                                                  |
-| -------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| [`examples/sftp-private-key.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/sftp-private-key.ts) | SFTP private-key authentication example with host-key pinning. |
+| Example                                                                                                                  | What it shows                                                        |
+| ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| [`examples/sftp-private-key.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/sftp-private-key.ts)     | SFTP private-key authentication example with host-key pinning.       |
+| [`examples/sftp-directory-ops.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/sftp-directory-ops.ts) | SFTP directory operations: list, stat, mkdir, rename, remove, rmdir. |
 
 ## Documentation
 

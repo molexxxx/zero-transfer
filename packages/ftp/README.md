@@ -48,10 +48,11 @@ This package publishes a narrowed surface of **14** exports. These symbols are a
 
 ## Examples
 
-| Example                                                                                                          | What it shows                                                    |
-| ---------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| [`examples/ftp-basic.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftp-basic.ts)           | Basic FTP upload + download example.                             |
-| [`examples/transfer-queue.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/transfer-queue.ts) | Transfer queue with concurrency, progress, and per-job receipts. |
+| Example                                                                                                                | What it shows                                                       |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| [`examples/ftp-basic.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftp-basic.ts)                 | Basic FTP upload + download example.                                |
+| [`examples/ftp-directory-ops.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftp-directory-ops.ts) | FTP directory operations: list, stat, mkdir, rename, remove, rmdir. |
+| [`examples/transfer-queue.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/transfer-queue.ts)       | Transfer queue with concurrency, progress, and per-job receipts.    |
 
 ## Documentation
 

@@ -41,6 +41,7 @@ This package publishes a narrowed surface of **4** exports. These symbols are al
 | Example                                                                                                                            | What it shows                                                          |
 | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | [`examples/ftps-client-certificate.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftps-client-certificate.ts) | FTPS client-certificate (mutual TLS) example with certificate pinning. |
+| [`examples/ftps-directory-ops.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftps-directory-ops.ts)           | FTPS directory operations: list, stat, mkdir, rename, remove, rmdir.   |
 
 ## Documentation
 

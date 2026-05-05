@@ -37,6 +37,7 @@ This is the actual surface published by [`@zero-transfer/sftp`](https://www.npmj
 | Example | What it shows |
 | --- | --- |
 | [`examples/sftp-private-key.ts`](../../examples/sftp-private-key.ts) | SFTP private-key authentication example with host-key pinning. |
+| [`examples/sftp-directory-ops.ts`](../../examples/sftp-directory-ops.ts) | SFTP directory operations: list, stat, mkdir, rename, remove, rmdir. |
 
 ## See also
 

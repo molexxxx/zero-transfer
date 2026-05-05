@@ -137,7 +137,13 @@ export const scopes = [
   {
     description:
       "Bundle of the three classic providers: FTP, FTPS, and SFTP. Wire `createFtpProviderFactory()`, `createFtpsProviderFactory()`, and `createSftpProviderFactory()` into a single `TransferClient` to talk to traditional file servers. Zero runtime dependencies - SFTP is implemented on top of the first-party native SSH stack.",
-    examples: ["sftp-private-key.ts", "ftps-client-certificate.ts"],
+    examples: [
+      "sftp-private-key.ts",
+      "sftp-directory-ops.ts",
+      "ftps-client-certificate.ts",
+      "ftps-directory-ops.ts",
+      "ftp-directory-ops.ts",
+    ],
     exports: [
       "createFtpProviderFactory",
       "createFtpsProviderFactory",
@@ -154,7 +160,7 @@ export const scopes = [
   {
     description:
       "Plain FTP with EPSV/PASV streaming, REST-resume, MLST/MLSD listings, Unix LIST fallback, and full profile timeout enforcement. Use `createFtpProviderFactory()`.",
-    examples: ["ftp-basic.ts", "transfer-queue.ts"],
+    examples: ["ftp-basic.ts", "ftp-directory-ops.ts", "transfer-queue.ts"],
     exports: [
       "createFtpProviderFactory",
       "FtpProviderOptions",
@@ -179,7 +185,7 @@ export const scopes = [
   {
     description:
       "FTPS over explicit `AUTH TLS` or implicit TLS, with PEM/PFX/P12 certificate sources, encrypted passive data channels, certificate fingerprint pinning, SNI/servername controls, and TLS min/max version configuration.",
-    examples: ["ftps-client-certificate.ts"],
+    examples: ["ftps-client-certificate.ts", "ftps-directory-ops.ts"],
     exports: ["createFtpsProviderFactory", "FtpsProviderOptions", "FtpsMode", "FtpsDataProtection"],
     deps: {},
     name: "ftps",
@@ -189,7 +195,7 @@ export const scopes = [
   {
     description:
       "Zero-dependency SFTP over SSH built on a first-party SSH transport stack: Ed25519 / RSA-SHA2-256/512 / ECDSA P-256/384/521 host keys, password / keyboard-interactive / public-key (Ed25519 + RSA) auth, host-key pinning, OpenSSH `known_hosts` (hashed/plain, `[host]:port`, `@revoked`), handshake timeout, and idle NAT keepalive. `createSftpProviderFactory` is kept as an alias of `createNativeSftpProviderFactory` for backward compatibility.",
-    examples: ["sftp-private-key.ts"],
+    examples: ["sftp-private-key.ts", "sftp-directory-ops.ts"],
     exports: [
       "createNativeSftpProviderFactory",
       "NativeSftpProviderOptions",

@@ -40,6 +40,7 @@ This is the actual surface published by [`@zero-transfer/ftp`](https://www.npmjs
 | Example | What it shows |
 | --- | --- |
 | [`examples/ftp-basic.ts`](../../examples/ftp-basic.ts) | Basic FTP upload + download example. |
+| [`examples/ftp-directory-ops.ts`](../../examples/ftp-directory-ops.ts) | FTP directory operations: list, stat, mkdir, rename, remove, rmdir. |
 | [`examples/transfer-queue.ts`](../../examples/transfer-queue.ts) | Transfer queue with concurrency, progress, and per-job receipts. |
 
 ## See also
