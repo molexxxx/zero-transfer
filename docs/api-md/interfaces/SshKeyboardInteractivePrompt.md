@@ -6,7 +6,7 @@
 
 # Interface: SshKeyboardInteractivePrompt
 
-Defined in: [src/types/public.ts:134](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/types/public.ts#L134)
+Defined in: [src/types/public.ts:134](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/types/public.ts#L134)
 
 Prompt metadata supplied by an SSH keyboard-interactive server challenge.
 
@@ -14,5 +14,5 @@ Prompt metadata supplied by an SSH keyboard-interactive server challenge.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="echo"></a> `echo?` | `boolean` | Whether the answer may be echoed to a terminal or UI. | [src/types/public.ts:138](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/types/public.ts#L138) |
-| <a id="prompt"></a> `prompt` | `string` | Human-readable prompt text supplied by the SSH server. | [src/types/public.ts:136](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/types/public.ts#L136) |
+| <a id="echo"></a> `echo?` | `boolean` | Whether the answer may be echoed to a terminal or UI. | [src/types/public.ts:138](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/types/public.ts#L138) |
+| <a id="prompt"></a> `prompt` | `string` | Human-readable prompt text supplied by the SSH server. | [src/types/public.ts:136](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/types/public.ts#L136) |

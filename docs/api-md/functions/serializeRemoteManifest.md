@@ -10,7 +10,7 @@
 function serializeRemoteManifest(manifest, indent?): string;
 ```
 
-Defined in: [src/sync/manifest.ts:139](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/sync/manifest.ts#L139)
+Defined in: [src/sync/manifest.ts:139](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/sync/manifest.ts#L139)
 
 Serializes a manifest to a JSON string suitable for persistence.
 

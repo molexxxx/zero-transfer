@@ -6,7 +6,7 @@
 
 # Interface: S3MultipartResumeStore
 
-Defined in: [src/providers/web/S3Provider.ts:129](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/web/S3Provider.ts#L129)
+Defined in: [src/providers/web/S3Provider.ts:129](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/web/S3Provider.ts#L129)
 
 Persistence contract for resuming partial multipart uploads across
 processes or retries. Implementations may be synchronous or asynchronous;
@@ -21,7 +21,7 @@ explicitly aborted).
 clear(key): void | Promise<void>;
 ```
 
-Defined in: [src/providers/web/S3Provider.ts:134](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/web/S3Provider.ts#L134)
+Defined in: [src/providers/web/S3Provider.ts:134](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/web/S3Provider.ts#L134)
 
 #### Parameters
 
@@ -44,7 +44,7 @@ load(key):
   | undefined;
 ```
 
-Defined in: [src/providers/web/S3Provider.ts:130](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/web/S3Provider.ts#L130)
+Defined in: [src/providers/web/S3Provider.ts:130](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/web/S3Provider.ts#L130)
 
 #### Parameters
 
@@ -66,7 +66,7 @@ Defined in: [src/providers/web/S3Provider.ts:130](https://github.com/tonywied17/
 save(key, checkpoint): void | Promise<void>;
 ```
 
-Defined in: [src/providers/web/S3Provider.ts:133](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/web/S3Provider.ts#L133)
+Defined in: [src/providers/web/S3Provider.ts:133](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/web/S3Provider.ts#L133)
 
 #### Parameters
 

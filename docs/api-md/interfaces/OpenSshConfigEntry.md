@@ -6,7 +6,7 @@
 
 # Interface: OpenSshConfigEntry
 
-Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:14](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/profiles/importers/OpenSshConfigImporter.ts#L14)
+Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:14](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/profiles/importers/OpenSshConfigImporter.ts#L14)
 
 Parsed `Host` block from an OpenSSH config file.
 
@@ -14,5 +14,5 @@ Parsed `Host` block from an OpenSSH config file.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="options"></a> `options` | `Readonly`\<`Record`\<`string`, readonly `string`[]\>\> | Lower-cased directive name to ordered values. Multi-valued directives (e.g. `IdentityFile`) preserve order. | [src/profiles/importers/OpenSshConfigImporter.ts:18](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/profiles/importers/OpenSshConfigImporter.ts#L18) |
-| <a id="patterns"></a> `patterns` | readonly `string`[] | Host patterns declared on the `Host` line. | [src/profiles/importers/OpenSshConfigImporter.ts:16](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/profiles/importers/OpenSshConfigImporter.ts#L16) |
+| <a id="options"></a> `options` | `Readonly`\<`Record`\<`string`, readonly `string`[]\>\> | Lower-cased directive name to ordered values. Multi-valued directives (e.g. `IdentityFile`) preserve order. | [src/profiles/importers/OpenSshConfigImporter.ts:18](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/profiles/importers/OpenSshConfigImporter.ts#L18) |
+| <a id="patterns"></a> `patterns` | readonly `string`[] | Host patterns declared on the `Host` line. | [src/profiles/importers/OpenSshConfigImporter.ts:16](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/profiles/importers/OpenSshConfigImporter.ts#L16) |

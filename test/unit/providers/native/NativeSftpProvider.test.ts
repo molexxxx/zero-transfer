@@ -9,19 +9,19 @@ import {
   ConfigurationError,
   ConnectionError,
 } from "../../../../src/errors/ZeroTransferError";
-import { createNativeSftpProviderFactory } from "../../../../src/providers/native/sftp/NativeSftpProvider";
+import { createSftpProviderFactory } from "../../../../src/providers/native/sftp/NativeSftpProvider";
 import { createTransferClient } from "../../../../src/core/createTransferClient";
 
 // -- Factory validation ---------------------------------------------------------
 
-describe("createNativeSftpProviderFactory", () => {
+describe("createSftpProviderFactory", () => {
   it("returns a factory with id 'sftp'", () => {
-    const factory = createNativeSftpProviderFactory();
+    const factory = createSftpProviderFactory();
     expect(factory.id).toBe("sftp");
   });
 
   it("exposes expected capabilities", () => {
-    const factory = createNativeSftpProviderFactory();
+    const factory = createSftpProviderFactory();
     expect(factory.capabilities.list).toBe(true);
     expect(factory.capabilities.stat).toBe(true);
     expect(factory.capabilities.readStream).toBe(true);
@@ -31,16 +31,12 @@ describe("createNativeSftpProviderFactory", () => {
   });
 
   it("throws ConfigurationError for non-positive readyTimeoutMs", () => {
-    expect(() => createNativeSftpProviderFactory({ readyTimeoutMs: 0 })).toThrow(
-      ConfigurationError,
-    );
-    expect(() => createNativeSftpProviderFactory({ readyTimeoutMs: -1 })).toThrow(
-      ConfigurationError,
-    );
+    expect(() => createSftpProviderFactory({ readyTimeoutMs: 0 })).toThrow(ConfigurationError);
+    expect(() => createSftpProviderFactory({ readyTimeoutMs: -1 })).toThrow(ConfigurationError);
   });
 
   it("accepts valid positive readyTimeoutMs", () => {
-    expect(() => createNativeSftpProviderFactory({ readyTimeoutMs: 5_000 })).not.toThrow();
+    expect(() => createSftpProviderFactory({ readyTimeoutMs: 5_000 })).not.toThrow();
   });
 });
 
@@ -48,7 +44,7 @@ describe("createNativeSftpProviderFactory", () => {
 
 describe("NativeSftpProvider.connect() profile validation", () => {
   const client = createTransferClient({
-    providers: [createNativeSftpProviderFactory()],
+    providers: [createSftpProviderFactory()],
   });
 
   it("throws ConfigurationError when username is missing", async () => {
@@ -135,7 +131,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
 
   it("connects and disconnects cleanly", async () => {
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
     const session = await client.connect(makeProfile());
     await expect(session.disconnect()).resolves.toBeUndefined();
@@ -143,7 +139,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
 
   it("lists the default directory", async () => {
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
     const session = await client.connect(makeProfile());
 
@@ -162,7 +158,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
 
   it("stats a file", async () => {
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
     const session = await client.connect(makeProfile());
 
@@ -181,7 +177,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
 
   it("reads a file via raw sftp session", async () => {
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
     const session = await client.connect(makeProfile());
 
@@ -206,7 +202,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
 
   it("writes and reads back a file via fs.stat", async () => {
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
     const session = await client.connect(makeProfile());
 
@@ -222,7 +218,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
 
   it("throws AuthenticationError on wrong password", async () => {
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
 
     await expect(
@@ -239,7 +235,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
     port = await server.start();
 
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
 
     const session = await client.connect({
@@ -263,7 +259,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
 
   it("accepts a connection with a matching pinnedHostKeySha256", async () => {
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
 
     const session = await client.connect({
@@ -280,7 +276,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
 
   it("rejects a connection whose host key does not match the pin", async () => {
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
 
     await expect(
@@ -300,7 +296,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
     const knownHosts = `[127.0.0.1]:${port} ${hostPubLine.split(/\s+/).slice(0, 2).join(" ")}\n`;
 
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
     const session = await client.connect({
       ...makeProfile(),
@@ -317,7 +313,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
     const knownHosts =
       "[127.0.0.1]:1 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n";
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
     await expect(
       client.connect({
@@ -352,7 +348,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
     port = await server.start();
 
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
 
     const session = await client.connect({
@@ -399,7 +395,7 @@ describe("NativeSftpProvider against FakeSftpServer", () => {
     port = await server.start();
 
     const client = createTransferClient({
-      providers: [createNativeSftpProviderFactory()],
+      providers: [createSftpProviderFactory()],
     });
 
     const session = await client.connect({

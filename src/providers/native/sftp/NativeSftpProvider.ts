@@ -142,7 +142,7 @@ const NATIVE_SFTP_PROVIDER_CAPABILITIES: CapabilitySet = buildNativeSftpCapabili
 // -- Public types --------------------------------------------------------------
 
 /**
- * Options for {@link createNativeSftpProviderFactory}.
+ * Options for {@link createSftpProviderFactory}.
  *
  * The native provider is a zero-dependency replacement for the legacy
  * `ssh2`-backed provider. It implements RFC 4253 SSH transport, RFC 4252 user
@@ -150,7 +150,7 @@ const NATIVE_SFTP_PROVIDER_CAPABILITIES: CapabilitySet = buildNativeSftpCapabili
  * Ed25519/RSA), RFC 5656 ECDSA host keys (`nistp256/384/521`), and the
  * SFTP v3 client protocol multiplexed over a single channel.
  */
-export interface NativeSftpProviderOptions {
+export interface SftpProviderOptions {
   /**
    * Default connection timeout in milliseconds when the profile omits
    * `timeoutMs`. Bounds both the TCP connect *and* the SSH identification +
@@ -182,7 +182,7 @@ export interface NativeSftpProviderOptions {
  * advanced extension. Most applications should use the
  * {@link TransferSession} returned from `client.connect()` instead.
  */
-export interface NativeSftpRawSession {
+export interface SftpRawSession {
   /** SFTP v3 client multiplexed over the SSH session channel. */
   sftp: SftpSession;
   /** Underlying SSH transport (key exchange, packet protection, channel mux). */
@@ -224,7 +224,7 @@ export interface NativeSftpRawSession {
  * @example
  * ```ts
  * const client = createTransferClient({
- *   providers: [createNativeSftpProviderFactory({
+ *   providers: [createSftpProviderFactory({
  *     readyTimeoutMs: 10_000,
  *     keepaliveIntervalMs: 30_000,
  *   })],
@@ -240,9 +240,7 @@ export interface NativeSftpRawSession {
  * });
  * ```
  */
-export function createNativeSftpProviderFactory(
-  options: NativeSftpProviderOptions = {},
-): ProviderFactory {
+export function createSftpProviderFactory(options: SftpProviderOptions = {}): ProviderFactory {
   validateNativeSftpOptions(options);
 
   const capabilities = buildNativeSftpCapabilities(
@@ -263,7 +261,7 @@ class NativeSftpProvider implements TransferProvider<NativeSftpSession> {
   readonly capabilities: CapabilitySet;
 
   constructor(
-    private readonly options: NativeSftpProviderOptions,
+    private readonly options: SftpProviderOptions,
     capabilities: CapabilitySet = NATIVE_SFTP_PROVIDER_CAPABILITIES,
   ) {
     this.capabilities = capabilities;
@@ -332,7 +330,7 @@ class NativeSftpProvider implements TransferProvider<NativeSftpSession> {
 
 // -- Session -------------------------------------------------------------------
 
-class NativeSftpSession implements TransferSession<NativeSftpRawSession> {
+class NativeSftpSession implements TransferSession<SftpRawSession> {
   readonly provider = NATIVE_SFTP_PROVIDER_ID;
   readonly capabilities = NATIVE_SFTP_PROVIDER_CAPABILITIES;
   readonly fs: RemoteFileSystem;
@@ -351,7 +349,7 @@ class NativeSftpSession implements TransferSession<NativeSftpRawSession> {
     return Promise.resolve();
   }
 
-  raw(): NativeSftpRawSession {
+  raw(): SftpRawSession {
     return { sftp: this.sftp, transport: this.transport };
   }
 }
@@ -615,7 +613,7 @@ class NativeSftpTransferOperations implements ProviderTransferOperations {
 
 function openNativeSftpSocket(
   profile: ResolvedConnectionProfile,
-  options: NativeSftpProviderOptions,
+  options: SftpProviderOptions,
 ): Promise<Socket> {
   return new Promise<Socket>((resolve, reject) => {
     const port = profile.port ?? NATIVE_SFTP_DEFAULT_PORT;
@@ -1081,7 +1079,7 @@ function getNativeSftpErrorMessage(error: unknown): string {
 
 // -- Option validation ---------------------------------------------------------
 
-function validateNativeSftpOptions(options: NativeSftpProviderOptions): void {
+function validateNativeSftpOptions(options: SftpProviderOptions): void {
   if (
     options.readyTimeoutMs !== undefined &&
     (!Number.isFinite(options.readyTimeoutMs) || options.readyTimeoutMs <= 0)

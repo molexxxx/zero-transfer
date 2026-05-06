@@ -55,12 +55,6 @@ export {
   type PooledTransferClient,
 } from "../core/ConnectionPool";
 export type { TransferProvider } from "../providers/Provider";
-export type {
-  AuthenticationCapability as ProviderAuthenticationCapability,
-  ChecksumCapability as ProviderChecksumCapability,
-  MetadataCapability as ProviderMetadataCapability,
-  ProviderCapabilities,
-} from "../providers/ProviderCapabilities";
 export type { ProviderFactory } from "../providers/ProviderFactory";
 export type {
   ProviderTransferOperations,

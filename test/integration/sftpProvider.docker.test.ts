@@ -5,7 +5,7 @@ import { promisify } from "node:util";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   TransferEngine,
-  createNativeSftpProviderFactory,
+  createSftpProviderFactory,
   createProgressEvent,
   createProviderTransferExecutor,
   createTransferClient,
@@ -37,7 +37,7 @@ describeDocker("SFTP provider Docker integration", () => {
   }, 60_000);
 
   it("performs SFTP metadata + transfer operations against atmoz/sftp", async () => {
-    const client = createTransferClient({ providers: [createNativeSftpProviderFactory()] });
+    const client = createTransferClient({ providers: [createSftpProviderFactory()] });
     const session = await client.connect(makeProfile());
     const copySession = await client.connect(makeProfile());
     const transfers = requireTransfers(session);
@@ -113,7 +113,7 @@ async function waitForReady(): Promise<void> {
   let lastError: unknown;
   while (Date.now() < deadline) {
     try {
-      const client = createTransferClient({ providers: [createNativeSftpProviderFactory()] });
+      const client = createTransferClient({ providers: [createSftpProviderFactory()] });
       const session = await client.connect({ ...makeProfile(), timeoutMs: 2_000 });
       await session.disconnect();
       return;

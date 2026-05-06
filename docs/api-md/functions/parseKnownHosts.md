@@ -10,7 +10,7 @@
 function parseKnownHosts(text): KnownHostsEntry[];
 ```
 
-Defined in: [src/profiles/importers/KnownHostsParser.ts:39](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/profiles/importers/KnownHostsParser.ts#L39)
+Defined in: [src/profiles/importers/KnownHostsParser.ts:39](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/profiles/importers/KnownHostsParser.ts#L39)
 
 Parses OpenSSH `known_hosts` content into structured entries. Comment and blank lines are skipped.
 Lines that cannot be parsed are silently dropped so callers can tolerate hand-edited files.

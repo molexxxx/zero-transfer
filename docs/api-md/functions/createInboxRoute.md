@@ -10,7 +10,7 @@
 function createInboxRoute(options): MftRoute;
 ```
 
-Defined in: [src/mft/conventions.ts:119](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/mft/conventions.ts#L119)
+Defined in: [src/mft/conventions.ts:119](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/mft/conventions.ts#L119)
 
 Creates a route that pulls files out of an inbox into a destination directory.
 

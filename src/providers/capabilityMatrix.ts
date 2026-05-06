@@ -13,7 +13,7 @@
 import type { CapabilitySet } from "../core/CapabilitySet";
 import type { ProviderId } from "../core/ProviderId";
 import { createFtpProviderFactory, createFtpsProviderFactory } from "./classic/ftp";
-import { createSftpProviderFactory } from "./classic/sftp";
+import { createSftpProviderFactory } from "./native/sftp";
 import {
   createAzureBlobProviderFactory,
   createDropboxProviderFactory,

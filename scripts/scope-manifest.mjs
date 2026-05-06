@@ -41,7 +41,6 @@ export const scopes = [
       "ProviderRegistry",
       "TransferSession",
       "TransferProvider",
-      "ProviderCapabilities",
       "ProviderFactory",
       "ProviderTransferOperations",
       "RemoteFileSystem",
@@ -194,12 +193,9 @@ export const scopes = [
   },
   {
     description:
-      "Zero-dependency SFTP over SSH built on a first-party SSH transport stack: Ed25519 / RSA-SHA2-256/512 / ECDSA P-256/384/521 host keys, password / keyboard-interactive / public-key (Ed25519 + RSA) auth, host-key pinning, OpenSSH `known_hosts` (hashed/plain, `[host]:port`, `@revoked`), handshake timeout, and idle NAT keepalive. `createSftpProviderFactory` is kept as an alias of `createNativeSftpProviderFactory` for backward compatibility.",
+      "Zero-dependency SFTP over SSH built on a first-party SSH transport stack: Ed25519 / RSA-SHA2-256/512 / ECDSA P-256/384/521 host keys, password / keyboard-interactive / public-key (Ed25519 + RSA) auth, host-key pinning, OpenSSH `known_hosts` (hashed/plain, `[host]:port`, `@revoked`), handshake timeout, and idle NAT keepalive.",
     examples: ["sftp-private-key.ts", "sftp-directory-ops.ts"],
     exports: [
-      "createNativeSftpProviderFactory",
-      "NativeSftpProviderOptions",
-      "NativeSftpRawSession",
       "createSftpProviderFactory",
       "SftpProviderOptions",
       "SftpRawSession",

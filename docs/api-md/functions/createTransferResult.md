@@ -10,7 +10,7 @@
 function createTransferResult(input): TransferResult;
 ```
 
-Defined in: [src/services/TransferService.ts:55](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/services/TransferService.ts#L55)
+Defined in: [src/services/TransferService.ts:55](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/services/TransferService.ts#L55)
 
 Creates a final transfer result with duration and average throughput.
 

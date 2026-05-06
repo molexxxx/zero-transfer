@@ -1,5 +1,5 @@
 export {
-  createNativeSftpProviderFactory,
-  type NativeSftpProviderOptions,
-  type NativeSftpRawSession,
+  createSftpProviderFactory,
+  type SftpProviderOptions,
+  type SftpRawSession,
 } from "./NativeSftpProvider";

@@ -6,7 +6,7 @@
 
 # Interface: TransferRetryPolicy
 
-Defined in: [src/transfers/TransferEngine.ts:57](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/transfers/TransferEngine.ts#L57)
+Defined in: [src/transfers/TransferEngine.ts:57](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/transfers/TransferEngine.ts#L57)
 
 Retry policy for transfer execution.
 
@@ -18,7 +18,7 @@ Retry policy for transfer execution.
 optional onRetry(input): void;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:63](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/transfers/TransferEngine.ts#L63)
+Defined in: [src/transfers/TransferEngine.ts:63](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/transfers/TransferEngine.ts#L63)
 
 Observes retry decisions before the next attempt starts.
 
@@ -40,7 +40,7 @@ Observes retry decisions before the next attempt starts.
 optional shouldRetry(input): boolean;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:61](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/transfers/TransferEngine.ts#L61)
+Defined in: [src/transfers/TransferEngine.ts:61](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/transfers/TransferEngine.ts#L61)
 
 Decides whether a failed attempt should be retried. Defaults to SDK retryability metadata.
 
@@ -58,4 +58,4 @@ Decides whether a failed attempt should be retried. Defaults to SDK retryability
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="maxattempts"></a> `maxAttempts?` | `number` | Maximum total attempts, including the first attempt. Defaults to `1`. | [src/transfers/TransferEngine.ts:59](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/transfers/TransferEngine.ts#L59) |
+| <a id="maxattempts"></a> `maxAttempts?` | `number` | Maximum total attempts, including the first attempt. Defaults to `1`. | [src/transfers/TransferEngine.ts:59](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/transfers/TransferEngine.ts#L59) |

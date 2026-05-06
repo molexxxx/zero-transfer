@@ -283,7 +283,7 @@ path safety utilities used by future protocol adapters.
 | [S3MultipartResumeStore](interfaces/S3MultipartResumeStore.md) | Persistence contract for resuming partial multipart uploads across processes or retries. Implementations may be synchronous or asynchronous; `clear` is invoked once the multipart upload completes successfully (or is explicitly aborted). |
 | [S3ProviderOptions](interfaces/S3ProviderOptions.md) | Options accepted by [createS3ProviderFactory](functions/createS3ProviderFactory.md). |
 | [ScheduleTimerHooks](interfaces/ScheduleTimerHooks.md) | Timer hooks injected by tests so fake clocks stay deterministic. |
-| [SftpProviderOptions](interfaces/SftpProviderOptions.md) | Options for [createNativeSftpProviderFactory](functions/createSftpProviderFactory.md). |
+| [SftpProviderOptions](interfaces/SftpProviderOptions.md) | Options for [createSftpProviderFactory](functions/createSftpProviderFactory.md). |
 | [SftpRawSession](interfaces/SftpRawSession.md) | Low-level handles exposed by a native SFTP session for diagnostics and advanced extension. Most applications should use the [TransferSession](interfaces/TransferSession.md) returned from `client.connect()` instead. |
 | [SshAlgorithmPreferences](interfaces/SshAlgorithmPreferences.md) | Algorithm lists exchanged during SSH KEXINIT negotiation. |
 | [SshKeyboardInteractiveChallenge](interfaces/SshKeyboardInteractiveChallenge.md) | Input passed to SSH keyboard-interactive answer providers. |
@@ -416,45 +416,3 @@ path safety utilities used by future protocol adapters.
 | [REDACTED](variables/REDACTED.md) | Placeholder used when sensitive content has been removed. |
 | [REMOTE\_MANIFEST\_FORMAT\_VERSION](variables/REMOTE_MANIFEST_FORMAT_VERSION.md) | Schema version for the manifest payload. Bumped on incompatible format changes. |
 | [SshDisconnectReason](variables/SshDisconnectReason.md) | Standard SSH disconnect reason codes (RFC 4253 §11.1). |
-
-## References
-
-### createNativeSftpProviderFactory
-
-Renames and re-exports [createSftpProviderFactory](functions/createSftpProviderFactory.md)
-
-***
-
-### NativeSftpProviderOptions
-
-Renames and re-exports [SftpProviderOptions](interfaces/SftpProviderOptions.md)
-
-***
-
-### NativeSftpRawSession
-
-Renames and re-exports [SftpRawSession](interfaces/SftpRawSession.md)
-
-***
-
-### ProviderAuthenticationCapability
-
-Renames and re-exports [AuthenticationCapability](type-aliases/AuthenticationCapability.md)
-
-***
-
-### ProviderCapabilities
-
-Renames and re-exports [CapabilitySet](interfaces/CapabilitySet.md)
-
-***
-
-### ProviderChecksumCapability
-
-Renames and re-exports [ChecksumCapability](type-aliases/ChecksumCapability.md)
-
-***
-
-### ProviderMetadataCapability
-
-Renames and re-exports [MetadataCapability](type-aliases/MetadataCapability.md)

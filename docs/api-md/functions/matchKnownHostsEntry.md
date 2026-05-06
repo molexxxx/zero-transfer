@@ -13,7 +13,7 @@ function matchKnownHostsEntry(
    port?): boolean;
 ```
 
-Defined in: [src/profiles/importers/KnownHostsParser.ts:105](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/profiles/importers/KnownHostsParser.ts#L105)
+Defined in: [src/profiles/importers/KnownHostsParser.ts:105](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/profiles/importers/KnownHostsParser.ts#L105)
 
 Returns true when the given host (and optional port) matches the entry's host patterns.
 Hashed entries use HMAC-SHA1 verification per OpenSSH semantics.

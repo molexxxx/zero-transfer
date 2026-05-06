@@ -6,7 +6,7 @@
 
 # Interface: Base64EnvSecretSource
 
-Defined in: [src/profiles/SecretSource.ts:30](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/profiles/SecretSource.ts#L30)
+Defined in: [src/profiles/SecretSource.ts:30](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/profiles/SecretSource.ts#L30)
 
 Environment variable descriptor for base64-encoded binary secrets.
 
@@ -14,4 +14,4 @@ Environment variable descriptor for base64-encoded binary secrets.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="base64env"></a> `base64Env` | `string` | Environment variable containing a base64-encoded secret. | [src/profiles/SecretSource.ts:32](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/profiles/SecretSource.ts#L32) |
+| <a id="base64env"></a> `base64Env` | `string` | Environment variable containing a base64-encoded secret. | [src/profiles/SecretSource.ts:32](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/profiles/SecretSource.ts#L32) |

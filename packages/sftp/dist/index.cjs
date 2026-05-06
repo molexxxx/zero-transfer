@@ -62,14 +62,13 @@ __export(sftp_exports, {
   createBandwidthThrottle: () => createBandwidthThrottle,
   createLocalProviderFactory: () => createLocalProviderFactory,
   createMemoryProviderFactory: () => createMemoryProviderFactory,
-  createNativeSftpProviderFactory: () => createNativeSftpProviderFactory,
   createOAuthTokenSecretSource: () => createOAuthTokenSecretSource,
   createPooledTransferClient: () => createPooledTransferClient,
   createProgressEvent: () => createProgressEvent,
   createProviderTransferExecutor: () => createProviderTransferExecutor,
   createRemoteBrowser: () => createRemoteBrowser,
   createRemoteManifest: () => createRemoteManifest,
-  createSftpProviderFactory: () => createNativeSftpProviderFactory,
+  createSftpProviderFactory: () => createSftpProviderFactory,
   createSyncPlan: () => createSyncPlan,
   createTransferClient: () => createTransferClient,
   createTransferJobsFromPlan: () => createTransferJobsFromPlan,
@@ -8481,7 +8480,7 @@ function buildNativeSftpCapabilities(maxConcurrency) {
 var NATIVE_SFTP_PROVIDER_CAPABILITIES = buildNativeSftpCapabilities(
   NATIVE_SFTP_DEFAULT_MAX_CONCURRENCY
 );
-function createNativeSftpProviderFactory(options = {}) {
+function createSftpProviderFactory(options = {}) {
   validateNativeSftpOptions(options);
   const capabilities = buildNativeSftpCapabilities(
     options.maxConcurrency ?? NATIVE_SFTP_DEFAULT_MAX_CONCURRENCY
@@ -9171,7 +9170,6 @@ function validateNativeSftpOptions(options) {
   createBandwidthThrottle,
   createLocalProviderFactory,
   createMemoryProviderFactory,
-  createNativeSftpProviderFactory,
   createOAuthTokenSecretSource,
   createPooledTransferClient,
   createProgressEvent,

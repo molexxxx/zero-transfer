@@ -10,7 +10,7 @@
 function createSftpProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:243](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/native/sftp/NativeSftpProvider.ts#L243)
+Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:243](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/native/sftp/NativeSftpProvider.ts#L243)
 
 Creates a [ProviderFactory](../interfaces/ProviderFactory.md) backed by the native SSH/SFTP protocol
 stack - no `ssh2` dependency required.
@@ -55,7 +55,7 @@ stack - no `ssh2` dependency required.
 
 ```ts
 const client = createTransferClient({
-  providers: [createNativeSftpProviderFactory({
+  providers: [createSftpProviderFactory({
     readyTimeoutMs: 10_000,
     keepaliveIntervalMs: 30_000,
   })],

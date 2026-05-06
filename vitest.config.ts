@@ -14,7 +14,6 @@ export default defineConfig({
         "src/entries/**",
         "src/types/public.ts",
         "src/providers/Provider.ts",
-        "src/providers/ProviderCapabilities.ts",
         "src/providers/ProviderFactory.ts",
         "src/providers/ProviderTransferOperations.ts",
         "src/providers/RemoteFileSystem.ts",

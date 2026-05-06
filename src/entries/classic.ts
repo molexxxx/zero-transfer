@@ -32,4 +32,4 @@ export {
   createSftpProviderFactory,
   type SftpProviderOptions,
   type SftpRawSession,
-} from "../providers/classic/sftp";
+} from "../providers/native/sftp";

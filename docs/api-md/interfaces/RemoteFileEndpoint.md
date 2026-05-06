@@ -6,7 +6,7 @@
 
 # Interface: RemoteFileEndpoint
 
-Defined in: [src/client/operations.ts:20](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/client/operations.ts#L20)
+Defined in: [src/client/operations.ts:20](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/client/operations.ts#L20)
 
 Endpoint shape accepted by the friendly helpers.
 
@@ -14,5 +14,5 @@ Endpoint shape accepted by the friendly helpers.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="path"></a> `path` | `string` | Provider, remote, or local path the helper operates on. | [src/client/operations.ts:24](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/client/operations.ts#L24) |
-| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Provider profile used to open the session. | [src/client/operations.ts:22](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/client/operations.ts#L22) |
+| <a id="path"></a> `path` | `string` | Provider, remote, or local path the helper operates on. | [src/client/operations.ts:24](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/client/operations.ts#L24) |
+| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Provider profile used to open the session. | [src/client/operations.ts:22](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/client/operations.ts#L22) |

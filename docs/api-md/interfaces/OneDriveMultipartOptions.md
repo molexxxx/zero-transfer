@@ -6,7 +6,7 @@
 
 # Interface: OneDriveMultipartOptions
 
-Defined in: [src/providers/cloud/OneDriveProvider.ts:74](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/cloud/OneDriveProvider.ts#L74)
+Defined in: [src/providers/cloud/OneDriveProvider.ts:74](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/cloud/OneDriveProvider.ts#L74)
 
 Resumable-upload session tuning for the OneDrive provider.
 
@@ -14,6 +14,6 @@ Resumable-upload session tuning for the OneDrive provider.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="enabled"></a> `enabled?` | `boolean` | Enable Microsoft Graph upload sessions. **Defaults to `true`** so payloads above [OneDriveMultipartOptions.thresholdBytes](#thresholdbytes) stream in fixed-size chunks via `createUploadSession` instead of being buffered into a single `PUT /content`. Set to `false` to force the legacy single-shot behaviour. | [src/providers/cloud/OneDriveProvider.ts:81](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/cloud/OneDriveProvider.ts#L81) |
-| <a id="partsizebytes"></a> `partSizeBytes?` | `number` | Target chunk size in bytes. Must be a multiple of 320 KiB per the Graph protocol (the final chunk is exempt). Defaults to 10 MiB. | [src/providers/cloud/OneDriveProvider.ts:88](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/cloud/OneDriveProvider.ts#L88) |
-| <a id="thresholdbytes"></a> `thresholdBytes?` | `number` | Object size threshold above which an upload session is used. Defaults to 4 MiB. | [src/providers/cloud/OneDriveProvider.ts:83](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/providers/cloud/OneDriveProvider.ts#L83) |
+| <a id="enabled"></a> `enabled?` | `boolean` | Enable Microsoft Graph upload sessions. **Defaults to `true`** so payloads above [OneDriveMultipartOptions.thresholdBytes](#thresholdbytes) stream in fixed-size chunks via `createUploadSession` instead of being buffered into a single `PUT /content`. Set to `false` to force the legacy single-shot behaviour. | [src/providers/cloud/OneDriveProvider.ts:81](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/cloud/OneDriveProvider.ts#L81) |
+| <a id="partsizebytes"></a> `partSizeBytes?` | `number` | Target chunk size in bytes. Must be a multiple of 320 KiB per the Graph protocol (the final chunk is exempt). Defaults to 10 MiB. | [src/providers/cloud/OneDriveProvider.ts:88](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/cloud/OneDriveProvider.ts#L88) |
+| <a id="thresholdbytes"></a> `thresholdBytes?` | `number` | Object size threshold above which an upload session is used. Defaults to 4 MiB. | [src/providers/cloud/OneDriveProvider.ts:83](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/cloud/OneDriveProvider.ts#L83) |

@@ -13,7 +13,7 @@ function nextCronFireAt(
    timezone?): Date | undefined;
 ```
 
-Defined in: [src/mft/cron.ts:79](https://github.com/tonywied17/zero-transfer/blob/7122761ae2c4dd865e3f364ad3d5692c88bbfbb7/src/mft/cron.ts#L79)
+Defined in: [src/mft/cron.ts:79](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/mft/cron.ts#L79)
 
 Computes the next time at which a cron expression fires strictly after `from`.
 

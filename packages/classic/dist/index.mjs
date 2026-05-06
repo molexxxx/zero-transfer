@@ -10046,7 +10046,7 @@ function buildNativeSftpCapabilities(maxConcurrency) {
 var NATIVE_SFTP_PROVIDER_CAPABILITIES = buildNativeSftpCapabilities(
   NATIVE_SFTP_DEFAULT_MAX_CONCURRENCY
 );
-function createNativeSftpProviderFactory(options = {}) {
+function createSftpProviderFactory(options = {}) {
   validateNativeSftpOptions(options);
   const capabilities = buildNativeSftpCapabilities(
     options.maxConcurrency ?? NATIVE_SFTP_DEFAULT_MAX_CONCURRENCY
@@ -10744,7 +10744,7 @@ export {
   createProviderTransferExecutor,
   createRemoteBrowser,
   createRemoteManifest,
-  createNativeSftpProviderFactory as createSftpProviderFactory,
+  createSftpProviderFactory,
   createSyncPlan,
   createTransferClient,
   createTransferJobsFromPlan,

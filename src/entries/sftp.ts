@@ -11,22 +11,14 @@
  *
  * Includes the complete `@zero-transfer/core` surface.
  *
- * `createSftpProviderFactory`, `SftpProviderOptions`, and `SftpRawSession`
- * are kept as aliases of the native names for backward compatibility.
- *
  * @module @zero-transfer/sftp
  */
 export * from "./core";
 export {
-  createNativeSftpProviderFactory,
-  type NativeSftpProviderOptions,
-  type NativeSftpRawSession,
-} from "../providers/native/sftp";
-export {
   createSftpProviderFactory,
   type SftpProviderOptions,
   type SftpRawSession,
-} from "../providers/classic/sftp";
+} from "../providers/native/sftp";
 export {
   matchKnownHosts,
   matchKnownHostsEntry,
