@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.6**](../README.md)
+[**ZeroTransfer SDK v0.4.7**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createTransferClient(options?): TransferClient;
 ```
 
-Defined in: [src/core/createTransferClient.ts:56](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/core/createTransferClient.ts#L56)
+Defined in: [src/core/createTransferClient.ts:56](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/core/createTransferClient.ts#L56)
 
 Creates a provider-neutral transfer client.
 

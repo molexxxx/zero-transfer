@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.6**](../README.md)
+[**ZeroTransfer SDK v0.4.7**](../README.md)
 
 ***
 
@@ -10,6 +10,6 @@
 type AtomicDeployActivateOperation = "rename" | "symlink" | "delete";
 ```
 
-Defined in: [src/sync/createAtomicDeployPlan.ts:28](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/sync/createAtomicDeployPlan.ts#L28)
+Defined in: [src/sync/createAtomicDeployPlan.ts:28](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/sync/createAtomicDeployPlan.ts#L28)
 
 Operation kind for an activation step.

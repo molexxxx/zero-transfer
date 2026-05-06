@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.6**](../README.md)
+[**ZeroTransfer SDK v0.4.7**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: AgeRetentionPolicy
 
-Defined in: [src/mft/retention.ts:15](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/mft/retention.ts#L15)
+Defined in: [src/mft/retention.ts:15](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/retention.ts#L15)
 
 Retention policy that evicts entries older than `maxAgeMs`.
 
@@ -14,5 +14,5 @@ Retention policy that evicts entries older than `maxAgeMs`.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="kind"></a> `kind` | `"age"` | Discriminator. | [src/mft/retention.ts:17](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/mft/retention.ts#L17) |
-| <a id="maxagems"></a> `maxAgeMs` | `number` | Maximum age before an entry is considered evictable. | [src/mft/retention.ts:19](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/mft/retention.ts#L19) |
+| <a id="kind"></a> `kind` | `"age"` | Discriminator. | [src/mft/retention.ts:17](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/retention.ts#L17) |
+| <a id="maxagems"></a> `maxAgeMs` | `number` | Maximum age before an entry is considered evictable. | [src/mft/retention.ts:19](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/retention.ts#L19) |

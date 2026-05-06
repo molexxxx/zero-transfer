@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.6**](../README.md)
+[**ZeroTransfer SDK v0.4.7**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Class: SshTransportConnection
 
-Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:91](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/protocols/ssh/transport/SshTransportConnection.ts#L91)
+Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:91](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/protocols/ssh/transport/SshTransportConnection.ts#L91)
 
 Live SSH transport connection over a TCP socket.
 
@@ -31,7 +31,7 @@ conn.disconnect();
 new SshTransportConnection(options?): SshTransportConnection;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:108](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/protocols/ssh/transport/SshTransportConnection.ts#L108)
+Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:108](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/protocols/ssh/transport/SshTransportConnection.ts#L108)
 
 #### Parameters
 
@@ -51,7 +51,7 @@ Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:108](https://
 connect(socket): Promise<SshTransportHandshakeResult>;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:115](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/protocols/ssh/transport/SshTransportConnection.ts#L115)
+Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:115](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/protocols/ssh/transport/SshTransportConnection.ts#L115)
 
 Runs the SSH handshake on a TCP-connected socket.
 Resolves when NEWKEYS completes and the transport is ready for encrypted messages.
@@ -75,7 +75,7 @@ Rejects on socket error, abort, or protocol failure.
 disconnect(reason?, description?): void;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:336](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/protocols/ssh/transport/SshTransportConnection.ts#L336)
+Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:336](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/protocols/ssh/transport/SshTransportConnection.ts#L336)
 
 Sends SSH_MSG_DISCONNECT and ends the socket.
 Safe to call multiple times; subsequent calls are no-ops.
@@ -99,7 +99,7 @@ Safe to call multiple times; subsequent calls are no-ops.
 isConnected(): boolean;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:363](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/protocols/ssh/transport/SshTransportConnection.ts#L363)
+Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:363](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/protocols/ssh/transport/SshTransportConnection.ts#L363)
 
 #### Returns
 
@@ -113,7 +113,7 @@ Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:363](https://
 receivePayloads(): AsyncGenerator<Buffer<ArrayBufferLike>>;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:322](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/protocols/ssh/transport/SshTransportConnection.ts#L322)
+Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:322](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/protocols/ssh/transport/SshTransportConnection.ts#L322)
 
 Async generator that yields inbound SSH payloads (post-NEWKEYS).
 
@@ -134,7 +134,7 @@ Transparent handling:
 sendPayload(payload): void;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:306](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/protocols/ssh/transport/SshTransportConnection.ts#L306)
+Defined in: [src/protocols/ssh/transport/SshTransportConnection.ts:306](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/protocols/ssh/transport/SshTransportConnection.ts#L306)
 
 Sends an SSH payload over the encrypted transport.
 The payload must start with the SSH message type byte.

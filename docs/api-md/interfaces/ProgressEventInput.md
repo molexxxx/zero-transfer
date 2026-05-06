@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.6**](../README.md)
+[**ZeroTransfer SDK v0.4.7**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ProgressEventInput
 
-Defined in: [src/services/TransferService.ts:36](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/services/TransferService.ts#L36)
+Defined in: [src/services/TransferService.ts:36](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/services/TransferService.ts#L36)
 
 Input used to create a transfer progress event.
 
@@ -14,8 +14,8 @@ Input used to create a transfer progress event.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="bytestransferred"></a> `bytesTransferred` | `number` | Bytes transferred so far. | [src/services/TransferService.ts:40](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/services/TransferService.ts#L40) |
-| <a id="now"></a> `now?` | `Date` | Time to use for the progress calculation; defaults to current time. | [src/services/TransferService.ts:44](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/services/TransferService.ts#L44) |
-| <a id="startedat"></a> `startedAt` | `Date` | Time the transfer began. | [src/services/TransferService.ts:42](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/services/TransferService.ts#L42) |
-| <a id="totalbytes"></a> `totalBytes?` | `number` | Total expected bytes when known. | [src/services/TransferService.ts:46](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/services/TransferService.ts#L46) |
-| <a id="transferid"></a> `transferId` | `string` | Stable transfer identifier for correlation. | [src/services/TransferService.ts:38](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/services/TransferService.ts#L38) |
+| <a id="bytestransferred"></a> `bytesTransferred` | `number` | Bytes transferred so far. | [src/services/TransferService.ts:40](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/services/TransferService.ts#L40) |
+| <a id="now"></a> `now?` | `Date` | Time to use for the progress calculation; defaults to current time. | [src/services/TransferService.ts:44](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/services/TransferService.ts#L44) |
+| <a id="startedat"></a> `startedAt` | `Date` | Time the transfer began. | [src/services/TransferService.ts:42](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/services/TransferService.ts#L42) |
+| <a id="totalbytes"></a> `totalBytes?` | `number` | Total expected bytes when known. | [src/services/TransferService.ts:46](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/services/TransferService.ts#L46) |
+| <a id="transferid"></a> `transferId` | `string` | Stable transfer identifier for correlation. | [src/services/TransferService.ts:38](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/services/TransferService.ts#L38) |

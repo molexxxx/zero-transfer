@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.6**](../README.md)
+[**ZeroTransfer SDK v0.4.7**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: TransferProvider\<TSession\>
 
-Defined in: [src/providers/Provider.ts:12](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/Provider.ts#L12)
+Defined in: [src/providers/Provider.ts:12](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/providers/Provider.ts#L12)
 
 Provider implementation that can open transfer sessions.
 
@@ -24,7 +24,7 @@ Provider implementation that can open transfer sessions.
 connect(profile): Promise<TSession>;
 ```
 
-Defined in: [src/providers/Provider.ts:18](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/Provider.ts#L18)
+Defined in: [src/providers/Provider.ts:18](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/providers/Provider.ts#L18)
 
 Opens a connected provider session.
 
@@ -42,5 +42,5 @@ Opens a connected provider session.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="capabilities"></a> `capabilities` | [`CapabilitySet`](CapabilitySet.md) | Capabilities advertised by this provider implementation. | [src/providers/Provider.ts:16](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/Provider.ts#L16) |
-| <a id="id"></a> `id` | [`ProviderId`](../type-aliases/ProviderId.md) | Stable provider id. | [src/providers/Provider.ts:14](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/Provider.ts#L14) |
+| <a id="capabilities"></a> `capabilities` | [`CapabilitySet`](CapabilitySet.md) | Capabilities advertised by this provider implementation. | [src/providers/Provider.ts:16](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/providers/Provider.ts#L16) |
+| <a id="id"></a> `id` | [`ProviderId`](../type-aliases/ProviderId.md) | Stable provider id. | [src/providers/Provider.ts:14](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/providers/Provider.ts#L14) |

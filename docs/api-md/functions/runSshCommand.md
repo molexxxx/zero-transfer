@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.6**](../README.md)
+[**ZeroTransfer SDK v0.4.7**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function runSshCommand(options): Promise<RunSshCommandResult>;
 ```
 
-Defined in: [src/protocols/ssh/runSshCommand.ts:86](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/protocols/ssh/runSshCommand.ts#L86)
+Defined in: [src/protocols/ssh/runSshCommand.ts:86](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/protocols/ssh/runSshCommand.ts#L86)
 
 Connects, authenticates, runs `command` on a fresh exec channel, drains
 stdout, and disconnects. The TCP socket, transport, auth session, and

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.6**](../README.md)
+[**ZeroTransfer SDK v0.4.7**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: LocalProviderOptions
 
-Defined in: [src/providers/local/LocalProvider.ts:74](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/local/LocalProvider.ts#L74)
+Defined in: [src/providers/local/LocalProvider.ts:74](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/providers/local/LocalProvider.ts#L74)
 
 Options used to create a local file-system provider factory.
 
@@ -14,4 +14,4 @@ Options used to create a local file-system provider factory.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="rootpath"></a> `rootPath?` | `string` | Root directory exposed as `/`. When omitted, `profile.host` is treated as the root path. | [src/providers/local/LocalProvider.ts:76](https://github.com/tonywied17/zero-transfer/blob/5215796cfdc2e79e8f55ee271567646774058098/src/providers/local/LocalProvider.ts#L76) |
+| <a id="rootpath"></a> `rootPath?` | `string` | Root directory exposed as `/`. When omitted, `profile.host` is treated as the root path. | [src/providers/local/LocalProvider.ts:76](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/providers/local/LocalProvider.ts#L76) |
