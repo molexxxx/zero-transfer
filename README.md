@@ -11,7 +11,7 @@
   <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-sdk-name-ztransfer.svg?v=ed60f617" alt="@zero-transfer/sdk"></a>
   <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-npm-ztransfer.svg?v=8f28aacf" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-dm-ztransfer.svg?v=ce9af984" alt="npm downloads"></a>
-  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-ci-ztransfer.svg?v=5ae982e7" alt="CI"></a>
+  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-ci-ztransfer.svg?v=0cb7497a" alt="CI"></a>
   <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-tests-ztransfer.svg?v=009484b2" alt="Tests"></a>
   <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-coverage-ztransfer.svg?v=3b15078d" alt="Coverage"></a>
   <a href="https://tonywied17.github.io/zero-transfer/"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-docs-ztransfer.svg?v=0fdfe8a2" alt="Docs"></a>
