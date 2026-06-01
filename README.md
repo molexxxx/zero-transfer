@@ -8,15 +8,15 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-sdk-name-ztransfer.svg?v=ed60f617" alt="@zero-transfer/sdk"></a>
-  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-npm-ztransfer.svg?v=8f28aacf" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-dm-ztransfer.svg?v=07b121b2" alt="npm downloads"></a>
-  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-ci-ztransfer.svg?v=0cb7497a" alt="CI"></a>
-  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-tests-ztransfer.svg?v=009484b2" alt="Tests"></a>
-  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-coverage-ztransfer.svg?v=3b15078d" alt="Coverage"></a>
-  <a href="https://tonywied17.github.io/zero-transfer/"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-docs-ztransfer.svg?v=0fdfe8a2" alt="Docs"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-license-ztransfer.svg?v=ff6666fe" alt="License"></a>
-  <a href="https://nodejs.org"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-node-ztransfer.svg?v=7d132ef5" alt="Node.js"></a>
+  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-sdk-name-ztransfer.svg?v=a1f0c2bf" alt="@zero-transfer/sdk"></a>
+  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-npm-ztransfer.svg?v=9d74a145" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/@zero-transfer/sdk"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-dm-ztransfer.svg?v=d80af0df" alt="npm downloads"></a>
+  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-ci-ztransfer.svg?v=326863d9" alt="CI"></a>
+  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-tests-ztransfer.svg?v=8daf2f1c" alt="Tests"></a>
+  <a href="https://github.com/tonywied17/zero-transfer/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-coverage-ztransfer.svg?v=5d3790bc" alt="Coverage"></a>
+  <a href="https://tonywied17.github.io/zero-transfer/"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-docs-ztransfer.svg?v=17a5515a" alt="Docs"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-license-ztransfer.svg?v=7bdf032a" alt="License"></a>
+  <a href="https://nodejs.org"><img src="https://raw.githubusercontent.com/tonywied17/tonywied17/main/.github/badges/zero-transfer-node-ztransfer.svg?v=efc0b060" alt="Node.js"></a>
 </p>
 
 ZeroTransfer is a unified, TypeScript-first file transfer SDK for Node.js. One typed API speaks to every backend you actually deploy against - classic protocols, web endpoints, object storage, cloud drives, and local disks - with streaming, resume, verification, dry-run plans, MFT-style scheduling, audit logs, and webhook delivery built in.
