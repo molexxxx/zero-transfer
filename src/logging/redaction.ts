@@ -100,8 +100,7 @@ export function redactUrlForLogging(url: string | URL): string {
     return REDACTED;
   }
 
-  const origin =
-    parsed.host.length > 0 ? `${parsed.protocol}//${parsed.host}` : parsed.protocol;
+  const origin = parsed.host.length > 0 ? `${parsed.protocol}//${parsed.host}` : parsed.protocol;
   const query = parsed.search.length > 0 ? `?${REDACTED}` : "";
   return `${origin}${parsed.pathname}${query}`;
 }
