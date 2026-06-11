@@ -186,6 +186,183 @@ describe("TransferEngine", () => {
     });
   });
 
+  it("retries attempt-scope timeouts under the retry policy", async () => {
+    const engine = new TransferEngine();
+    let attemptCount = 0;
+
+    const receipt = await engine.execute(
+      uploadJob,
+      () => {
+        attemptCount += 1;
+        if (attemptCount === 1) {
+          return new Promise<never>(() => undefined);
+        }
+        return { bytesTransferred: 100 };
+      },
+      {
+        retry: { maxAttempts: 2 },
+        timeout: { attemptTimeoutMs: 25 },
+      },
+    );
+
+    expect(attemptCount).toBe(2);
+    expect(receipt.attempts).toHaveLength(2);
+    expect(receipt.attempts[0]?.error).toMatchObject({
+      code: "ZERO_TRANSFER_TIMEOUT",
+      retryable: true,
+    });
+    expect(receipt.bytesTransferred).toBe(100);
+  });
+
+  it("aborts stalled attempts via the no-progress watchdog and retries them", async () => {
+    const engine = new TransferEngine();
+    let attemptCount = 0;
+
+    const receipt = await engine.execute(
+      uploadJob,
+      (context) => {
+        attemptCount += 1;
+        if (attemptCount === 1) {
+          context.reportProgress(10);
+          return new Promise<never>(() => undefined);
+        }
+        return { bytesTransferred: 100 };
+      },
+      {
+        retry: { maxAttempts: 2 },
+        timeout: { stallTimeoutMs: 25 },
+      },
+    );
+
+    expect(attemptCount).toBe(2);
+    expect(receipt.attempts[0]?.error?.message).toContain("stalled");
+    expect(receipt.attempts[0]?.error?.code).toBe("ZERO_TRANSFER_TIMEOUT");
+  });
+
+  it("resets the stall watchdog on every progress report", async () => {
+    const engine = new TransferEngine();
+
+    const receipt = await engine.execute(
+      uploadJob,
+      async (context) => {
+        for (let step = 1; step <= 5; step += 1) {
+          await new Promise((resolve) => setTimeout(resolve, 15));
+          context.reportProgress(step * 20);
+        }
+        return { bytesTransferred: 100 };
+      },
+      { timeout: { stallTimeoutMs: 60 } },
+    );
+
+    expect(receipt.attempts).toHaveLength(1);
+    expect(receipt.bytesTransferred).toBe(100);
+  });
+
+  it("wraps exhausted attempt timeouts in TransferError instead of rethrowing", async () => {
+    const engine = new TransferEngine();
+
+    let error: unknown;
+    try {
+      await engine.execute(uploadJob, () => new Promise<never>(() => undefined), {
+        retry: { maxAttempts: 2 },
+        timeout: { attemptTimeoutMs: 20 },
+      });
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error).toBeInstanceOf(TransferError);
+    const transferError = error as TransferError;
+    expect(transferError.cause).toBeInstanceOf(TimeoutError);
+    expect(transferError.details?.["attempts"]).toHaveLength(2);
+  });
+
+  it("rethrows job-scope timeouts unconditionally, bypassing retry", async () => {
+    const engine = new TransferEngine();
+    const shouldRetry = vi.fn(() => true);
+
+    await expect(
+      engine.execute(uploadJob, () => new Promise<never>(() => undefined), {
+        retry: { maxAttempts: 5, shouldRetry },
+        timeout: { timeoutMs: 20 },
+      }),
+    ).rejects.toMatchObject({
+      code: "ZERO_TRANSFER_TIMEOUT",
+      details: { jobId: "job-1", timeoutMs: 20 },
+    });
+    expect(shouldRetry).not.toHaveBeenCalled();
+  });
+
+  it("retries retryable TimeoutErrors thrown by executors (provider-level timeouts)", async () => {
+    const engine = new TransferEngine();
+    let attemptCount = 0;
+
+    const receipt = await engine.execute(
+      uploadJob,
+      () => {
+        attemptCount += 1;
+        if (attemptCount === 1) {
+          throw new TimeoutError({ message: "provider request timed out", retryable: true });
+        }
+        return { bytesTransferred: 100 };
+      },
+      { retry: { maxAttempts: 2 } },
+    );
+
+    expect(attemptCount).toBe(2);
+    expect(receipt.attempts[0]?.error?.code).toBe("ZERO_TRANSFER_TIMEOUT");
+  });
+
+  it("sleeps for getDelayMs between attempts and passes elapsedMs to retry hooks", async () => {
+    const engine = new TransferEngine();
+    const getDelayMs = vi.fn(() => 30);
+    const onRetry = vi.fn();
+    const attemptTimes: number[] = [];
+
+    await engine.execute(
+      uploadJob,
+      () => {
+        attemptTimes.push(Date.now());
+        if (attemptTimes.length === 1) {
+          throw new ConnectionError({ message: "transient", retryable: true });
+        }
+        return { bytesTransferred: 100 };
+      },
+      { retry: { getDelayMs, maxAttempts: 2, onRetry } },
+    );
+
+    expect(getDelayMs).toHaveBeenCalledWith(
+      expect.objectContaining({ attempt: 1, elapsedMs: expect.any(Number) as number }),
+    );
+    expect(onRetry).toHaveBeenCalledWith(
+      expect.objectContaining({ attempt: 1, elapsedMs: expect.any(Number) as number }),
+    );
+    expect(attemptTimes[1]! - attemptTimes[0]!).toBeGreaterThanOrEqual(25);
+  });
+
+  it("aborts the retry delay immediately when the job is cancelled", async () => {
+    const engine = new TransferEngine();
+    const controller = new AbortController();
+    const startedAt = Date.now();
+
+    setTimeout(() => controller.abort(), 20);
+
+    await expect(
+      engine.execute(
+        uploadJob,
+        () => {
+          throw new ConnectionError({ message: "transient", retryable: true });
+        },
+        {
+          retry: { getDelayMs: () => 60_000, maxAttempts: 2 },
+          signal: controller.signal,
+        },
+      ),
+    ).rejects.toBeInstanceOf(AbortError);
+
+    expect(Date.now() - startedAt).toBeLessThan(5_000);
+  });
+
   it("wraps exhausted failures with transfer attempt details", async () => {
     const engine = new TransferEngine({
       now: () => new Date("2026-04-27T00:00:00.000Z"),

@@ -101,6 +101,54 @@ describe("runRoute", () => {
     expect(executeSpy).toHaveBeenCalledOnce();
   });
 
+  it("applies client-level default retry and timeout policies", async () => {
+    const defaults = {
+      retry: { maxAttempts: 3 },
+      timeout: { stallTimeoutMs: 30_000 },
+    };
+    const client = createTransferClient({
+      defaults,
+      providers: [
+        createMemoryProviderFactory({
+          entries: [{ content: fixtureContent, path: "/in/data.bin", type: "file" }],
+        }),
+      ],
+    });
+    const engine = new TransferEngine();
+    const executeSpy = vi.spyOn(engine, "execute");
+
+    await runRoute({ client, engine, route: createRoute() });
+
+    expect(executeSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({ retry: defaults.retry, timeout: defaults.timeout }),
+    );
+  });
+
+  it("lets per-call retry and timeout override client defaults", async () => {
+    const client = createTransferClient({
+      defaults: { retry: { maxAttempts: 3 }, timeout: { stallTimeoutMs: 30_000 } },
+      providers: [
+        createMemoryProviderFactory({
+          entries: [{ content: fixtureContent, path: "/in/data.bin", type: "file" }],
+        }),
+      ],
+    });
+    const engine = new TransferEngine();
+    const executeSpy = vi.spyOn(engine, "execute");
+    const retry = { maxAttempts: 1 };
+    const timeout = { timeoutMs: 5_000 };
+
+    await runRoute({ client, engine, retry, route: createRoute(), timeout });
+
+    expect(executeSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.objectContaining({ retry, timeout }),
+    );
+  });
+
   it("throws ConfigurationError for disabled routes without opening sessions", async () => {
     const client = createRouteClient();
 

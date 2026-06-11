@@ -6,6 +6,7 @@ import {
   AuthenticationError,
   ConfigurationError,
   ConnectionError,
+  ParseError,
   ProtocolError,
   TimeoutError,
   TransferEngine,
@@ -728,7 +729,128 @@ describe("createFtpProviderFactory", () => {
       await malformedDataSession.disconnect();
     }
   });
+
+  it("parses large listings streamed across many data-socket chunks", async () => {
+    const entryCount = 4000;
+    const lines = Array.from(
+      { length: entryCount },
+      (_, index) =>
+        `type=file;size=${String(index)};modify=20260427010203;perm=adfr; file-${String(index)}.bin`,
+    );
+    await server.stop();
+    server = new FakeFtpServer({
+      passiveData(command) {
+        if (command === "MLSD /incoming") return `${lines.join("\r\n")}\r\n`;
+        return undefined;
+      },
+      responder: contractResponder,
+    });
+    const port = await server.start();
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      password: "secret",
+      port,
+      provider: "ftp",
+      username: "tester",
+    });
+
+    try {
+      const entries = await session.fs.list("/incoming");
+
+      expect(entries).toHaveLength(entryCount);
+      const first = entries.find((entry) => entry.name === "file-0.bin");
+      const last = entries.find((entry) => entry.name === `file-${String(entryCount - 1)}.bin`);
+      expect(first).toMatchObject({ name: "file-0.bin", size: 0 });
+      expect(last).toMatchObject({
+        name: `file-${String(entryCount - 1)}.bin`,
+        size: entryCount - 1,
+      });
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("rejects a listing line that exceeds the bounded line limit with ParseError", async () => {
+    await server.stop();
+    server = new FakeFtpServer({
+      passiveData(command) {
+        if (command === "MLSD /incoming") {
+          return `type=file;size=1;perm=adfr; ${"x".repeat(70_000)}\r\n`;
+        }
+        return undefined;
+      },
+      responder: contractResponder,
+    });
+    const port = await server.start();
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      password: "secret",
+      port,
+      provider: "ftp",
+      username: "tester",
+    });
+
+    try {
+      await expect(session.fs.list("/incoming")).rejects.toBeInstanceOf(ParseError);
+    } finally {
+      await session.disconnect();
+    }
+  });
+
+  it("keeps the control connection usable after a malformed listing line", async () => {
+    let listAttempts = 0;
+    await server.stop();
+    server = new FakeFtpServer({
+      passiveData(command) {
+        if (command === "LIST /incoming") {
+          listAttempts += 1;
+          if (listAttempts === 1) {
+            return [
+              "-rw-r--r-- 1 deploy staff 14 Apr 27 2026 good-first.csv",
+              "this line is not a unix listing",
+            ].join("\r\n");
+          }
+          return "-rw-r--r-- 1 deploy staff 14 Apr 27 2026 good-second.csv\r\n";
+        }
+        return undefined;
+      },
+      responder(command) {
+        if (command.startsWith("MLSD ")) return "502 MLSD unavailable\r\n";
+        return contractResponder(command);
+      },
+    });
+    const port = await server.start();
+    const client = createTransferClient({ providers: [createFtpProviderFactory()] });
+    const session = await client.connect({
+      host: "127.0.0.1",
+      password: "secret",
+      port,
+      provider: "ftp",
+      username: "tester",
+    });
+
+    try {
+      await expect(session.fs.list("/incoming")).rejects.toBeInstanceOf(ParseError);
+
+      // The malformed listing drained the data socket and consumed the final
+      // 226 response, so the same control connection still works.
+      const entries = await session.fs.list("/incoming");
+      expect(entries.map((entry) => entry.name)).toEqual(["good-second.csv"]);
+    } finally {
+      await session.disconnect();
+    }
+  });
 });
+
+function contractResponder(command: string): string {
+  if (command === "USER tester") return "331 Password required\r\n";
+  if (command === "PASS secret") return "230 Logged in\r\n";
+  if (command === "TYPE I") return "200 Type set\r\n";
+  if (command === "QUIT") return "221 Bye\r\n";
+  return "502 Unexpected command\r\n";
+}
 
 function createContractFtpServer(): FakeFtpServer {
   let restartOffset = 0;

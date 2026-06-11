@@ -6,7 +6,7 @@
 
 # Interface: TransferVerificationResult
 
-Defined in: [src/transfers/TransferJob.ts:61](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/TransferJob.ts#L61)
+Defined in: [src/transfers/TransferJob.ts:93](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/TransferJob.ts#L93)
 
 Normalized post-transfer verification details.
 
@@ -14,9 +14,9 @@ Normalized post-transfer verification details.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="actualchecksum"></a> `actualChecksum?` | `string` | Actual checksum observed by the operation. | [src/transfers/TransferJob.ts:71](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/TransferJob.ts#L71) |
-| <a id="checksum"></a> `checksum?` | `string` | Checksum value produced or verified by the operation. | [src/transfers/TransferJob.ts:67](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/TransferJob.ts#L67) |
-| <a id="details"></a> `details?` | `Record`\<`string`, `unknown`\> | Caller-defined verification details retained for diagnostics. | [src/transfers/TransferJob.ts:73](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/TransferJob.ts#L73) |
-| <a id="expectedchecksum"></a> `expectedChecksum?` | `string` | Expected checksum when a checksum comparison was performed. | [src/transfers/TransferJob.ts:69](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/TransferJob.ts#L69) |
-| <a id="method"></a> `method?` | `string` | Verification method, such as checksum, size, timestamp, or provider-native. | [src/transfers/TransferJob.ts:65](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/TransferJob.ts#L65) |
-| <a id="verified"></a> `verified` | `boolean` | Whether verification completed successfully. | [src/transfers/TransferJob.ts:63](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/TransferJob.ts#L63) |
+| <a id="actualchecksum"></a> `actualChecksum?` | `string` | Actual checksum observed by the operation. | [src/transfers/TransferJob.ts:103](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/TransferJob.ts#L103) |
+| <a id="checksum"></a> `checksum?` | `string` | Checksum value produced or verified by the operation. | [src/transfers/TransferJob.ts:99](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/TransferJob.ts#L99) |
+| <a id="details"></a> `details?` | `Record`\<`string`, `unknown`\> | Caller-defined verification details retained for diagnostics. | [src/transfers/TransferJob.ts:105](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/TransferJob.ts#L105) |
+| <a id="expectedchecksum"></a> `expectedChecksum?` | `string` | Expected checksum when a checksum comparison was performed. | [src/transfers/TransferJob.ts:101](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/TransferJob.ts#L101) |
+| <a id="method"></a> `method?` | `string` | Verification method, such as checksum, size, timestamp, or provider-native. | [src/transfers/TransferJob.ts:97](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/TransferJob.ts#L97) |
+| <a id="verified"></a> `verified` | `boolean` | Whether verification completed successfully. | [src/transfers/TransferJob.ts:95](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/TransferJob.ts#L95) |

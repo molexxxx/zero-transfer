@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   ApprovalRegistry,
   ApprovalRejectedError,
+  ApprovalTimeoutError,
   ConfigurationError,
   createApprovalGate,
   type MftRoute,
@@ -145,5 +146,69 @@ describe("createApprovalGate", () => {
     controller.abort();
     await expect(promise).rejects.toBeInstanceOf(ApprovalRejectedError);
     expect(registry.get("abort-test")?.status).toBe("rejected");
+  });
+
+  it("rejects with ApprovalTimeoutError when the request stays pending past timeoutMs", async () => {
+    vi.useFakeTimers();
+    try {
+      const registry = new ApprovalRegistry();
+      const runner = vi.fn(() => Promise.resolve(createReceipt()));
+
+      const gated: ScheduleRouteRunner = createApprovalGate({
+        approvalId: () => "timeout-test",
+        registry,
+        runner,
+        timeoutMs: 5_000,
+      });
+
+      const promise = gated({
+        client: {} as never,
+        route,
+        schedule: { id: "s", routeId: route.id, trigger: { everyMs: 1, kind: "interval" } },
+        signal: new AbortController().signal,
+      });
+      const outcome = expect(promise).rejects.toMatchObject({
+        code: "approval_timeout",
+        details: { timeoutMs: 5_000 },
+      });
+
+      await vi.advanceTimersByTimeAsync(5_000);
+      await outcome;
+      await expect(promise).rejects.toBeInstanceOf(ApprovalTimeoutError);
+      expect(registry.get("timeout-test")?.status).toBe("rejected");
+      expect(registry.get("timeout-test")?.reason).toBe("timeout");
+      expect(runner).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not time out approvals resolved within the window", async () => {
+    vi.useFakeTimers();
+    try {
+      const registry = new ApprovalRegistry();
+      const runner = vi.fn(() => Promise.resolve(createReceipt()));
+
+      const gated: ScheduleRouteRunner = createApprovalGate({
+        approvalId: () => "fast-approval",
+        registry,
+        runner,
+        timeoutMs: 5_000,
+      });
+
+      const promise = gated({
+        client: {} as never,
+        route,
+        schedule: { id: "s", routeId: route.id, trigger: { everyMs: 1, kind: "interval" } },
+        signal: new AbortController().signal,
+      });
+
+      registry.approve("fast-approval");
+      await expect(promise).resolves.toMatchObject({ jobId: "job-1" });
+      await vi.advanceTimersByTimeAsync(10_000);
+      expect(runner).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

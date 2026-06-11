@@ -124,6 +124,41 @@ describe("dispatchWebhook", () => {
       }),
     ).rejects.toBeInstanceOf(ConfigurationError);
   });
+
+  it("rejects cleartext http target urls by default", async () => {
+    const fetchImpl = createFetch([{ ok: true, status: 200 }]);
+    await expect(
+      dispatchWebhook({
+        fetch: fetchImpl,
+        payload: baseEntry,
+        target: { url: "http://hooks.example.com/in" },
+      }),
+    ).rejects.toThrow(/allowInsecureUrl/);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("permits http target urls when allowInsecureUrl is set", async () => {
+    const fetchImpl = createFetch([{ ok: true, status: 200 }]);
+    const result = await dispatchWebhook({
+      fetch: fetchImpl,
+      payload: baseEntry,
+      sleep,
+      target: { allowInsecureUrl: true, url: "http://hooks.example.com/in" },
+    });
+    expect(result.delivered).toBe(true);
+  });
+
+  it("rejects relative and non-http(s) target urls", async () => {
+    await expect(
+      dispatchWebhook({ payload: baseEntry, target: { url: "/relative/hook" } }),
+    ).rejects.toBeInstanceOf(ConfigurationError);
+    await expect(
+      dispatchWebhook({
+        payload: baseEntry,
+        target: { allowInsecureUrl: true, url: "ftp://hooks.example.com/in" },
+      }),
+    ).rejects.toBeInstanceOf(ConfigurationError);
+  });
 });
 
 describe("createWebhookAuditLog", () => {
@@ -154,6 +189,12 @@ describe("createWebhookAuditLog", () => {
     await log.record({ ...baseEntry, type: "result" });
 
     expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("validates the target eagerly at creation", () => {
+    expect(() =>
+      createWebhookAuditLog({ target: { url: "http://hooks.example.com/in" } }),
+    ).toThrow(ConfigurationError);
   });
 
   it("invokes onDelivery with the result", async () => {

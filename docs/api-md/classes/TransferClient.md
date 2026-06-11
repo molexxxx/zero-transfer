@@ -6,7 +6,7 @@
 
 # Class: TransferClient
 
-Defined in: [src/core/TransferClient.ts:33](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/core/TransferClient.ts#L33)
+Defined in: [src/core/TransferClient.ts:72](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L72)
 
 Small provider-neutral client that owns provider lookup and connection setup.
 
@@ -18,7 +18,7 @@ Small provider-neutral client that owns provider lookup and connection setup.
 new TransferClient(options?): TransferClient;
 ```
 
-Defined in: [src/core/TransferClient.ts:44](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/core/TransferClient.ts#L44)
+Defined in: [src/core/TransferClient.ts:86](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L86)
 
 Creates a transfer client without opening any provider connections.
 
@@ -26,7 +26,7 @@ Creates a transfer client without opening any provider connections.
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
-| `options` | [`TransferClientOptions`](../interfaces/TransferClientOptions.md) | Optional registry, provider factories, and logger. |
+| `options` | [`TransferClientOptions`](../interfaces/TransferClientOptions.md) | Optional registry, provider factories, logger, and execution defaults. |
 
 #### Returns
 
@@ -40,7 +40,7 @@ Creates a transfer client without opening any provider connections.
 connect(profile): Promise<TransferSession<unknown>>;
 ```
 
-Defined in: [src/core/TransferClient.ts:93](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/core/TransferClient.ts#L93)
+Defined in: [src/core/TransferClient.ts:138](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L138)
 
 Opens a provider session using `profile.provider`, with `profile.protocol` as compatibility fallback.
 
@@ -70,7 +70,7 @@ A connected provider session.
 getCapabilities(): CapabilitySet[];
 ```
 
-Defined in: [src/core/TransferClient.ts:75](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/core/TransferClient.ts#L75)
+Defined in: [src/core/TransferClient.ts:120](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L120)
 
 Lists all registered provider capability snapshots.
 
@@ -84,7 +84,7 @@ Lists all registered provider capability snapshots.
 getCapabilities(providerId): CapabilitySet;
 ```
 
-Defined in: [src/core/TransferClient.ts:77](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/core/TransferClient.ts#L77)
+Defined in: [src/core/TransferClient.ts:122](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L122)
 
 Gets a specific provider capability snapshot.
 
@@ -106,7 +106,7 @@ Gets a specific provider capability snapshot.
 hasProvider(providerId): boolean;
 ```
 
-Defined in: [src/core/TransferClient.ts:70](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/core/TransferClient.ts#L70)
+Defined in: [src/core/TransferClient.ts:115](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L115)
 
 Checks whether this client can create sessions for a provider id.
 
@@ -130,7 +130,7 @@ Checks whether this client can create sessions for a provider id.
 registerProvider(provider): this;
 ```
 
-Defined in: [src/core/TransferClient.ts:59](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/core/TransferClient.ts#L59)
+Defined in: [src/core/TransferClient.ts:104](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L104)
 
 Registers a provider factory with this client's registry.
 
@@ -150,4 +150,5 @@ This client for fluent setup.
 
 | Property | Modifier | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ | ------ |
-| <a id="registry"></a> `registry` | `readonly` | [`ProviderRegistry`](ProviderRegistry.md) | Provider registry used by this client. | [src/core/TransferClient.ts:35](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/core/TransferClient.ts#L35) |
+| <a id="defaults"></a> `defaults?` | `readonly` | [`TransferClientDefaults`](../interfaces/TransferClientDefaults.md) | Execution defaults applied when call sites omit their own values. | [src/core/TransferClient.ts:77](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L77) |
+| <a id="registry"></a> `registry` | `readonly` | [`ProviderRegistry`](ProviderRegistry.md) | Provider registry used by this client. | [src/core/TransferClient.ts:74](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L74) |

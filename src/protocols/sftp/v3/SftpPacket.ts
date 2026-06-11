@@ -7,6 +7,14 @@ export interface SftpPacket {
   type: number;
 }
 
+/**
+ * Maximum accepted SFTP message body length before a peer is considered
+ * hostile or broken; matches OpenSSH's 256 KiB cap so the framer never
+ * buffers unbounded amounts of network data on a forged length prefix.
+ * Read chunk sizes must stay comfortably below this bound.
+ */
+export const MAX_SFTP_PACKET_LENGTH = 256 * 1024;
+
 /** Packet type values from the SFTP v3 baseline draft. */
 export const SFTP_PACKET_TYPE = {
   ATTRS: 105,
@@ -101,6 +109,13 @@ export class SftpPacketFramer {
 
     while (this.pending.length >= 4) {
       const bodyLength = this.pending.readUInt32BE(0);
+      if (bodyLength > MAX_SFTP_PACKET_LENGTH) {
+        throw new ParseError({
+          details: { bodyLength, maxPacketLength: MAX_SFTP_PACKET_LENGTH },
+          message: "SFTP packet length exceeds the maximum accepted size",
+          retryable: false,
+        });
+      }
       const frameLength = 4 + bodyLength;
 
       if (this.pending.length < frameLength) {

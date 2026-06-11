@@ -25,6 +25,7 @@ path safety utilities used by future protocol adapters.
 | [createAtomicDeployPlan](functions/createAtomicDeployPlan.md) | Builds an [AtomicDeployPlan](interfaces/AtomicDeployPlan.md) that stages a release, swaps it live, and prunes old releases. |
 | [createAzureBlobProviderFactory](functions/createAzureBlobProviderFactory.md) | Creates an Azure Blob Storage provider factory. |
 | [createBandwidthThrottle](functions/createBandwidthThrottle.md) | Creates a token-bucket throttle that paces an asynchronous data pipeline to a sustained [TransferBandwidthLimit](interfaces/TransferBandwidthLimit.md). |
+| [createDefaultRetryPolicy](functions/createDefaultRetryPolicy.md) | Creates the SDK's recommended retry policy for transfer execution. |
 | [createDropboxProviderFactory](functions/createDropboxProviderFactory.md) | Creates a Dropbox provider factory. |
 | [createFileSystemS3MultipartResumeStore](functions/createFileSystemS3MultipartResumeStore.md) | File-system backed [S3MultipartResumeStore](interfaces/S3MultipartResumeStore.md) that survives process restarts. Each in-flight multipart upload is checkpointed to a single JSON file in `options.directory` after every part. On retry the upload reuses the stored `uploadId` and skips parts that S3 has already accepted. |
 | [createFtpProviderFactory](functions/createFtpProviderFactory.md) | Creates a provider factory for classic FTP connections. |
@@ -93,8 +94,10 @@ path safety utilities used by future protocol adapters.
 | [parseUnixListLine](functions/parseUnixListLine.md) | Parses one Unix-style FTP `LIST` line. |
 | [redactCommand](functions/redactCommand.md) | Redacts sensitive FTP command payloads while preserving the command name. |
 | [redactConnectionProfile](functions/redactConnectionProfile.md) | Produces a diagnostics-safe profile copy with credentials and runtime hooks redacted. |
+| [redactErrorForLogging](functions/redactErrorForLogging.md) | Converts an arbitrary thrown value into a JSON-safe, secret-free record. |
 | [redactObject](functions/redactObject.md) | Redacts sensitive keys and nested values in a plain object. |
 | [redactSecretSource](functions/redactSecretSource.md) | Redacts a secret source or resolved secret for safe diagnostics. |
+| [redactUrlForLogging](functions/redactUrlForLogging.md) | Strips credentials and query/fragment content from a URL before logging. |
 | [redactValue](functions/redactValue.md) | Recursively redacts strings, arrays, and plain object values. |
 | [resolveConnectionProfileSecrets](functions/resolveConnectionProfileSecrets.md) | Resolves credential and TLS material secret sources without mutating the original profile. |
 | [resolveOpenSshHost](functions/resolveOpenSshHost.md) | Resolves the merged option set for an OpenSSH host alias. |
@@ -122,6 +125,7 @@ path safety utilities used by future protocol adapters.
 | [AbortError](classes/AbortError.md) | Error raised when an operation is cancelled by an AbortSignal or caller action. |
 | [ApprovalRegistry](classes/ApprovalRegistry.md) | In-memory approval registry. |
 | [ApprovalRejectedError](classes/ApprovalRejectedError.md) | Error raised when an approval request is rejected. |
+| [ApprovalTimeoutError](classes/ApprovalTimeoutError.md) | Error raised when an approval request is not resolved within its timeout window. |
 | [AuthenticationError](classes/AuthenticationError.md) | Error raised when authentication credentials are rejected. |
 | [AuthorizationError](classes/AuthorizationError.md) | Error raised when authenticated credentials are not authorized for an operation. |
 | [ConfigurationError](classes/ConfigurationError.md) | Error raised when user-provided options or paths are invalid before network I/O. |
@@ -189,6 +193,7 @@ path safety utilities used by future protocol adapters.
 | [CreateWebhookAuditLogOptions](interfaces/CreateWebhookAuditLogOptions.md) | Options accepted by [createWebhookAuditLog](functions/createWebhookAuditLog.md). |
 | [CronExpression](interfaces/CronExpression.md) | Compiled cron expression. |
 | [CronScheduleTrigger](interfaces/CronScheduleTrigger.md) | Fires at times matching a 5-field cron expression (minute hour dom month dow). |
+| [DefaultRetryPolicyOptions](interfaces/DefaultRetryPolicyOptions.md) | Options for [createDefaultRetryPolicy](functions/createDefaultRetryPolicy.md). |
 | [DiffRemoteTreesOptions](interfaces/DiffRemoteTreesOptions.md) | Options accepted by [diffRemoteTrees](functions/diffRemoteTrees.md). |
 | [DispatchWebhookOptions](interfaces/DispatchWebhookOptions.md) | Options accepted by [dispatchWebhook](functions/dispatchWebhook.md). |
 | [DispatchWebhookResult](interfaces/DispatchWebhookResult.md) | Result returned by [dispatchWebhook](functions/dispatchWebhook.md). |
@@ -302,6 +307,7 @@ path safety utilities used by future protocol adapters.
 | [TransferAttemptError](interfaces/TransferAttemptError.md) | Serializable error summary retained in failed attempts. |
 | [TransferBandwidthLimit](interfaces/TransferBandwidthLimit.md) | Optional throughput limit shape that concrete transfer executors may honor. |
 | [TransferByteRange](interfaces/TransferByteRange.md) | Byte range requested from a readable provider endpoint. |
+| [TransferClientDefaults](interfaces/TransferClientDefaults.md) | Client-level execution defaults applied when a call site does not supply its own value. |
 | [TransferClientOptions](interfaces/TransferClientOptions.md) | Options used to create a provider-neutral transfer client. |
 | [TransferEndpoint](interfaces/TransferEndpoint.md) | Endpoint referenced by a transfer job or receipt. |
 | [TransferEngineExecuteOptions](interfaces/TransferEngineExecuteOptions.md) | Options used by [TransferEngine.execute](classes/TransferEngine.md#execute). |

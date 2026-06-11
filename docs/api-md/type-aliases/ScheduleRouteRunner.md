@@ -10,7 +10,7 @@
 type ScheduleRouteRunner = (input) => Promise<TransferReceipt>;
 ```
 
-Defined in: [src/mft/MftScheduler.ts:22](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/MftScheduler.ts#L22)
+Defined in: [src/mft/MftScheduler.ts:22](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/MftScheduler.ts#L22)
 
 Function shape used to fire a route. Defaults to [runRoute](../functions/runRoute.md).
 

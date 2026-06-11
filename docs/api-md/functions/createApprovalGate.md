@@ -10,14 +10,16 @@
 function createApprovalGate(options): ScheduleRouteRunner;
 ```
 
-Defined in: [src/mft/approvals.ts:250](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/approvals.ts#L250)
+Defined in: [src/mft/approvals.ts:283](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/approvals.ts#L283)
 
 Wraps a route runner with an approval gate.
 
 The returned runner creates an approval request, waits for resolution, and
 dispatches the underlying runner only when the request is approved. Rejection
-surfaces an [ApprovalRejectedError](../classes/ApprovalRejectedError.md). Pair with [MftScheduler](../classes/MftScheduler.md) to
-implement two-person rules and human-in-the-loop release flows.
+surfaces an [ApprovalRejectedError](../classes/ApprovalRejectedError.md); an unresolved request that exceeds
+`timeoutMs` surfaces an [ApprovalTimeoutError](../classes/ApprovalTimeoutError.md). Pair with
+[MftScheduler](../classes/MftScheduler.md) to implement two-person rules and human-in-the-loop
+release flows.
 
 ## Parameters
 
@@ -30,6 +32,11 @@ implement two-person rules and human-in-the-loop release flows.
 [`ScheduleRouteRunner`](../type-aliases/ScheduleRouteRunner.md)
 
 A [ScheduleRouteRunner](../type-aliases/ScheduleRouteRunner.md) that gates execution behind approval.
+
+## Throws
+
+[ApprovalTimeoutError](../classes/ApprovalTimeoutError.md) From the returned runner when the
+request stays pending longer than `timeoutMs`.
 
 ## Example
 

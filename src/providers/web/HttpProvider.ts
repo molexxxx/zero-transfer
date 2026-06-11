@@ -16,6 +16,7 @@ import {
   ConnectionError,
   UnsupportedFeatureError,
 } from "../../errors/ZeroTransferError";
+import { redactUrlForLogging } from "../../logging/redaction";
 import { resolveSecret } from "../../profiles/SecretSource";
 import type { ConnectionProfile, RemoteEntry, RemoteStat } from "../../types/public";
 import { basenameRemotePath, normalizeRemotePath } from "../../utils/path";
@@ -30,13 +31,15 @@ import type {
 } from "../ProviderTransferOperations";
 import type { RemoteFileSystem } from "../RemoteFileSystem";
 import {
+  assertHttpsEnforced,
   buildBaseUrl,
   dispatchRequest,
   formatRangeHeader,
-  mapResponseError,
+  mapResponseErrorWithBody,
   parseTotalBytes,
   resolveUrl,
   secretToString,
+  warnCleartextCredentials,
   webStreamToAsyncIterable,
   type HttpFetch,
   type HttpSessionTransport,
@@ -56,6 +59,12 @@ export interface HttpProviderOptions {
   fetch?: HttpFetch;
   /** Default headers applied to every request. */
   defaultHeaders?: Record<string, string>;
+  /**
+   * Rejects factory creation when the transport is cleartext `http`. Defaults
+   * to `false`, where connecting with credentials over cleartext emits a
+   * process `SecurityWarning` instead of failing.
+   */
+  enforceHttps?: boolean;
 }
 
 const HTTP_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["etag"];
@@ -108,6 +117,8 @@ export function createHttpProviderFactory(options: HttpProviderOptions = {}): Pr
   const secure = options.secure ?? id === "https";
   const basePath = options.basePath ?? "";
   const fetchImpl = options.fetch ?? globalThis.fetch;
+
+  assertHttpsEnforced({ enforceHttps: options.enforceHttps ?? false, providerId: id, secure });
 
   if (typeof fetchImpl !== "function") {
     throw new ConfigurationError({
@@ -171,6 +182,14 @@ class HttpProvider implements TransferProvider {
   }
 
   async connect(profile: ConnectionProfile): Promise<TransferSession> {
+    if (!this.internals.secure) {
+      warnCleartextCredentials({
+        hasCredentials: profile.username !== undefined || profile.password !== undefined,
+        host: profile.host,
+        providerId: this.internals.id,
+      });
+    }
+
     const headers = { ...this.internals.defaultHeaders };
     if (profile.username !== undefined) {
       const username = await resolveSecret(profile.username);
@@ -237,7 +256,7 @@ class HttpFileSystem implements RemoteFileSystem {
       method: "HEAD",
     });
     if (!response.ok) {
-      throw mapResponseError(response, normalized);
+      throw await mapResponseErrorWithBody(response, normalized);
     }
     return responseToStat(response, normalized);
   }
@@ -263,13 +282,13 @@ class HttpTransferOperations implements ProviderTransferOperations {
     const response = await dispatchRequest(this.options, url, requestInit);
 
     if (!response.ok && response.status !== 206) {
-      throw mapResponseError(response, normalized);
+      throw await mapResponseErrorWithBody(response, normalized);
     }
 
     const body = response.body;
     if (body === null) {
       throw new ConnectionError({
-        message: `HTTP response had no body for ${url.toString()}`,
+        message: `HTTP response had no body for ${redactUrlForLogging(url)}`,
         retryable: true,
       });
     }

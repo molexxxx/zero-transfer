@@ -17,7 +17,7 @@ import type { MftAuditEntry, MftAuditLog } from "./audit";
 
 /** Webhook destination. */
 export interface WebhookTarget {
-  /** Absolute HTTP(S) URL that receives `POST` deliveries. */
+  /** Absolute `https:` URL that receives `POST` deliveries. */
   url: string;
   /** Additional headers merged into every request. */
   headers?: Record<string, string>;
@@ -25,6 +25,12 @@ export interface WebhookTarget {
   secret?: string;
   /** Audit entry types to deliver. Defaults to all types. */
   types?: readonly MftAuditEntry["type"][];
+  /**
+   * Permits plain `http:` delivery. Defaults to `false`, which rejects
+   * cleartext URLs because audit payloads (and the HMAC timestamp/signature
+   * headers) would cross the network unencrypted.
+   */
+  allowInsecureUrl?: boolean;
 }
 
 /** Retry policy for webhook deliveries. */
@@ -94,6 +100,8 @@ export function signWebhookPayload(
  *
  * @param options - Target, payload, fetch impl, retry policy, abort signal.
  * @returns The delivery outcome.
+ * @throws {@link ConfigurationError} When the target URL is not absolute or
+ * uses cleartext `http:` without `allowInsecureUrl: true`.
  */
 export async function dispatchWebhook(
   options: DispatchWebhookOptions,
@@ -189,6 +197,8 @@ export interface CreateWebhookAuditLogOptions {
  * ```
  */
 export function createWebhookAuditLog(options: CreateWebhookAuditLogOptions): MftAuditLog {
+  validateTarget(options.target);
+
   return {
     list: () => Promise.resolve([]),
     record: async (entry) => {
@@ -214,6 +224,31 @@ function validateTarget(target: WebhookTarget): void {
       retryable: false,
     });
   }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(target.url);
+  } catch (error) {
+    throw new ConfigurationError({
+      cause: error,
+      details: { url: target.url },
+      message: "Webhook target url must be an absolute URL",
+      retryable: false,
+    });
+  }
+
+  if (parsed.protocol === "https:") return;
+
+  if (parsed.protocol === "http:" && target.allowInsecureUrl === true) return;
+
+  throw new ConfigurationError({
+    details: { protocol: parsed.protocol, url: target.url },
+    message:
+      parsed.protocol === "http:"
+        ? "Webhook target url must use https; set allowInsecureUrl: true to permit cleartext http delivery"
+        : `Webhook target url must use https, got "${parsed.protocol}"`,
+    retryable: false,
+  });
 }
 
 interface NormalizedRetryPolicy {

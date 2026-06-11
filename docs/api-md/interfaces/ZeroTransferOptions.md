@@ -6,7 +6,7 @@
 
 # Interface: ZeroTransferOptions
 
-Defined in: [src/client/ZeroTransfer.ts:33](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/client/ZeroTransfer.ts#L33)
+Defined in: [src/client/ZeroTransfer.ts:33](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/client/ZeroTransfer.ts#L33)
 
 Construction options for a [ZeroTransfer](../classes/ZeroTransfer.md) instance.
 
@@ -20,6 +20,6 @@ compatible adapter to exercise the facade contract.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="adapter"></a> `adapter?` | [`RemoteFileAdapter`](RemoteFileAdapter.md) | Protocol adapter that performs concrete remote file operations. | [src/client/ZeroTransfer.ts:39](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/client/ZeroTransfer.ts#L39) |
-| <a id="logger"></a> `logger?` | [`ZeroTransferLogger`](ZeroTransferLogger.md) | Structured logger used for lifecycle and operation records. | [src/client/ZeroTransfer.ts:37](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/client/ZeroTransfer.ts#L37) |
-| <a id="protocol"></a> `protocol?` | `"ftp"` \| `"ftps"` \| `"sftp"` | Protocol used when the connection profile does not provide one. | [src/client/ZeroTransfer.ts:35](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/client/ZeroTransfer.ts#L35) |
+| <a id="adapter"></a> `adapter?` | [`RemoteFileAdapter`](RemoteFileAdapter.md) | Protocol adapter that performs concrete remote file operations. | [src/client/ZeroTransfer.ts:39](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/client/ZeroTransfer.ts#L39) |
+| <a id="logger"></a> `logger?` | [`ZeroTransferLogger`](ZeroTransferLogger.md) | Structured logger used for lifecycle and operation records. | [src/client/ZeroTransfer.ts:37](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/client/ZeroTransfer.ts#L37) |
+| <a id="protocol"></a> `protocol?` | `"ftp"` \| `"ftps"` \| `"sftp"` | Protocol used when the connection profile does not provide one. | [src/client/ZeroTransfer.ts:35](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/client/ZeroTransfer.ts#L35) |

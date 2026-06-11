@@ -2,26 +2,31 @@
  * Remote path normalization and FTP command-argument safety helpers.
  *
  * The functions in this module avoid platform-specific local path behavior and reject
- * CR/LF characters before values can be interpolated into FTP commands.
+ * CR/LF and NUL characters before values can be interpolated into FTP commands or
+ * handed to filesystem APIs.
  *
  * @module utils/path
  */
 import { ConfigurationError } from "../errors/ZeroTransferError";
 
-const UNSAFE_FTP_ARGUMENT_PATTERN = /[\r\n]/;
+const UNSAFE_FTP_ARGUMENT_PATTERN = /[\r\n\0]/;
 
 /**
  * Validates that an FTP command argument cannot inject additional command lines.
  *
+ * NUL bytes are rejected alongside CR/LF: C-string-based servers and filesystem
+ * APIs truncate at the first NUL, which lets a crafted path smuggle a different
+ * effective target past validation.
+ *
  * @param value - Argument value to validate.
  * @param label - Human-readable argument label used in error messages.
  * @returns The original value when it is safe.
- * @throws {@link ConfigurationError} When the value contains CR or LF characters.
+ * @throws {@link ConfigurationError} When the value contains CR, LF, or NUL characters.
  */
 export function assertSafeFtpArgument(value: string, label = "path"): string {
   if (UNSAFE_FTP_ARGUMENT_PATTERN.test(value)) {
     throw new ConfigurationError({
-      message: `Unsafe FTP ${label}: CR and LF characters are not allowed`,
+      message: `Unsafe FTP ${label}: CR, LF, and NUL characters are not allowed`,
       retryable: false,
       details: {
         label,
@@ -37,7 +42,7 @@ export function assertSafeFtpArgument(value: string, label = "path"): string {
  *
  * @param input - Remote path that may contain duplicate separators or dot segments.
  * @returns A normalized remote path, `/` for absolute root, or `.` for an empty relative path.
- * @throws {@link ConfigurationError} When the input contains unsafe CR or LF characters.
+ * @throws {@link ConfigurationError} When the input contains unsafe CR, LF, or NUL characters.
  */
 export function normalizeRemotePath(input: string): string {
   assertSafeFtpArgument(input);

@@ -20,7 +20,7 @@ import { MftRoute, RouteRegistry, runRoute } from "@zero-transfer/mft";
 
 ## Public surface
 
-This package publishes a narrowed surface of **30** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
+This package publishes a narrowed surface of **31** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
 
 | Symbol                                                                                                                          | Kind      | Notes              |
 | ------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
@@ -54,6 +54,7 @@ This package publishes a narrowed surface of **30** exports. These symbols are a
 | [`ApprovalRegistry`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/classes/ApprovalRegistry.md)             | Class     | See API reference. |
 | [`createApprovalGate`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createApprovalGate.md)       | Function  | See API reference. |
 | [`ApprovalRejectedError`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/classes/ApprovalRejectedError.md)   | Class     | See API reference. |
+| [`ApprovalTimeoutError`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/classes/ApprovalTimeoutError.md)     | Class     | See API reference. |
 
 ## Examples
 

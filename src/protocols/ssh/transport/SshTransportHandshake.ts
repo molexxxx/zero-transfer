@@ -382,8 +382,14 @@ export class SshTransportHandshake {
   }
 }
 
+/** Longest accepted identification/banner line; matches OpenSSH's 8 KiB cap. */
+const MAX_IDENTIFICATION_LINE_BYTES = 8192;
+/** Most pre-identification banner lines accepted; matches OpenSSH's 1024-line cap. */
+const MAX_PRE_IDENTIFICATION_LINES = 1024;
+
 class SshIdentificationAccumulator {
   private pending = Buffer.alloc(0);
+  private bannerLineCount = 0;
 
   push(chunk: Uint8Array): { bannerLines: string[]; identLine?: string; remainder: Buffer } {
     this.pending = Buffer.concat([this.pending, Buffer.from(chunk)]);
@@ -391,7 +397,25 @@ class SshIdentificationAccumulator {
 
     while (true) {
       const lfIndex = this.pending.indexOf(0x0a);
-      if (lfIndex < 0) break;
+      if (lfIndex < 0) {
+        if (this.pending.length > MAX_IDENTIFICATION_LINE_BYTES) {
+          throw new ProtocolError({
+            details: { limitBytes: MAX_IDENTIFICATION_LINE_BYTES },
+            message: "SSH identification line exceeds the maximum accepted length",
+            protocol: "sftp",
+            retryable: false,
+          });
+        }
+        break;
+      }
+      if (lfIndex > MAX_IDENTIFICATION_LINE_BYTES) {
+        throw new ProtocolError({
+          details: { limitBytes: MAX_IDENTIFICATION_LINE_BYTES },
+          message: "SSH identification line exceeds the maximum accepted length",
+          protocol: "sftp",
+          retryable: false,
+        });
+      }
 
       // Capture the line as text (safe: identification exchange is ASCII-only).
       const lineText = trimLineEndings(this.pending.subarray(0, lfIndex + 1).toString("ascii"));
@@ -406,6 +430,15 @@ class SshIdentificationAccumulator {
         return { bannerLines, identLine: lineText, remainder };
       }
 
+      this.bannerLineCount += 1;
+      if (this.bannerLineCount > MAX_PRE_IDENTIFICATION_LINES) {
+        throw new ProtocolError({
+          details: { limitLines: MAX_PRE_IDENTIFICATION_LINES },
+          message: "SSH server sent too many pre-identification banner lines",
+          protocol: "sftp",
+          retryable: false,
+        });
+      }
       bannerLines.push(lineText);
     }
 

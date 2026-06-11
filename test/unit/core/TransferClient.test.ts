@@ -140,6 +140,19 @@ describe("TransferClient", () => {
     expect(client.getCapabilities("memory")).toEqual(memoryCapabilities);
   });
 
+  it("exposes execution defaults without sharing the caller's object", () => {
+    const defaults = {
+      retry: { maxAttempts: 4 },
+      timeout: { stallTimeoutMs: 30_000 },
+    };
+    const client = createTransferClient({ defaults });
+
+    expect(client.defaults).toEqual(defaults);
+    expect(client.defaults).not.toBe(defaults);
+
+    expect(createTransferClient().defaults).toBeUndefined();
+  });
+
   it("connects through the selected provider and logs lifecycle context", async () => {
     const providerFactory = createProviderFactory();
     const info = vi.fn();

@@ -39,4 +39,12 @@ describe("SFTP packet framing", () => {
     const badFrame = Buffer.from([0, 0, 0, 8, SFTP_PACKET_TYPE.STATUS, 1, 2]);
     expect(() => decodeSftpPacket(badFrame)).toThrow(ParseError);
   });
+
+  it("rejects a forged oversized message length instead of buffering it", () => {
+    const framer = new SftpPacketFramer();
+    const forged = Buffer.alloc(8);
+    forged.writeUInt32BE(0xffff_ffff, 0);
+
+    expect(() => framer.push(forged)).toThrow(ParseError);
+  });
 });

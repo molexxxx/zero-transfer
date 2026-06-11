@@ -10,7 +10,11 @@ import {
 import { ProtocolError } from "../../../errors/ZeroTransferError";
 import type { NegotiatedSshAlgorithms } from "./SshAlgorithmNegotiation";
 import type { SshTransportDirectionKeys } from "./SshKeyDerivation";
-import { decodeSshTransportPacket, encodeSshTransportPacket } from "./SshTransportPacket";
+import {
+  decodeSshTransportPacket,
+  encodeSshTransportPacket,
+  MAX_SSH_PACKET_LENGTH,
+} from "./SshTransportPacket";
 
 /** Bidirectional packet protection pair for SSH transport after NEWKEYS. */
 export interface SshTransportProtectionContext {
@@ -157,6 +161,14 @@ export class SshTransportPacketUnprotector {
           ? Buffer.from(this.decipher.update(firstBlock))
           : Buffer.from(firstBlock);
         const packetLength = this.framePartialDecrypted.readUInt32BE(0);
+        if (packetLength > MAX_SSH_PACKET_LENGTH) {
+          throw new ProtocolError({
+            details: { maxPacketLength: MAX_SSH_PACKET_LENGTH, packetLength },
+            message: "SSH encrypted packet length exceeds the maximum accepted size",
+            protocol: "sftp",
+            retryable: false,
+          });
+        }
         // Total encrypted bytes = 4 (length field) + packetLength.
         // Remaining raw after first block = (4 + packetLength - blockLength) + macLength.
         const remaining = 4 + packetLength - this.blockLength + this.macLength;

@@ -400,6 +400,10 @@ interface TlsProfile {
      * trust via `rejectUnauthorized`. Pinning is **recommended for production** when you control
      * the server and want defence-in-depth against rogue certificates issued by trusted CAs.
      *
+     * Cannot be combined with `rejectUnauthorized: false`: pin verification runs after the TLS
+     * handshake is accepted, so chain validation must stay enabled. Use `ca` for self-signed
+     * certificates.
+     *
      * @example "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99"
      */
     pinnedFingerprint256?: string | readonly string[];
@@ -677,10 +681,42 @@ interface TransferBandwidthLimit {
     /** Optional burst allowance in bytes for token-bucket-style implementations. */
     burstBytes?: number;
 }
-/** Timeout policy applied by the transfer engine. */
+/**
+ * Timeout policy applied by the transfer engine.
+ *
+ * Two timeout scopes exist with deliberately different failure semantics:
+ *
+ * - **Job scope** ({@link timeoutMs}): covers the full engine execution
+ *   including retries. When it fires, the engine rethrows the
+ *   {@link TimeoutError} immediately - the retry policy is never consulted.
+ * - **Attempt scope** ({@link attemptTimeoutMs} and {@link stallTimeoutMs}):
+ *   covers a single attempt. When either fires, the per-attempt abort
+ *   controller cancels the attempt and the resulting {@link TimeoutError}
+ *   flows into the retry policy like any other attempt failure, so retryable
+ *   timeouts are retried (with backoff) instead of failing the job.
+ *
+ * @example Retry stalled attempts, but never run longer than 10 minutes total
+ * ```ts
+ * await engine.execute(job, executor, {
+ *   retry: createDefaultRetryPolicy(),
+ *   timeout: { timeoutMs: 600_000, attemptTimeoutMs: 120_000, stallTimeoutMs: 30_000 },
+ * });
+ * ```
+ */
 interface TransferTimeoutPolicy {
     /** Maximum duration for the full engine execution, including retries, in milliseconds. */
     timeoutMs?: number;
+    /**
+     * Maximum duration for a single attempt in milliseconds. Expiry aborts only
+     * the active attempt; the failure flows into the retry policy.
+     */
+    attemptTimeoutMs?: number;
+    /**
+     * Maximum time without progress before an attempt is considered stalled, in
+     * milliseconds. The watchdog resets on every progress report; expiry aborts
+     * only the active attempt and the failure flows into the retry policy.
+     */
+    stallTimeoutMs?: number;
     /** Whether timeout failures are retryable. Defaults to `true`. */
     retryable?: boolean;
 }
@@ -805,15 +841,31 @@ interface TransferRetryDecisionInput {
     error: unknown;
     /** One-based attempt number that failed. */
     attempt: number;
+    /** Milliseconds elapsed since the engine execution started, including prior attempts and delays. */
+    elapsedMs: number;
     /** Job being executed. */
     job: TransferJob;
 }
-/** Retry policy for transfer execution. */
+/**
+ * Retry policy for transfer execution.
+ *
+ * Use {@link createDefaultRetryPolicy} for a production-ready policy with
+ * exponential backoff, full jitter, and `Retry-After` support, or implement
+ * the hooks directly for full control.
+ */
 interface TransferRetryPolicy {
     /** Maximum total attempts, including the first attempt. Defaults to `1`. */
     maxAttempts?: number;
     /** Decides whether a failed attempt should be retried. Defaults to SDK retryability metadata. */
     shouldRetry?(input: TransferRetryDecisionInput): boolean;
+    /**
+     * Computes the delay before the next attempt in milliseconds.
+     *
+     * The engine sleeps for the returned duration with an abort-aware timer:
+     * cancelling the job during the delay rejects immediately instead of
+     * waiting out the backoff. Non-positive or missing values retry at once.
+     */
+    getDelayMs?(input: TransferRetryDecisionInput): number;
     /** Observes retry decisions before the next attempt starts. */
     onRetry?(input: TransferRetryDecisionInput): void;
 }
@@ -847,7 +899,12 @@ interface TransferEngineOptions {
  *
  * @example Execute a single job with a custom executor
  * ```ts
- * import { TransferEngine, type TransferExecutor, type TransferJob } from "@zero-transfer/sdk";
+ * import {
+ *   TransferEngine,
+ *   createDefaultRetryPolicy,
+ *   type TransferExecutor,
+ *   type TransferJob,
+ * } from "@zero-transfer/sdk";
  *
  * const engine = new TransferEngine();
  *
@@ -865,7 +922,8 @@ interface TransferEngineOptions {
  * };
  *
  * const receipt = await engine.execute(job, executor, {
- *   retry: { maxAttempts: 3, baseDelayMs: 250 },
+ *   retry: createDefaultRetryPolicy(),
+ *   timeout: { stallTimeoutMs: 30_000 },
  * });
  * console.log(receipt.attempts.length); // 1 on success
  * ```
@@ -1087,6 +1145,40 @@ declare class ProviderRegistry {
     listCapabilities(): CapabilitySet[];
 }
 
+/**
+ * Client-level execution defaults applied when a call site does not supply
+ * its own value.
+ *
+ * Defaults are consumed by {@link runRoute}, the one-shot helpers
+ * ({@link uploadFile}, {@link downloadFile}, {@link copyBetween}),
+ * {@link TransferQueue} (via its `client` option), and scheduled routes fired
+ * through {@link MftScheduler}. The {@link TransferEngine} primitive stays
+ * fully explicit: defaults never reach `engine.execute()` directly.
+ *
+ * Per-call options always win over client defaults.
+ *
+ * Additional default slots (`verify`, `resume`, `compression`, `policy`) land
+ * here as their features ship in later releases; the shape is additive.
+ *
+ * @example Resilient defaults for every transfer in an application
+ * ```ts
+ * import { createDefaultRetryPolicy, createTransferClient } from "@zero-transfer/sdk";
+ *
+ * const client = createTransferClient({
+ *   providers: [createSftpProviderFactory(), createS3ProviderFactory()],
+ *   defaults: {
+ *     retry: createDefaultRetryPolicy(),
+ *     timeout: { stallTimeoutMs: 30_000 },
+ *   },
+ * });
+ * ```
+ */
+interface TransferClientDefaults {
+    /** Default retry policy for transfers executed through this client. */
+    retry?: TransferRetryPolicy;
+    /** Default timeout policy for transfers executed through this client. */
+    timeout?: TransferTimeoutPolicy;
+}
 /** Options used to create a provider-neutral transfer client. */
 interface TransferClientOptions {
     /** Existing registry to reuse. When omitted, a fresh empty registry is created. */
@@ -1095,16 +1187,20 @@ interface TransferClientOptions {
     providers?: ProviderFactory[];
     /** Structured logger used for client lifecycle records. */
     logger?: ZeroTransferLogger;
+    /** Execution defaults applied when call sites omit their own values. */
+    defaults?: TransferClientDefaults;
 }
 /** Small provider-neutral client that owns provider lookup and connection setup. */
 declare class TransferClient {
     /** Provider registry used by this client. */
     readonly registry: ProviderRegistry;
+    /** Execution defaults applied when call sites omit their own values. */
+    readonly defaults?: TransferClientDefaults;
     private readonly logger;
     /**
      * Creates a transfer client without opening any provider connections.
      *
-     * @param options - Optional registry, provider factories, and logger.
+     * @param options - Optional registry, provider factories, logger, and execution defaults.
      */
     constructor(options?: TransferClientOptions);
     /**
@@ -1438,11 +1534,11 @@ interface RunRouteOptions {
     now?: () => Date;
     /** Abort signal used to cancel the route execution. */
     signal?: AbortSignal;
-    /** Retry policy forwarded to the engine. */
+    /** Retry policy forwarded to the engine. Falls back to `client.defaults.retry`. */
     retry?: TransferRetryPolicy;
     /** Progress observer forwarded to the engine. */
     onProgress?: (event: TransferProgressEvent) => void;
-    /** Timeout policy forwarded to the engine. */
+    /** Timeout policy forwarded to the engine. Falls back to `client.defaults.timeout`. */
     timeout?: TransferTimeoutPolicy;
     /** Optional bandwidth limit forwarded to the engine. */
     bandwidthLimit?: TransferBandwidthLimit;
@@ -2085,8 +2181,13 @@ interface FileZillaSite {
     folder: readonly string[];
     /** Generated connection profile. */
     profile: ConnectionProfile;
-    /** Encoded password value retained from the file, if any. */
-    password?: string;
+    /**
+     * Whether the FileZilla entry stored a password. The importer never decodes
+     * or returns stored passwords; supply the credential via a
+     * {@link ConnectionProfile.password | SecretSource} (for example
+     * `{ env: "SITE_PASSWORD" }` or `{ path: "./secret" }`) before connecting.
+     */
+    hasStoredPassword: boolean;
     /** Logon type code preserved from the file (`0`=anonymous, `1`=normal, etc.). */
     logonType?: number;
 }
@@ -2142,16 +2243,6 @@ interface ImportWinScpSessionsResult {
  * @throws {@link ConfigurationError} When no session sections are found.
  */
 declare function importWinScpSessions(ini: string): ImportWinScpSessionsResult;
-
-/**
- * Structured ZeroTransfer error hierarchy.
- *
- * The classes in this module preserve protocol details, retryability, command/path
- * context, and machine-readable codes so application code does not need to parse
- * human error messages.
- *
- * @module errors/ZeroTransferError
- */
 
 /**
  * Complete set of fields required to create a ZeroTransfer error.
@@ -2217,6 +2308,11 @@ declare class ZeroTransferError extends Error {
     constructor(details: ZeroTransferErrorDetails);
     /**
      * Serializes the error into a plain object suitable for logs or API responses.
+     *
+     * `details` and `command` are passed through secret redaction so serialized
+     * errors never leak credentials, signed URLs, or raw protocol commands. The
+     * live {@link ZeroTransferError.details | details} property stays unredacted
+     * for programmatic consumers.
      *
      * @returns A JSON-safe object containing public structured error fields.
      */
@@ -2421,6 +2517,32 @@ declare function redactValue(value: unknown): unknown;
  * @returns A shallow object copy with sensitive fields and nested secrets redacted.
  */
 declare function redactObject(input: Record<string, unknown>): Record<string, unknown>;
+/**
+ * Strips credentials and query/fragment content from a URL before logging.
+ *
+ * Query strings routinely carry bearer material - SigV4 `X-Amz-Signature`
+ * values, SAS tokens, signed-URL parameters - so the entire search and hash
+ * segments are replaced rather than filtered key-by-key. Embedded
+ * `user:password@` userinfo is removed. Origin and pathname are preserved
+ * because they are what operators need to correlate a failing request.
+ *
+ * @param url - Absolute URL string or `URL` instance to sanitize.
+ * @returns A loggable URL string, or {@link REDACTED} when the value cannot be
+ * parsed as a URL (an unparsable value may still embed credentials).
+ */
+declare function redactUrlForLogging(url: string | URL): string;
+/**
+ * Converts an arbitrary thrown value into a JSON-safe, secret-free record.
+ *
+ * Structured SDK errors are serialized through their `toJSON()` (which already
+ * redacts details); plain errors contribute name/message/stack-free context;
+ * other values are stringified. Use this at every internal log site that
+ * records a caught error.
+ *
+ * @param error - Caught value of unknown shape.
+ * @returns A redacted, JSON-safe object describing the error.
+ */
+declare function redactErrorForLogging(error: unknown): Record<string, unknown>;
 
 /** Sleep helper signature used by {@link createBandwidthThrottle}. */
 type BandwidthSleep = (delayMs: number, signal?: AbortSignal) => Promise<void>;
@@ -2471,6 +2593,73 @@ declare function createBandwidthThrottle(limit: TransferBandwidthLimit | undefin
  * @returns Async generator emitting the original chunks at the throttled rate.
  */
 declare function throttleByteIterable(source: AsyncIterable<Uint8Array>, throttle: BandwidthThrottle | undefined, signal?: AbortSignal): AsyncIterable<Uint8Array>;
+
+/** Options for {@link createDefaultRetryPolicy}. */
+interface DefaultRetryPolicyOptions {
+    /** Maximum total attempts, including the first attempt. Defaults to `4`. */
+    maxAttempts?: number;
+    /** Base backoff delay before jitter in milliseconds. Defaults to `250`. */
+    baseDelayMs?: number;
+    /** Upper bound for a single computed backoff delay in milliseconds. Defaults to `30_000`. */
+    maxDelayMs?: number;
+    /**
+     * Total elapsed-time budget across all attempts and delays in milliseconds.
+     * Once exceeded, no further retries are attempted. Defaults to `300_000` (5 minutes).
+     */
+    maxElapsedMs?: number;
+    /**
+     * Random source in `[0, 1)` used for jitter. Defaults to `Math.random`.
+     * Inject a deterministic source in tests.
+     */
+    random?: () => number;
+}
+/**
+ * Creates the SDK's recommended retry policy for transfer execution.
+ *
+ * The policy retries only failures the SDK has marked as safe to retry
+ * (`error.retryable === true` on a {@link ZeroTransferError}), backing off
+ * exponentially with full jitter: each delay is drawn uniformly from
+ * `[0, min(maxDelayMs, baseDelayMs * 2^(attempt - 1)))`, the schedule that
+ * minimizes contention when many clients retry against the same server.
+ *
+ * Server pacing hints are honored: when the failed attempt carries
+ * `details.retryAfterMs` (parsed from an HTTP `Retry-After` header on 429/503
+ * responses by the web-family providers), the next delay is exactly that
+ * value rather than the jittered backoff. A hint that does not fit in the
+ * remaining `maxElapsedMs` budget stops retrying instead of retrying early.
+ *
+ * Retries also stop once `maxElapsedMs` has elapsed since execution started,
+ * regardless of how many attempts remain.
+ *
+ * @param options - Optional overrides for attempts, delays, and the elapsed budget.
+ * @returns A {@link TransferRetryPolicy} for {@link TransferEngine.execute},
+ *   {@link runRoute}, {@link TransferQueue}, or client-level defaults.
+ *
+ * @example Default policy on a one-shot helper
+ * ```ts
+ * import { createDefaultRetryPolicy, uploadFile } from "@zero-transfer/sdk";
+ *
+ * await uploadFile({
+ *   client,
+ *   destination: { path: "/uploads/report.csv", profile },
+ *   localPath: "./out/report.csv",
+ *   retry: createDefaultRetryPolicy(),
+ * });
+ * ```
+ *
+ * @example Tighter schedule for latency-sensitive work
+ * ```ts
+ * const retry = createDefaultRetryPolicy({
+ *   maxAttempts: 3,
+ *   baseDelayMs: 100,
+ *   maxDelayMs: 2_000,
+ *   maxElapsedMs: 15_000,
+ * });
+ * ```
+ *
+ * @see {@link TransferRetryPolicy} for the underlying hook contract.
+ */
+declare function createDefaultRetryPolicy(options?: DefaultRetryPolicyOptions): TransferRetryPolicy;
 
 /**
  * Transfer executor bridge for provider-backed read/write sessions.
@@ -2627,6 +2816,12 @@ declare function summarizeTransferPlan(plan: TransferPlan): TransferPlanSummary;
 /** Converts executable plan steps into transfer jobs while preserving order. */
 declare function createTransferJobsFromPlan(plan: TransferPlan): TransferJob[];
 
+/**
+ * Transfer queue primitives built on top of {@link TransferEngine}.
+ *
+ * @module transfers/TransferQueue
+ */
+
 /** Queue item lifecycle state. */
 type TransferQueueItemStatus = "queued" | "running" | "completed" | "failed" | "canceled";
 /** Resolver used when jobs do not provide an executor at enqueue time. */
@@ -2635,15 +2830,20 @@ type TransferQueueExecutorResolver = (job: TransferJob) => TransferExecutor;
 interface TransferQueueOptions {
     /** Transfer engine used to execute queued jobs. Defaults to a new engine. */
     engine?: TransferEngine;
+    /**
+     * Transfer client whose {@link TransferClientDefaults | defaults} seed the
+     * queue's retry and timeout policies when not set here or per drain.
+     */
+    client?: TransferClient;
     /** Maximum jobs to execute at the same time. Defaults to `1`. */
     concurrency?: number;
     /** Default executor used for jobs that do not provide one directly. */
     executor?: TransferExecutor;
     /** Dynamic executor resolver used when no per-job executor or default executor exists. */
     resolveExecutor?: TransferQueueExecutorResolver;
-    /** Retry policy passed to engine executions. */
+    /** Retry policy passed to engine executions. Falls back to `client.defaults.retry`. */
     retry?: TransferRetryPolicy;
-    /** Timeout policy passed to engine executions. */
+    /** Timeout policy passed to engine executions. Falls back to `client.defaults.timeout`. */
     timeout?: TransferTimeoutPolicy;
     /** Optional throughput limit shape passed to transfer executors. */
     bandwidthLimit?: TransferBandwidthLimit;
@@ -3438,10 +3638,14 @@ declare function createProgressEvent(input: ProgressEventInput): TransferProgres
 /**
  * Validates that an FTP command argument cannot inject additional command lines.
  *
+ * NUL bytes are rejected alongside CR/LF: C-string-based servers and filesystem
+ * APIs truncate at the first NUL, which lets a crafted path smuggle a different
+ * effective target past validation.
+ *
  * @param value - Argument value to validate.
  * @param label - Human-readable argument label used in error messages.
  * @returns The original value when it is safe.
- * @throws {@link ConfigurationError} When the value contains CR or LF characters.
+ * @throws {@link ConfigurationError} When the value contains CR, LF, or NUL characters.
  */
 declare function assertSafeFtpArgument(value: string, label?: string): string;
 /**
@@ -3449,7 +3653,7 @@ declare function assertSafeFtpArgument(value: string, label?: string): string;
  *
  * @param input - Remote path that may contain duplicate separators or dot segments.
  * @returns A normalized remote path, `/` for absolute root, or `.` for an empty relative path.
- * @throws {@link ConfigurationError} When the input contains unsafe CR or LF characters.
+ * @throws {@link ConfigurationError} When the input contains unsafe CR, LF, or NUL characters.
  */
 declare function normalizeRemotePath(input: string): string;
 /**
@@ -4074,7 +4278,7 @@ interface RunSshCommandResult {
  * stdout, and disconnects. The TCP socket, transport, auth session, and
  * channel are all owned by this helper and torn down before it returns.
  *
- * @example Run `uname -a` with a password credential
+ * @example Run uname -a with a password credential
  * ```ts
  * import { runSshCommand } from "@zero-transfer/ssh";
  *
@@ -4088,4 +4292,4 @@ interface RunSshCommandResult {
  */
 declare function runSshCommand(options: RunSshCommandOptions): Promise<RunSshCommandResult>;
 
-export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionPoolOptions, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, DEFAULT_SSH_ALGORITHM_PREFERENCES, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type NegotiatedSshAlgorithms, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type PooledTransferClient, type ProgressEventInput, ProtocolError, type ProviderFactory, type ProviderId, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type RunSshCommandOptions, type RunSshCommandResult, type SecretProvider, type SecretSource, type SecretValue, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithmPreferences, type SshAlgorithms, SshAuthSession, SshConnectionManager, SshDataReader, SshDataWriter, SshDisconnectReason, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveCredential, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshPasswordCredential, type SshProfile, type SshPublickeyCredential, SshSessionChannel, type SshSocketFactory, type SshSocketFactoryContext, SshTransportConnection, type SshTransportConnectionOptions, SshTransportHandshake, type SshTransportHandshakeResult, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildPublickeyCredential, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createLocalProviderFactory, createMemoryProviderFactory, createOAuthTokenSecretSource, createPooledTransferClient, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isMainModule, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, negotiateSshAlgorithms, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactObject, redactSecretSource, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, runSshCommand, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };
+export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionPoolOptions, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, DEFAULT_SSH_ALGORITHM_PREFERENCES, type DefaultRetryPolicyOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type NegotiatedSshAlgorithms, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type PooledTransferClient, type ProgressEventInput, ProtocolError, type ProviderFactory, type ProviderId, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type RunSshCommandOptions, type RunSshCommandResult, type SecretProvider, type SecretSource, type SecretValue, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithmPreferences, type SshAlgorithms, SshAuthSession, SshConnectionManager, SshDataReader, SshDataWriter, SshDisconnectReason, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveCredential, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshPasswordCredential, type SshProfile, type SshPublickeyCredential, SshSessionChannel, type SshSocketFactory, type SshSocketFactoryContext, SshTransportConnection, type SshTransportConnectionOptions, SshTransportHandshake, type SshTransportHandshakeResult, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientDefaults, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildPublickeyCredential, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createDefaultRetryPolicy, createLocalProviderFactory, createMemoryProviderFactory, createOAuthTokenSecretSource, createPooledTransferClient, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isMainModule, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, negotiateSshAlgorithms, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactErrorForLogging, redactObject, redactSecretSource, redactUrlForLogging, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, runSshCommand, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };

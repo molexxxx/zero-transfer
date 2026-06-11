@@ -13,7 +13,7 @@ function throttleByteIterable(
 signal?): AsyncIterable<Uint8Array<ArrayBufferLike>>;
 ```
 
-Defined in: [src/transfers/BandwidthThrottle.ts:125](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/BandwidthThrottle.ts#L125)
+Defined in: [src/transfers/BandwidthThrottle.ts:125](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/BandwidthThrottle.ts#L125)
 
 Wraps an async iterable of byte chunks so each chunk is released only after
 the throttle has admitted its byte count.

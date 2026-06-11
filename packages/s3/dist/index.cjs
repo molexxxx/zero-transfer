@@ -60,6 +60,7 @@ __export(s3_exports, {
   copyBetween: () => copyBetween,
   createAtomicDeployPlan: () => createAtomicDeployPlan,
   createBandwidthThrottle: () => createBandwidthThrottle,
+  createDefaultRetryPolicy: () => createDefaultRetryPolicy,
   createFileSystemS3MultipartResumeStore: () => createFileSystemS3MultipartResumeStore,
   createLocalProviderFactory: () => createLocalProviderFactory,
   createMemoryProviderFactory: () => createMemoryProviderFactory,
@@ -98,8 +99,10 @@ __export(s3_exports, {
   parseRemoteManifest: () => parseRemoteManifest,
   redactCommand: () => redactCommand,
   redactConnectionProfile: () => redactConnectionProfile,
+  redactErrorForLogging: () => redactErrorForLogging,
   redactObject: () => redactObject,
   redactSecretSource: () => redactSecretSource,
+  redactUrlForLogging: () => redactUrlForLogging,
   redactValue: () => redactValue,
   resolveConnectionProfileSecrets: () => resolveConnectionProfileSecrets,
   resolveOpenSshHost: () => resolveOpenSshHost,
@@ -119,6 +122,68 @@ module.exports = __toCommonJS(s3_exports);
 
 // src/client/ZeroTransfer.ts
 var import_node_events = require("events");
+
+// src/logging/redaction.ts
+var REDACTED = "[REDACTED]";
+var SENSITIVE_KEY_PATTERN = /(?:password|passphrase|privatekey|token|secret|username|user)$/i;
+var SECRET_COMMAND_PATTERN = /^(PASS|USER|ACCT)\s+(.+)$/i;
+var URL_KEY_PATTERN = /(?:url|uri|href)$/i;
+function isSensitiveKey(key) {
+  return SENSITIVE_KEY_PATTERN.test(key.replace(/[_-]/g, ""));
+}
+function redactCommand(command) {
+  return command.replace(SECRET_COMMAND_PATTERN, (_fullMatch, commandName) => {
+    return `${commandName.toUpperCase()} ${REDACTED}`;
+  });
+}
+function redactValue(value) {
+  if (typeof value === "string") {
+    return redactCommand(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => redactValue(item));
+  }
+  if (value !== null && typeof value === "object") {
+    return redactObject(value);
+  }
+  return value;
+}
+function redactObject(input) {
+  return Object.fromEntries(
+    Object.entries(input).map(([key, value]) => {
+      if (isSensitiveKey(key)) {
+        return [key, REDACTED];
+      }
+      if (URL_KEY_PATTERN.test(key) && typeof value === "string") {
+        return [key, redactUrlForLogging(value)];
+      }
+      return [key, redactValue(value)];
+    })
+  );
+}
+function redactUrlForLogging(url) {
+  let parsed;
+  try {
+    parsed = typeof url === "string" ? new URL(url) : url;
+  } catch {
+    return REDACTED;
+  }
+  const origin = parsed.host.length > 0 ? `${parsed.protocol}//${parsed.host}` : parsed.protocol;
+  const query = parsed.search.length > 0 ? `?${REDACTED}` : "";
+  return `${origin}${parsed.pathname}${query}`;
+}
+function redactErrorForLogging(error) {
+  if (error !== null && typeof error === "object") {
+    const candidate = error;
+    if (typeof candidate.toJSON === "function") {
+      return redactObject(candidate.toJSON());
+    }
+  }
+  if (error instanceof Error) {
+    return redactObject({ message: error.message, name: error.name });
+  }
+  return { message: redactValue(typeof error === "string" ? error : String(error)) };
+}
 
 // src/errors/ZeroTransferError.ts
 var ZeroTransferError = class extends Error {
@@ -161,6 +226,11 @@ var ZeroTransferError = class extends Error {
   /**
    * Serializes the error into a plain object suitable for logs or API responses.
    *
+   * `details` and `command` are passed through secret redaction so serialized
+   * errors never leak credentials, signed URLs, or raw protocol commands. The
+   * live {@link ZeroTransferError.details | details} property stays unredacted
+   * for programmatic consumers.
+   *
    * @returns A JSON-safe object containing public structured error fields.
    */
   toJSON() {
@@ -170,12 +240,12 @@ var ZeroTransferError = class extends Error {
       message: this.message,
       protocol: this.protocol,
       host: this.host,
-      command: this.command,
+      command: this.command === void 0 ? void 0 : redactCommand(this.command),
       ftpCode: this.ftpCode,
       sftpCode: this.sftpCode,
       path: this.path,
       retryable: this.retryable,
-      details: this.details
+      details: this.details === void 0 ? void 0 : redactObject(this.details)
     };
   }
 };
@@ -698,15 +768,20 @@ var ProviderRegistry = class {
 var TransferClient = class {
   /** Provider registry used by this client. */
   registry;
+  /** Execution defaults applied when call sites omit their own values. */
+  defaults;
   logger;
   /**
    * Creates a transfer client without opening any provider connections.
    *
-   * @param options - Optional registry, provider factories, and logger.
+   * @param options - Optional registry, provider factories, logger, and execution defaults.
    */
   constructor(options = {}) {
     this.registry = options.registry ?? new ProviderRegistry();
     this.logger = options.logger ?? noopLogger;
+    if (options.defaults !== void 0) {
+      this.defaults = { ...options.defaults };
+    }
     for (const provider of options.providers ?? []) {
       this.registry.register(provider);
     }
@@ -1279,18 +1354,25 @@ var TransferEngine = class {
       for (let attemptNumber = 1; attemptNumber <= maxAttempts; attemptNumber += 1) {
         this.throwIfAborted(abortScope.signal, job);
         const attemptStartedAt = this.now();
+        const attemptScope = createAttemptScope(
+          abortScope.signal,
+          options.timeout,
+          job,
+          attemptNumber
+        );
         const context = this.createExecutionContext(
           job,
           attemptNumber,
           attemptStartedAt,
           options,
-          abortScope.signal,
+          attemptScope.signal,
           (bytesTransferred) => {
             latestBytesTransferred = bytesTransferred;
-          }
+          },
+          attemptScope.notifyProgress
         );
         try {
-          const result = await runExecutor(executor, context, abortScope.signal, job);
+          const result = await runExecutor(executor, context, attemptScope.signal, job);
           context.throwIfAborted();
           latestBytesTransferred = result.bytesTransferred;
           const completedAt = this.now();
@@ -1308,16 +1390,27 @@ var TransferEngine = class {
             summarizeError(error)
           );
           attempts.push(attempt);
-          if (error instanceof AbortError || error instanceof TimeoutError) {
+          if (error instanceof AbortError || abortScope.signal?.aborted === true) {
             throw error;
           }
-          const retryInput = { attempt: attemptNumber, error, job };
+          const retryInput = {
+            attempt: attemptNumber,
+            elapsedMs: Math.max(0, completedAt.getTime() - startedAt.getTime()),
+            error,
+            job
+          };
           const shouldRetry = attemptNumber < maxAttempts && (options.retry?.shouldRetry?.(retryInput) ?? isRetryable(error));
           if (shouldRetry) {
             options.retry?.onRetry?.(retryInput);
+            const delayMs = normalizeDelayMs(options.retry?.getDelayMs?.(retryInput));
+            if (delayMs > 0) {
+              await sleepWithAbort(delayMs, abortScope.signal, job);
+            }
             continue;
           }
           throw createTransferFailure(job, error, attempts);
+        } finally {
+          attemptScope.dispose();
         }
       }
       throw createTransferFailure(job, void 0, attempts);
@@ -1325,12 +1418,13 @@ var TransferEngine = class {
       abortScope.dispose();
     }
   }
-  createExecutionContext(job, attempt, startedAt, options, signal, updateBytesTransferred) {
+  createExecutionContext(job, attempt, startedAt, options, signal, updateBytesTransferred, notifyProgress) {
     const context = {
       attempt,
       job,
       reportProgress: (bytesTransferred, totalBytes) => {
         this.throwIfAborted(signal, job);
+        notifyProgress();
         updateBytesTransferred(bytesTransferred);
         const progressInput = {
           bytesTransferred,
@@ -1398,6 +1492,96 @@ function createAbortScope(parentSignal, timeout, job) {
     },
     signal: controller.signal
   };
+}
+function createAttemptScope(parentSignal, timeout, job, attempt) {
+  const attemptTimeoutMs = normalizeTimeoutMs(timeout?.attemptTimeoutMs);
+  const stallTimeoutMs = normalizeTimeoutMs(timeout?.stallTimeoutMs);
+  if (attemptTimeoutMs === void 0 && stallTimeoutMs === void 0) {
+    const scope = {
+      dispose: () => void 0,
+      notifyProgress: () => void 0
+    };
+    if (parentSignal !== void 0) scope.signal = parentSignal;
+    return scope;
+  }
+  const controller = new AbortController();
+  const retryable = timeout?.retryable ?? true;
+  const abortFromParent = () => controller.abort(parentSignal?.reason);
+  if (parentSignal?.aborted === true) {
+    abortFromParent();
+  } else {
+    parentSignal?.addEventListener("abort", abortFromParent, { once: true });
+  }
+  const attemptTimer = attemptTimeoutMs === void 0 ? void 0 : setTimeout(() => {
+    controller.abort(
+      new TimeoutError({
+        details: { attempt, attemptTimeoutMs, jobId: job.id, operation: job.operation },
+        message: `Transfer attempt ${String(attempt)} timed out after ${String(attemptTimeoutMs)}ms: ${job.id}`,
+        retryable
+      })
+    );
+  }, attemptTimeoutMs);
+  let stallTimer;
+  const armStallWatchdog = () => {
+    if (stallTimeoutMs === void 0 || controller.signal.aborted) return;
+    if (stallTimer !== void 0) clearTimeout(stallTimer);
+    stallTimer = setTimeout(() => {
+      controller.abort(
+        new TimeoutError({
+          details: { attempt, jobId: job.id, operation: job.operation, stallTimeoutMs },
+          message: `Transfer attempt ${String(attempt)} stalled (no progress for ${String(stallTimeoutMs)}ms): ${job.id}`,
+          retryable
+        })
+      );
+    }, stallTimeoutMs);
+  };
+  armStallWatchdog();
+  return {
+    dispose: () => {
+      if (attemptTimer !== void 0) clearTimeout(attemptTimer);
+      if (stallTimer !== void 0) clearTimeout(stallTimer);
+      parentSignal?.removeEventListener("abort", abortFromParent);
+    },
+    notifyProgress: armStallWatchdog,
+    signal: controller.signal
+  };
+}
+function sleepWithAbort(delayMs, signal, job) {
+  return new Promise((resolve, reject) => {
+    if (signal === void 0) {
+      setTimeout(resolve, delayMs);
+      return;
+    }
+    if (signal.aborted) {
+      reject(toAbortFailure(signal, job));
+      return;
+    }
+    const rejectAbort = () => {
+      clearTimeout(timer);
+      reject(toAbortFailure(signal, job));
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", rejectAbort);
+      resolve();
+    }, delayMs);
+    signal.addEventListener("abort", rejectAbort, { once: true });
+  });
+}
+function toAbortFailure(signal, job) {
+  if (signal.reason instanceof ZeroTransferError) {
+    return signal.reason;
+  }
+  return new AbortError({
+    details: { jobId: job.id, operation: job.operation },
+    message: `Transfer job aborted: ${job.id}`,
+    retryable: false
+  });
+}
+function normalizeDelayMs(value) {
+  if (value === void 0 || !Number.isFinite(value) || value <= 0) {
+    return 0;
+  }
+  return Math.floor(value);
 }
 function normalizeTimeoutMs(value) {
   if (value === void 0 || !Number.isFinite(value) || value <= 0) {
@@ -1567,7 +1751,7 @@ async function runRoute(options) {
     const executor = createProviderTransferExecutor({
       resolveSession: ({ role }) => sessions.get(role)
     });
-    return await engine.execute(job, executor, buildExecuteOptions(options));
+    return await engine.execute(job, executor, buildExecuteOptions(options, client));
   } finally {
     if (destinationSession !== void 0) {
       await destinationSession.disconnect();
@@ -1604,12 +1788,14 @@ function defaultJobId(route, now) {
   const timestamp = (now?.() ?? /* @__PURE__ */ new Date()).getTime();
   return `route:${route.id}:${timestamp.toString(36)}`;
 }
-function buildExecuteOptions(options) {
+function buildExecuteOptions(options, client) {
   const execute = {};
+  const retry = options.retry ?? client.defaults?.retry;
+  const timeout = options.timeout ?? client.defaults?.timeout;
   if (options.signal !== void 0) execute.signal = options.signal;
-  if (options.retry !== void 0) execute.retry = options.retry;
+  if (retry !== void 0) execute.retry = retry;
   if (options.onProgress !== void 0) execute.onProgress = options.onProgress;
-  if (options.timeout !== void 0) execute.timeout = options.timeout;
+  if (timeout !== void 0) execute.timeout = timeout;
   if (options.bandwidthLimit !== void 0) execute.bandwidthLimit = options.bandwidthLimit;
   return execute;
 }
@@ -1664,41 +1850,6 @@ function absolutePath(localPath) {
 }
 function defaultRouteSuffix(source, destination) {
   return `${source}->${destination}`;
-}
-
-// src/logging/redaction.ts
-var REDACTED = "[REDACTED]";
-var SENSITIVE_KEY_PATTERN = /(?:password|passphrase|privatekey|token|secret|username|user)$/i;
-var SECRET_COMMAND_PATTERN = /^(PASS|USER|ACCT)\s+(.+)$/i;
-function isSensitiveKey(key) {
-  return SENSITIVE_KEY_PATTERN.test(key.replace(/[_-]/g, ""));
-}
-function redactCommand(command) {
-  return command.replace(SECRET_COMMAND_PATTERN, (_fullMatch, commandName) => {
-    return `${commandName.toUpperCase()} ${REDACTED}`;
-  });
-}
-function redactValue(value) {
-  if (typeof value === "string") {
-    return redactCommand(value);
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => redactValue(item));
-  }
-  if (value !== null && typeof value === "object") {
-    return redactObject(value);
-  }
-  return value;
-}
-function redactObject(input) {
-  return Object.fromEntries(
-    Object.entries(input).map(([key, value]) => {
-      if (isSensitiveKey(key)) {
-        return [key, REDACTED];
-      }
-      return [key, redactValue(value)];
-    })
-  );
 }
 
 // src/profiles/SecretSource.ts
@@ -2072,11 +2223,11 @@ var import_promises2 = require("fs/promises");
 var import_node_path2 = __toESM(require("path"));
 
 // src/utils/path.ts
-var UNSAFE_FTP_ARGUMENT_PATTERN = /[\r\n]/;
+var UNSAFE_FTP_ARGUMENT_PATTERN = /[\r\n\0]/;
 function assertSafeFtpArgument(value, label = "path") {
   if (UNSAFE_FTP_ARGUMENT_PATTERN.test(value)) {
     throw new ConfigurationError({
-      message: `Unsafe FTP ${label}: CR and LF characters are not allowed`,
+      message: `Unsafe FTP ${label}: CR, LF, and NUL characters are not allowed`,
       retryable: false,
       details: {
         label
@@ -3378,7 +3529,6 @@ function expandAlgorithms(values) {
 }
 
 // src/profiles/importers/FileZillaImporter.ts
-var import_node_buffer5 = require("buffer");
 function importFileZillaSites(xml) {
   const events = tokenizeXml(xml);
   if (events.length === 0) {
@@ -3394,7 +3544,6 @@ function importFileZillaSites(xml) {
   const folderNamePending = [];
   let inServer = false;
   let serverFields = {};
-  let serverPasswordEncoding;
   let activeTag;
   let captureFolderName = false;
   for (const event of events) {
@@ -3407,13 +3556,9 @@ function importFileZillaSites(xml) {
       if (event.name === "Server") {
         inServer = true;
         serverFields = {};
-        serverPasswordEncoding = void 0;
         continue;
       }
       activeTag = event.name;
-      if (event.name === "Pass" && inServer) {
-        serverPasswordEncoding = event.attributes["encoding"];
-      }
       if (event.name === "Name" && !inServer && folderNamePending.length > 0) {
         captureFolderName = true;
       }
@@ -3439,7 +3584,7 @@ function importFileZillaSites(xml) {
       }
       if (event.name === "Server") {
         const folder = folderStack.filter((segment) => segment !== "");
-        const result = buildSiteFromFields(serverFields, serverPasswordEncoding);
+        const result = buildSiteFromFields(serverFields);
         if (result.kind === "site") {
           sites.push({ ...result.site, folder });
         } else {
@@ -3451,7 +3596,6 @@ function importFileZillaSites(xml) {
         }
         inServer = false;
         serverFields = {};
-        serverPasswordEncoding = void 0;
         activeTag = void 0;
         continue;
       }
@@ -3460,7 +3604,7 @@ function importFileZillaSites(xml) {
   }
   return { sites, skipped };
 }
-function buildSiteFromFields(fields, passwordEncoding) {
+function buildSiteFromFields(fields) {
   const name = (fields["Name"] ?? fields["Host"] ?? "Untitled").trim();
   const host = (fields["Host"] ?? "").trim();
   if (host === "") return { kind: "skipped", name };
@@ -3479,18 +3623,9 @@ function buildSiteFromFields(fields, passwordEncoding) {
   }
   const user = fields["User"]?.trim();
   if (user !== void 0 && user !== "") profile.username = { value: user };
-  let password;
   const rawPass = fields["Pass"];
-  if (rawPass !== void 0 && rawPass !== "") {
-    if (passwordEncoding === "base64") {
-      password = import_node_buffer5.Buffer.from(rawPass, "base64").toString("utf8");
-    } else {
-      password = rawPass;
-    }
-    if (password !== void 0 && password !== "") profile.password = { value: password };
-  }
-  const site = { name, profile };
-  if (password !== void 0) site.password = password;
+  const hasStoredPassword = rawPass !== void 0 && rawPass !== "";
+  const site = { hasStoredPassword, name, profile };
   const logonText = fields["Logontype"];
   if (logonText !== void 0) {
     const logonType = Number.parseInt(logonText.trim(), 10);
@@ -3733,6 +3868,62 @@ function mapFtp550(details) {
   return new PermissionDeniedError(details);
 }
 
+// src/transfers/createDefaultRetryPolicy.ts
+var DEFAULT_MAX_ATTEMPTS = 4;
+var DEFAULT_BASE_DELAY_MS = 250;
+var DEFAULT_MAX_DELAY_MS = 3e4;
+var DEFAULT_MAX_ELAPSED_MS = 3e5;
+function createDefaultRetryPolicy(options = {}) {
+  const maxAttempts = normalizePositiveInteger(options.maxAttempts, DEFAULT_MAX_ATTEMPTS);
+  const baseDelayMs = normalizeNonNegative(options.baseDelayMs, DEFAULT_BASE_DELAY_MS);
+  const maxDelayMs = normalizeNonNegative(options.maxDelayMs, DEFAULT_MAX_DELAY_MS);
+  const maxElapsedMs = normalizeNonNegative(options.maxElapsedMs, DEFAULT_MAX_ELAPSED_MS);
+  const random = options.random ?? Math.random;
+  return {
+    getDelayMs(input) {
+      const retryAfterMs = readRetryAfterMs(input.error);
+      if (retryAfterMs !== void 0) {
+        return retryAfterMs;
+      }
+      const exponentialMs = baseDelayMs * 2 ** (input.attempt - 1);
+      const cappedMs = Math.min(maxDelayMs, exponentialMs);
+      return Math.floor(random() * cappedMs);
+    },
+    maxAttempts,
+    shouldRetry(input) {
+      if (!(input.error instanceof ZeroTransferError) || !input.error.retryable) {
+        return false;
+      }
+      if (input.elapsedMs >= maxElapsedMs) {
+        return false;
+      }
+      const retryAfterMs = readRetryAfterMs(input.error);
+      if (retryAfterMs !== void 0 && input.elapsedMs + retryAfterMs > maxElapsedMs) {
+        return false;
+      }
+      return true;
+    }
+  };
+}
+function readRetryAfterMs(error) {
+  if (!(error instanceof ZeroTransferError)) return void 0;
+  const value = error.details?.["retryAfterMs"];
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return void 0;
+  return Math.floor(value);
+}
+function normalizePositiveInteger(value, fallback) {
+  if (value === void 0 || !Number.isFinite(value) || value < 1) {
+    return fallback;
+  }
+  return Math.floor(value);
+}
+function normalizeNonNegative(value, fallback) {
+  if (value === void 0 || !Number.isFinite(value) || value < 0) {
+    return fallback;
+  }
+  return Math.floor(value);
+}
+
 // src/transfers/TransferPlan.ts
 function createTransferPlan(input) {
   const plan = {
@@ -3830,8 +4021,8 @@ var TransferQueue = class {
     this.concurrency = normalizeConcurrency(options.concurrency);
     this.defaultExecutor = options.executor;
     this.resolveExecutor = options.resolveExecutor;
-    this.retry = options.retry;
-    this.timeout = options.timeout;
+    this.retry = options.retry ?? options.client?.defaults?.retry;
+    this.timeout = options.timeout ?? options.client?.defaults?.timeout;
     this.bandwidthLimit = options.bandwidthLimit;
     this.onProgress = options.onProgress;
     this.onReceipt = options.onReceipt;
@@ -4914,11 +5105,12 @@ var import_node_path3 = require("path");
 
 // src/providers/web/awsSigv4.ts
 var import_node_crypto2 = require("crypto");
+var UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD";
 function signSigV4(input) {
   const now = input.now ?? /* @__PURE__ */ new Date();
   const amzDate = formatAmzDate(now);
   const dateStamp = amzDate.slice(0, 8);
-  const payloadHash = input.body !== void 0 ? sha256Hex(input.body) : sha256Hex(new Uint8Array());
+  const payloadHash = input.unsignedPayload === true ? UNSIGNED_PAYLOAD : input.body !== void 0 ? sha256Hex(input.body) : sha256Hex(new Uint8Array());
   input.headers["host"] = input.url.host;
   input.headers["x-amz-date"] = amzDate;
   input.headers["x-amz-content-sha256"] = payloadHash;
@@ -4993,7 +5185,7 @@ function hmacHex(key, data) {
 }
 
 // src/providers/web/httpInternals.ts
-var import_node_buffer6 = require("buffer");
+var import_node_buffer5 = require("buffer");
 function parseContentRangeTotal(value) {
   const match = /\/(\d+)\s*$/.exec(value);
   if (match === null) return void 0;
@@ -5019,8 +5211,48 @@ function formatRangeHeader(offset, length) {
   const end = offset + length - 1;
   return `bytes=${String(offset)}-${String(end)}`;
 }
-function mapResponseError(response, path2) {
-  const details = { path: path2, status: response.status, statusText: response.statusText };
+var ERROR_BODY_EXCERPT_LIMIT = 2048;
+async function readErrorBodyExcerpt(response) {
+  try {
+    const text = await response.text();
+    if (text.length === 0) return void 0;
+    return text.length > ERROR_BODY_EXCERPT_LIMIT ? `${text.slice(0, ERROR_BODY_EXCERPT_LIMIT)}... [truncated]` : text;
+  } catch {
+    return void 0;
+  }
+}
+function parseRetryAfterMs(value, now = Date.now) {
+  if (value === null) return void 0;
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return void 0;
+  if (/^\d+$/.test(trimmed)) {
+    const seconds = Number.parseInt(trimmed, 10);
+    return Number.isFinite(seconds) ? seconds * 1e3 : void 0;
+  }
+  if (!/[A-Za-z]/.test(trimmed)) return void 0;
+  const retryAt = Date.parse(trimmed);
+  if (Number.isNaN(retryAt)) return void 0;
+  return Math.max(0, retryAt - now());
+}
+async function mapResponseErrorWithBody(response, path2) {
+  return mapResponseError(response, path2, await readErrorBodyExcerpt(response));
+}
+function mapResponseError(response, path2, bodyExcerpt) {
+  const details = {
+    path: path2,
+    status: response.status,
+    statusText: response.statusText
+  };
+  if (bodyExcerpt !== void 0) details["body"] = bodyExcerpt;
+  if (response.status === 429 || response.status === 503) {
+    const retryAfterMs = parseRetryAfterMs(response.headers.get("retry-after"));
+    if (retryAfterMs !== void 0) details["retryAfterMs"] = retryAfterMs;
+    return new ConnectionError({
+      details,
+      message: response.status === 429 ? `HTTP request for ${path2} was rate limited (429)` : `HTTP service unavailable for ${path2} (503)`,
+      retryable: true
+    });
+  }
   if (response.status === 401) {
     return new AuthenticationError({
       details,
@@ -5052,18 +5284,58 @@ async function* webStreamToAsyncIterable(body) {
   const reader = body.getReader();
   try {
     while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      if (value !== void 0) yield value;
+      let result;
+      try {
+        result = await reader.read();
+      } catch (error) {
+        if (error instanceof ZeroTransferError) throw error;
+        throw new ConnectionError({
+          cause: error,
+          message: "HTTP response stream was interrupted before completion",
+          retryable: true
+        });
+      }
+      if (result.done) break;
+      if (result.value !== void 0) yield result.value;
     }
   } finally {
     reader.releaseLock();
   }
 }
+function asyncIterableToReadableStream(source, onChunk) {
+  const iterator = source[Symbol.asyncIterator]();
+  return new ReadableStream({
+    async pull(controller) {
+      try {
+        const next = await iterator.next();
+        if (next.done === true) {
+          controller.close();
+          return;
+        }
+        const chunk = next.value;
+        if (chunk.byteLength === 0) {
+          return;
+        }
+        controller.enqueue(chunk);
+        onChunk(chunk);
+      } catch (error) {
+        controller.error(error);
+      }
+    },
+    async cancel(reason) {
+      if (typeof iterator.return === "function") {
+        try {
+          await iterator.return(reason);
+        } catch {
+        }
+      }
+    }
+  });
+}
 function secretToString(value) {
   if (typeof value === "string") return value;
-  if (value instanceof Uint8Array || import_node_buffer6.Buffer.isBuffer(value)) {
-    return import_node_buffer6.Buffer.from(value).toString("utf8");
+  if (value instanceof Uint8Array || import_node_buffer5.Buffer.isBuffer(value)) {
+    return import_node_buffer5.Buffer.from(value).toString("utf8");
   }
   return String(value);
 }
@@ -5275,7 +5547,7 @@ var S3FileSystem = class {
     url.searchParams.set("delimiter", "/");
     if (prefix.length > 0) url.searchParams.set("prefix", prefix);
     const response = await s3Fetch(this.options, "GET", url);
-    if (!response.ok) throw mapResponseError(response, normalized);
+    if (!response.ok) throw await mapResponseErrorWithBody(response, normalized);
     const body = await response.text();
     return parseListObjectsV2(body, prefix);
   }
@@ -5283,7 +5555,7 @@ var S3FileSystem = class {
     const normalized = normalizeRemotePath(path2);
     const url = buildObjectUrl(this.options, normalized);
     const response = await s3Fetch(this.options, "HEAD", url);
-    if (!response.ok) throw mapResponseError(response, normalized);
+    if (!response.ok) throw await mapResponseErrorWithBody(response, normalized);
     const stat = {
       exists: true,
       name: basenameRemotePath(normalized),
@@ -5323,12 +5595,12 @@ var S3TransferOperations = class {
       extraHeaders: headers
     });
     if (!response.ok && response.status !== 206) {
-      throw mapResponseError(response, normalized);
+      throw await mapResponseErrorWithBody(response, normalized);
     }
     const body = response.body;
     if (body === null) {
       throw new ConnectionError({
-        message: `S3 response had no body for ${url.toString()}`,
+        message: `S3 response had no body for ${redactUrlForLogging(url)}`,
         retryable: true
       });
     }
@@ -5364,19 +5636,33 @@ var S3TransferOperations = class {
     }
     return this.writeSingleShot(request, normalized);
   }
+  /**
+   * Single PUT upload used when multipart is disabled. Streams the body with
+   * a declared `Content-Length` (signed as `UNSIGNED-PAYLOAD`) when the
+   * caller knows the total size; S3 requires a length up front, so only
+   * unknown-size payloads fall back to buffering the content in memory.
+   */
   async writeSingleShot(request, normalized) {
     const url = buildObjectUrl(this.options, normalized);
-    const buffered = await collectChunks(request.content);
+    const totalBytes = request.totalBytes;
+    if (typeof totalBytes !== "number" || totalBytes < 0) {
+      const buffered = await collectChunks(request.content);
+      return this.singleShotFromBuffer(request, normalized, buffered);
+    }
+    let bytesTransferred = 0;
+    const stream = asyncIterableToReadableStream(request.content, (chunk) => {
+      bytesTransferred += chunk.byteLength;
+      request.reportProgress(bytesTransferred, totalBytes);
+    });
     const response = await s3Fetch(this.options, "PUT", url, {
       ...request.signal !== void 0 ? { signal: request.signal } : {},
-      body: buffered,
-      extraHeaders: { "content-type": "application/octet-stream" }
+      extraHeaders: { "content-type": "application/octet-stream" },
+      streamBody: { content: stream, contentLength: totalBytes }
     });
-    if (!response.ok) throw mapResponseError(response, normalized);
-    request.reportProgress(buffered.byteLength, buffered.byteLength);
+    if (!response.ok) throw await mapResponseErrorWithBody(response, normalized);
     const result = {
-      bytesTransferred: buffered.byteLength,
-      totalBytes: buffered.byteLength
+      bytesTransferred,
+      totalBytes
     };
     const etag = response.headers.get("etag");
     if (etag !== null) result.checksum = etag;
@@ -5440,7 +5726,7 @@ var S3TransferOperations = class {
         ...request.signal !== void 0 ? { signal: request.signal } : {},
         extraHeaders: { "content-type": "application/octet-stream" }
       });
-      if (!initiateResponse.ok) throw mapResponseError(initiateResponse, normalized);
+      if (!initiateResponse.ok) throw await mapResponseErrorWithBody(initiateResponse, normalized);
       const initiateBody = await initiateResponse.text();
       const initiated = innerText(initiateBody, "UploadId");
       if (initiated === void 0 || initiated === "") {
@@ -5479,7 +5765,7 @@ var S3TransferOperations = class {
           body: partBytes.bytes
         });
         if (!partResponse.ok) {
-          throw mapResponseError(partResponse, normalized);
+          throw await mapResponseErrorWithBody(partResponse, normalized);
         }
         const partEtag = partResponse.headers.get("etag");
         if (partEtag === null) {
@@ -5535,7 +5821,7 @@ var S3TransferOperations = class {
       if (resumeStore === void 0) {
         await abortMultipart(this.options, objectUrl, uploadId).catch(() => void 0);
       }
-      throw mapResponseError(completeResponse, normalized);
+      throw await mapResponseErrorWithBody(completeResponse, normalized);
     }
     if (resumeStore !== void 0) await resumeStore.clear(resumeKey);
     const completeBody = await completeResponse.text();
@@ -5554,7 +5840,7 @@ var S3TransferOperations = class {
       body: buffered,
       extraHeaders: { "content-type": "application/octet-stream" }
     });
-    if (!response.ok) throw mapResponseError(response, normalized);
+    if (!response.ok) throw await mapResponseErrorWithBody(response, normalized);
     request.reportProgress(buffered.byteLength, buffered.byteLength);
     const result = {
       bytesTransferred: buffered.byteLength,
@@ -5572,6 +5858,8 @@ async function s3Fetch(options, method, url, fetchOptions = {}) {
   };
   if (fetchOptions.body !== void 0) {
     headers["content-length"] = String(fetchOptions.body.byteLength);
+  } else if (fetchOptions.streamBody !== void 0) {
+    headers["content-length"] = String(fetchOptions.streamBody.contentLength);
   }
   signSigV4({
     accessKeyId: options.accessKeyId,
@@ -5582,10 +5870,16 @@ async function s3Fetch(options, method, url, fetchOptions = {}) {
     service: options.service,
     url,
     ...fetchOptions.body !== void 0 ? { body: fetchOptions.body } : {},
+    ...fetchOptions.streamBody !== void 0 ? { unsignedPayload: true } : {},
     ...options.sessionToken !== void 0 ? { sessionToken: options.sessionToken } : {}
   });
   const init = { headers, method };
-  if (fetchOptions.body !== void 0) init.body = fetchOptions.body;
+  if (fetchOptions.body !== void 0) {
+    init.body = fetchOptions.body;
+  } else if (fetchOptions.streamBody !== void 0) {
+    init.body = fetchOptions.streamBody.content;
+    init.duplex = "half";
+  }
   if (fetchOptions.signal !== void 0) init.signal = fetchOptions.signal;
   const controller = new AbortController();
   const upstreamSignal = init.signal ?? null;
@@ -5603,10 +5897,11 @@ async function s3Fetch(options, method, url, fetchOptions = {}) {
   try {
     return await options.fetch(url.toString(), { ...init, signal: controller.signal });
   } catch (error) {
+    const safeUrl = redactUrlForLogging(url);
     throw new ConnectionError({
       cause: error,
-      details: { url: url.toString() },
-      message: `S3 request to ${url.toString()} failed`,
+      details: { url: safeUrl },
+      message: `S3 request to ${safeUrl} failed`,
       retryable: true
     });
   } finally {
@@ -5779,6 +6074,7 @@ function innerText(xml, tag) {
   copyBetween,
   createAtomicDeployPlan,
   createBandwidthThrottle,
+  createDefaultRetryPolicy,
   createFileSystemS3MultipartResumeStore,
   createLocalProviderFactory,
   createMemoryProviderFactory,
@@ -5817,8 +6113,10 @@ function innerText(xml, tag) {
   parseRemoteManifest,
   redactCommand,
   redactConnectionProfile,
+  redactErrorForLogging,
   redactObject,
   redactSecretSource,
+  redactUrlForLogging,
   redactValue,
   resolveConnectionProfileSecrets,
   resolveOpenSshHost,

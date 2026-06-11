@@ -22,10 +22,19 @@
 ZeroTransfer is a unified, TypeScript-first file transfer SDK for Node.js. One typed API speaks to every backend you actually deploy against - classic protocols, web endpoints, object storage, cloud drives, and local disks - with streaming, resume, verification, dry-run plans, MFT-style scheduling, audit logs, and webhook delivery built in.
 
 ```ts
-import { createS3ProviderFactory, createTransferClient, uploadFile } from "@zero-transfer/sdk";
+import {
+  createDefaultRetryPolicy,
+  createS3ProviderFactory,
+  createTransferClient,
+  uploadFile,
+} from "@zero-transfer/sdk";
 
 const client = createTransferClient({
   providers: [createS3ProviderFactory({ region: "us-east-1" })],
+  defaults: {
+    retry: createDefaultRetryPolicy(),
+    timeout: { stallTimeoutMs: 30_000 },
+  },
 });
 
 // One call, any provider you registered above.
@@ -50,7 +59,8 @@ await uploadFile({
 
 - **One API, every provider.** Replace bespoke FTP, SFTP, S3, and cloud-drive code with a single `TransferClient` and provider-neutral sessions.
 - **TypeScript-first.** Strict types, exact optional properties, exhaustive capability discovery, and typed errors for every protocol failure mode.
-- **Streaming + resume.** Backpressure via `stream.pipeline`, byte-range downloads, multipart uploads, and cross-process resume stores for object storage.
+- **Streaming + resume.** Backpressure via `stream.pipeline`, byte-range downloads, multipart uploads, and cross-process resume stores for object storage. Memory-bounded end to end - no whole-file buffering, and framing layers cap declared packet sizes.
+- **Resilient by default.** `createDefaultRetryPolicy()` retries only retryable failures with exponential backoff + full jitter and honors `Retry-After` hints; job-scope and attempt-scope timeouts plus a stall watchdog catch connections that go silent; every receipt records per-attempt history.
 - **Dry-run-first sync.** Diff remote trees, generate `TransferPlan`s, and review every step before any byte moves.
 - **MFT batteries.** Routes, cron + interval schedules, audit logs, HMAC-signed webhooks, retention policies, and approval gates that block on human sign-off.
 - **Security by default.** Profile redaction in every log, host-key pinning, certificate fingerprint pinning, OAuth refresh, and SecretSource adapters for vaults / env / files / commands.
@@ -338,6 +348,7 @@ Real-world examples live in [`examples/`](https://github.com/tonywied17/zero-tra
 | [`webdav-sync.ts`](examples/webdav-sync.ts)                                 | WebDAV diff + sync plan with deterministic ordering.              |
 | [`signed-url-download.ts`](examples/signed-url-download.ts)                 | HTTPS signed-URL download with progress reporting.                |
 | [`transfer-queue.ts`](examples/transfer-queue.ts)                           | Concurrent transfers with `TransferQueue` + executor.             |
+| [`retry-and-timeouts.ts`](examples/retry-and-timeouts.ts)                   | Retry policy, timeout scopes, stall watchdog, client defaults.    |
 | [`dry-run-sync.ts`](examples/dry-run-sync.ts)                               | Plan a sync, print a summary, never touch bytes.                  |
 | [`mft-route.ts`](examples/mft-route.ts)                                     | SFTP→S3 cron-scheduled MFT route with audit hooks.                |
 | [`profile-from-env.ts`](examples/profile-from-env.ts)                       | Build a `ConnectionProfile` from env / file / base64-env secrets. |
@@ -361,7 +372,7 @@ npm run docs:all      # HTML + Markdown api refs + per-scope pages + per-package
 
 ## Project status
 
-ZeroTransfer is in **alpha** under the `alpha` npm dist-tag. The provider-neutral foundation, transfer engine, queue, sync planner, atomic deploy planner, MFT layer, friendly client surface, and diagnostics module are stable. Multipart / resumable upload sessions are now wired up across S3, Azure Blob, GCS, and OneDrive. Phase work in progress: broader real-server compatibility coverage and the push to higher coverage targets.
+ZeroTransfer is in **alpha** under the `alpha` npm dist-tag. The provider-neutral foundation, transfer engine, queue, sync planner, atomic deploy planner, MFT layer, friendly client surface, and diagnostics module are stable. Multipart / resumable upload sessions are wired up across S3, Azure Blob, GCS, and OneDrive, and the resilience layer (default retry policy with backoff + jitter, job/attempt timeout scopes, stall detection, approval timeouts, redaction-safe error logging, memory-bounded streaming) is in place. Phase work in progress: unified checkpoint/resume, SFTP pipelining, and parallel multipart pools.
 
 ## Contributing
 

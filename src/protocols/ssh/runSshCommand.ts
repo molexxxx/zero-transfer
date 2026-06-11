@@ -71,7 +71,7 @@ const DEFAULT_MAX_OUTPUT_BYTES = 16 * 1024 * 1024;
  * stdout, and disconnects. The TCP socket, transport, auth session, and
  * channel are all owned by this helper and torn down before it returns.
  *
- * @example Run `uname -a` with a password credential
+ * @example Run uname -a with a password credential
  * ```ts
  * import { runSshCommand } from "@zero-transfer/ssh";
  *

@@ -56,6 +56,23 @@ describe("signSigV4", () => {
     expect(result.signedHeaders).toContain("host");
   });
 
+  it("signs with the UNSIGNED-PAYLOAD content hash when unsignedPayload is set", () => {
+    const headers: Record<string, string> = {};
+    const result = signSigV4({
+      accessKeyId: "AKIA",
+      headers,
+      method: "PUT",
+      now: new Date("2030-01-01T00:00:00Z"),
+      region: "us-east-1",
+      secretAccessKey: "secret",
+      service: "s3",
+      unsignedPayload: true,
+      url: new URL("https://example.com/object"),
+    });
+    expect(headers["x-amz-content-sha256"]).toBe("UNSIGNED-PAYLOAD");
+    expect(result.authorization).toMatch(/Signature=[0-9a-f]{64}$/);
+  });
+
   it("includes x-amz-security-token when a session token is supplied", () => {
     const headers: Record<string, string> = {};
     signSigV4({

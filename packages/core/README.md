@@ -20,12 +20,13 @@ import { createLocalProviderFactory } from "@zero-transfer/core";
 
 ## Public surface
 
-This package publishes a narrowed surface of **92** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
+This package publishes a narrowed surface of **97** exports. These symbols are also available from [`@zero-transfer/sdk`](https://www.npmjs.com/package/@zero-transfer/sdk); the table below links into the full API reference:
 
 | Symbol                                                                                                                                                         | Kind      | Notes              |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
 | [`TransferClient`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/classes/TransferClient.md)                                                | Class     | See API reference. |
 | [`TransferClientOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/TransferClientOptions.md)                               | Interface | See API reference. |
+| [`TransferClientDefaults`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/TransferClientDefaults.md)                             | Interface | See API reference. |
 | [`createTransferClient`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createTransferClient.md)                                  | Function  | See API reference. |
 | [`ProviderRegistry`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/classes/ProviderRegistry.md)                                            | Class     | See API reference. |
 | [`TransferSession`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/TransferSession.md)                                           | Interface | See API reference. |
@@ -50,6 +51,8 @@ This package publishes a narrowed surface of **92** exports. These symbols are a
 | [`TransferAttempt`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/TransferAttempt.md)                                           | Interface | See API reference. |
 | [`TransferRetryPolicy`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/TransferRetryPolicy.md)                                   | Interface | See API reference. |
 | [`TransferTimeoutPolicy`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/TransferTimeoutPolicy.md)                               | Interface | See API reference. |
+| [`createDefaultRetryPolicy`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createDefaultRetryPolicy.md)                          | Function  | See API reference. |
+| [`DefaultRetryPolicyOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/DefaultRetryPolicyOptions.md)                       | Interface | See API reference. |
 | [`TransferBandwidthLimit`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/TransferBandwidthLimit.md)                             | Interface | See API reference. |
 | [`TransferVerificationResult`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/TransferVerificationResult.md)                     | Interface | See API reference. |
 | [`ProviderTransferSessionResolver`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/ProviderTransferSessionResolver.md)         | Type      | See API reference. |
@@ -107,6 +110,8 @@ This package publishes a narrowed surface of **92** exports. These symbols are a
 | [`resolveConnectionProfileSecrets`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/resolveConnectionProfileSecrets.md)            | Function  | See API reference. |
 | [`redactConnectionProfile`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/redactConnectionProfile.md)                            | Function  | See API reference. |
 | [`redactSecretSource`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/redactSecretSource.md)                                      | Function  | See API reference. |
+| [`redactErrorForLogging`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/redactErrorForLogging.md)                                | Function  | See API reference. |
+| [`redactUrlForLogging`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/redactUrlForLogging.md)                                    | Function  | See API reference. |
 | [`resolveSecret`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/resolveSecret.md)                                                | Function  | See API reference. |
 | [`createOAuthTokenSecretSource`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createOAuthTokenSecretSource.md)                  | Function  | See API reference. |
 | [`ResolvedConnectionProfile`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/ResolvedConnectionProfile.md)                       | Interface | See API reference. |
@@ -124,6 +129,7 @@ This package publishes a narrowed surface of **92** exports. These symbols are a
 | [`examples/local-copy-file.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/local-copy-file.ts)         | Local-to-local file copy example.                                |
 | [`examples/ftp-basic.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftp-basic.ts)                     | Basic FTP upload + download example.                             |
 | [`examples/transfer-queue.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/transfer-queue.ts)           | Transfer queue with concurrency, progress, and per-job receipts. |
+| [`examples/retry-and-timeouts.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/retry-and-timeouts.ts)   | Retry, timeout, and stall-detection configuration.               |
 | [`examples/dry-run-sync.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/dry-run-sync.ts)               | Dry-run sync planner.                                            |
 | [`examples/diagnose-connection.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/diagnose-connection.ts) | Diagnose a connection without exposing secrets.                  |
 

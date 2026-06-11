@@ -13,6 +13,12 @@ describe("remote path utilities", () => {
     expect(() => assertSafeFtpArgument("/bad\r\nDELE /", "remotePath")).toThrow(ConfigurationError);
   });
 
+  it("rejects NUL bytes in paths and arguments", () => {
+    expect(() => assertSafeFtpArgument("/etc/passwd\0.txt")).toThrow(ConfigurationError);
+    expect(() => normalizeRemotePath("/a/b\0/c")).toThrow(ConfigurationError);
+    expect(() => joinRemotePath("/root", "evil\0name")).toThrow(ConfigurationError);
+  });
+
   it("normalizes remote paths without escaping absolute roots", () => {
     expect(normalizeRemotePath("")).toBe(".");
     expect(normalizeRemotePath("/a//b/./c")).toBe("/a/b/c");

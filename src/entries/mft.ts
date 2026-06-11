@@ -63,6 +63,7 @@ export {
 export {
   ApprovalRegistry,
   ApprovalRejectedError,
+  ApprovalTimeoutError,
   createApprovalGate,
   type ApprovalRequest,
   type ApprovalStatus,

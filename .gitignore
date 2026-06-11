@@ -8,7 +8,6 @@ docs/api/
 .env.*
 !.env.example
 zero-transfer-remake.md
-PUBLISHING.md
 ssh-sftp-native-replacement-plan.md
 
 # Starlight docs site
@@ -18,3 +17,4 @@ website/.astro/
 website/src/content/docs/api/
 website/public/badges/
 website/public/assets/
+.docs/

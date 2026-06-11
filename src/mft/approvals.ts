@@ -55,6 +55,29 @@ export class ApprovalRejectedError extends ZeroTransferError {
   }
 }
 
+/** Error raised when an approval request is not resolved within its timeout window. */
+export class ApprovalTimeoutError extends ZeroTransferError {
+  /**
+   * Creates an approval timeout error.
+   *
+   * @param request - The approval request that timed out while pending.
+   * @param timeoutMs - Configured timeout window in milliseconds.
+   */
+  constructor(
+    public readonly request: ApprovalRequest,
+    timeoutMs: number,
+  ) {
+    super({
+      code: "approval_timeout",
+      details: { approvalId: request.id, routeId: request.routeId, timeoutMs },
+      message: `Approval "${request.id}" for route "${request.routeId}" timed out after ${String(timeoutMs)}ms`,
+      retryable: false,
+    });
+    Object.setPrototypeOf(this, ApprovalTimeoutError.prototype);
+    this.name = "ApprovalTimeoutError";
+  }
+}
+
 interface PendingResolver {
   resolve: (request: ApprovalRequest) => void;
   reject: (error: unknown) => void;
@@ -212,6 +235,12 @@ export interface CreateApprovalGateOptions {
   now?: () => Date;
   /** Observer fired when a new approval request is created. */
   onRequested?: (request: ApprovalRequest) => void;
+  /**
+   * Maximum time in milliseconds an approval may stay pending. When the window
+   * elapses the request is rejected with reason `"timeout"` and the gated run
+   * fails with a typed {@link ApprovalTimeoutError}. Unset means wait forever.
+   */
+  timeoutMs?: number;
 }
 
 /**
@@ -219,11 +248,15 @@ export interface CreateApprovalGateOptions {
  *
  * The returned runner creates an approval request, waits for resolution, and
  * dispatches the underlying runner only when the request is approved. Rejection
- * surfaces an {@link ApprovalRejectedError}. Pair with {@link MftScheduler} to
- * implement two-person rules and human-in-the-loop release flows.
+ * surfaces an {@link ApprovalRejectedError}; an unresolved request that exceeds
+ * `timeoutMs` surfaces an {@link ApprovalTimeoutError}. Pair with
+ * {@link MftScheduler} to implement two-person rules and human-in-the-loop
+ * release flows.
  *
  * @param options - Registry, downstream runner, approval-id derivation, hooks.
  * @returns A {@link ScheduleRouteRunner} that gates execution behind approval.
+ * @throws {@link ApprovalTimeoutError} From the returned runner when the
+ * request stays pending longer than `timeoutMs`.
  *
  * @example Two-person rule on a release route
  * ```ts
@@ -269,9 +302,31 @@ export function createApprovalGate(options: CreateApprovalGateOptions): Schedule
     if (input.signal.aborted) onAbort();
     input.signal.addEventListener("abort", onAbort);
 
+    let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
+    const timeoutMs = options.timeoutMs;
+    const pendingPromises: Promise<ApprovalRequest>[] = [settled];
+    if (timeoutMs !== undefined) {
+      pendingPromises.push(
+        new Promise<never>((_resolve, reject) => {
+          timeoutTimer = setTimeout(() => {
+            const current = options.registry.get(approvalId) ?? request;
+            // Reject the race first: registry.reject() below synchronously
+            // rejects `settled` with ApprovalRejectedError, which must not win
+            // the race over the typed timeout error.
+            reject(new ApprovalTimeoutError(current, timeoutMs));
+            if (current.status === "pending") {
+              settled.catch(() => undefined);
+              options.registry.reject(approvalId, { reason: "timeout" }, now());
+            }
+          }, timeoutMs);
+        }),
+      );
+    }
+
     try {
-      await settled;
+      await Promise.race(pendingPromises);
     } finally {
+      if (timeoutTimer !== undefined) clearTimeout(timeoutTimer);
       input.signal.removeEventListener("abort", onAbort);
     }
 

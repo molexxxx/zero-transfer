@@ -46,7 +46,11 @@ export type {
   MetadataCapability,
 } from "./core/CapabilitySet";
 export { ProviderRegistry } from "./core/ProviderRegistry";
-export { TransferClient, type TransferClientOptions } from "./core/TransferClient";
+export {
+  TransferClient,
+  type TransferClientDefaults,
+  type TransferClientOptions,
+} from "./core/TransferClient";
 export type { TransferSession } from "./core/TransferSession";
 export { createTransferClient } from "./core/createTransferClient";
 export {
@@ -187,7 +191,9 @@ export {
   REDACTED,
   isSensitiveKey,
   redactCommand,
+  redactErrorForLogging,
   redactObject,
+  redactUrlForLogging,
   redactValue,
 } from "./logging/redaction";
 export type { RemoteFileAdapter } from "./protocols/RemoteFileAdapter";
@@ -255,6 +261,7 @@ export {
   TransferEngine,
   TransferQueue,
   createBandwidthThrottle,
+  createDefaultRetryPolicy,
   createProviderTransferExecutor,
   createTransferJobsFromPlan,
   createTransferPlan,
@@ -263,6 +270,7 @@ export {
   type BandwidthSleep,
   type BandwidthThrottle,
   type BandwidthThrottleOptions,
+  type DefaultRetryPolicyOptions,
   type TransferAttempt,
   type TransferAttemptError,
   type TransferBandwidthLimit,
@@ -424,6 +432,7 @@ export {
 export {
   ApprovalRegistry,
   ApprovalRejectedError,
+  ApprovalTimeoutError,
   createApprovalGate,
   type ApprovalRequest,
   type ApprovalStatus,

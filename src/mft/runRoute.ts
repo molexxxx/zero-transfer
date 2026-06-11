@@ -42,11 +42,11 @@ export interface RunRouteOptions {
   now?: () => Date;
   /** Abort signal used to cancel the route execution. */
   signal?: AbortSignal;
-  /** Retry policy forwarded to the engine. */
+  /** Retry policy forwarded to the engine. Falls back to `client.defaults.retry`. */
   retry?: TransferRetryPolicy;
   /** Progress observer forwarded to the engine. */
   onProgress?: (event: TransferProgressEvent) => void;
-  /** Timeout policy forwarded to the engine. */
+  /** Timeout policy forwarded to the engine. Falls back to `client.defaults.timeout`. */
   timeout?: TransferTimeoutPolicy;
   /** Optional bandwidth limit forwarded to the engine. */
   bandwidthLimit?: TransferBandwidthLimit;
@@ -69,7 +69,12 @@ export interface RunRouteOptions {
  *
  * @example Run a pre-built route with progress + retry
  * ```ts
- * import { createTransferClient, runRoute, type MftRoute } from "@zero-transfer/sdk";
+ * import {
+ *   createDefaultRetryPolicy,
+ *   createTransferClient,
+ *   runRoute,
+ *   type MftRoute,
+ * } from "@zero-transfer/sdk";
  *
  * const route: MftRoute = {
  *   id: "nightly-export",
@@ -88,7 +93,7 @@ export interface RunRouteOptions {
  *   client,
  *   route,
  *   onProgress: (e) => console.log(`${e.bytesTransferred}/${e.totalBytes ?? "?"}`),
- *   retry: { maxAttempts: 3, baseDelayMs: 500 },
+ *   retry: createDefaultRetryPolicy({ maxAttempts: 3 }),
  * });
  * console.log(`Job ${receipt.jobId} moved ${receipt.bytesTransferred} bytes…`);
  * ```
@@ -119,7 +124,7 @@ export async function runRoute(options: RunRouteOptions): Promise<TransferReceip
       resolveSession: ({ role }) => sessions.get(role),
     });
 
-    return await engine.execute(job, executor, buildExecuteOptions(options));
+    return await engine.execute(job, executor, buildExecuteOptions(options, client));
   } finally {
     if (destinationSession !== undefined) {
       await destinationSession.disconnect();
@@ -168,12 +173,17 @@ function defaultJobId(route: MftRoute, now: (() => Date) | undefined): string {
   return `route:${route.id}:${timestamp.toString(36)}`;
 }
 
-function buildExecuteOptions(options: RunRouteOptions): TransferEngineExecuteOptions {
+function buildExecuteOptions(
+  options: RunRouteOptions,
+  client: TransferClient,
+): TransferEngineExecuteOptions {
   const execute: TransferEngineExecuteOptions = {};
+  const retry = options.retry ?? client.defaults?.retry;
+  const timeout = options.timeout ?? client.defaults?.timeout;
   if (options.signal !== undefined) execute.signal = options.signal;
-  if (options.retry !== undefined) execute.retry = options.retry;
+  if (retry !== undefined) execute.retry = retry;
   if (options.onProgress !== undefined) execute.onProgress = options.onProgress;
-  if (options.timeout !== undefined) execute.timeout = options.timeout;
+  if (timeout !== undefined) execute.timeout = timeout;
   if (options.bandwidthLimit !== undefined) execute.bandwidthLimit = options.bandwidthLimit;
   return execute;
 }

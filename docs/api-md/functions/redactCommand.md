@@ -10,7 +10,7 @@
 function redactCommand(command): string;
 ```
 
-Defined in: [src/logging/redaction.ts:31](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/logging/redaction.ts#L31)
+Defined in: [src/logging/redaction.ts:32](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/logging/redaction.ts#L32)
 
 Redacts sensitive FTP command payloads while preserving the command name.
 
