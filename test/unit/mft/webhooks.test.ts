@@ -192,9 +192,9 @@ describe("createWebhookAuditLog", () => {
   });
 
   it("validates the target eagerly at creation", () => {
-    expect(() =>
-      createWebhookAuditLog({ target: { url: "http://hooks.example.com/in" } }),
-    ).toThrow(ConfigurationError);
+    expect(() => createWebhookAuditLog({ target: { url: "http://hooks.example.com/in" } })).toThrow(
+      ConfigurationError,
+    );
   });
 
   it("invokes onDelivery with the result", async () => {

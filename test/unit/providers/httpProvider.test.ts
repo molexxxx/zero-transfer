@@ -220,9 +220,7 @@ describe("createHttpProviderFactory", () => {
 
   it("captures a truncated error body excerpt in error details", async () => {
     const fetchImpl: HttpFetch = () =>
-      Promise.resolve(
-        new Response("<Error><Code>SlowDown</Code></Error>", { status: 503 }),
-      );
+      Promise.resolve(new Response("<Error><Code>SlowDown</Code></Error>", { status: 503 }));
     const session = await connectHttp({ fetch: fetchImpl });
     const transfers = session.transfers;
     if (transfers === undefined) throw new Error("Expected transfers");

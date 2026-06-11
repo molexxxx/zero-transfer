@@ -7,14 +7,14 @@ description: ZeroTransferError taxonomy, structured details, and the diagnostics
 
 All SDK errors derive from [`ZeroTransferError`](../../api/classes/zerotransfererror/). They carry:
 
-| Field       | Type                  | Notes                                                       |
-| ----------- | --------------------- | ----------------------------------------------------------- |
-| `name`      | `string`              | The concrete subclass name (e.g. `"ConnectionError"`).      |
-| `code`      | `string`              | Stable, machine-readable category (see below).              |
-| `message`   | `string`              | Human-readable, redaction-safe.                             |
-| `details`   | `object \| undefined` | Structured context (provider, host, path, byte counts, …).  |
-| `cause`     | `unknown`             | The wrapped underlying error, when one exists.              |
-| `retryable` | `boolean`             | Whether a retry policy may safely retry this failure.       |
+| Field       | Type                  | Notes                                                      |
+| ----------- | --------------------- | ---------------------------------------------------------- |
+| `name`      | `string`              | The concrete subclass name (e.g. `"ConnectionError"`).     |
+| `code`      | `string`              | Stable, machine-readable category (see below).             |
+| `message`   | `string`              | Human-readable, redaction-safe.                            |
+| `details`   | `object \| undefined` | Structured context (provider, host, path, byte counts, …). |
+| `cause`     | `unknown`             | The wrapped underlying error, when one exists.             |
+| `retryable` | `boolean`             | Whether a retry policy may safely retry this failure.      |
 
 Protocol context (`protocol`, `host`, `command`, `path`, `ftpCode`, `sftpCode`) is attached when known, so application code never has to parse error messages.
 
@@ -22,22 +22,22 @@ Protocol context (`protocol`, `host`, `command`, `path`, `ftpCode`, `sftpCode`) 
 
 Each subclass has a stable default code:
 
-| Class                     | Default code                          | Raised when                                              |
-| ------------------------- | ------------------------------------- | -------------------------------------------------------- |
-| `ConnectionError`         | `ZERO_TRANSFER_CONNECTION_ERROR`      | Transport could not be opened or was lost mid-operation. |
-| `AuthenticationError`     | `ZERO_TRANSFER_AUTHENTICATION_ERROR`  | Credentials rejected.                                    |
-| `AuthorizationError`      | `ZERO_TRANSFER_AUTHORIZATION_ERROR`   | Authenticated but not allowed.                           |
-| `PathNotFoundError`       | `ZERO_TRANSFER_PATH_NOT_FOUND`        | Remote path missing.                                     |
-| `PathAlreadyExistsError`  | `ZERO_TRANSFER_PATH_ALREADY_EXISTS`   | Destination already exists.                              |
-| `PermissionDeniedError`   | `ZERO_TRANSFER_PERMISSION_DENIED`     | Server returned 403 / 550.                               |
-| `TimeoutError`            | `ZERO_TRANSFER_TIMEOUT`               | Deadline or stall watchdog fired.                        |
-| `AbortError`              | `ZERO_TRANSFER_ABORTED`               | Caller-initiated cancellation via `AbortSignal`.         |
-| `ProtocolError`           | `ZERO_TRANSFER_PROTOCOL_ERROR`        | Server replied with malformed or unexpected data.        |
-| `ParseError`              | `ZERO_TRANSFER_PARSE_ERROR`           | A server payload could not be parsed safely.             |
-| `TransferError`           | `ZERO_TRANSFER_TRANSFER_ERROR`        | A transfer failed after all attempts were exhausted.     |
-| `VerificationError`       | `ZERO_TRANSFER_VERIFICATION_ERROR`    | Verified hash didn't match expected.                     |
-| `UnsupportedFeatureError` | `ZERO_TRANSFER_UNSUPPORTED_FEATURE`   | Operation isn't available on this provider.              |
-| `ConfigurationError`      | `ZERO_TRANSFER_CONFIGURATION_ERROR`   | Invalid options or profile.                              |
+| Class                     | Default code                         | Raised when                                              |
+| ------------------------- | ------------------------------------ | -------------------------------------------------------- |
+| `ConnectionError`         | `ZERO_TRANSFER_CONNECTION_ERROR`     | Transport could not be opened or was lost mid-operation. |
+| `AuthenticationError`     | `ZERO_TRANSFER_AUTHENTICATION_ERROR` | Credentials rejected.                                    |
+| `AuthorizationError`      | `ZERO_TRANSFER_AUTHORIZATION_ERROR`  | Authenticated but not allowed.                           |
+| `PathNotFoundError`       | `ZERO_TRANSFER_PATH_NOT_FOUND`       | Remote path missing.                                     |
+| `PathAlreadyExistsError`  | `ZERO_TRANSFER_PATH_ALREADY_EXISTS`  | Destination already exists.                              |
+| `PermissionDeniedError`   | `ZERO_TRANSFER_PERMISSION_DENIED`    | Server returned 403 / 550.                               |
+| `TimeoutError`            | `ZERO_TRANSFER_TIMEOUT`              | Deadline or stall watchdog fired.                        |
+| `AbortError`              | `ZERO_TRANSFER_ABORTED`              | Caller-initiated cancellation via `AbortSignal`.         |
+| `ProtocolError`           | `ZERO_TRANSFER_PROTOCOL_ERROR`       | Server replied with malformed or unexpected data.        |
+| `ParseError`              | `ZERO_TRANSFER_PARSE_ERROR`          | A server payload could not be parsed safely.             |
+| `TransferError`           | `ZERO_TRANSFER_TRANSFER_ERROR`       | A transfer failed after all attempts were exhausted.     |
+| `VerificationError`       | `ZERO_TRANSFER_VERIFICATION_ERROR`   | Verified hash didn't match expected.                     |
+| `UnsupportedFeatureError` | `ZERO_TRANSFER_UNSUPPORTED_FEATURE`  | Operation isn't available on this provider.              |
+| `ConfigurationError`      | `ZERO_TRANSFER_CONFIGURATION_ERROR`  | Invalid options or profile.                              |
 
 ### Pattern: branch on class or `code`
 

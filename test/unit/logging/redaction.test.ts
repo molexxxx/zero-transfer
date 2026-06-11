@@ -56,9 +56,10 @@ describe("redaction", () => {
   });
 
   it("redacts string values under url-like keys in objects", () => {
-    expect(
-      redactObject({ host: "h", url: "https://example.com/k?token=abc" }),
-    ).toEqual({ host: "h", url: `https://example.com/k?${REDACTED}` });
+    expect(redactObject({ host: "h", url: "https://example.com/k?token=abc" })).toEqual({
+      host: "h",
+      url: `https://example.com/k?${REDACTED}`,
+    });
   });
 
   it("converts thrown values into redacted JSON-safe records", () => {
