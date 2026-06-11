@@ -20,6 +20,7 @@ This is the actual surface published by [`@zero-transfer/core`](https://www.npmj
 | --- | --- | --- |
 | [`TransferClient`](../api-md/classes/TransferClient.md) | Class | See API reference. |
 | [`TransferClientOptions`](../api-md/interfaces/TransferClientOptions.md) | Interface | See API reference. |
+| [`TransferClientDefaults`](../api-md/interfaces/TransferClientDefaults.md) | Interface | See API reference. |
 | [`createTransferClient`](../api-md/functions/createTransferClient.md) | Function | See API reference. |
 | [`ProviderRegistry`](../api-md/classes/ProviderRegistry.md) | Class | See API reference. |
 | [`TransferSession`](../api-md/interfaces/TransferSession.md) | Interface | See API reference. |
@@ -44,6 +45,8 @@ This is the actual surface published by [`@zero-transfer/core`](https://www.npmj
 | [`TransferAttempt`](../api-md/interfaces/TransferAttempt.md) | Interface | See API reference. |
 | [`TransferRetryPolicy`](../api-md/interfaces/TransferRetryPolicy.md) | Interface | See API reference. |
 | [`TransferTimeoutPolicy`](../api-md/interfaces/TransferTimeoutPolicy.md) | Interface | See API reference. |
+| [`createDefaultRetryPolicy`](../api-md/functions/createDefaultRetryPolicy.md) | Function | See API reference. |
+| [`DefaultRetryPolicyOptions`](../api-md/interfaces/DefaultRetryPolicyOptions.md) | Interface | See API reference. |
 | [`TransferBandwidthLimit`](../api-md/interfaces/TransferBandwidthLimit.md) | Interface | See API reference. |
 | [`TransferVerificationResult`](../api-md/interfaces/TransferVerificationResult.md) | Interface | See API reference. |
 | [`ProviderTransferSessionResolver`](../api-md/type-aliases/ProviderTransferSessionResolver.md) | Type | See API reference. |
@@ -101,6 +104,8 @@ This is the actual surface published by [`@zero-transfer/core`](https://www.npmj
 | [`resolveConnectionProfileSecrets`](../api-md/functions/resolveConnectionProfileSecrets.md) | Function | See API reference. |
 | [`redactConnectionProfile`](../api-md/functions/redactConnectionProfile.md) | Function | See API reference. |
 | [`redactSecretSource`](../api-md/functions/redactSecretSource.md) | Function | See API reference. |
+| [`redactErrorForLogging`](../api-md/functions/redactErrorForLogging.md) | Function | See API reference. |
+| [`redactUrlForLogging`](../api-md/functions/redactUrlForLogging.md) | Function | See API reference. |
 | [`resolveSecret`](../api-md/functions/resolveSecret.md) | Function | See API reference. |
 | [`createOAuthTokenSecretSource`](../api-md/functions/createOAuthTokenSecretSource.md) | Function | See API reference. |
 | [`ResolvedConnectionProfile`](../api-md/interfaces/ResolvedConnectionProfile.md) | Interface | See API reference. |
@@ -118,6 +123,7 @@ This is the actual surface published by [`@zero-transfer/core`](https://www.npmj
 | [`examples/local-copy-file.ts`](../../examples/local-copy-file.ts) | Local-to-local file copy example. |
 | [`examples/ftp-basic.ts`](../../examples/ftp-basic.ts) | Basic FTP upload + download example. |
 | [`examples/transfer-queue.ts`](../../examples/transfer-queue.ts) | Transfer queue with concurrency, progress, and per-job receipts. |
+| [`examples/retry-and-timeouts.ts`](../../examples/retry-and-timeouts.ts) | Retry, timeout, and stall-detection configuration. |
 | [`examples/dry-run-sync.ts`](../../examples/dry-run-sync.ts) | Dry-run sync planner. |
 | [`examples/diagnose-connection.ts`](../../examples/diagnose-connection.ts) | Diagnose a connection without exposing secrets. |
 

@@ -10,9 +10,13 @@
 function assertSafeFtpArgument(value, label?): string;
 ```
 
-Defined in: [src/utils/path.ts:21](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/utils/path.ts#L21)
+Defined in: [src/utils/path.ts:26](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/utils/path.ts#L26)
 
 Validates that an FTP command argument cannot inject additional command lines.
+
+NUL bytes are rejected alongside CR/LF: C-string-based servers and filesystem
+APIs truncate at the first NUL, which lets a crafted path smuggle a different
+effective target past validation.
 
 ## Parameters
 
@@ -29,4 +33,4 @@ The original value when it is safe.
 
 ## Throws
 
-[ConfigurationError](../classes/ConfigurationError.md) When the value contains CR or LF characters.
+[ConfigurationError](../classes/ConfigurationError.md) When the value contains CR, LF, or NUL characters.

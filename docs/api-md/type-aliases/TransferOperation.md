@@ -18,6 +18,6 @@ type TransferOperation =
 };
 ```
 
-Defined in: [src/transfers/TransferJob.ts:9](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/TransferJob.ts#L9)
+Defined in: [src/transfers/TransferJob.ts:9](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/TransferJob.ts#L9)
 
 Provider-neutral transfer operation names.

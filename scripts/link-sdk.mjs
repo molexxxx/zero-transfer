@@ -9,7 +9,7 @@
  * Runs from `postinstall` so it is invoked after `npm install` / `npm ci` in
  * both local dev and CI.
  */
-import { existsSync, lstatSync, rmSync, symlinkSync } from "node:fs";
+import { existsSync, lstatSync, rmdirSync, rmSync, symlinkSync, unlinkSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -22,9 +22,26 @@ if (!existsSync(resolve(repoRoot, "node_modules", "@zero-transfer"))) {
   process.exit(0);
 }
 
-if (existsSync(target)) {
-  const stat = lstatSync(target);
-  if (stat.isSymbolicLink() || stat.isJunction?.() || stat.isDirectory()) {
+// lstat (not existsSync) so a dangling link from a previous run is still cleaned up.
+let targetStat;
+try {
+  targetStat = lstatSync(target);
+} catch {
+  targetStat = undefined;
+}
+
+if (targetStat !== undefined) {
+  if (targetStat.isSymbolicLink()) {
+    // Remove only the link itself - never recurse, since the link points at the
+    // repo root. unlink handles POSIX symlinks; rmdir handles Windows junctions
+    // and directory symlinks, and refuses to delete a real directory's contents.
+    try {
+      unlinkSync(target);
+    } catch {
+      rmdirSync(target);
+    }
+  } else if (targetStat.isDirectory()) {
+    // Registry-installed package contents; bounded to the package directory.
     rmSync(target, { force: true, recursive: true });
   }
 }

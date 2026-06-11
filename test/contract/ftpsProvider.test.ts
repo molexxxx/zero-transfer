@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  ConfigurationError,
   ConnectionError,
   ProtocolError,
   createFtpsProviderFactory,
@@ -188,6 +189,21 @@ describe("createFtpsProviderFactory", () => {
         },
       }),
     ).rejects.toBeInstanceOf(ConnectionError);
+  });
+
+  it("rejects pinning combined with rejectUnauthorized: false as a configuration error", async () => {
+    const client = createTransferClient({ providers: [createFtpsProviderFactory()] });
+
+    await expect(
+      client.connect({
+        ...profile,
+        tls: {
+          ...profile.tls,
+          pinnedFingerprint256: certificateFingerprint256,
+          rejectUnauthorized: false,
+        },
+      }),
+    ).rejects.toBeInstanceOf(ConfigurationError);
   });
 
   it("raises typed protocol errors when AUTH TLS is rejected", async () => {

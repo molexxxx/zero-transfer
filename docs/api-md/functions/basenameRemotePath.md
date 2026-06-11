@@ -10,7 +10,7 @@
 function basenameRemotePath(input): string;
 ```
 
-Defined in: [src/utils/path.ts:100](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/utils/path.ts#L100)
+Defined in: [src/utils/path.ts:105](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/utils/path.ts#L105)
 
 Extracts the final name segment from a normalized remote path.
 

@@ -11,6 +11,7 @@ export const REDACTED = "[REDACTED]";
 
 const SENSITIVE_KEY_PATTERN = /(?:password|passphrase|privatekey|token|secret|username|user)$/i;
 const SECRET_COMMAND_PATTERN = /^(PASS|USER|ACCT)\s+(.+)$/i;
+const URL_KEY_PATTERN = /(?:url|uri|href)$/i;
 
 /**
  * Checks whether an object key is likely to contain sensitive data.
@@ -69,7 +70,64 @@ export function redactObject(input: Record<string, unknown>): Record<string, unk
         return [key, REDACTED];
       }
 
+      if (URL_KEY_PATTERN.test(key) && typeof value === "string") {
+        return [key, redactUrlForLogging(value)];
+      }
+
       return [key, redactValue(value)];
     }),
   );
+}
+
+/**
+ * Strips credentials and query/fragment content from a URL before logging.
+ *
+ * Query strings routinely carry bearer material - SigV4 `X-Amz-Signature`
+ * values, SAS tokens, signed-URL parameters - so the entire search and hash
+ * segments are replaced rather than filtered key-by-key. Embedded
+ * `user:password@` userinfo is removed. Origin and pathname are preserved
+ * because they are what operators need to correlate a failing request.
+ *
+ * @param url - Absolute URL string or `URL` instance to sanitize.
+ * @returns A loggable URL string, or {@link REDACTED} when the value cannot be
+ * parsed as a URL (an unparsable value may still embed credentials).
+ */
+export function redactUrlForLogging(url: string | URL): string {
+  let parsed: URL;
+  try {
+    parsed = typeof url === "string" ? new URL(url) : url;
+  } catch {
+    return REDACTED;
+  }
+
+  const origin =
+    parsed.host.length > 0 ? `${parsed.protocol}//${parsed.host}` : parsed.protocol;
+  const query = parsed.search.length > 0 ? `?${REDACTED}` : "";
+  return `${origin}${parsed.pathname}${query}`;
+}
+
+/**
+ * Converts an arbitrary thrown value into a JSON-safe, secret-free record.
+ *
+ * Structured SDK errors are serialized through their `toJSON()` (which already
+ * redacts details); plain errors contribute name/message/stack-free context;
+ * other values are stringified. Use this at every internal log site that
+ * records a caught error.
+ *
+ * @param error - Caught value of unknown shape.
+ * @returns A redacted, JSON-safe object describing the error.
+ */
+export function redactErrorForLogging(error: unknown): Record<string, unknown> {
+  if (error !== null && typeof error === "object") {
+    const candidate = error as { toJSON?: () => Record<string, unknown> };
+    if (typeof candidate.toJSON === "function") {
+      return redactObject(candidate.toJSON());
+    }
+  }
+
+  if (error instanceof Error) {
+    return redactObject({ message: error.message, name: error.name });
+  }
+
+  return { message: redactValue(typeof error === "string" ? error : String(error)) };
 }

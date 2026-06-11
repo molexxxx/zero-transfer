@@ -10,7 +10,7 @@
 function createMemoryProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/memory/MemoryProvider.ts:104](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/providers/memory/MemoryProvider.ts#L104)
+Defined in: [src/providers/memory/MemoryProvider.ts:104](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/providers/memory/MemoryProvider.ts#L104)
 
 Creates a provider factory backed by deterministic in-memory fixture entries.
 

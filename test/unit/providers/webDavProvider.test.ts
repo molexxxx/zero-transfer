@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AuthenticationError,
   PathNotFoundError,
@@ -18,6 +18,10 @@ const MULTISTATUS = (body: string) =>
   });
 
 describe("createWebDavProviderFactory", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("advertises WebDAV capabilities", () => {
     const factory = createWebDavProviderFactory({ fetch: notImplementedFetch });
     expect(factory.id).toBe("webdav");
@@ -157,11 +161,37 @@ describe("createWebDavProviderFactory", () => {
 
     expect(captured[0]?.init?.method).toBe("PUT");
     expect(captured[0]?.url).toBe("http://example.com/upload.txt");
+    // Default policy is now "always": unknown-size bodies stream chunked
+    // instead of being buffered.
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["Content-Length"]).toBeUndefined();
+    expect(captured[0]?.init?.body).toBeInstanceOf(ReadableStream);
+    expect(result.bytesTransferred).toBe(5);
+    expect(result.checksum).toBe('"new-etag"');
+  });
+
+  it("buffers unknown-size PUT bodies when uploadStreaming is 'when-known-size'", async () => {
+    const captured: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}), url: input });
+      return Promise.resolve(new Response(null, { status: 201 }));
+    };
+    const factory = createWebDavProviderFactory({
+      fetch: fetchImpl,
+      uploadStreaming: "when-known-size",
+    });
+    const session = await factory.create().connect({ host: "example.com", protocol: "ftp" });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    const result = await transfers.write(
+      makeWriteRequest("/upload.txt", new TextEncoder().encode("hello")),
+    );
+
     const headers = captured[0]?.init?.headers as Record<string, string>;
     expect(headers["Content-Length"]).toBe("5");
     expect(captured[0]?.init?.body).toBeInstanceOf(Uint8Array);
     expect(result.bytesTransferred).toBe(5);
-    expect(result.checksum).toBe('"new-etag"');
   });
 
   it("streams PUT bodies when totalBytes is known", async () => {
@@ -243,6 +273,7 @@ describe("createWebDavProviderFactory", () => {
   });
 
   it("attaches Basic auth when credentials are provided", async () => {
+    vi.spyOn(process, "emitWarning").mockImplementation(() => undefined);
     const captured: Array<{ init?: RequestInit }> = [];
     const fetchImpl: HttpFetch = (_input, init) => {
       captured.push({ ...(init !== undefined ? { init } : {}) });
@@ -258,6 +289,41 @@ describe("createWebDavProviderFactory", () => {
     await session.fs.list("/").catch(() => undefined);
     const headers = captured[0]?.init?.headers as Record<string, string> | undefined;
     expect(headers?.["Authorization"]).toBe(`Basic ${Buffer.from("alice:pw").toString("base64")}`);
+  });
+
+  it("rejects enforceHttps on a cleartext transport and accepts it on a secure one", () => {
+    expect(() =>
+      createWebDavProviderFactory({ enforceHttps: true, fetch: notImplementedFetch }),
+    ).toThrow(/enforceHttps/);
+    expect(() =>
+      createWebDavProviderFactory({
+        enforceHttps: true,
+        fetch: notImplementedFetch,
+        secure: true,
+      }),
+    ).not.toThrow();
+  });
+
+  it("captures a truncated error body excerpt on failed PUT", async () => {
+    const fetchImpl: HttpFetch = (_input, init) =>
+      Promise.resolve(
+        init?.method === "PUT"
+          ? new Response("<d:error>quota exceeded</d:error>", { status: 507 })
+          : MULTISTATUS('<D:multistatus xmlns:D="DAV:"></D:multistatus>'),
+      );
+    const session = await connect({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    let failure: unknown;
+    try {
+      await transfers.write(makeWriteRequest("/big.bin", new Uint8Array([1, 2, 3])));
+    } catch (error) {
+      failure = error;
+    }
+    expect((failure as { details?: Record<string, unknown> }).details?.["body"]).toContain(
+      "quota exceeded",
+    );
   });
 
   it("throws ConfigurationError when no fetch implementation is available", () => {

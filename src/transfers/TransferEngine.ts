@@ -49,16 +49,32 @@ export interface TransferRetryDecisionInput {
   error: unknown;
   /** One-based attempt number that failed. */
   attempt: number;
+  /** Milliseconds elapsed since the engine execution started, including prior attempts and delays. */
+  elapsedMs: number;
   /** Job being executed. */
   job: TransferJob;
 }
 
-/** Retry policy for transfer execution. */
+/**
+ * Retry policy for transfer execution.
+ *
+ * Use {@link createDefaultRetryPolicy} for a production-ready policy with
+ * exponential backoff, full jitter, and `Retry-After` support, or implement
+ * the hooks directly for full control.
+ */
 export interface TransferRetryPolicy {
   /** Maximum total attempts, including the first attempt. Defaults to `1`. */
   maxAttempts?: number;
   /** Decides whether a failed attempt should be retried. Defaults to SDK retryability metadata. */
   shouldRetry?(input: TransferRetryDecisionInput): boolean;
+  /**
+   * Computes the delay before the next attempt in milliseconds.
+   *
+   * The engine sleeps for the returned duration with an abort-aware timer:
+   * cancelling the job during the delay rejects immediately instead of
+   * waiting out the backoff. Non-positive or missing values retry at once.
+   */
+  getDelayMs?(input: TransferRetryDecisionInput): number;
   /** Observes retry decisions before the next attempt starts. */
   onRetry?(input: TransferRetryDecisionInput): void;
 }
@@ -95,7 +111,12 @@ export interface TransferEngineOptions {
  *
  * @example Execute a single job with a custom executor
  * ```ts
- * import { TransferEngine, type TransferExecutor, type TransferJob } from "@zero-transfer/sdk";
+ * import {
+ *   TransferEngine,
+ *   createDefaultRetryPolicy,
+ *   type TransferExecutor,
+ *   type TransferJob,
+ * } from "@zero-transfer/sdk";
  *
  * const engine = new TransferEngine();
  *
@@ -113,7 +134,8 @@ export interface TransferEngineOptions {
  * };
  *
  * const receipt = await engine.execute(job, executor, {
- *   retry: { maxAttempts: 3, baseDelayMs: 250 },
+ *   retry: createDefaultRetryPolicy(),
+ *   timeout: { stallTimeoutMs: 30_000 },
  * });
  * console.log(receipt.attempts.length); // 1 on success
  * ```
@@ -156,19 +178,26 @@ export class TransferEngine {
         this.throwIfAborted(abortScope.signal, job);
 
         const attemptStartedAt = this.now();
+        const attemptScope = createAttemptScope(
+          abortScope.signal,
+          options.timeout,
+          job,
+          attemptNumber,
+        );
         const context = this.createExecutionContext(
           job,
           attemptNumber,
           attemptStartedAt,
           options,
-          abortScope.signal,
+          attemptScope.signal,
           (bytesTransferred) => {
             latestBytesTransferred = bytesTransferred;
           },
+          attemptScope.notifyProgress,
         );
 
         try {
-          const result = await runExecutor(executor, context, abortScope.signal, job);
+          const result = await runExecutor(executor, context, attemptScope.signal, job);
           context.throwIfAborted();
           latestBytesTransferred = result.bytesTransferred;
 
@@ -189,21 +218,35 @@ export class TransferEngine {
           );
           attempts.push(attempt);
 
-          if (error instanceof AbortError || error instanceof TimeoutError) {
+          // Job-scope failures (caller abort or whole-job timeout) end execution
+          // unconditionally. Attempt-scope timeouts and stalls fall through to the
+          // retry decision like any other attempt failure.
+          if (error instanceof AbortError || abortScope.signal?.aborted === true) {
             throw error;
           }
 
-          const retryInput: TransferRetryDecisionInput = { attempt: attemptNumber, error, job };
+          const retryInput: TransferRetryDecisionInput = {
+            attempt: attemptNumber,
+            elapsedMs: Math.max(0, completedAt.getTime() - startedAt.getTime()),
+            error,
+            job,
+          };
           const shouldRetry =
             attemptNumber < maxAttempts &&
             (options.retry?.shouldRetry?.(retryInput) ?? isRetryable(error));
 
           if (shouldRetry) {
             options.retry?.onRetry?.(retryInput);
+            const delayMs = normalizeDelayMs(options.retry?.getDelayMs?.(retryInput));
+            if (delayMs > 0) {
+              await sleepWithAbort(delayMs, abortScope.signal, job);
+            }
             continue;
           }
 
           throw createTransferFailure(job, error, attempts);
+        } finally {
+          attemptScope.dispose();
         }
       }
 
@@ -220,12 +263,14 @@ export class TransferEngine {
     options: TransferEngineExecuteOptions,
     signal: AbortSignal | undefined,
     updateBytesTransferred: (bytesTransferred: number) => void,
+    notifyProgress: () => void,
   ): TransferExecutionContext {
     const context: TransferExecutionContext = {
       attempt,
       job,
       reportProgress: (bytesTransferred, totalBytes) => {
         this.throwIfAborted(signal, job);
+        notifyProgress();
         updateBytesTransferred(bytesTransferred);
         const progressInput = {
           bytesTransferred,
@@ -317,6 +362,141 @@ function createAbortScope(
     },
     signal: controller.signal,
   };
+}
+
+interface AttemptScope {
+  signal?: AbortSignal;
+  /** Resets the stall watchdog. Wired into the engine's progress interception. */
+  notifyProgress: () => void;
+  dispose: () => void;
+}
+
+/**
+ * Builds the per-attempt abort scope nested under the job-scope signal.
+ *
+ * The attempt controller aborts on parent abort (propagating the parent
+ * reason), on attempt timeout, and on stall (no progress reports within
+ * `stallTimeoutMs`). Attempt-scope timeout errors are retryable by default so
+ * they flow into the retry policy; job-scope failures are handled upstream.
+ */
+function createAttemptScope(
+  parentSignal: AbortSignal | undefined,
+  timeout: TransferTimeoutPolicy | undefined,
+  job: TransferJob,
+  attempt: number,
+): AttemptScope {
+  const attemptTimeoutMs = normalizeTimeoutMs(timeout?.attemptTimeoutMs);
+  const stallTimeoutMs = normalizeTimeoutMs(timeout?.stallTimeoutMs);
+
+  if (attemptTimeoutMs === undefined && stallTimeoutMs === undefined) {
+    const scope: AttemptScope = {
+      dispose: () => undefined,
+      notifyProgress: () => undefined,
+    };
+    if (parentSignal !== undefined) scope.signal = parentSignal;
+    return scope;
+  }
+
+  const controller = new AbortController();
+  const retryable = timeout?.retryable ?? true;
+  const abortFromParent = (): void => controller.abort(parentSignal?.reason);
+
+  if (parentSignal?.aborted === true) {
+    abortFromParent();
+  } else {
+    parentSignal?.addEventListener("abort", abortFromParent, { once: true });
+  }
+
+  const attemptTimer =
+    attemptTimeoutMs === undefined
+      ? undefined
+      : setTimeout(() => {
+          controller.abort(
+            new TimeoutError({
+              details: { attempt, attemptTimeoutMs, jobId: job.id, operation: job.operation },
+              message: `Transfer attempt ${String(attempt)} timed out after ${String(attemptTimeoutMs)}ms: ${job.id}`,
+              retryable,
+            }),
+          );
+        }, attemptTimeoutMs);
+
+  let stallTimer: ReturnType<typeof setTimeout> | undefined;
+  const armStallWatchdog = (): void => {
+    if (stallTimeoutMs === undefined || controller.signal.aborted) return;
+    if (stallTimer !== undefined) clearTimeout(stallTimer);
+    stallTimer = setTimeout(() => {
+      controller.abort(
+        new TimeoutError({
+          details: { attempt, jobId: job.id, operation: job.operation, stallTimeoutMs },
+          message:
+            `Transfer attempt ${String(attempt)} stalled ` +
+            `(no progress for ${String(stallTimeoutMs)}ms): ${job.id}`,
+          retryable,
+        }),
+      );
+    }, stallTimeoutMs);
+  };
+  armStallWatchdog();
+
+  return {
+    dispose: () => {
+      if (attemptTimer !== undefined) clearTimeout(attemptTimer);
+      if (stallTimer !== undefined) clearTimeout(stallTimer);
+      parentSignal?.removeEventListener("abort", abortFromParent);
+    },
+    notifyProgress: armStallWatchdog,
+    signal: controller.signal,
+  };
+}
+
+/** Sleeps between retry attempts, rejecting immediately when the job aborts. */
+function sleepWithAbort(
+  delayMs: number,
+  signal: AbortSignal | undefined,
+  job: TransferJob,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal === undefined) {
+      setTimeout(resolve, delayMs);
+      return;
+    }
+
+    if (signal.aborted) {
+      reject(toAbortFailure(signal, job));
+      return;
+    }
+
+    const rejectAbort = (): void => {
+      clearTimeout(timer);
+      reject(toAbortFailure(signal, job));
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", rejectAbort);
+      resolve();
+    }, delayMs);
+    signal.addEventListener("abort", rejectAbort, { once: true });
+  });
+}
+
+/** Normalizes an aborted signal into the SDK error to surface for the job. */
+function toAbortFailure(signal: AbortSignal, job: TransferJob): ZeroTransferError {
+  if (signal.reason instanceof ZeroTransferError) {
+    return signal.reason;
+  }
+
+  return new AbortError({
+    details: { jobId: job.id, operation: job.operation },
+    message: `Transfer job aborted: ${job.id}`,
+    retryable: false,
+  });
+}
+
+function normalizeDelayMs(value: number | undefined): number {
+  if (value === undefined || !Number.isFinite(value) || value <= 0) {
+    return 0;
+  }
+
+  return Math.floor(value);
 }
 
 function normalizeTimeoutMs(value: number | undefined): number | undefined {

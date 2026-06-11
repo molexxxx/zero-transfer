@@ -1,6 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   AuthenticationError,
+  ConfigurationError,
+  ConnectionError,
   PathNotFoundError,
   PermissionDeniedError,
   UnsupportedFeatureError,
@@ -12,6 +14,10 @@ import {
 } from "../../../src/index";
 
 describe("createHttpProviderFactory", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("advertises read-only HTTP capabilities", () => {
     const factory = createHttpProviderFactory({ fetch: notImplementedFetch });
     expect(factory.id).toBe("http");
@@ -100,6 +106,7 @@ describe("createHttpProviderFactory", () => {
   });
 
   it("attaches Basic auth headers when username/password are provided", async () => {
+    vi.spyOn(process, "emitWarning").mockImplementation(() => undefined);
     const captured: Array<{ url: string; init?: RequestInit }> = [];
     const fetchImpl: HttpFetch = (input, init) => {
       captured.push({ ...(init !== undefined ? { init } : {}), url: input });
@@ -164,6 +171,70 @@ describe("createHttpProviderFactory", () => {
     });
     await session.fs.stat("/x");
     expect(captured[0]).toBe("https://secure.example.com/x");
+  });
+
+  describe("transport security", () => {
+    it("rejects enforceHttps on a cleartext transport", () => {
+      expect(() =>
+        createHttpProviderFactory({ enforceHttps: true, fetch: notImplementedFetch }),
+      ).toThrow(ConfigurationError);
+    });
+
+    it("accepts enforceHttps on a secure transport", () => {
+      expect(() =>
+        createHttpProviderFactory({ enforceHttps: true, fetch: notImplementedFetch, id: "https" }),
+      ).not.toThrow();
+    });
+
+    it("warns when credentials cross a cleartext connection", async () => {
+      const warn = vi.spyOn(process, "emitWarning").mockImplementation(() => undefined);
+      const fetchImpl: HttpFetch = () => Promise.resolve(new Response(null, { status: 200 }));
+      const factory = createHttpProviderFactory({ fetch: fetchImpl });
+
+      await factory.create().connect({
+        host: "warn-once.example.com",
+        password: "secret",
+        protocol: "ftp",
+        username: "user",
+      });
+      expect(warn).toHaveBeenCalledOnce();
+      expect(String(warn.mock.calls[0]?.[0])).toContain("cleartext");
+
+      // Deduplicated per provider/host pair.
+      await factory.create().connect({
+        host: "warn-once.example.com",
+        password: "secret",
+        protocol: "ftp",
+        username: "user",
+      });
+      expect(warn).toHaveBeenCalledOnce();
+    });
+
+    it("does not warn for anonymous cleartext connections", async () => {
+      const warn = vi.spyOn(process, "emitWarning").mockImplementation(() => undefined);
+      const fetchImpl: HttpFetch = () => Promise.resolve(new Response(null, { status: 200 }));
+      await connectHttp({ fetch: fetchImpl });
+      expect(warn).not.toHaveBeenCalled();
+    });
+  });
+
+  it("captures a truncated error body excerpt in error details", async () => {
+    const fetchImpl: HttpFetch = () =>
+      Promise.resolve(
+        new Response("<Error><Code>SlowDown</Code></Error>", { status: 503 }),
+      );
+    const session = await connectHttp({ fetch: fetchImpl });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    let failure: unknown;
+    try {
+      await transfers.read(makeReadRequest("/file.txt"));
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).toBeInstanceOf(ConnectionError);
+    expect((failure as ConnectionError).details?.["body"]).toContain("SlowDown");
   });
 });
 

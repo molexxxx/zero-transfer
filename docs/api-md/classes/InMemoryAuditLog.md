@@ -6,7 +6,7 @@
 
 # Class: InMemoryAuditLog
 
-Defined in: [src/mft/audit.ts:47](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/audit.ts#L47)
+Defined in: [src/mft/audit.ts:47](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/audit.ts#L47)
 
 In-memory implementation of [MftAuditLog](../interfaces/MftAuditLog.md).
 
@@ -24,7 +24,7 @@ In-memory implementation of [MftAuditLog](../interfaces/MftAuditLog.md).
 get size(): number;
 ```
 
-Defined in: [src/mft/audit.ts:67](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/audit.ts#L67)
+Defined in: [src/mft/audit.ts:67](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/audit.ts#L67)
 
 Number of currently recorded entries.
 
@@ -52,7 +52,7 @@ new InMemoryAuditLog(): InMemoryAuditLog;
 clear(): void;
 ```
 
-Defined in: [src/mft/audit.ts:62](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/audit.ts#L62)
+Defined in: [src/mft/audit.ts:62](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/audit.ts#L62)
 
 Drops all recorded entries.
 
@@ -68,7 +68,7 @@ Drops all recorded entries.
 list(): Promise<readonly MftAuditEntry[]>;
 ```
 
-Defined in: [src/mft/audit.ts:57](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/audit.ts#L57)
+Defined in: [src/mft/audit.ts:57](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/audit.ts#L57)
 
 Returns recorded entries in insertion order.
 
@@ -88,7 +88,7 @@ Returns recorded entries in insertion order.
 record(entry): Promise<void>;
 ```
 
-Defined in: [src/mft/audit.ts:51](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/audit.ts#L51)
+Defined in: [src/mft/audit.ts:51](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/audit.ts#L51)
 
 Records a new audit entry.
 

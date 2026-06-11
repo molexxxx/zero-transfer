@@ -3,11 +3,12 @@
  *
  * Walks FileZilla's nested folder/server hierarchy and emits {@link ConnectionProfile} entries
  * for each saved site. The importer ignores cloud providers and other entries it cannot map
- * to a {@link RemoteProtocol}.
+ * to a {@link RemoteProtocol}. Stored passwords are never decoded or returned; sites that
+ * carry one are flagged via {@link FileZillaSite.hasStoredPassword} so callers can prompt
+ * for the credential through a SecretSource instead.
  *
  * @module profiles/importers/FileZillaImporter
  */
-import { Buffer } from "node:buffer";
 import { ConfigurationError } from "../../errors/ZeroTransferError";
 import type { ConnectionProfile } from "../../types/public";
 
@@ -19,8 +20,13 @@ export interface FileZillaSite {
   folder: readonly string[];
   /** Generated connection profile. */
   profile: ConnectionProfile;
-  /** Encoded password value retained from the file, if any. */
-  password?: string;
+  /**
+   * Whether the FileZilla entry stored a password. The importer never decodes
+   * or returns stored passwords; supply the credential via a
+   * {@link ConnectionProfile.password | SecretSource} (for example
+   * `{ env: "SITE_PASSWORD" }` or `{ path: "./secret" }`) before connecting.
+   */
+  hasStoredPassword: boolean;
   /** Logon type code preserved from the file (`0`=anonymous, `1`=normal, etc.). */
   logonType?: number;
 }
@@ -55,7 +61,6 @@ export function importFileZillaSites(xml: string): ImportFileZillaSitesResult {
   const folderNamePending: boolean[] = [];
   let inServer = false;
   let serverFields: Record<string, string> = {};
-  let serverPasswordEncoding: string | undefined;
   let activeTag: string | undefined;
   let captureFolderName = false;
 
@@ -69,13 +74,9 @@ export function importFileZillaSites(xml: string): ImportFileZillaSitesResult {
       if (event.name === "Server") {
         inServer = true;
         serverFields = {};
-        serverPasswordEncoding = undefined;
         continue;
       }
       activeTag = event.name;
-      if (event.name === "Pass" && inServer) {
-        serverPasswordEncoding = event.attributes["encoding"];
-      }
       if (event.name === "Name" && !inServer && folderNamePending.length > 0) {
         captureFolderName = true;
       }
@@ -101,7 +102,7 @@ export function importFileZillaSites(xml: string): ImportFileZillaSitesResult {
       }
       if (event.name === "Server") {
         const folder = folderStack.filter((segment) => segment !== "");
-        const result = buildSiteFromFields(serverFields, serverPasswordEncoding);
+        const result = buildSiteFromFields(serverFields);
         if (result.kind === "site") {
           sites.push({ ...result.site, folder });
         } else {
@@ -113,7 +114,6 @@ export function importFileZillaSites(xml: string): ImportFileZillaSitesResult {
         }
         inServer = false;
         serverFields = {};
-        serverPasswordEncoding = undefined;
         activeTag = undefined;
         continue;
       }
@@ -134,10 +134,7 @@ interface SkippedSite {
   protocol?: number;
 }
 
-function buildSiteFromFields(
-  fields: Record<string, string>,
-  passwordEncoding: string | undefined,
-): BuiltSite | SkippedSite {
+function buildSiteFromFields(fields: Record<string, string>): BuiltSite | SkippedSite {
   const name = (fields["Name"] ?? fields["Host"] ?? "Untitled").trim();
   const host = (fields["Host"] ?? "").trim();
   if (host === "") return { kind: "skipped", name };
@@ -159,19 +156,10 @@ function buildSiteFromFields(
   const user = fields["User"]?.trim();
   if (user !== undefined && user !== "") profile.username = { value: user };
 
-  let password: string | undefined;
   const rawPass = fields["Pass"];
-  if (rawPass !== undefined && rawPass !== "") {
-    if (passwordEncoding === "base64") {
-      password = Buffer.from(rawPass, "base64").toString("utf8");
-    } else {
-      password = rawPass;
-    }
-    if (password !== undefined && password !== "") profile.password = { value: password };
-  }
+  const hasStoredPassword = rawPass !== undefined && rawPass !== "";
 
-  const site: Omit<FileZillaSite, "folder"> = { name, profile };
-  if (password !== undefined) site.password = password;
+  const site: Omit<FileZillaSite, "folder"> = { hasStoredPassword, name, profile };
   const logonText = fields["Logontype"];
   if (logonText !== undefined) {
     const logonType = Number.parseInt(logonText.trim(), 10);

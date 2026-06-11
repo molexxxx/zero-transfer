@@ -3,6 +3,7 @@
  *
  * @module transfers/TransferQueue
  */
+import type { TransferClient } from "../core/TransferClient";
 import { ConfigurationError } from "../errors/ZeroTransferError";
 import type { TransferProgressEvent } from "../types/public";
 import {
@@ -28,15 +29,20 @@ export type TransferQueueExecutorResolver = (job: TransferJob) => TransferExecut
 export interface TransferQueueOptions {
   /** Transfer engine used to execute queued jobs. Defaults to a new engine. */
   engine?: TransferEngine;
+  /**
+   * Transfer client whose {@link TransferClientDefaults | defaults} seed the
+   * queue's retry and timeout policies when not set here or per drain.
+   */
+  client?: TransferClient;
   /** Maximum jobs to execute at the same time. Defaults to `1`. */
   concurrency?: number;
   /** Default executor used for jobs that do not provide one directly. */
   executor?: TransferExecutor;
   /** Dynamic executor resolver used when no per-job executor or default executor exists. */
   resolveExecutor?: TransferQueueExecutorResolver;
-  /** Retry policy passed to engine executions. */
+  /** Retry policy passed to engine executions. Falls back to `client.defaults.retry`. */
   retry?: TransferRetryPolicy;
-  /** Timeout policy passed to engine executions. */
+  /** Timeout policy passed to engine executions. Falls back to `client.defaults.timeout`. */
   timeout?: TransferTimeoutPolicy;
   /** Optional throughput limit shape passed to transfer executors. */
   bandwidthLimit?: TransferBandwidthLimit;
@@ -160,8 +166,8 @@ export class TransferQueue {
     this.concurrency = normalizeConcurrency(options.concurrency);
     this.defaultExecutor = options.executor;
     this.resolveExecutor = options.resolveExecutor;
-    this.retry = options.retry;
-    this.timeout = options.timeout;
+    this.retry = options.retry ?? options.client?.defaults?.retry;
+    this.timeout = options.timeout ?? options.client?.defaults?.timeout;
     this.bandwidthLimit = options.bandwidthLimit;
     this.onProgress = options.onProgress;
     this.onReceipt = options.onReceipt;

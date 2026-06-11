@@ -38,6 +38,87 @@ describe("createS3ProviderFactory", () => {
     expect(factory.capabilities.resumeUpload).toBe(false);
   });
 
+  it("streams single-shot PUT with UNSIGNED-PAYLOAD when multipart is disabled and size is known", async () => {
+    const captured: Array<{ url: string; init?: RequestInit }> = [];
+    let received: Uint8Array | undefined;
+    const fetchImpl: HttpFetch = async (input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}), url: input });
+      const body = init?.body;
+      if (body instanceof ReadableStream) {
+        const reader = (body as ReadableStream<Uint8Array>).getReader();
+        const parts: Uint8Array[] = [];
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value !== undefined) parts.push(value);
+        }
+        received = new Uint8Array(Buffer.concat(parts.map((part) => Buffer.from(part))));
+      }
+      return new Response(null, { headers: { etag: '"stream-etag"' }, status: 200 });
+    };
+    const factory = createS3ProviderFactory({ fetch: fetchImpl, multipart: { enabled: false } });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    const payload = new TextEncoder().encode("streamed-single-shot");
+    const progress: number[] = [];
+    const result = await transfers.write({
+      ...makeWriteRequest("/stream.bin", payload),
+      reportProgress: (bytesTransferred, totalBytes) => {
+        progress.push(bytesTransferred);
+        return makeProgressEvent(bytesTransferred, totalBytes);
+      },
+      totalBytes: payload.byteLength,
+    });
+
+    expect(captured[0]?.init?.method).toBe("PUT");
+    expect(captured[0]?.init?.body).toBeInstanceOf(ReadableStream);
+    expect((captured[0]?.init as { duplex?: string }).duplex).toBe("half");
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["content-length"]).toBe(String(payload.byteLength));
+    expect(headers["x-amz-content-sha256"]).toBe("UNSIGNED-PAYLOAD");
+    expect(received).toEqual(payload);
+    expect(progress.at(-1)).toBe(payload.byteLength);
+    expect(result.bytesTransferred).toBe(payload.byteLength);
+    expect(result.totalBytes).toBe(payload.byteLength);
+    expect(result.checksum).toBe('"stream-etag"');
+  });
+
+  it("buffers single-shot PUT with a hashed payload when multipart is disabled and size is unknown", async () => {
+    const captured: Array<{ url: string; init?: RequestInit }> = [];
+    const fetchImpl: HttpFetch = (input, init) => {
+      captured.push({ ...(init !== undefined ? { init } : {}), url: input });
+      return Promise.resolve(
+        new Response(null, { headers: { etag: '"buffered-etag"' }, status: 200 }),
+      );
+    };
+    const factory = createS3ProviderFactory({ fetch: fetchImpl, multipart: { enabled: false } });
+    const session = await factory.create().connect({
+      host: "bucket-a",
+      password: "secret",
+      protocol: "ftp",
+      username: "AKIAEXAMPLE",
+    });
+    const transfers = session.transfers;
+    if (transfers === undefined) throw new Error("Expected transfers");
+
+    const payload = new TextEncoder().encode("buffered-single-shot");
+    const result = await transfers.write(makeWriteRequest("/buffered.bin", payload));
+
+    expect(captured[0]?.init?.body).toBeInstanceOf(Uint8Array);
+    const headers = captured[0]?.init?.headers as Record<string, string>;
+    expect(headers["content-length"]).toBe(String(payload.byteLength));
+    expect(headers["x-amz-content-sha256"]).toMatch(/^[0-9a-f]{64}$/);
+    expect(result.bytesTransferred).toBe(payload.byteLength);
+    expect(result.checksum).toBe('"buffered-etag"');
+  });
+
   it("rejects connect() without credentials or bucket", async () => {
     const factory = createS3ProviderFactory({ fetch: notImplementedFetch });
     await expect(

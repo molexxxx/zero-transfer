@@ -48,6 +48,7 @@ This is the actual surface published by [`@zero-transfer/mft`](https://www.npmjs
 | [`ApprovalRegistry`](../api-md/classes/ApprovalRegistry.md) | Class | See API reference. |
 | [`createApprovalGate`](../api-md/functions/createApprovalGate.md) | Function | See API reference. |
 | [`ApprovalRejectedError`](../api-md/classes/ApprovalRejectedError.md) | Class | See API reference. |
+| [`ApprovalTimeoutError`](../api-md/classes/ApprovalTimeoutError.md) | Class | See API reference. |
 
 ## Examples
 

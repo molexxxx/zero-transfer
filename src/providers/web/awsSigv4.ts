@@ -29,6 +29,14 @@ export interface SigV4Input {
   sessionToken?: string;
   /** Body bytes used to compute the payload hash. Defaults to empty. */
   body?: Uint8Array;
+  /**
+   * Sign with the literal `UNSIGNED-PAYLOAD` content hash instead of a body
+   * digest. Required when the request body is streamed and cannot be hashed
+   * up front (the same mode presigned URLs and the AWS SDKs use for
+   * streaming uploads). The signature still covers method, URL, and headers;
+   * payload integrity relies on TLS, so only use this over `https`.
+   */
+  unsignedPayload?: boolean;
   /** Override SigV4 timestamp; primarily useful in tests. */
   now?: Date;
 }
@@ -41,7 +49,11 @@ export function signSigV4(input: SigV4Input): { authorization: string; signedHea
   const amzDate = formatAmzDate(now);
   const dateStamp = amzDate.slice(0, 8);
   const payloadHash =
-    input.body !== undefined ? sha256Hex(input.body) : sha256Hex(new Uint8Array());
+    input.unsignedPayload === true
+      ? UNSIGNED_PAYLOAD
+      : input.body !== undefined
+        ? sha256Hex(input.body)
+        : sha256Hex(new Uint8Array());
 
   input.headers["host"] = input.url.host;
   input.headers["x-amz-date"] = amzDate;

@@ -61,6 +61,7 @@ __export(classic_exports, {
   copyBetween: () => copyBetween,
   createAtomicDeployPlan: () => createAtomicDeployPlan,
   createBandwidthThrottle: () => createBandwidthThrottle,
+  createDefaultRetryPolicy: () => createDefaultRetryPolicy,
   createFtpProviderFactory: () => createFtpProviderFactory,
   createFtpsProviderFactory: () => createFtpsProviderFactory,
   createLocalProviderFactory: () => createLocalProviderFactory,
@@ -106,8 +107,10 @@ __export(classic_exports, {
   parseUnixListLine: () => parseUnixListLine,
   redactCommand: () => redactCommand,
   redactConnectionProfile: () => redactConnectionProfile,
+  redactErrorForLogging: () => redactErrorForLogging,
   redactObject: () => redactObject,
   redactSecretSource: () => redactSecretSource,
+  redactUrlForLogging: () => redactUrlForLogging,
   redactValue: () => redactValue,
   resolveConnectionProfileSecrets: () => resolveConnectionProfileSecrets,
   resolveOpenSshHost: () => resolveOpenSshHost,
@@ -127,6 +130,68 @@ module.exports = __toCommonJS(classic_exports);
 
 // src/client/ZeroTransfer.ts
 var import_node_events = require("events");
+
+// src/logging/redaction.ts
+var REDACTED = "[REDACTED]";
+var SENSITIVE_KEY_PATTERN = /(?:password|passphrase|privatekey|token|secret|username|user)$/i;
+var SECRET_COMMAND_PATTERN = /^(PASS|USER|ACCT)\s+(.+)$/i;
+var URL_KEY_PATTERN = /(?:url|uri|href)$/i;
+function isSensitiveKey(key) {
+  return SENSITIVE_KEY_PATTERN.test(key.replace(/[_-]/g, ""));
+}
+function redactCommand(command) {
+  return command.replace(SECRET_COMMAND_PATTERN, (_fullMatch, commandName) => {
+    return `${commandName.toUpperCase()} ${REDACTED}`;
+  });
+}
+function redactValue(value) {
+  if (typeof value === "string") {
+    return redactCommand(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => redactValue(item));
+  }
+  if (value !== null && typeof value === "object") {
+    return redactObject(value);
+  }
+  return value;
+}
+function redactObject(input) {
+  return Object.fromEntries(
+    Object.entries(input).map(([key, value]) => {
+      if (isSensitiveKey(key)) {
+        return [key, REDACTED];
+      }
+      if (URL_KEY_PATTERN.test(key) && typeof value === "string") {
+        return [key, redactUrlForLogging(value)];
+      }
+      return [key, redactValue(value)];
+    })
+  );
+}
+function redactUrlForLogging(url) {
+  let parsed;
+  try {
+    parsed = typeof url === "string" ? new URL(url) : url;
+  } catch {
+    return REDACTED;
+  }
+  const origin = parsed.host.length > 0 ? `${parsed.protocol}//${parsed.host}` : parsed.protocol;
+  const query = parsed.search.length > 0 ? `?${REDACTED}` : "";
+  return `${origin}${parsed.pathname}${query}`;
+}
+function redactErrorForLogging(error) {
+  if (error !== null && typeof error === "object") {
+    const candidate = error;
+    if (typeof candidate.toJSON === "function") {
+      return redactObject(candidate.toJSON());
+    }
+  }
+  if (error instanceof Error) {
+    return redactObject({ message: error.message, name: error.name });
+  }
+  return { message: redactValue(typeof error === "string" ? error : String(error)) };
+}
 
 // src/errors/ZeroTransferError.ts
 var ZeroTransferError = class extends Error {
@@ -169,6 +234,11 @@ var ZeroTransferError = class extends Error {
   /**
    * Serializes the error into a plain object suitable for logs or API responses.
    *
+   * `details` and `command` are passed through secret redaction so serialized
+   * errors never leak credentials, signed URLs, or raw protocol commands. The
+   * live {@link ZeroTransferError.details | details} property stays unredacted
+   * for programmatic consumers.
+   *
    * @returns A JSON-safe object containing public structured error fields.
    */
   toJSON() {
@@ -178,12 +248,12 @@ var ZeroTransferError = class extends Error {
       message: this.message,
       protocol: this.protocol,
       host: this.host,
-      command: this.command,
+      command: this.command === void 0 ? void 0 : redactCommand(this.command),
       ftpCode: this.ftpCode,
       sftpCode: this.sftpCode,
       path: this.path,
       retryable: this.retryable,
-      details: this.details
+      details: this.details === void 0 ? void 0 : redactObject(this.details)
     };
   }
 };
@@ -706,15 +776,20 @@ var ProviderRegistry = class {
 var TransferClient = class {
   /** Provider registry used by this client. */
   registry;
+  /** Execution defaults applied when call sites omit their own values. */
+  defaults;
   logger;
   /**
    * Creates a transfer client without opening any provider connections.
    *
-   * @param options - Optional registry, provider factories, and logger.
+   * @param options - Optional registry, provider factories, logger, and execution defaults.
    */
   constructor(options = {}) {
     this.registry = options.registry ?? new ProviderRegistry();
     this.logger = options.logger ?? noopLogger;
+    if (options.defaults !== void 0) {
+      this.defaults = { ...options.defaults };
+    }
     for (const provider of options.providers ?? []) {
       this.registry.register(provider);
     }
@@ -1287,18 +1362,25 @@ var TransferEngine = class {
       for (let attemptNumber = 1; attemptNumber <= maxAttempts; attemptNumber += 1) {
         this.throwIfAborted(abortScope.signal, job);
         const attemptStartedAt = this.now();
+        const attemptScope = createAttemptScope(
+          abortScope.signal,
+          options.timeout,
+          job,
+          attemptNumber
+        );
         const context = this.createExecutionContext(
           job,
           attemptNumber,
           attemptStartedAt,
           options,
-          abortScope.signal,
+          attemptScope.signal,
           (bytesTransferred) => {
             latestBytesTransferred = bytesTransferred;
-          }
+          },
+          attemptScope.notifyProgress
         );
         try {
-          const result = await runExecutor(executor, context, abortScope.signal, job);
+          const result = await runExecutor(executor, context, attemptScope.signal, job);
           context.throwIfAborted();
           latestBytesTransferred = result.bytesTransferred;
           const completedAt = this.now();
@@ -1316,16 +1398,27 @@ var TransferEngine = class {
             summarizeError(error)
           );
           attempts.push(attempt);
-          if (error instanceof AbortError || error instanceof TimeoutError) {
+          if (error instanceof AbortError || abortScope.signal?.aborted === true) {
             throw error;
           }
-          const retryInput = { attempt: attemptNumber, error, job };
+          const retryInput = {
+            attempt: attemptNumber,
+            elapsedMs: Math.max(0, completedAt.getTime() - startedAt.getTime()),
+            error,
+            job
+          };
           const shouldRetry = attemptNumber < maxAttempts && (options.retry?.shouldRetry?.(retryInput) ?? isRetryable(error));
           if (shouldRetry) {
             options.retry?.onRetry?.(retryInput);
+            const delayMs = normalizeDelayMs(options.retry?.getDelayMs?.(retryInput));
+            if (delayMs > 0) {
+              await sleepWithAbort(delayMs, abortScope.signal, job);
+            }
             continue;
           }
           throw createTransferFailure(job, error, attempts);
+        } finally {
+          attemptScope.dispose();
         }
       }
       throw createTransferFailure(job, void 0, attempts);
@@ -1333,12 +1426,13 @@ var TransferEngine = class {
       abortScope.dispose();
     }
   }
-  createExecutionContext(job, attempt, startedAt, options, signal, updateBytesTransferred) {
+  createExecutionContext(job, attempt, startedAt, options, signal, updateBytesTransferred, notifyProgress) {
     const context = {
       attempt,
       job,
       reportProgress: (bytesTransferred, totalBytes) => {
         this.throwIfAborted(signal, job);
+        notifyProgress();
         updateBytesTransferred(bytesTransferred);
         const progressInput = {
           bytesTransferred,
@@ -1406,6 +1500,96 @@ function createAbortScope(parentSignal, timeout, job) {
     },
     signal: controller.signal
   };
+}
+function createAttemptScope(parentSignal, timeout, job, attempt) {
+  const attemptTimeoutMs = normalizeTimeoutMs(timeout?.attemptTimeoutMs);
+  const stallTimeoutMs = normalizeTimeoutMs(timeout?.stallTimeoutMs);
+  if (attemptTimeoutMs === void 0 && stallTimeoutMs === void 0) {
+    const scope = {
+      dispose: () => void 0,
+      notifyProgress: () => void 0
+    };
+    if (parentSignal !== void 0) scope.signal = parentSignal;
+    return scope;
+  }
+  const controller = new AbortController();
+  const retryable = timeout?.retryable ?? true;
+  const abortFromParent = () => controller.abort(parentSignal?.reason);
+  if (parentSignal?.aborted === true) {
+    abortFromParent();
+  } else {
+    parentSignal?.addEventListener("abort", abortFromParent, { once: true });
+  }
+  const attemptTimer = attemptTimeoutMs === void 0 ? void 0 : setTimeout(() => {
+    controller.abort(
+      new TimeoutError({
+        details: { attempt, attemptTimeoutMs, jobId: job.id, operation: job.operation },
+        message: `Transfer attempt ${String(attempt)} timed out after ${String(attemptTimeoutMs)}ms: ${job.id}`,
+        retryable
+      })
+    );
+  }, attemptTimeoutMs);
+  let stallTimer;
+  const armStallWatchdog = () => {
+    if (stallTimeoutMs === void 0 || controller.signal.aborted) return;
+    if (stallTimer !== void 0) clearTimeout(stallTimer);
+    stallTimer = setTimeout(() => {
+      controller.abort(
+        new TimeoutError({
+          details: { attempt, jobId: job.id, operation: job.operation, stallTimeoutMs },
+          message: `Transfer attempt ${String(attempt)} stalled (no progress for ${String(stallTimeoutMs)}ms): ${job.id}`,
+          retryable
+        })
+      );
+    }, stallTimeoutMs);
+  };
+  armStallWatchdog();
+  return {
+    dispose: () => {
+      if (attemptTimer !== void 0) clearTimeout(attemptTimer);
+      if (stallTimer !== void 0) clearTimeout(stallTimer);
+      parentSignal?.removeEventListener("abort", abortFromParent);
+    },
+    notifyProgress: armStallWatchdog,
+    signal: controller.signal
+  };
+}
+function sleepWithAbort(delayMs, signal, job) {
+  return new Promise((resolve, reject) => {
+    if (signal === void 0) {
+      setTimeout(resolve, delayMs);
+      return;
+    }
+    if (signal.aborted) {
+      reject(toAbortFailure(signal, job));
+      return;
+    }
+    const rejectAbort = () => {
+      clearTimeout(timer);
+      reject(toAbortFailure(signal, job));
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener("abort", rejectAbort);
+      resolve();
+    }, delayMs);
+    signal.addEventListener("abort", rejectAbort, { once: true });
+  });
+}
+function toAbortFailure(signal, job) {
+  if (signal.reason instanceof ZeroTransferError) {
+    return signal.reason;
+  }
+  return new AbortError({
+    details: { jobId: job.id, operation: job.operation },
+    message: `Transfer job aborted: ${job.id}`,
+    retryable: false
+  });
+}
+function normalizeDelayMs(value) {
+  if (value === void 0 || !Number.isFinite(value) || value <= 0) {
+    return 0;
+  }
+  return Math.floor(value);
 }
 function normalizeTimeoutMs(value) {
   if (value === void 0 || !Number.isFinite(value) || value <= 0) {
@@ -1575,7 +1759,7 @@ async function runRoute(options) {
     const executor = createProviderTransferExecutor({
       resolveSession: ({ role }) => sessions.get(role)
     });
-    return await engine.execute(job, executor, buildExecuteOptions(options));
+    return await engine.execute(job, executor, buildExecuteOptions(options, client));
   } finally {
     if (destinationSession !== void 0) {
       await destinationSession.disconnect();
@@ -1612,12 +1796,14 @@ function defaultJobId(route, now) {
   const timestamp = (now?.() ?? /* @__PURE__ */ new Date()).getTime();
   return `route:${route.id}:${timestamp.toString(36)}`;
 }
-function buildExecuteOptions(options) {
+function buildExecuteOptions(options, client) {
   const execute = {};
+  const retry = options.retry ?? client.defaults?.retry;
+  const timeout = options.timeout ?? client.defaults?.timeout;
   if (options.signal !== void 0) execute.signal = options.signal;
-  if (options.retry !== void 0) execute.retry = options.retry;
+  if (retry !== void 0) execute.retry = retry;
   if (options.onProgress !== void 0) execute.onProgress = options.onProgress;
-  if (options.timeout !== void 0) execute.timeout = options.timeout;
+  if (timeout !== void 0) execute.timeout = timeout;
   if (options.bandwidthLimit !== void 0) execute.bandwidthLimit = options.bandwidthLimit;
   return execute;
 }
@@ -1672,41 +1858,6 @@ function absolutePath(localPath) {
 }
 function defaultRouteSuffix(source, destination) {
   return `${source}->${destination}`;
-}
-
-// src/logging/redaction.ts
-var REDACTED = "[REDACTED]";
-var SENSITIVE_KEY_PATTERN = /(?:password|passphrase|privatekey|token|secret|username|user)$/i;
-var SECRET_COMMAND_PATTERN = /^(PASS|USER|ACCT)\s+(.+)$/i;
-function isSensitiveKey(key) {
-  return SENSITIVE_KEY_PATTERN.test(key.replace(/[_-]/g, ""));
-}
-function redactCommand(command) {
-  return command.replace(SECRET_COMMAND_PATTERN, (_fullMatch, commandName) => {
-    return `${commandName.toUpperCase()} ${REDACTED}`;
-  });
-}
-function redactValue(value) {
-  if (typeof value === "string") {
-    return redactCommand(value);
-  }
-  if (Array.isArray(value)) {
-    return value.map((item) => redactValue(item));
-  }
-  if (value !== null && typeof value === "object") {
-    return redactObject(value);
-  }
-  return value;
-}
-function redactObject(input) {
-  return Object.fromEntries(
-    Object.entries(input).map(([key, value]) => {
-      if (isSensitiveKey(key)) {
-        return [key, REDACTED];
-      }
-      return [key, redactValue(value)];
-    })
-  );
 }
 
 // src/profiles/SecretSource.ts
@@ -2080,11 +2231,11 @@ var import_promises2 = require("fs/promises");
 var import_node_path2 = __toESM(require("path"));
 
 // src/utils/path.ts
-var UNSAFE_FTP_ARGUMENT_PATTERN = /[\r\n]/;
+var UNSAFE_FTP_ARGUMENT_PATTERN = /[\r\n\0]/;
 function assertSafeFtpArgument(value, label = "path") {
   if (UNSAFE_FTP_ARGUMENT_PATTERN.test(value)) {
     throw new ConfigurationError({
-      message: `Unsafe FTP ${label}: CR and LF characters are not allowed`,
+      message: `Unsafe FTP ${label}: CR, LF, and NUL characters are not allowed`,
       retryable: false,
       details: {
         label
@@ -3386,7 +3537,6 @@ function expandAlgorithms(values) {
 }
 
 // src/profiles/importers/FileZillaImporter.ts
-var import_node_buffer5 = require("buffer");
 function importFileZillaSites(xml) {
   const events = tokenizeXml(xml);
   if (events.length === 0) {
@@ -3402,7 +3552,6 @@ function importFileZillaSites(xml) {
   const folderNamePending = [];
   let inServer = false;
   let serverFields = {};
-  let serverPasswordEncoding;
   let activeTag;
   let captureFolderName = false;
   for (const event of events) {
@@ -3415,13 +3564,9 @@ function importFileZillaSites(xml) {
       if (event.name === "Server") {
         inServer = true;
         serverFields = {};
-        serverPasswordEncoding = void 0;
         continue;
       }
       activeTag = event.name;
-      if (event.name === "Pass" && inServer) {
-        serverPasswordEncoding = event.attributes["encoding"];
-      }
       if (event.name === "Name" && !inServer && folderNamePending.length > 0) {
         captureFolderName = true;
       }
@@ -3447,7 +3592,7 @@ function importFileZillaSites(xml) {
       }
       if (event.name === "Server") {
         const folder = folderStack.filter((segment) => segment !== "");
-        const result = buildSiteFromFields(serverFields, serverPasswordEncoding);
+        const result = buildSiteFromFields(serverFields);
         if (result.kind === "site") {
           sites.push({ ...result.site, folder });
         } else {
@@ -3459,7 +3604,6 @@ function importFileZillaSites(xml) {
         }
         inServer = false;
         serverFields = {};
-        serverPasswordEncoding = void 0;
         activeTag = void 0;
         continue;
       }
@@ -3468,7 +3612,7 @@ function importFileZillaSites(xml) {
   }
   return { sites, skipped };
 }
-function buildSiteFromFields(fields, passwordEncoding) {
+function buildSiteFromFields(fields) {
   const name = (fields["Name"] ?? fields["Host"] ?? "Untitled").trim();
   const host = (fields["Host"] ?? "").trim();
   if (host === "") return { kind: "skipped", name };
@@ -3487,18 +3631,9 @@ function buildSiteFromFields(fields, passwordEncoding) {
   }
   const user = fields["User"]?.trim();
   if (user !== void 0 && user !== "") profile.username = { value: user };
-  let password;
   const rawPass = fields["Pass"];
-  if (rawPass !== void 0 && rawPass !== "") {
-    if (passwordEncoding === "base64") {
-      password = import_node_buffer5.Buffer.from(rawPass, "base64").toString("utf8");
-    } else {
-      password = rawPass;
-    }
-    if (password !== void 0 && password !== "") profile.password = { value: password };
-  }
-  const site = { name, profile };
-  if (password !== void 0) site.password = password;
+  const hasStoredPassword = rawPass !== void 0 && rawPass !== "";
+  const site = { hasStoredPassword, name, profile };
   const logonText = fields["Logontype"];
   if (logonText !== void 0) {
     const logonType = Number.parseInt(logonText.trim(), 10);
@@ -3741,6 +3876,62 @@ function mapFtp550(details) {
   return new PermissionDeniedError(details);
 }
 
+// src/transfers/createDefaultRetryPolicy.ts
+var DEFAULT_MAX_ATTEMPTS = 4;
+var DEFAULT_BASE_DELAY_MS = 250;
+var DEFAULT_MAX_DELAY_MS = 3e4;
+var DEFAULT_MAX_ELAPSED_MS = 3e5;
+function createDefaultRetryPolicy(options = {}) {
+  const maxAttempts = normalizePositiveInteger(options.maxAttempts, DEFAULT_MAX_ATTEMPTS);
+  const baseDelayMs = normalizeNonNegative(options.baseDelayMs, DEFAULT_BASE_DELAY_MS);
+  const maxDelayMs = normalizeNonNegative(options.maxDelayMs, DEFAULT_MAX_DELAY_MS);
+  const maxElapsedMs = normalizeNonNegative(options.maxElapsedMs, DEFAULT_MAX_ELAPSED_MS);
+  const random = options.random ?? Math.random;
+  return {
+    getDelayMs(input) {
+      const retryAfterMs = readRetryAfterMs(input.error);
+      if (retryAfterMs !== void 0) {
+        return retryAfterMs;
+      }
+      const exponentialMs = baseDelayMs * 2 ** (input.attempt - 1);
+      const cappedMs = Math.min(maxDelayMs, exponentialMs);
+      return Math.floor(random() * cappedMs);
+    },
+    maxAttempts,
+    shouldRetry(input) {
+      if (!(input.error instanceof ZeroTransferError) || !input.error.retryable) {
+        return false;
+      }
+      if (input.elapsedMs >= maxElapsedMs) {
+        return false;
+      }
+      const retryAfterMs = readRetryAfterMs(input.error);
+      if (retryAfterMs !== void 0 && input.elapsedMs + retryAfterMs > maxElapsedMs) {
+        return false;
+      }
+      return true;
+    }
+  };
+}
+function readRetryAfterMs(error) {
+  if (!(error instanceof ZeroTransferError)) return void 0;
+  const value = error.details?.["retryAfterMs"];
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return void 0;
+  return Math.floor(value);
+}
+function normalizePositiveInteger(value, fallback) {
+  if (value === void 0 || !Number.isFinite(value) || value < 1) {
+    return fallback;
+  }
+  return Math.floor(value);
+}
+function normalizeNonNegative(value, fallback) {
+  if (value === void 0 || !Number.isFinite(value) || value < 0) {
+    return fallback;
+  }
+  return Math.floor(value);
+}
+
 // src/transfers/TransferPlan.ts
 function createTransferPlan(input) {
   const plan = {
@@ -3838,8 +4029,8 @@ var TransferQueue = class {
     this.concurrency = normalizeConcurrency(options.concurrency);
     this.defaultExecutor = options.executor;
     this.resolveExecutor = options.resolveExecutor;
-    this.retry = options.retry;
-    this.timeout = options.timeout;
+    this.retry = options.retry ?? options.client?.defaults?.retry;
+    this.timeout = options.timeout ?? options.client?.defaults?.timeout;
     this.bandwidthLimit = options.bandwidthLimit;
     this.onProgress = options.onProgress;
     this.onReceipt = options.onReceipt;
@@ -4916,7 +5107,7 @@ function isMainModule(importMetaUrl) {
 }
 
 // src/providers/classic/ftp/FtpProvider.ts
-var import_node_buffer6 = require("buffer");
+var import_node_buffer5 = require("buffer");
 var import_node_net = require("net");
 var import_node_tls = require("tls");
 
@@ -5834,38 +6025,53 @@ async function expectCompletion(control, command, path2) {
   const response = await control.sendCommand(command);
   assertPathCommandSucceeded(response, command, path2, control.providerId);
 }
-async function readPassiveDataCommand(control, command, path2, options = {}) {
-  const dataConnection = await openPassiveDataCommand(control, command, path2, options);
+async function readPassiveLinesCommand(control, command, path2, onLine) {
+  const dataConnection = await openPassiveDataCommand(control, command, path2);
   try {
-    const payload = await collectPassiveData(
-      dataConnection,
-      control.operationTimeoutMs,
-      path2,
-      control.providerId
-    );
+    const failure = await consumePassiveLines(dataConnection, control.operationTimeoutMs, {
+      command,
+      onLine,
+      path: path2,
+      providerId: control.providerId
+    });
     const finalResponse = await control.readFinalResponse({
       command,
       operation: "data command completion",
       path: path2
     });
     assertPathCommandSucceeded(finalResponse, command, path2, control.providerId);
-    return payload;
+    if (failure !== void 0) throw failure;
   } catch (error) {
     dataConnection.close();
     throw error;
   }
 }
 async function readDirectoryEntries(control, path2) {
+  const entries = [];
+  const collectEntry = (entry) => {
+    if (entry.name === "." || entry.name === "..") return;
+    entries.push(entry);
+  };
   try {
-    const payload2 = await readPassiveDataCommand(control, `MLSD ${path2}`, path2);
-    return parseMlsdList(payload2.toString("utf8"), path2);
+    await readPassiveLinesCommand(control, `MLSD ${path2}`, path2, (rawLine) => {
+      const line = rawLine.trimEnd();
+      if (line.length === 0) return;
+      collectEntry(parseMlsdLine(line, path2));
+    });
+    return entries;
   } catch (error) {
     if (!isUnsupportedFtpCommandError(error, "MLSD")) {
       throw error;
     }
   }
-  const payload = await readPassiveDataCommand(control, `LIST ${path2}`, path2);
-  return parseUnixList(payload.toString("utf8"), path2);
+  entries.length = 0;
+  const now = /* @__PURE__ */ new Date();
+  await readPassiveLinesCommand(control, `LIST ${path2}`, path2, (rawLine) => {
+    const line = rawLine.trimEnd();
+    if (line.length === 0 || line.toLowerCase().startsWith("total ")) return;
+    collectEntry(parseUnixListLine(line, path2, now));
+  });
+  return entries;
 }
 async function openPassiveDataCommand(control, command, path2, options = {}) {
   const offset = normalizeOptionalByteCount3(options.offset, "offset", path2);
@@ -6038,22 +6244,58 @@ function openPassiveDataConnection(endpoint, timeoutMs, path2, control) {
     }
   };
 }
-async function collectPassiveData(dataConnection, timeoutMs, path2, providerId) {
-  const chunks = [];
+var MAX_LIST_LINE_BYTES = 64 * 1024;
+async function consumePassiveLines(dataConnection, timeoutMs, input) {
+  let carry = import_node_buffer5.Buffer.alloc(0);
+  let failure;
   const clearIdleTimeout = setSocketTimeout(dataConnection.socket, timeoutMs, {
     host: dataConnection.endpoint.host,
     operation: "passive data transfer",
-    path: path2,
-    providerId
+    path: input.path,
+    providerId: input.providerId
   });
+  const overlongLineFailure = () => new ParseError({
+    details: { command: input.command, limitBytes: MAX_LIST_LINE_BYTES, path: input.path },
+    message: `FTP listing line exceeded ${String(MAX_LIST_LINE_BYTES)} bytes for ${input.command}`,
+    retryable: false
+  });
+  const emit = (lineBytes) => {
+    if (failure !== void 0) return;
+    let end = lineBytes.length;
+    if (end > 0 && lineBytes[end - 1] === 13) end -= 1;
+    if (end === 0) return;
+    if (end > MAX_LIST_LINE_BYTES) {
+      failure = overlongLineFailure();
+      return;
+    }
+    try {
+      input.onLine(lineBytes.toString("utf8", 0, end));
+    } catch (error) {
+      failure = error instanceof Error ? error : new Error(String(error));
+    }
+  };
   try {
     for await (const chunk of dataConnection.socket) {
-      chunks.push(import_node_buffer6.Buffer.from(chunk));
+      if (failure !== void 0) continue;
+      const data = carry.length > 0 ? import_node_buffer5.Buffer.concat([carry, chunk]) : chunk;
+      let start = 0;
+      let newline = data.indexOf(10, start);
+      while (newline !== -1) {
+        emit(data.subarray(start, newline));
+        start = newline + 1;
+        newline = data.indexOf(10, start);
+      }
+      carry = import_node_buffer5.Buffer.from(data.subarray(start));
+      if (carry.length > MAX_LIST_LINE_BYTES && failure === void 0) {
+        failure = overlongLineFailure();
+      }
+      if (failure !== void 0) carry = import_node_buffer5.Buffer.alloc(0);
     }
+    if (carry.length > 0) emit(carry);
   } finally {
     clearIdleTimeout();
   }
-  return import_node_buffer6.Buffer.concat(chunks);
+  return failure;
 }
 async function* createPassiveReadSource(control, dataConnection, command, path2, range, request) {
   let bytesEmitted = 0;
@@ -6070,7 +6312,7 @@ async function* createPassiveReadSource(control, dataConnection, command, path2,
     });
     for await (const chunk of dataConnection.socket) {
       request.throwIfAborted();
-      const buffer = import_node_buffer6.Buffer.from(chunk);
+      const buffer = import_node_buffer5.Buffer.from(chunk);
       if (range.length === void 0) {
         bytesEmitted += buffer.byteLength;
         yield new Uint8Array(buffer);
@@ -6302,6 +6544,13 @@ function createTlsPinnedFingerprints(profile) {
   if (pinnedFingerprint256 === void 0) {
     return void 0;
   }
+  if (profile.tls?.rejectUnauthorized === false) {
+    throw new ConfigurationError({
+      message: "FTPS tls.pinnedFingerprint256 cannot be combined with rejectUnauthorized: false; pin verification runs after the TLS handshake, so chain validation must stay enabled. For self-signed certificates supply tls.ca instead of disabling validation.",
+      protocol: FTPS_PROVIDER_ID,
+      retryable: false
+    });
+  }
   const fingerprints = Array.isArray(pinnedFingerprint256) ? pinnedFingerprint256 : [pinnedFingerprint256];
   if (fingerprints.length === 0) {
     throw new ConfigurationError({
@@ -6356,9 +6605,9 @@ function normalizeCertificateFingerprint256(certificate) {
 }
 function normalizeTlsSecretValue(value) {
   if (Array.isArray(value)) {
-    return value.map((item) => import_node_buffer6.Buffer.isBuffer(item) ? import_node_buffer6.Buffer.from(item) : item);
+    return value.map((item) => import_node_buffer5.Buffer.isBuffer(item) ? import_node_buffer5.Buffer.from(item) : item);
   }
-  return import_node_buffer6.Buffer.isBuffer(value) ? import_node_buffer6.Buffer.from(value) : value;
+  return import_node_buffer5.Buffer.isBuffer(value) ? import_node_buffer5.Buffer.from(value) : value;
 }
 async function authenticateFtpSession(control, username, password, host) {
   const safeUsername = assertSafeFtpArgument(username, "username");
@@ -6537,7 +6786,7 @@ function compareEntries5(left, right) {
   return left.path.localeCompare(right.path);
 }
 function secretToString(value) {
-  return import_node_buffer6.Buffer.isBuffer(value) ? value.toString("utf8") : value;
+  return import_node_buffer5.Buffer.isBuffer(value) ? value.toString("utf8") : value;
 }
 
 // src/providers/classic/ftp/FtpFeatureParser.ts
@@ -6582,12 +6831,12 @@ function normalizeFeatureLines(input) {
 }
 
 // src/providers/native/sftp/NativeSftpProvider.ts
-var import_node_buffer21 = require("buffer");
+var import_node_buffer20 = require("buffer");
 var import_node_crypto9 = require("crypto");
 var import_node_net2 = require("net");
 
 // src/protocols/ssh/binary/SshDataWriter.ts
-var import_node_buffer7 = require("buffer");
+var import_node_buffer6 = require("buffer");
 var MAX_UINT32 = 4294967295;
 var MAX_UINT64 = (1n << 64n) - 1n;
 var SshDataWriter = class {
@@ -6595,7 +6844,7 @@ var SshDataWriter = class {
   length = 0;
   writeByte(value) {
     this.assertByte(value, "byte");
-    const chunk = import_node_buffer7.Buffer.alloc(1);
+    const chunk = import_node_buffer6.Buffer.alloc(1);
     chunk.writeUInt8(value, 0);
     return this.push(chunk);
   }
@@ -6603,7 +6852,7 @@ var SshDataWriter = class {
     return this.writeByte(value ? 1 : 0);
   }
   writeBytes(value) {
-    return this.push(import_node_buffer7.Buffer.from(value));
+    return this.push(import_node_buffer6.Buffer.from(value));
   }
   writeUint32(value) {
     if (!Number.isInteger(value) || value < 0 || value > MAX_UINT32) {
@@ -6613,7 +6862,7 @@ var SshDataWriter = class {
         retryable: false
       });
     }
-    const chunk = import_node_buffer7.Buffer.alloc(4);
+    const chunk = import_node_buffer6.Buffer.alloc(4);
     chunk.writeUInt32BE(value, 0);
     return this.push(chunk);
   }
@@ -6625,12 +6874,12 @@ var SshDataWriter = class {
         retryable: false
       });
     }
-    const chunk = import_node_buffer7.Buffer.alloc(8);
+    const chunk = import_node_buffer6.Buffer.alloc(8);
     chunk.writeBigUInt64BE(value, 0);
     return this.push(chunk);
   }
   writeString(value, encoding = "utf8") {
-    const payload = typeof value === "string" ? import_node_buffer7.Buffer.from(value, encoding) : import_node_buffer7.Buffer.from(value);
+    const payload = typeof value === "string" ? import_node_buffer6.Buffer.from(value, encoding) : import_node_buffer6.Buffer.from(value);
     this.writeUint32(payload.length);
     return this.push(payload);
   }
@@ -6652,7 +6901,7 @@ var SshDataWriter = class {
     return this.writeString(values.join(","), "ascii");
   }
   toBuffer() {
-    return import_node_buffer7.Buffer.concat(this.chunks, this.length);
+    return import_node_buffer6.Buffer.concat(this.chunks, this.length);
   }
   push(chunk) {
     this.chunks.push(chunk);
@@ -6670,23 +6919,23 @@ var SshDataWriter = class {
   }
 };
 function normalizePositiveMpint(value) {
-  const input = import_node_buffer7.Buffer.from(value);
+  const input = import_node_buffer6.Buffer.from(value);
   let offset = 0;
   while (offset < input.length && input[offset] === 0) {
     offset += 1;
   }
   if (offset >= input.length) {
-    return import_node_buffer7.Buffer.alloc(0);
+    return import_node_buffer6.Buffer.alloc(0);
   }
   const stripped = input.subarray(offset);
   if ((stripped[0] & 128) === 128) {
-    return import_node_buffer7.Buffer.concat([import_node_buffer7.Buffer.from([0]), stripped]);
+    return import_node_buffer6.Buffer.concat([import_node_buffer6.Buffer.from([0]), stripped]);
   }
   return stripped;
 }
 
 // src/protocols/ssh/binary/SshDataReader.ts
-var import_node_buffer8 = require("buffer");
+var import_node_buffer7 = require("buffer");
 var SshDataReader = class {
   constructor(source) {
     this.source = source;
@@ -6712,18 +6961,18 @@ var SshDataReader = class {
     this.ensureAvailable(length, "bytes");
     const data = this.source.subarray(this.offset, this.offset + length);
     this.offset += length;
-    return import_node_buffer8.Buffer.from(data);
+    return import_node_buffer7.Buffer.from(data);
   }
   readUint32() {
     this.ensureAvailable(4, "uint32");
-    const buffer = import_node_buffer8.Buffer.from(this.source);
+    const buffer = import_node_buffer7.Buffer.from(this.source);
     const value = buffer.readUInt32BE(this.offset);
     this.offset += 4;
     return value;
   }
   readUint64() {
     this.ensureAvailable(8, "uint64");
-    const buffer = import_node_buffer8.Buffer.from(this.source);
+    const buffer = import_node_buffer7.Buffer.from(this.source);
     const value = buffer.readBigUInt64BE(this.offset);
     this.offset += 8;
     return value;
@@ -6733,7 +6982,7 @@ var SshDataReader = class {
     this.ensureAvailable(length, "string");
     const data = this.source.subarray(this.offset, this.offset + length);
     this.offset += length;
-    return import_node_buffer8.Buffer.from(data);
+    return import_node_buffer7.Buffer.from(data);
   }
   readUtf8String() {
     return this.readString().toString("utf8");
@@ -7088,7 +7337,7 @@ function buildKiRequest(args) {
 }
 
 // src/protocols/ssh/auth/SshPublickeyCredentialBuilder.ts
-var import_node_buffer9 = require("buffer");
+var import_node_buffer8 = require("buffer");
 var import_node_crypto2 = require("crypto");
 var ED25519_RAW_KEY_LENGTH = 32;
 var ED25519_SPKI_PREFIX_LENGTH = 12;
@@ -7106,7 +7355,7 @@ function buildPublickeyCredential(options) {
       return {
         algorithmName: "ssh-ed25519",
         publicKeyBlob,
-        sign: (data) => (0, import_node_crypto2.sign)(null, import_node_buffer9.Buffer.from(data), privateKey),
+        sign: (data) => (0, import_node_crypto2.sign)(null, import_node_buffer8.Buffer.from(data), privateKey),
         type: "publickey",
         username
       };
@@ -7124,7 +7373,7 @@ function buildPublickeyCredential(options) {
       return {
         algorithmName,
         publicKeyBlob,
-        sign: (data) => (0, import_node_crypto2.sign)(hash, import_node_buffer9.Buffer.from(data), privateKey),
+        sign: (data) => (0, import_node_crypto2.sign)(hash, import_node_buffer8.Buffer.from(data), privateKey),
         type: "publickey",
         username
       };
@@ -7137,7 +7386,7 @@ function buildPublickeyCredential(options) {
 }
 function base64UrlToMpint(value) {
   const padded = value.replace(/-/g, "+").replace(/_/g, "/");
-  const buffer = import_node_buffer9.Buffer.from(padded, "base64");
+  const buffer = import_node_buffer8.Buffer.from(padded, "base64");
   return buffer;
 }
 function createInvalidKeyError(message) {
@@ -7263,7 +7512,7 @@ function encodeSshChannelClose(recipientChannel) {
 }
 
 // src/protocols/ssh/connection/SshSessionChannel.ts
-var import_node_buffer10 = require("buffer");
+var import_node_buffer9 = require("buffer");
 var INITIAL_WINDOW_SIZE = 256 * 1024;
 var MAX_PACKET_SIZE = 32 * 1024;
 var WINDOW_REFILL_THRESHOLD = 64 * 1024;
@@ -7421,7 +7670,7 @@ var SshSessionChannel = class {
         this.remoteWindowRemaining,
         this.remoteMaxPacketSize
       );
-      const chunk = import_node_buffer10.Buffer.from(data.subarray(offset, offset + chunkSize));
+      const chunk = import_node_buffer9.Buffer.from(data.subarray(offset, offset + chunkSize));
       this.transport.sendPayload(
         encodeSshChannelData({ data: chunk, recipientChannel: this.remoteChannelId })
       );
@@ -7683,10 +7932,10 @@ var SshConnectionManager = class {
 };
 
 // src/protocols/ssh/transport/SshTransportConnection.ts
-var import_node_buffer18 = require("buffer");
+var import_node_buffer17 = require("buffer");
 
 // src/protocols/ssh/transport/SshTransportHandshake.ts
-var import_node_buffer16 = require("buffer");
+var import_node_buffer15 = require("buffer");
 
 // src/protocols/ssh/transport/SshAlgorithmNegotiation.ts
 var DEFAULT_SSH_ALGORITHM_PREFERENCES = {
@@ -7848,12 +8097,12 @@ function parseSshIdentificationLine(line) {
 }
 
 // src/protocols/ssh/transport/SshKexInit.ts
-var import_node_buffer11 = require("buffer");
+var import_node_buffer10 = require("buffer");
 var import_node_crypto3 = require("crypto");
 var SSH_MSG_KEXINIT = 20;
 var KEXINIT_COOKIE_LENGTH = 16;
 function encodeSshKexInitMessage(options) {
-  const cookie = options.cookie === void 0 ? (0, import_node_crypto3.randomBytes)(KEXINIT_COOKIE_LENGTH) : import_node_buffer11.Buffer.from(options.cookie);
+  const cookie = options.cookie === void 0 ? (0, import_node_crypto3.randomBytes)(KEXINIT_COOKIE_LENGTH) : import_node_buffer10.Buffer.from(options.cookie);
   if (cookie.length !== KEXINIT_COOKIE_LENGTH) {
     throw new ConfigurationError({
       details: { actualLength: cookie.length, expectedLength: KEXINIT_COOKIE_LENGTH },
@@ -7923,12 +8172,12 @@ function decodeSshKexInitMessage(payload) {
 }
 
 // src/protocols/ssh/transport/SshKexCurve25519.ts
-var import_node_buffer12 = require("buffer");
+var import_node_buffer11 = require("buffer");
 var import_node_crypto4 = require("crypto");
 var SSH_MSG_KEX_ECDH_INIT = 30;
 var SSH_MSG_KEX_ECDH_REPLY = 31;
 var X25519_PUBLIC_KEY_LENGTH = 32;
-var X25519_SPKI_PREFIX = import_node_buffer12.Buffer.from("302a300506032b656e032100", "hex");
+var X25519_SPKI_PREFIX = import_node_buffer11.Buffer.from("302a300506032b656e032100", "hex");
 function createCurve25519Ephemeral() {
   const { privateKey, publicKey } = (0, import_node_crypto4.generateKeyPairSync)("x25519");
   const encodedPublicKey = exportX25519PublicKeyRaw(publicKey);
@@ -7973,7 +8222,7 @@ function exportX25519PublicKeyRaw(publicKey) {
 }
 function importX25519PublicKeyRaw(raw) {
   const normalized = normalizeX25519PublicKey(raw, "server");
-  const der = import_node_buffer12.Buffer.concat([X25519_SPKI_PREFIX, normalized]);
+  const der = import_node_buffer11.Buffer.concat([X25519_SPKI_PREFIX, normalized]);
   return (0, import_node_crypto4.createPublicKey)({
     format: "der",
     key: der,
@@ -7981,7 +8230,7 @@ function importX25519PublicKeyRaw(raw) {
   });
 }
 function normalizeX25519PublicKey(value, label) {
-  const key = import_node_buffer12.Buffer.from(value);
+  const key = import_node_buffer11.Buffer.from(value);
   if (key.length !== X25519_PUBLIC_KEY_LENGTH) {
     throw new ConfigurationError({
       details: { keyLength: key.length, label },
@@ -7994,7 +8243,7 @@ function normalizeX25519PublicKey(value, label) {
 }
 
 // src/protocols/ssh/transport/SshKeyDerivation.ts
-var import_node_buffer13 = require("buffer");
+var import_node_buffer12 = require("buffer");
 var import_node_crypto5 = require("crypto");
 function deriveSshSessionKeys(input) {
   const hashAlgorithm = resolveKexHashAlgorithm(input.kexAlgorithm);
@@ -8016,7 +8265,7 @@ function deriveSshSessionKeys(input) {
     input.negotiatedAlgorithms.encryptionServerToClient,
     input.negotiatedAlgorithms.macServerToClient
   );
-  const sharedSecret = import_node_buffer13.Buffer.from(input.sharedSecret);
+  const sharedSecret = import_node_buffer12.Buffer.from(input.sharedSecret);
   return {
     clientToServer: {
       encryptionKey: deriveMaterial(
@@ -8066,21 +8315,21 @@ function computeCurve25519ExchangeHash(input, hashAlgorithm) {
 }
 function deriveMaterial(sharedSecret, exchangeHash, sessionId, letter, length, hashAlgorithm) {
   if (length <= 0) {
-    return import_node_buffer13.Buffer.alloc(0);
+    return import_node_buffer12.Buffer.alloc(0);
   }
   const result = [];
   const first2 = (0, import_node_crypto5.createHash)(hashAlgorithm).update(
     new SshDataWriter().writeMpint(sharedSecret).writeBytes(exchangeHash).writeByte(letter.charCodeAt(0)).writeBytes(sessionId).toBuffer()
   ).digest();
   result.push(first2);
-  while (import_node_buffer13.Buffer.concat(result).length < length) {
-    const previous = import_node_buffer13.Buffer.concat(result);
+  while (import_node_buffer12.Buffer.concat(result).length < length) {
+    const previous = import_node_buffer12.Buffer.concat(result);
     const next = (0, import_node_crypto5.createHash)(hashAlgorithm).update(
       new SshDataWriter().writeMpint(sharedSecret).writeBytes(exchangeHash).writeBytes(previous).toBuffer()
     ).digest();
     result.push(next);
   }
-  return import_node_buffer13.Buffer.concat(result).subarray(0, length);
+  return import_node_buffer12.Buffer.concat(result).subarray(0, length);
 }
 function resolveKexHashAlgorithm(kexAlgorithm) {
   if (kexAlgorithm === "curve25519-sha256" || kexAlgorithm === "curve25519-sha256@libssh.org") {
@@ -8168,20 +8417,21 @@ function decodeSshNewKeysMessage(payload) {
 }
 
 // src/protocols/ssh/transport/SshTransportPacket.ts
-var import_node_buffer14 = require("buffer");
+var import_node_buffer13 = require("buffer");
 var import_node_crypto6 = require("crypto");
 var MIN_PADDING_LENGTH = 4;
 var MIN_PACKET_LENGTH = 1 + MIN_PADDING_LENGTH;
+var MAX_SSH_PACKET_LENGTH = 256 * 1024;
 function encodeSshTransportPacket(payload, options = {}) {
-  const body = import_node_buffer14.Buffer.from(payload);
+  const body = import_node_buffer13.Buffer.from(payload);
   const blockSize = normalizeBlockSize(options.blockSize ?? 8);
   let paddingLength = MIN_PADDING_LENGTH;
   while ((1 + body.length + paddingLength + 4) % blockSize !== 0) {
     paddingLength += 1;
   }
-  const padding = options.randomPadding === false ? import_node_buffer14.Buffer.alloc(paddingLength) : (0, import_node_crypto6.randomBytes)(paddingLength);
+  const padding = options.randomPadding === false ? import_node_buffer13.Buffer.alloc(paddingLength) : (0, import_node_crypto6.randomBytes)(paddingLength);
   const packetLength = 1 + body.length + paddingLength;
-  const frame = import_node_buffer14.Buffer.alloc(4 + packetLength);
+  const frame = import_node_buffer13.Buffer.alloc(4 + packetLength);
   frame.writeUInt32BE(packetLength, 0);
   frame.writeUInt8(paddingLength, 4);
   body.copy(frame, 5);
@@ -8189,7 +8439,7 @@ function encodeSshTransportPacket(payload, options = {}) {
   return frame;
 }
 function decodeSshTransportPacket(frame) {
-  const bytes = import_node_buffer14.Buffer.from(frame);
+  const bytes = import_node_buffer13.Buffer.from(frame);
   if (bytes.length < 4 + MIN_PACKET_LENGTH) {
     throw new ParseError({
       details: { length: bytes.length },
@@ -8243,12 +8493,20 @@ function decodeSshTransportPacket(frame) {
   };
 }
 var SshTransportPacketFramer = class {
-  pending = import_node_buffer14.Buffer.alloc(0);
+  pending = import_node_buffer13.Buffer.alloc(0);
   push(chunk) {
-    this.pending = import_node_buffer14.Buffer.concat([this.pending, import_node_buffer14.Buffer.from(chunk)]);
+    this.pending = import_node_buffer13.Buffer.concat([this.pending, import_node_buffer13.Buffer.from(chunk)]);
     const packets = [];
     while (this.pending.length >= 4) {
       const packetLength = this.pending.readUInt32BE(0);
+      if (packetLength > MAX_SSH_PACKET_LENGTH) {
+        throw new ParseError({
+          details: { maxPacketLength: MAX_SSH_PACKET_LENGTH, packetLength },
+          message: "SSH transport packet length exceeds the maximum accepted size",
+          protocol: "sftp",
+          retryable: false
+        });
+      }
       const frameLength = 4 + packetLength;
       if (this.pending.length < frameLength) {
         break;
@@ -8264,8 +8522,8 @@ var SshTransportPacketFramer = class {
   }
   /** Returns and clears any bytes buffered but not yet part of a complete packet. */
   takeRemainingBytes() {
-    const remaining = import_node_buffer14.Buffer.from(this.pending);
-    this.pending = import_node_buffer14.Buffer.alloc(0);
+    const remaining = import_node_buffer13.Buffer.from(this.pending);
+    this.pending = import_node_buffer13.Buffer.alloc(0);
     return remaining;
   }
 };
@@ -8282,10 +8540,10 @@ function normalizeBlockSize(blockSize) {
 }
 
 // src/protocols/ssh/transport/SshHostKeyVerification.ts
-var import_node_buffer15 = require("buffer");
+var import_node_buffer14 = require("buffer");
 var import_node_crypto7 = require("crypto");
 var ED25519_RAW_KEY_LENGTH2 = 32;
-var ED25519_SPKI_PREFIX = import_node_buffer15.Buffer.from("302a300506032b6570032100", "hex");
+var ED25519_SPKI_PREFIX = import_node_buffer14.Buffer.from("302a300506032b6570032100", "hex");
 function verifySshHostKeySignature(input) {
   const { algorithmName, publicKey } = parseHostKey(input.hostKeyBlob);
   const { signatureAlgorithm, signatureBytes } = parseSignatureBlob(input.signatureBlob);
@@ -8298,9 +8556,9 @@ function verifySshHostKeySignature(input) {
     });
   }
   const verified = verifySignature({
-    data: import_node_buffer15.Buffer.from(input.exchangeHash),
+    data: import_node_buffer14.Buffer.from(input.exchangeHash),
     publicKey,
-    signature: import_node_buffer15.Buffer.from(signatureBytes),
+    signature: import_node_buffer14.Buffer.from(signatureBytes),
     signatureAlgorithm
   });
   if (!verified) {
@@ -8329,7 +8587,7 @@ function parseHostKey(blob) {
           retryable: false
         });
       }
-      const spki = import_node_buffer15.Buffer.concat([ED25519_SPKI_PREFIX, raw]);
+      const spki = import_node_buffer14.Buffer.concat([ED25519_SPKI_PREFIX, raw]);
       return {
         algorithmName,
         publicKey: (0, import_node_crypto7.createPublicKey)({ format: "der", key: spki, type: "spki" })
@@ -8435,37 +8693,37 @@ function verifySignature(input) {
 function rsaPublicKeyFromComponents(e, n) {
   const eDer = encodeAsn1Integer(e);
   const nDer = encodeAsn1Integer(n);
-  const rsaPublicKeyDer = encodeAsn1Sequence(import_node_buffer15.Buffer.concat([nDer, eDer]));
-  const bitStringContent = import_node_buffer15.Buffer.concat([import_node_buffer15.Buffer.from([0]), rsaPublicKeyDer]);
-  const bitString = import_node_buffer15.Buffer.concat([
-    import_node_buffer15.Buffer.from([3]),
+  const rsaPublicKeyDer = encodeAsn1Sequence(import_node_buffer14.Buffer.concat([nDer, eDer]));
+  const bitStringContent = import_node_buffer14.Buffer.concat([import_node_buffer14.Buffer.from([0]), rsaPublicKeyDer]);
+  const bitString = import_node_buffer14.Buffer.concat([
+    import_node_buffer14.Buffer.from([3]),
     encodeAsn1Length(bitStringContent.length),
     bitStringContent
   ]);
-  const algoId = import_node_buffer15.Buffer.from("300d06092a864886f70d010101 0500".replace(/\s+/g, ""), "hex");
-  const spki = encodeAsn1Sequence(import_node_buffer15.Buffer.concat([algoId, bitString]));
+  const algoId = import_node_buffer14.Buffer.from("300d06092a864886f70d010101 0500".replace(/\s+/g, ""), "hex");
+  const spki = encodeAsn1Sequence(import_node_buffer14.Buffer.concat([algoId, bitString]));
   return (0, import_node_crypto7.createPublicKey)({ format: "der", key: spki, type: "spki" });
 }
 function encodeAsn1Integer(value) {
   let body = value;
   while (body.length > 1 && body[0] === 0) body = body.subarray(1);
   if (body.length > 0 && (body[0] & 128) !== 0) {
-    body = import_node_buffer15.Buffer.concat([import_node_buffer15.Buffer.from([0]), body]);
+    body = import_node_buffer14.Buffer.concat([import_node_buffer14.Buffer.from([0]), body]);
   }
-  return import_node_buffer15.Buffer.concat([import_node_buffer15.Buffer.from([2]), encodeAsn1Length(body.length), body]);
+  return import_node_buffer14.Buffer.concat([import_node_buffer14.Buffer.from([2]), encodeAsn1Length(body.length), body]);
 }
 function encodeAsn1Sequence(content) {
-  return import_node_buffer15.Buffer.concat([import_node_buffer15.Buffer.from([48]), encodeAsn1Length(content.length), content]);
+  return import_node_buffer14.Buffer.concat([import_node_buffer14.Buffer.from([48]), encodeAsn1Length(content.length), content]);
 }
 function encodeAsn1Length(length) {
-  if (length < 128) return import_node_buffer15.Buffer.from([length]);
+  if (length < 128) return import_node_buffer14.Buffer.from([length]);
   const bytes = [];
   let n = length;
   while (n > 0) {
     bytes.unshift(n & 255);
     n >>>= 8;
   }
-  return import_node_buffer15.Buffer.from([128 | bytes.length, ...bytes]);
+  return import_node_buffer14.Buffer.from([128 | bytes.length, ...bytes]);
 }
 var ECDSA_OID_BY_CURVE = {
   nistp256: "06082a8648ce3d030107",
@@ -8486,15 +8744,15 @@ function ecdsaPublicKeyFromPoint(curveIdentifier, point) {
       retryable: false
     });
   }
-  const algoIdContent = import_node_buffer15.Buffer.from(ECDSA_ALGORITHM_OID_HEX + oidHex, "hex");
+  const algoIdContent = import_node_buffer14.Buffer.from(ECDSA_ALGORITHM_OID_HEX + oidHex, "hex");
   const algoId = encodeAsn1Sequence(algoIdContent);
-  const bitStringContent = import_node_buffer15.Buffer.concat([import_node_buffer15.Buffer.from([0]), point]);
-  const bitString = import_node_buffer15.Buffer.concat([
-    import_node_buffer15.Buffer.from([3]),
+  const bitStringContent = import_node_buffer14.Buffer.concat([import_node_buffer14.Buffer.from([0]), point]);
+  const bitString = import_node_buffer14.Buffer.concat([
+    import_node_buffer14.Buffer.from([3]),
     encodeAsn1Length(bitStringContent.length),
     bitStringContent
   ]);
-  const spki = encodeAsn1Sequence(import_node_buffer15.Buffer.concat([algoId, bitString]));
+  const spki = encodeAsn1Sequence(import_node_buffer14.Buffer.concat([algoId, bitString]));
   return (0, import_node_crypto7.createPublicKey)({ format: "der", key: spki, type: "spki" });
 }
 function sshEcdsaSignatureToDer(sshSignature) {
@@ -8503,7 +8761,7 @@ function sshEcdsaSignatureToDer(sshSignature) {
   const s = reader.readMpint();
   const rDer = encodeAsn1Integer(r);
   const sDer = encodeAsn1Integer(s);
-  return encodeAsn1Sequence(import_node_buffer15.Buffer.concat([rDer, sDer]));
+  return encodeAsn1Sequence(import_node_buffer14.Buffer.concat([rDer, sDer]));
 }
 
 // src/protocols/ssh/transport/SshTransportHandshake.ts
@@ -8535,7 +8793,7 @@ var SshTransportHandshake = class {
   serverIdentification;
   /** Creates the first outbound bytes (client identification line). */
   createInitialClientBytes() {
-    return import_node_buffer16.Buffer.from(`${this.clientIdentificationLine}\r
+    return import_node_buffer15.Buffer.from(`${this.clientIdentificationLine}\r
 `, "ascii");
   }
   /**
@@ -8559,7 +8817,7 @@ var SshTransportHandshake = class {
       }
       return { outbound };
     }
-    return this.pushServerBytesWithPhase(outbound, import_node_buffer16.Buffer.from(chunk));
+    return this.pushServerBytesWithPhase(outbound, import_node_buffer15.Buffer.from(chunk));
   }
   getServerBannerLines() {
     return this.identificationLines;
@@ -8613,12 +8871,12 @@ var SshTransportHandshake = class {
           clientKexInitPayload: this.clientKexInitPayload,
           clientPublicKey: this.pendingCurve25519.publicKey,
           negotiatedAlgorithms,
-          serverHostKey: import_node_buffer16.Buffer.alloc(0),
+          serverHostKey: import_node_buffer15.Buffer.alloc(0),
           serverIdentification: (this.serverIdentification ?? missingServerIdentificationError()).raw,
-          serverKexInitPayload: import_node_buffer16.Buffer.from(packet.payload),
-          serverPublicKey: import_node_buffer16.Buffer.alloc(0),
-          serverSignature: import_node_buffer16.Buffer.alloc(0),
-          sharedSecret: import_node_buffer16.Buffer.alloc(0)
+          serverKexInitPayload: import_node_buffer15.Buffer.from(packet.payload),
+          serverPublicKey: import_node_buffer15.Buffer.alloc(0),
+          serverSignature: import_node_buffer15.Buffer.alloc(0),
+          sharedSecret: import_node_buffer15.Buffer.alloc(0)
         };
         continue;
       }
@@ -8726,24 +8984,54 @@ var SshTransportHandshake = class {
     return { outbound };
   }
 };
+var MAX_IDENTIFICATION_LINE_BYTES = 8192;
+var MAX_PRE_IDENTIFICATION_LINES = 1024;
 var SshIdentificationAccumulator = class {
-  pending = import_node_buffer16.Buffer.alloc(0);
+  pending = import_node_buffer15.Buffer.alloc(0);
+  bannerLineCount = 0;
   push(chunk) {
-    this.pending = import_node_buffer16.Buffer.concat([this.pending, import_node_buffer16.Buffer.from(chunk)]);
+    this.pending = import_node_buffer15.Buffer.concat([this.pending, import_node_buffer15.Buffer.from(chunk)]);
     const bannerLines = [];
     while (true) {
       const lfIndex = this.pending.indexOf(10);
-      if (lfIndex < 0) break;
+      if (lfIndex < 0) {
+        if (this.pending.length > MAX_IDENTIFICATION_LINE_BYTES) {
+          throw new ProtocolError({
+            details: { limitBytes: MAX_IDENTIFICATION_LINE_BYTES },
+            message: "SSH identification line exceeds the maximum accepted length",
+            protocol: "sftp",
+            retryable: false
+          });
+        }
+        break;
+      }
+      if (lfIndex > MAX_IDENTIFICATION_LINE_BYTES) {
+        throw new ProtocolError({
+          details: { limitBytes: MAX_IDENTIFICATION_LINE_BYTES },
+          message: "SSH identification line exceeds the maximum accepted length",
+          protocol: "sftp",
+          retryable: false
+        });
+      }
       const lineText = trimLineEndings(this.pending.subarray(0, lfIndex + 1).toString("ascii"));
-      const remainder = import_node_buffer16.Buffer.from(this.pending.subarray(lfIndex + 1));
+      const remainder = import_node_buffer15.Buffer.from(this.pending.subarray(lfIndex + 1));
       this.pending = remainder;
       if (lineText.startsWith("SSH-")) {
-        this.pending = import_node_buffer16.Buffer.alloc(0);
+        this.pending = import_node_buffer15.Buffer.alloc(0);
         return { bannerLines, identLine: lineText, remainder };
+      }
+      this.bannerLineCount += 1;
+      if (this.bannerLineCount > MAX_PRE_IDENTIFICATION_LINES) {
+        throw new ProtocolError({
+          details: { limitLines: MAX_PRE_IDENTIFICATION_LINES },
+          message: "SSH server sent too many pre-identification banner lines",
+          protocol: "sftp",
+          retryable: false
+        });
       }
       bannerLines.push(lineText);
     }
-    return { bannerLines, remainder: import_node_buffer16.Buffer.alloc(0) };
+    return { bannerLines, remainder: import_node_buffer15.Buffer.alloc(0) };
   }
 };
 function trimLineEndings(value) {
@@ -8771,7 +9059,7 @@ function missingPendingKeyExchangeError() {
 }
 
 // src/protocols/ssh/transport/SshTransportProtection.ts
-var import_node_buffer17 = require("buffer");
+var import_node_buffer16 = require("buffer");
 var import_node_crypto8 = require("crypto");
 function createSshTransportProtectionContext(input) {
   return {
@@ -8828,7 +9116,7 @@ var SshTransportPacketProtector = class {
     );
     const encrypted = this.cipher === void 0 ? clearPacket : this.cipher.update(clearPacket);
     this.sequenceNumber = this.sequenceNumber + 1 >>> 0;
-    return import_node_buffer17.Buffer.concat([encrypted, mac]);
+    return import_node_buffer16.Buffer.concat([encrypted, mac]);
   }
 };
 var SshTransportPacketUnprotector = class {
@@ -8854,7 +9142,7 @@ var SshTransportPacketUnprotector = class {
   sequenceNumber;
   // Streaming framing state for pushBytes()
   framePartialDecrypted;
-  framePendingRaw = import_node_buffer17.Buffer.alloc(0);
+  framePendingRaw = import_node_buffer16.Buffer.alloc(0);
   frameRemainingNeeded;
   getSequenceNumber() {
     return this.sequenceNumber;
@@ -8864,15 +9152,23 @@ var SshTransportPacketUnprotector = class {
    * Maintains internal framing state across calls - pass each `data` event chunk directly.
    */
   pushBytes(chunk) {
-    this.framePendingRaw = import_node_buffer17.Buffer.concat([this.framePendingRaw, chunk]);
+    this.framePendingRaw = import_node_buffer16.Buffer.concat([this.framePendingRaw, chunk]);
     const results = [];
     while (true) {
       if (this.framePartialDecrypted === void 0) {
         if (this.framePendingRaw.length < this.blockLength) break;
         const firstBlock = this.framePendingRaw.subarray(0, this.blockLength);
-        this.framePendingRaw = import_node_buffer17.Buffer.from(this.framePendingRaw.subarray(this.blockLength));
-        this.framePartialDecrypted = this.decipher ? import_node_buffer17.Buffer.from(this.decipher.update(firstBlock)) : import_node_buffer17.Buffer.from(firstBlock);
+        this.framePendingRaw = import_node_buffer16.Buffer.from(this.framePendingRaw.subarray(this.blockLength));
+        this.framePartialDecrypted = this.decipher ? import_node_buffer16.Buffer.from(this.decipher.update(firstBlock)) : import_node_buffer16.Buffer.from(firstBlock);
         const packetLength = this.framePartialDecrypted.readUInt32BE(0);
+        if (packetLength > MAX_SSH_PACKET_LENGTH) {
+          throw new ProtocolError({
+            details: { maxPacketLength: MAX_SSH_PACKET_LENGTH, packetLength },
+            message: "SSH encrypted packet length exceeds the maximum accepted size",
+            protocol: "sftp",
+            retryable: false
+          });
+        }
         const remaining = 4 + packetLength - this.blockLength + this.macLength;
         if (remaining < 0) {
           throw new ProtocolError({
@@ -8888,9 +9184,9 @@ var SshTransportPacketUnprotector = class {
       if (this.framePendingRaw.length < needed) break;
       const encryptedRest = this.framePendingRaw.subarray(0, needed - this.macLength);
       const receivedMac = this.framePendingRaw.subarray(needed - this.macLength, needed);
-      this.framePendingRaw = import_node_buffer17.Buffer.from(this.framePendingRaw.subarray(needed));
-      const decryptedRest = encryptedRest.length > 0 ? this.decipher ? import_node_buffer17.Buffer.from(this.decipher.update(encryptedRest)) : import_node_buffer17.Buffer.from(encryptedRest) : import_node_buffer17.Buffer.alloc(0);
-      const clearPacket = import_node_buffer17.Buffer.concat([this.framePartialDecrypted, decryptedRest]);
+      this.framePendingRaw = import_node_buffer16.Buffer.from(this.framePendingRaw.subarray(needed));
+      const decryptedRest = encryptedRest.length > 0 ? this.decipher ? import_node_buffer16.Buffer.from(this.decipher.update(encryptedRest)) : import_node_buffer16.Buffer.from(encryptedRest) : import_node_buffer16.Buffer.alloc(0);
+      const clearPacket = import_node_buffer16.Buffer.concat([this.framePartialDecrypted, decryptedRest]);
       const expectedMac = computeMac(
         this.macAlgorithm,
         this.options.keys.macKey,
@@ -8913,7 +9209,7 @@ var SshTransportPacketUnprotector = class {
     return results;
   }
   unprotectPayload(packet) {
-    const frame = import_node_buffer17.Buffer.from(packet);
+    const frame = import_node_buffer16.Buffer.from(packet);
     if (frame.length < this.macLength) {
       throw new ProtocolError({
         details: { length: frame.length, macLength: this.macLength },
@@ -9054,10 +9350,10 @@ function resolveMacLength(encryptionAlgorithm, macAlgorithm) {
 }
 function computeMac(macAlgorithm, macKey, sequence, packet, macLength) {
   if (macLength === 0) {
-    return import_node_buffer17.Buffer.alloc(0);
+    return import_node_buffer16.Buffer.alloc(0);
   }
   const hashName = macAlgorithm === "hmac-sha2-512" ? "sha512" : "sha256";
-  const sequenceBuffer = import_node_buffer17.Buffer.alloc(4);
+  const sequenceBuffer = import_node_buffer16.Buffer.alloc(4);
   sequenceBuffer.writeUInt32BE(sequence >>> 0, 0);
   return (0, import_node_crypto8.createHmac)(hashName, macKey).update(sequenceBuffer).update(packet).digest().subarray(0, macLength);
 }
@@ -9264,7 +9560,7 @@ var SshTransportConnection = class {
    */
   sendPayload(payload) {
     this.assertConnected();
-    const frame = this.protector.protectPayload(import_node_buffer18.Buffer.from(payload));
+    const frame = this.protector.protectPayload(import_node_buffer17.Buffer.from(payload));
     this.socket.write(frame);
     this.resetKeepaliveTimer();
   }
@@ -9422,7 +9718,7 @@ function parseDisconnectPayload(payload) {
 }
 
 // src/protocols/sftp/v3/SftpSession.ts
-var import_node_buffer20 = require("buffer");
+var import_node_buffer19 = require("buffer");
 
 // src/protocols/sftp/v3/SftpAttributes.ts
 var SFTP_ATTR_FLAG = {
@@ -9495,7 +9791,8 @@ function decodeSftpAttributesFromReader(reader) {
 }
 
 // src/protocols/sftp/v3/SftpPacket.ts
-var import_node_buffer19 = require("buffer");
+var import_node_buffer18 = require("buffer");
+var MAX_SFTP_PACKET_LENGTH = 256 * 1024;
 var SFTP_PACKET_TYPE = {
   ATTRS: 105,
   CLOSE: 4,
@@ -9526,7 +9823,7 @@ var SFTP_PACKET_TYPE = {
   WRITE: 6
 };
 function decodeSftpPacket(frame) {
-  const bytes = import_node_buffer19.Buffer.from(frame);
+  const bytes = import_node_buffer18.Buffer.from(frame);
   if (bytes.length < 5) {
     throw new ParseError({
       details: { length: bytes.length },
@@ -9549,12 +9846,19 @@ function decodeSftpPacket(frame) {
   };
 }
 var SftpPacketFramer = class {
-  pending = import_node_buffer19.Buffer.alloc(0);
+  pending = import_node_buffer18.Buffer.alloc(0);
   push(chunk) {
-    this.pending = import_node_buffer19.Buffer.concat([this.pending, import_node_buffer19.Buffer.from(chunk)]);
+    this.pending = import_node_buffer18.Buffer.concat([this.pending, import_node_buffer18.Buffer.from(chunk)]);
     const packets = [];
     while (this.pending.length >= 4) {
       const bodyLength = this.pending.readUInt32BE(0);
+      if (bodyLength > MAX_SFTP_PACKET_LENGTH) {
+        throw new ParseError({
+          details: { bodyLength, maxPacketLength: MAX_SFTP_PACKET_LENGTH },
+          message: "SFTP packet length exceeds the maximum accepted size",
+          retryable: false
+        });
+      }
       const frameLength = 4 + bodyLength;
       if (this.pending.length < frameLength) {
         break;
@@ -10009,7 +10313,7 @@ var SftpSession = class {
    * serializes concurrent calls so byte ordering is preserved.
    */
   sendRaw(encodedMessage, requestId) {
-    const frame = import_node_buffer20.Buffer.alloc(4 + encodedMessage.length);
+    const frame = import_node_buffer19.Buffer.alloc(4 + encodedMessage.length);
     frame.writeUInt32BE(encodedMessage.length, 0);
     encodedMessage.copy(frame, 4);
     this.channel.sendData(frame).catch((err) => {
@@ -10552,9 +10856,9 @@ function buildNativePublickeyCredential(profile, username) {
   const passphrase = profile.ssh?.passphrase;
   try {
     const privateKey = (0, import_node_crypto9.createPrivateKey)({
-      key: import_node_buffer21.Buffer.isBuffer(keyMaterial) ? keyMaterial : keyMaterial,
+      key: import_node_buffer20.Buffer.isBuffer(keyMaterial) ? keyMaterial : keyMaterial,
       ...passphrase === void 0 ? {} : {
-        passphrase: import_node_buffer21.Buffer.isBuffer(passphrase) ? passphrase : passphrase
+        passphrase: import_node_buffer20.Buffer.isBuffer(passphrase) ? passphrase : passphrase
       }
     });
     return buildPublickeyCredential({ privateKey, username });
@@ -10681,12 +10985,12 @@ function normalizeNativeHostKeyPins(value) {
     const trimmed = pin.trim();
     const hex = trimmed.replace(/:/g, "");
     if (hex.length === 64 && /^[a-f0-9]+$/i.test(hex)) {
-      normalized.add(import_node_buffer21.Buffer.from(hex, "hex").toString("base64").replace(/=+$/g, ""));
+      normalized.add(import_node_buffer20.Buffer.from(hex, "hex").toString("base64").replace(/=+$/g, ""));
       continue;
     }
     const bare = trimmed.startsWith("SHA256:") ? trimmed.slice("SHA256:".length) : trimmed;
     const padded = bare.length % 4 === 0 ? bare : `${bare}${"=".repeat(4 - bare.length % 4)}`;
-    normalized.add(import_node_buffer21.Buffer.from(padded, "base64").toString("base64").replace(/=+$/g, ""));
+    normalized.add(import_node_buffer20.Buffer.from(padded, "base64").toString("base64").replace(/=+$/g, ""));
   }
   return normalized;
 }
@@ -10696,7 +11000,7 @@ function parseNativeKnownHosts(source) {
   const entries = [];
   let sawNonEmpty = false;
   for (const value of sources) {
-    const text = import_node_buffer21.Buffer.isBuffer(value) ? value.toString("utf8") : String(value);
+    const text = import_node_buffer20.Buffer.isBuffer(value) ? value.toString("utf8") : String(value);
     if (text.length === 0) continue;
     sawNonEmpty = true;
     entries.push(...parseKnownHosts(text));
@@ -10769,7 +11073,7 @@ function requireNativeSftpUsername(profile) {
 }
 function resolveNativeSftpTextSecret(value) {
   if (value === void 0) return void 0;
-  const text = import_node_buffer21.Buffer.isBuffer(value) ? value.toString("utf8") : value;
+  const text = import_node_buffer20.Buffer.isBuffer(value) ? value.toString("utf8") : value;
   if (text.length === 0) return void 0;
   return text;
 }
@@ -10845,6 +11149,7 @@ function validateNativeSftpOptions(options) {
   copyBetween,
   createAtomicDeployPlan,
   createBandwidthThrottle,
+  createDefaultRetryPolicy,
   createFtpProviderFactory,
   createFtpsProviderFactory,
   createLocalProviderFactory,
@@ -10890,8 +11195,10 @@ function validateNativeSftpOptions(options) {
   parseUnixListLine,
   redactCommand,
   redactConnectionProfile,
+  redactErrorForLogging,
   redactObject,
   redactSecretSource,
+  redactUrlForLogging,
   redactValue,
   resolveConnectionProfileSecrets,
   resolveOpenSshHost,

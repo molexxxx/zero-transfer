@@ -39,4 +39,12 @@ describe("SSH transport packet codec", () => {
 
     expect(() => decodeSshTransportPacket(corrupted)).toThrow(ParseError);
   });
+
+  it("rejects a forged oversized packet length instead of buffering it", () => {
+    const framer = new SshTransportPacketFramer();
+    const forged = Buffer.alloc(8);
+    forged.writeUInt32BE(0xffff_ffff, 0);
+
+    expect(() => framer.push(forged)).toThrow(ParseError);
+  });
 });

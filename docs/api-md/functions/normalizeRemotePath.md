@@ -10,7 +10,7 @@
 function normalizeRemotePath(input): string;
 ```
 
-Defined in: [src/utils/path.ts:42](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/utils/path.ts#L42)
+Defined in: [src/utils/path.ts:47](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/utils/path.ts#L47)
 
 Normalizes a remote path using POSIX-style separators without escaping absolute roots.
 
@@ -28,4 +28,4 @@ A normalized remote path, `/` for absolute root, or `.` for an empty relative pa
 
 ## Throws
 
-[ConfigurationError](../classes/ConfigurationError.md) When the input contains unsafe CR or LF characters.
+[ConfigurationError](../classes/ConfigurationError.md) When the input contains unsafe CR, LF, or NUL characters.

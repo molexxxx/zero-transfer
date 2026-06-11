@@ -6,6 +6,10 @@ export {
   type BandwidthThrottleOptions,
 } from "./BandwidthThrottle";
 export {
+  createDefaultRetryPolicy,
+  type DefaultRetryPolicyOptions,
+} from "./createDefaultRetryPolicy";
+export {
   createProviderTransferExecutor,
   type ProviderTransferEndpointRole,
   type ProviderTransferExecutorOptions,

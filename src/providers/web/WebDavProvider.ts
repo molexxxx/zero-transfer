@@ -17,6 +17,7 @@ import {
   ProtocolError,
   UnsupportedFeatureError,
 } from "../../errors/ZeroTransferError";
+import { redactUrlForLogging } from "../../logging/redaction";
 import { resolveSecret } from "../../profiles/SecretSource";
 import type { ConnectionProfile, RemoteEntry, RemoteStat } from "../../types/public";
 import { basenameRemotePath, normalizeRemotePath } from "../../utils/path";
@@ -31,13 +32,16 @@ import type {
 } from "../ProviderTransferOperations";
 import type { RemoteFileSystem } from "../RemoteFileSystem";
 import {
+  assertHttpsEnforced,
+  asyncIterableToReadableStream,
   buildBaseUrl,
   dispatchRequest,
   formatRangeHeader,
-  mapResponseError,
+  mapResponseErrorWithBody,
   parseTotalBytes,
   resolveUrl,
   secretToString,
+  warnCleartextCredentials,
   webStreamToAsyncIterable,
   type HttpFetch,
   type HttpSessionTransport,
@@ -58,19 +62,25 @@ export interface WebDavProviderOptions {
   /** Default headers applied to every request. */
   defaultHeaders?: Record<string, string>;
   /**
+   * Rejects factory creation when the transport is cleartext `http`. Defaults
+   * to `false`, where connecting with credentials over cleartext emits a
+   * process `SecurityWarning` instead of failing.
+   */
+  enforceHttps?: boolean;
+  /**
    * Streaming policy for `PUT` request bodies.
    *
-   * - `"when-known-size"` (default) - stream when the caller declares
-   *   `request.totalBytes` (an explicit `Content-Length` is sent so all
-   *   WebDAV servers accept the upload); otherwise buffer the entire body in
-   *   memory before sending. This is the safe default that does not require
-   *   the server to accept HTTP/1.1 chunked transfer-encoding.
-   * - `"always"` - always stream the body, even when the size is unknown
-   *   (the runtime will use chunked transfer-encoding). Some legacy WebDAV
-   *   servers reject `Transfer-Encoding: chunked` and will respond `411
-   *   Length Required` or `501 Not Implemented`; only enable this for
-   *   servers known to accept chunked uploads (modern Apache/nginx, IIS
-   *   with chunked transfer enabled, Nextcloud, ownCloud, sabre/dav).
+   * - `"always"` (default since 0.5) - always stream the body so memory use
+   *   stays bounded regardless of payload size. When the caller declares
+   *   `request.totalBytes` an explicit `Content-Length` is still sent (no
+   *   chunked encoding); only unknown-size uploads fall back to HTTP/1.1
+   *   chunked transfer-encoding. Some legacy WebDAV servers reject
+   *   `Transfer-Encoding: chunked` and respond `411 Length Required` or
+   *   `501 Not Implemented`; point those at `"when-known-size"`.
+   * - `"when-known-size"` (default before 0.5) - stream only when
+   *   `request.totalBytes` is known; unknown-size bodies are buffered
+   *   entirely in memory so a `Content-Length` can always be sent. Use for
+   *   servers that require a declared length on every upload.
    * - `"never"` - always buffer (legacy behaviour pre-0.4.0). Use for
    *   maximum compatibility at the cost of memory.
    */
@@ -121,7 +131,9 @@ export function createWebDavProviderFactory(options: WebDavProviderOptions = {})
   const secure = options.secure ?? false;
   const basePath = options.basePath ?? "";
   const fetchImpl = options.fetch ?? globalThis.fetch;
-  const uploadStreaming = options.uploadStreaming ?? "when-known-size";
+  const uploadStreaming = options.uploadStreaming ?? "always";
+
+  assertHttpsEnforced({ enforceHttps: options.enforceHttps ?? false, providerId: id, secure });
 
   if (typeof fetchImpl !== "function") {
     throw new ConfigurationError({
@@ -194,6 +206,14 @@ class WebDavProvider implements TransferProvider {
   }
 
   async connect(profile: ConnectionProfile): Promise<TransferSession> {
+    if (!this.internals.secure) {
+      warnCleartextCredentials({
+        hasCredentials: profile.username !== undefined || profile.password !== undefined,
+        host: profile.host,
+        providerId: this.internals.id,
+      });
+    }
+
     const headers = { ...this.internals.defaultHeaders };
     if (profile.username !== undefined) {
       const username = await resolveSecret(profile.username);
@@ -257,7 +277,7 @@ class WebDavFileSystem implements RemoteFileSystem {
       method: "PROPFIND",
     });
     if (!response.ok && response.status !== 207) {
-      throw mapResponseError(response, normalized);
+      throw await mapResponseErrorWithBody(response, normalized);
     }
     const body = await response.text();
     const entries = parsePropfindResponses(body, this.options.baseUrl);
@@ -274,7 +294,7 @@ class WebDavFileSystem implements RemoteFileSystem {
       method: "PROPFIND",
     });
     if (!response.ok && response.status !== 207) {
-      throw mapResponseError(response, normalized);
+      throw await mapResponseErrorWithBody(response, normalized);
     }
     const body = await response.text();
     const entries = parsePropfindResponses(body, this.options.baseUrl);
@@ -322,12 +342,12 @@ class WebDavTransferOperations implements ProviderTransferOperations {
     const response = await dispatchRequest(this.options, url, init);
 
     if (!response.ok && response.status !== 206) {
-      throw mapResponseError(response, normalized);
+      throw await mapResponseErrorWithBody(response, normalized);
     }
     const body = response.body;
     if (body === null) {
       throw new ConnectionError({
-        message: `WebDAV response had no body for ${url.toString()}`,
+        message: `WebDAV response had no body for ${redactUrlForLogging(url)}`,
         retryable: true,
       });
     }
@@ -380,7 +400,7 @@ class WebDavTransferOperations implements ProviderTransferOperations {
       if (request.signal !== undefined) init.signal = request.signal;
       const response = await dispatchRequest(this.options, url, init);
       if (!response.ok) {
-        throw mapResponseError(response, normalized);
+        throw await mapResponseErrorWithBody(response, normalized);
       }
       request.reportProgress(buffered.byteLength, buffered.byteLength);
       const result: ProviderTransferWriteResult = {
@@ -429,7 +449,7 @@ class WebDavTransferOperations implements ProviderTransferOperations {
     if (request.signal !== undefined) init.signal = request.signal;
     const response = await dispatchRequest(this.options, url, init);
     if (!response.ok) {
-      throw mapResponseError(response, normalized);
+      throw await mapResponseErrorWithBody(response, normalized);
     }
     const result: ProviderTransferWriteResult = {
       bytesTransferred,
@@ -455,47 +475,6 @@ async function collectChunks(source: AsyncIterable<Uint8Array>): Promise<Uint8Ar
     offset += chunk.byteLength;
   }
   return out;
-}
-
-/**
- * Adapts an `AsyncIterable<Uint8Array>` into a Web `ReadableStream<Uint8Array>`
- * suitable for passing as a `fetch` request body. Invokes `onChunk` after each
- * chunk is enqueued so callers can report transfer progress.
- */
-function asyncIterableToReadableStream(
-  source: AsyncIterable<Uint8Array>,
-  onChunk: (chunk: Uint8Array) => void,
-): ReadableStream<Uint8Array> {
-  const iterator = source[Symbol.asyncIterator]();
-  return new ReadableStream<Uint8Array>({
-    async pull(controller) {
-      try {
-        const next = await iterator.next();
-        if (next.done === true) {
-          controller.close();
-          return;
-        }
-        const chunk = next.value;
-        if (chunk.byteLength === 0) {
-          // Drop empty chunks; pull() will be invoked again on demand.
-          return;
-        }
-        controller.enqueue(chunk);
-        onChunk(chunk);
-      } catch (error) {
-        controller.error(error);
-      }
-    },
-    async cancel(reason) {
-      if (typeof iterator.return === "function") {
-        try {
-          await iterator.return(reason);
-        } catch {
-          // Ignore: cancellation is best-effort.
-        }
-      }
-    },
-  });
 }
 
 interface PropfindEntry {

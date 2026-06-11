@@ -10,7 +10,7 @@
 function negotiateSshAlgorithms(client, server): NegotiatedSshAlgorithms;
 ```
 
-Defined in: [src/protocols/ssh/transport/SshAlgorithmNegotiation.ts:69](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/protocols/ssh/transport/SshAlgorithmNegotiation.ts#L69)
+Defined in: [src/protocols/ssh/transport/SshAlgorithmNegotiation.ts:69](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/protocols/ssh/transport/SshAlgorithmNegotiation.ts#L69)
 
 Intersects client and server algorithm lists using SSH's client-priority selection model.
 

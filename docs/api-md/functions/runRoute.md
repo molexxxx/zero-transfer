@@ -10,7 +10,7 @@
 function runRoute(options): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/mft/runRoute.ts:96](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/runRoute.ts#L96)
+Defined in: [src/mft/runRoute.ts:101](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/runRoute.ts#L101)
 
 Executes an MFT route as a single transfer through the supplied client.
 
@@ -39,7 +39,12 @@ Receipt produced by the underlying transfer engine.
 ## Example
 
 ```ts
-import { createTransferClient, runRoute, type MftRoute } from "@zero-transfer/sdk";
+import {
+  createDefaultRetryPolicy,
+  createTransferClient,
+  runRoute,
+  type MftRoute,
+} from "@zero-transfer/sdk";
 
 const route: MftRoute = {
   id: "nightly-export",
@@ -58,7 +63,7 @@ const receipt = await runRoute({
   client,
   route,
   onProgress: (e) => console.log(`${e.bytesTransferred}/${e.totalBytes ?? "?"}`),
-  retry: { maxAttempts: 3, baseDelayMs: 500 },
+  retry: createDefaultRetryPolicy({ maxAttempts: 3 }),
 });
 console.log(`Job ${receipt.jobId} moved ${receipt.bytesTransferred} bytes…`);
 ```

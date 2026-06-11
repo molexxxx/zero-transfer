@@ -9,6 +9,7 @@
 import {
   ApprovalRegistry,
   ApprovalRejectedError,
+  ApprovalTimeoutError,
   createApprovalGate,
   createSftpProviderFactory,
   createTransferClient,
@@ -64,12 +65,17 @@ const gatedRunner = createApprovalGate({
   approvalId: () => `payroll-${(approvalCounter += 1)}-${Date.now()}`,
   registry: approvals,
   runner: ({ client: c, route: r, signal }) => runRoute({ client: c, route: r, signal }),
+  // Requests that stay pending past one hour are auto-rejected with reason
+  // "timeout" and surface as ApprovalTimeoutError. Omit to wait indefinitely.
+  timeoutMs: 3_600_000,
 });
 
 const scheduler = new MftScheduler({
   client,
   onError: ({ error, schedule: s }) => {
-    if (error instanceof ApprovalRejectedError) {
+    if (error instanceof ApprovalTimeoutError) {
+      console.warn(`Approval timed out for ${s.id}: ${error.message}`);
+    } else if (error instanceof ApprovalRejectedError) {
       console.warn(`Approval rejected for ${s.id}: ${error.message}`);
     } else {
       console.error(`Schedule ${s.id} failed:`, (error as Error).message);

@@ -149,6 +149,32 @@ describe("SshTransportHandshake", () => {
     expect(handshake.isComplete()).toBe(true);
   });
 
+  it("rejects an endless identification line instead of buffering it", () => {
+    const handshake = new SshTransportHandshake({
+      clientSoftwareVersion: "ZeroTransfer_Test",
+      kexCookie: Buffer.alloc(16, 0x11),
+    });
+    handshake.createInitialClientBytes();
+
+    // A hostile server streams bytes without ever sending a newline; the
+    // accumulator must give up at its 8 KiB line bound.
+    expect(() => handshake.pushServerBytes(Buffer.alloc(10_000, 0x41))).toThrow(ProtocolError);
+  });
+
+  it("rejects an oversized banner line before the identification line", () => {
+    const handshake = new SshTransportHandshake({
+      clientSoftwareVersion: "ZeroTransfer_Test",
+      kexCookie: Buffer.alloc(16, 0x11),
+    });
+    handshake.createInitialClientBytes();
+
+    const oversizedBanner = Buffer.concat([
+      Buffer.alloc(9_000, 0x42),
+      Buffer.from("\r\nSSH-2.0-OpenSSH_9.9\r\n", "ascii"),
+    ]);
+    expect(() => handshake.pushServerBytes(oversizedBanner)).toThrow(ProtocolError);
+  });
+
   it("fails when server sends a non-KEXINIT message during negotiation", () => {
     const handshake = new SshTransportHandshake();
     handshake.pushServerBytes(Buffer.from("SSH-2.0-OpenSSH_9.9\r\n", "ascii"));

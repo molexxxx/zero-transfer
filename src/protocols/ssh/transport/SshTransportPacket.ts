@@ -5,6 +5,14 @@ import { ConfigurationError, ParseError } from "../../../errors/ZeroTransferErro
 const MIN_PADDING_LENGTH = 4;
 const MIN_PACKET_LENGTH = 1 + MIN_PADDING_LENGTH;
 
+/**
+ * Maximum accepted SSH `packet_length` before a peer is considered hostile or
+ * broken. RFC 4253 only requires support for 35000-byte packets; this matches
+ * OpenSSH's 256 KiB cap so the framers never buffer unbounded amounts of
+ * network data on a forged length prefix.
+ */
+export const MAX_SSH_PACKET_LENGTH = 256 * 1024;
+
 /** Decoded SSH transport packet before decryption/MAC pipelines are applied. */
 export interface SshTransportPacket {
   padding: Buffer;
@@ -124,6 +132,14 @@ export class SshTransportPacketFramer {
 
     while (this.pending.length >= 4) {
       const packetLength = this.pending.readUInt32BE(0);
+      if (packetLength > MAX_SSH_PACKET_LENGTH) {
+        throw new ParseError({
+          details: { maxPacketLength: MAX_SSH_PACKET_LENGTH, packetLength },
+          message: "SSH transport packet length exceeds the maximum accepted size",
+          protocol: "sftp",
+          retryable: false,
+        });
+      }
       const frameLength = 4 + packetLength;
 
       if (this.pending.length < frameLength) {

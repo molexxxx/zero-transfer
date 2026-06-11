@@ -3,8 +3,9 @@
  *
  * Talks to S3-compatible REST endpoints (AWS S3, MinIO, R2, Backblaze B2 S3
  * compatibility, Wasabi, etc.) with SigV4 signing. Supports `list` (ListObjectsV2),
- * `stat` (HEAD object), `read` (GET with optional `Range`), and single-shot `write`
- * (PUT object). Multipart upload remains a future capability.
+ * `stat` (HEAD object), `read` (GET with optional `Range`), and `write` via
+ * multipart upload (enabled by default, streaming in fixed-size parts) or a
+ * streamed single-shot `PUT` when multipart is disabled.
  *
  * @module providers/web/S3Provider
  */
@@ -25,6 +26,7 @@ import {
   ConnectionError,
   UnsupportedFeatureError,
 } from "../../errors/ZeroTransferError";
+import { redactUrlForLogging } from "../../logging/redaction";
 import { resolveSecret, type SecretSource } from "../../profiles/SecretSource";
 import type { ConnectionProfile, RemoteEntry, RemoteStat } from "../../types/public";
 import { basenameRemotePath, normalizeRemotePath } from "../../utils/path";
@@ -40,8 +42,9 @@ import type {
 import type { RemoteFileSystem } from "../RemoteFileSystem";
 import { signSigV4 } from "./awsSigv4";
 import {
+  asyncIterableToReadableStream,
   formatRangeHeader,
-  mapResponseError,
+  mapResponseErrorWithBody,
   parseTotalBytes,
   secretToString,
   webStreamToAsyncIterable,
@@ -70,7 +73,7 @@ export interface S3ProviderOptions {
   defaultHeaders?: Record<string, string>;
   /** Optional STS session token applied to every request. */
   sessionToken?: SecretSource;
-  /** Multipart upload tuning. Disabled by default; enable for objects above ~5 GiB or when streaming. */
+  /** Multipart upload tuning. Enabled by default; see {@link S3MultipartOptions.enabled}. */
   multipart?: S3MultipartOptions;
 }
 
@@ -81,8 +84,11 @@ export interface S3MultipartOptions {
    * in fixed-size parts instead of being buffered in memory before a single
    * `PUT`. Payloads at or below {@link S3MultipartOptions.thresholdBytes}
    * still fall back to a single-shot `PUT` automatically. Set to `false` to
-   * force the legacy single-shot behaviour (e.g. when targeting an
-   * S3-compatible endpoint that does not support `CreateMultipartUpload`).
+   * force single-shot behaviour (e.g. when targeting an S3-compatible
+   * endpoint that does not support `CreateMultipartUpload`). Single-shot
+   * uploads stream with `UNSIGNED-PAYLOAD` signing when the total size is
+   * known; S3 requires a `Content-Length` up front, so unknown-size payloads
+   * are buffered entirely in memory on this path.
    */
   enabled?: boolean;
   /** Object size threshold in bytes above which multipart is used. Defaults to 8 MiB. */
@@ -485,7 +491,7 @@ class S3FileSystem implements RemoteFileSystem {
     if (prefix.length > 0) url.searchParams.set("prefix", prefix);
 
     const response = await s3Fetch(this.options, "GET", url);
-    if (!response.ok) throw mapResponseError(response, normalized);
+    if (!response.ok) throw await mapResponseErrorWithBody(response, normalized);
     const body = await response.text();
     return parseListObjectsV2(body, prefix);
   }
@@ -494,7 +500,7 @@ class S3FileSystem implements RemoteFileSystem {
     const normalized = normalizeRemotePath(path);
     const url = buildObjectUrl(this.options, normalized);
     const response = await s3Fetch(this.options, "HEAD", url);
-    if (!response.ok) throw mapResponseError(response, normalized);
+    if (!response.ok) throw await mapResponseErrorWithBody(response, normalized);
     const stat: RemoteStat = {
       exists: true,
       name: basenameRemotePath(normalized),
@@ -533,12 +539,12 @@ class S3TransferOperations implements ProviderTransferOperations {
       extraHeaders: headers,
     });
     if (!response.ok && response.status !== 206) {
-      throw mapResponseError(response, normalized);
+      throw await mapResponseErrorWithBody(response, normalized);
     }
     const body = response.body;
     if (body === null) {
       throw new ConnectionError({
-        message: `S3 response had no body for ${url.toString()}`,
+        message: `S3 response had no body for ${redactUrlForLogging(url)}`,
         retryable: true,
       });
     }
@@ -577,22 +583,37 @@ class S3TransferOperations implements ProviderTransferOperations {
     return this.writeSingleShot(request, normalized);
   }
 
+  /**
+   * Single PUT upload used when multipart is disabled. Streams the body with
+   * a declared `Content-Length` (signed as `UNSIGNED-PAYLOAD`) when the
+   * caller knows the total size; S3 requires a length up front, so only
+   * unknown-size payloads fall back to buffering the content in memory.
+   */
   private async writeSingleShot(
     request: ProviderTransferWriteRequest,
     normalized: string,
   ): Promise<ProviderTransferWriteResult> {
     const url = buildObjectUrl(this.options, normalized);
-    const buffered = await collectChunks(request.content);
+    const totalBytes = request.totalBytes;
+    if (typeof totalBytes !== "number" || totalBytes < 0) {
+      const buffered = await collectChunks(request.content);
+      return this.singleShotFromBuffer(request, normalized, buffered);
+    }
+
+    let bytesTransferred = 0;
+    const stream = asyncIterableToReadableStream(request.content, (chunk) => {
+      bytesTransferred += chunk.byteLength;
+      request.reportProgress(bytesTransferred, totalBytes);
+    });
     const response = await s3Fetch(this.options, "PUT", url, {
       ...(request.signal !== undefined ? { signal: request.signal } : {}),
-      body: buffered,
       extraHeaders: { "content-type": "application/octet-stream" },
+      streamBody: { content: stream, contentLength: totalBytes },
     });
-    if (!response.ok) throw mapResponseError(response, normalized);
-    request.reportProgress(buffered.byteLength, buffered.byteLength);
+    if (!response.ok) throw await mapResponseErrorWithBody(response, normalized);
     const result: ProviderTransferWriteResult = {
-      bytesTransferred: buffered.byteLength,
-      totalBytes: buffered.byteLength,
+      bytesTransferred,
+      totalBytes,
     };
     const etag = response.headers.get("etag");
     if (etag !== null) result.checksum = etag;
@@ -670,7 +691,7 @@ class S3TransferOperations implements ProviderTransferOperations {
         ...(request.signal !== undefined ? { signal: request.signal } : {}),
         extraHeaders: { "content-type": "application/octet-stream" },
       });
-      if (!initiateResponse.ok) throw mapResponseError(initiateResponse, normalized);
+      if (!initiateResponse.ok) throw await mapResponseErrorWithBody(initiateResponse, normalized);
       const initiateBody = await initiateResponse.text();
       const initiated = innerText(initiateBody, "UploadId");
       if (initiated === undefined || initiated === "") {
@@ -711,7 +732,7 @@ class S3TransferOperations implements ProviderTransferOperations {
           body: partBytes.bytes,
         });
         if (!partResponse.ok) {
-          throw mapResponseError(partResponse, normalized);
+          throw await mapResponseErrorWithBody(partResponse, normalized);
         }
         const partEtag = partResponse.headers.get("etag");
         if (partEtag === null) {
@@ -773,7 +794,7 @@ class S3TransferOperations implements ProviderTransferOperations {
       if (resumeStore === undefined) {
         await abortMultipart(this.options, objectUrl, uploadId).catch(() => undefined);
       }
-      throw mapResponseError(completeResponse, normalized);
+      throw await mapResponseErrorWithBody(completeResponse, normalized);
     }
     if (resumeStore !== undefined) await resumeStore.clear(resumeKey);
     const completeBody = await completeResponse.text();
@@ -797,7 +818,7 @@ class S3TransferOperations implements ProviderTransferOperations {
       body: buffered,
       extraHeaders: { "content-type": "application/octet-stream" },
     });
-    if (!response.ok) throw mapResponseError(response, normalized);
+    if (!response.ok) throw await mapResponseErrorWithBody(response, normalized);
     request.reportProgress(buffered.byteLength, buffered.byteLength);
     const result: ProviderTransferWriteResult = {
       bytesTransferred: buffered.byteLength,
@@ -811,6 +832,12 @@ class S3TransferOperations implements ProviderTransferOperations {
 
 interface S3FetchOptions {
   body?: Uint8Array;
+  /**
+   * Streamed request body with a declared length. Signed with
+   * `UNSIGNED-PAYLOAD` because the bytes cannot be hashed before the request
+   * starts; mutually exclusive with `body`.
+   */
+  streamBody?: { content: ReadableStream<Uint8Array>; contentLength: number };
   extraHeaders?: Record<string, string>;
   signal?: AbortSignal;
 }
@@ -827,6 +854,8 @@ async function s3Fetch(
   };
   if (fetchOptions.body !== undefined) {
     headers["content-length"] = String(fetchOptions.body.byteLength);
+  } else if (fetchOptions.streamBody !== undefined) {
+    headers["content-length"] = String(fetchOptions.streamBody.contentLength);
   }
   signSigV4({
     accessKeyId: options.accessKeyId,
@@ -837,11 +866,20 @@ async function s3Fetch(
     service: options.service,
     url,
     ...(fetchOptions.body !== undefined ? { body: fetchOptions.body } : {}),
+    ...(fetchOptions.streamBody !== undefined ? { unsignedPayload: true } : {}),
     ...(options.sessionToken !== undefined ? { sessionToken: options.sessionToken } : {}),
   });
 
-  const init: RequestInit = { headers, method };
-  if (fetchOptions.body !== undefined) (init as { body: Uint8Array }).body = fetchOptions.body;
+  // `duplex: "half"` is required by Node's fetch when the request body is a
+  // ReadableStream so the runtime knows the request is fully written before
+  // the response is read.
+  const init: RequestInit & { duplex?: "half" } = { headers, method };
+  if (fetchOptions.body !== undefined) {
+    (init as { body: Uint8Array }).body = fetchOptions.body;
+  } else if (fetchOptions.streamBody !== undefined) {
+    (init as { body: ReadableStream<Uint8Array> }).body = fetchOptions.streamBody.content;
+    init.duplex = "half";
+  }
   if (fetchOptions.signal !== undefined) init.signal = fetchOptions.signal;
 
   const controller = new AbortController();
@@ -861,10 +899,11 @@ async function s3Fetch(
   try {
     return await options.fetch(url.toString(), { ...init, signal: controller.signal });
   } catch (error) {
+    const safeUrl = redactUrlForLogging(url);
     throw new ConnectionError({
       cause: error,
-      details: { url: url.toString() },
-      message: `S3 request to ${url.toString()} failed`,
+      details: { url: safeUrl },
+      message: `S3 request to ${safeUrl} failed`,
       retryable: true,
     });
   } finally {

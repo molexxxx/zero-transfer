@@ -10,7 +10,7 @@
 function createWebhookAuditLog(options): MftAuditLog;
 ```
 
-Defined in: [src/mft/webhooks.ts:191](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/webhooks.ts#L191)
+Defined in: [src/mft/webhooks.ts:199](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/webhooks.ts#L199)
 
 Wraps a webhook target as an [MftAuditLog](../interfaces/MftAuditLog.md).
 

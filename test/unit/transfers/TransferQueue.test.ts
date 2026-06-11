@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   ConfigurationError,
+  ConnectionError,
   TransferQueue,
+  createTransferClient,
   type TransferExecutor,
   type TransferJob,
   type TransferProgressEvent,
@@ -59,6 +61,50 @@ describe("TransferQueue", () => {
     expect(summary.receipts.map((receipt) => receipt.jobId)).toEqual(["job-1", "job-2", "job-3"]);
     expect(progressEvents.map((event) => event.transferId)).toEqual(["job-1", "job-2", "job-3"]);
     expect(receipts).toHaveLength(3);
+  });
+
+  it("seeds retry and timeout policies from client defaults", async () => {
+    const client = createTransferClient({
+      defaults: { retry: { maxAttempts: 2 } },
+    });
+    let attemptCount = 0;
+    const queue = new TransferQueue({
+      client,
+      executor: () => {
+        attemptCount += 1;
+        if (attemptCount === 1) {
+          throw new ConnectionError({ message: "transient", retryable: true });
+        }
+        return { bytesTransferred: 1 };
+      },
+    });
+
+    queue.add(createJob("job-defaults"));
+    const summary = await queue.run();
+
+    expect(attemptCount).toBe(2);
+    expect(summary.completed).toBe(1);
+  });
+
+  it("prefers explicit queue retry policy over client defaults", async () => {
+    const client = createTransferClient({
+      defaults: { retry: { maxAttempts: 5 } },
+    });
+    let attemptCount = 0;
+    const queue = new TransferQueue({
+      client,
+      executor: () => {
+        attemptCount += 1;
+        throw new ConnectionError({ message: "transient", retryable: true });
+      },
+      retry: { maxAttempts: 1 },
+    });
+
+    queue.add(createJob("job-override"));
+    const summary = await queue.run();
+
+    expect(attemptCount).toBe(1);
+    expect(summary.failed).toBe(1);
   });
 
   it("pauses, resumes, and cancels queued jobs", async () => {

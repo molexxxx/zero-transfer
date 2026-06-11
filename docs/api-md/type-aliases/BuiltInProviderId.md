@@ -22,6 +22,6 @@ type BuiltInProviderId =
   | "one-drive";
 ```
 
-Defined in: [src/core/ProviderId.ts:14](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/core/ProviderId.ts#L14)
+Defined in: [src/core/ProviderId.ts:14](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/ProviderId.ts#L14)
 
 Provider ids reserved for first-party ZeroTransfer adapters.

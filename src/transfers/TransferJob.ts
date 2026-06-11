@@ -49,10 +49,42 @@ export interface TransferBandwidthLimit {
   burstBytes?: number;
 }
 
-/** Timeout policy applied by the transfer engine. */
+/**
+ * Timeout policy applied by the transfer engine.
+ *
+ * Two timeout scopes exist with deliberately different failure semantics:
+ *
+ * - **Job scope** ({@link timeoutMs}): covers the full engine execution
+ *   including retries. When it fires, the engine rethrows the
+ *   {@link TimeoutError} immediately - the retry policy is never consulted.
+ * - **Attempt scope** ({@link attemptTimeoutMs} and {@link stallTimeoutMs}):
+ *   covers a single attempt. When either fires, the per-attempt abort
+ *   controller cancels the attempt and the resulting {@link TimeoutError}
+ *   flows into the retry policy like any other attempt failure, so retryable
+ *   timeouts are retried (with backoff) instead of failing the job.
+ *
+ * @example Retry stalled attempts, but never run longer than 10 minutes total
+ * ```ts
+ * await engine.execute(job, executor, {
+ *   retry: createDefaultRetryPolicy(),
+ *   timeout: { timeoutMs: 600_000, attemptTimeoutMs: 120_000, stallTimeoutMs: 30_000 },
+ * });
+ * ```
+ */
 export interface TransferTimeoutPolicy {
   /** Maximum duration for the full engine execution, including retries, in milliseconds. */
   timeoutMs?: number;
+  /**
+   * Maximum duration for a single attempt in milliseconds. Expiry aborts only
+   * the active attempt; the failure flows into the retry policy.
+   */
+  attemptTimeoutMs?: number;
+  /**
+   * Maximum time without progress before an attempt is considered stalled, in
+   * milliseconds. The watchdog resets on every progress report; expiry aborts
+   * only the active attempt and the failure flows into the retry policy.
+   */
+  stallTimeoutMs?: number;
   /** Whether timeout failures are retryable. Defaults to `true`. */
   retryable?: boolean;
 }

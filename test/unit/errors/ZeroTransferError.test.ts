@@ -50,6 +50,25 @@ describe("ZeroTransferError", () => {
     });
   });
 
+  it("redacts secrets in toJSON while leaving live details untouched", () => {
+    const error = new ZeroTransferError({
+      code: "CUSTOM",
+      command: "PASS hunter2",
+      details: { password: "hunter2", retryAfterMs: 500, url: "https://h/x?sig=abc" },
+      message: "boom",
+      retryable: false,
+    });
+
+    const json = error.toJSON();
+    expect(json["command"]).toBe("PASS [REDACTED]");
+    expect(json["details"]).toMatchObject({ password: "[REDACTED]", retryAfterMs: 500 });
+    expect(JSON.stringify(json)).not.toContain("hunter2");
+    expect(JSON.stringify(json)).not.toContain("sig=abc");
+    // Programmatic consumers still see the raw values.
+    expect(error.details?.["password"]).toBe("hunter2");
+    expect(error.command).toBe("PASS hunter2");
+  });
+
   it("assigns stable default codes for specialized errors", () => {
     const baseDetails: SpecializedErrorDetails = {
       message: "boom",

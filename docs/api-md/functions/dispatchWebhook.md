@@ -10,7 +10,7 @@
 function dispatchWebhook(options): Promise<DispatchWebhookResult>;
 ```
 
-Defined in: [src/mft/webhooks.ts:98](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/mft/webhooks.ts#L98)
+Defined in: [src/mft/webhooks.ts:106](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/webhooks.ts#L106)
 
 Dispatches a single webhook payload with bounded retries.
 
@@ -25,3 +25,8 @@ Dispatches a single webhook payload with bounded retries.
 `Promise`\<[`DispatchWebhookResult`](../interfaces/DispatchWebhookResult.md)\>
 
 The delivery outcome.
+
+## Throws
+
+[ConfigurationError](../classes/ConfigurationError.md) When the target URL is not absolute or
+uses cleartext `http:` without `allowInsecureUrl: true`.

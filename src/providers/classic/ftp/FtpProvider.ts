@@ -18,6 +18,7 @@ import {
   AuthenticationError,
   ConfigurationError,
   ConnectionError,
+  ParseError,
   PathNotFoundError,
   ProtocolError,
   TimeoutError,
@@ -51,7 +52,7 @@ import {
   basenameRemotePath,
   normalizeRemotePath,
 } from "../../../utils/path";
-import { parseMlsdLine, parseMlsdList, parseUnixList } from "./FtpListParser";
+import { parseMlsdLine, parseUnixListLine } from "./FtpListParser";
 import { FtpResponseParser, type FtpResponse } from "./FtpResponseParser";
 
 const FTP_PROVIDER_ID = "ftp";
@@ -960,28 +961,38 @@ async function expectCompletion(
   assertPathCommandSucceeded(response, command, path, control.providerId);
 }
 
-async function readPassiveDataCommand(
+/**
+ * Runs a passive-mode data command whose payload is line-oriented (MLSD/LIST),
+ * feeding each completed line to `onLine` as it arrives instead of buffering
+ * the whole payload.
+ *
+ * When a line fails to parse (or exceeds {@link MAX_LIST_LINE_BYTES}) the
+ * remaining data is drained without buffering and the final control response
+ * is still consumed, so the control connection stays usable; the recorded
+ * failure is thrown afterwards.
+ */
+async function readPassiveLinesCommand(
   control: FtpControlConnection,
   command: string,
   path: string,
-  options: PassiveTransferOptions = {},
-): Promise<Buffer> {
-  const dataConnection = await openPassiveDataCommand(control, command, path, options);
+  onLine: (line: string) => void,
+): Promise<void> {
+  const dataConnection = await openPassiveDataCommand(control, command, path);
 
   try {
-    const payload = await collectPassiveData(
-      dataConnection,
-      control.operationTimeoutMs,
+    const failure = await consumePassiveLines(dataConnection, control.operationTimeoutMs, {
+      command,
+      onLine,
       path,
-      control.providerId,
-    );
+      providerId: control.providerId,
+    });
     const finalResponse = await control.readFinalResponse({
       command,
       operation: "data command completion",
       path,
     });
     assertPathCommandSucceeded(finalResponse, command, path, control.providerId);
-    return payload;
+    if (failure !== undefined) throw failure;
   } catch (error) {
     dataConnection.close();
     throw error;
@@ -999,17 +1010,33 @@ async function readDirectoryEntries(
   control: FtpControlConnection,
   path: string,
 ): Promise<RemoteEntry[]> {
+  const entries: RemoteEntry[] = [];
+  const collectEntry = (entry: RemoteEntry): void => {
+    if (entry.name === "." || entry.name === "..") return;
+    entries.push(entry);
+  };
+
   try {
-    const payload = await readPassiveDataCommand(control, `MLSD ${path}`, path);
-    return parseMlsdList(payload.toString("utf8"), path);
+    await readPassiveLinesCommand(control, `MLSD ${path}`, path, (rawLine) => {
+      const line = rawLine.trimEnd();
+      if (line.length === 0) return;
+      collectEntry(parseMlsdLine(line, path));
+    });
+    return entries;
   } catch (error) {
     if (!isUnsupportedFtpCommandError(error, "MLSD")) {
       throw error;
     }
   }
 
-  const payload = await readPassiveDataCommand(control, `LIST ${path}`, path);
-  return parseUnixList(payload.toString("utf8"), path);
+  entries.length = 0;
+  const now = new Date();
+  await readPassiveLinesCommand(control, `LIST ${path}`, path, (rawLine) => {
+    const line = rawLine.trimEnd();
+    if (line.length === 0 || line.toLowerCase().startsWith("total ")) return;
+    collectEntry(parseUnixListLine(line, path, now));
+  });
+  return entries;
 }
 
 async function openPassiveDataCommand(
@@ -1248,29 +1275,85 @@ function openPassiveDataConnection(
   };
 }
 
-async function collectPassiveData(
+/** Upper bound on a single MLSD/LIST line; anything longer is malformed output. */
+const MAX_LIST_LINE_BYTES = 64 * 1024;
+
+/**
+ * Streams a passive-mode data payload line by line with a bounded carry
+ * buffer, so listing memory stays proportional to one line rather than the
+ * whole payload. Splits on LF (a trailing CR is stripped) and skips empty
+ * lines. Returns the first line failure instead of throwing so the caller can
+ * keep the control connection in sync before surfacing it; once a failure is
+ * recorded the rest of the payload is drained without buffering.
+ */
+async function consumePassiveLines(
   dataConnection: PassiveDataConnection,
   timeoutMs: number | undefined,
-  path: string,
-  providerId: ClassicProviderId,
-): Promise<Buffer> {
-  const chunks: Buffer[] = [];
+  input: {
+    command: string;
+    onLine: (line: string) => void;
+    path: string;
+    providerId: ClassicProviderId;
+  },
+): Promise<Error | undefined> {
+  let carry: Buffer = Buffer.alloc(0);
+  let failure: Error | undefined;
   const clearIdleTimeout = setSocketTimeout(dataConnection.socket, timeoutMs, {
     host: dataConnection.endpoint.host,
     operation: "passive data transfer",
-    path,
-    providerId,
+    path: input.path,
+    providerId: input.providerId,
   });
+
+  const overlongLineFailure = (): ParseError =>
+    new ParseError({
+      details: { command: input.command, limitBytes: MAX_LIST_LINE_BYTES, path: input.path },
+      message: `FTP listing line exceeded ${String(MAX_LIST_LINE_BYTES)} bytes for ${input.command}`,
+      retryable: false,
+    });
+
+  const emit = (lineBytes: Buffer): void => {
+    if (failure !== undefined) return;
+    let end = lineBytes.length;
+    if (end > 0 && lineBytes[end - 1] === 0x0d) end -= 1;
+    if (end === 0) return;
+    if (end > MAX_LIST_LINE_BYTES) {
+      failure = overlongLineFailure();
+      return;
+    }
+    try {
+      input.onLine(lineBytes.toString("utf8", 0, end));
+    } catch (error) {
+      failure = error instanceof Error ? error : new Error(String(error));
+    }
+  };
 
   try {
     for await (const chunk of dataConnection.socket as AsyncIterable<Buffer>) {
-      chunks.push(Buffer.from(chunk));
+      if (failure !== undefined) continue;
+      // Bounded: carry never exceeds MAX_LIST_LINE_BYTES and chunk is one
+      // socket read.
+      const data = carry.length > 0 ? Buffer.concat([carry, chunk]) : chunk;
+      let start = 0;
+      let newline = data.indexOf(0x0a, start);
+      while (newline !== -1) {
+        emit(data.subarray(start, newline));
+        start = newline + 1;
+        newline = data.indexOf(0x0a, start);
+      }
+      // Copy the partial tail so the carry never retains a whole socket buffer.
+      carry = Buffer.from(data.subarray(start));
+      if (carry.length > MAX_LIST_LINE_BYTES && failure === undefined) {
+        failure = overlongLineFailure();
+      }
+      if (failure !== undefined) carry = Buffer.alloc(0);
     }
+    if (carry.length > 0) emit(carry);
   } finally {
     clearIdleTimeout();
   }
 
-  return Buffer.concat(chunks);
+  return failure;
 }
 
 async function* createPassiveReadSource(
@@ -1683,6 +1766,9 @@ function createTlsConnectionOptions(profile: ResolvedConnectionProfile): TlsConn
  *
  * @param profile - Connection profile with TLS policy fields already resolved.
  * @returns Normalized lowercase fingerprint pins, or `undefined` when no pins are configured.
+ * @throws {@link ConfigurationError} When pinning is combined with `rejectUnauthorized: false`,
+ * because pin verification runs only after the TLS handshake is accepted - disabling chain
+ * validation would leave the connection unauthenticated until that late check.
  */
 function createTlsPinnedFingerprints(
   profile: ResolvedConnectionProfile,
@@ -1691,6 +1777,17 @@ function createTlsPinnedFingerprints(
 
   if (pinnedFingerprint256 === undefined) {
     return undefined;
+  }
+
+  if (profile.tls?.rejectUnauthorized === false) {
+    throw new ConfigurationError({
+      message:
+        "FTPS tls.pinnedFingerprint256 cannot be combined with rejectUnauthorized: false; " +
+        "pin verification runs after the TLS handshake, so chain validation must stay enabled. " +
+        "For self-signed certificates supply tls.ca instead of disabling validation.",
+      protocol: FTPS_PROVIDER_ID,
+      retryable: false,
+    });
   }
 
   const fingerprints = Array.isArray(pinnedFingerprint256)

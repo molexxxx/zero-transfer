@@ -189,6 +189,10 @@ export interface TlsProfile {
    * trust via `rejectUnauthorized`. Pinning is **recommended for production** when you control
    * the server and want defence-in-depth against rogue certificates issued by trusted CAs.
    *
+   * Cannot be combined with `rejectUnauthorized: false`: pin verification runs after the TLS
+   * handshake is accepted, so chain validation must stay enabled. Use `ca` for self-signed
+   * certificates.
+   *
    * @example "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99"
    */
   pinnedFingerprint256?: string | readonly string[];

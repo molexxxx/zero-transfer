@@ -10,7 +10,7 @@
 function createOneDriveProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/cloud/OneDriveProvider.ts:136](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/providers/cloud/OneDriveProvider.ts#L136)
+Defined in: [src/providers/cloud/OneDriveProvider.ts:136](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/providers/cloud/OneDriveProvider.ts#L136)
 
 Creates a OneDrive/SharePoint provider factory backed by Microsoft Graph.
 

@@ -6,7 +6,7 @@
 
 # Class: TransferEngine
 
-Defined in: [src/transfers/TransferEngine.ts:121](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/TransferEngine.ts#L121)
+Defined in: [src/transfers/TransferEngine.ts:143](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/TransferEngine.ts#L143)
 
 Executes transfer jobs and produces audit-friendly receipts.
 
@@ -20,7 +20,12 @@ you need full control over execution semantics.
 ## Example
 
 ```ts
-import { TransferEngine, type TransferExecutor, type TransferJob } from "@zero-transfer/sdk";
+import {
+  TransferEngine,
+  createDefaultRetryPolicy,
+  type TransferExecutor,
+  type TransferJob,
+} from "@zero-transfer/sdk";
 
 const engine = new TransferEngine();
 
@@ -38,7 +43,8 @@ const job: TransferJob = {
 };
 
 const receipt = await engine.execute(job, executor, {
-  retry: { maxAttempts: 3, baseDelayMs: 250 },
+  retry: createDefaultRetryPolicy(),
+  timeout: { stallTimeoutMs: 30_000 },
 });
 console.log(receipt.attempts.length); // 1 on success
 ```
@@ -51,7 +57,7 @@ console.log(receipt.attempts.length); // 1 on success
 new TransferEngine(options?): TransferEngine;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:129](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/TransferEngine.ts#L129)
+Defined in: [src/transfers/TransferEngine.ts:151](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/TransferEngine.ts#L151)
 
 Creates a transfer engine.
 
@@ -76,7 +82,7 @@ execute(
 options?): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:143](https://github.com/tonywied17/zero-transfer/blob/3b0c75fda9454105c57a1d57b3ceb8b8ca9ec4cf/src/transfers/TransferEngine.ts#L143)
+Defined in: [src/transfers/TransferEngine.ts:165](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/transfers/TransferEngine.ts#L165)
 
 Executes a transfer job through a caller-supplied operation.
 

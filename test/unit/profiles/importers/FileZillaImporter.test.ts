@@ -35,17 +35,20 @@ const xml = `<?xml version="1.0" encoding="UTF-8"?>
 </FileZilla3>`;
 
 describe("importFileZillaSites", () => {
-  it("parses sites and decodes base64 passwords", () => {
+  it("parses sites and flags stored passwords without decoding them", () => {
     const { sites, skipped } = importFileZillaSites(xml);
     expect(sites).toHaveLength(2);
     const prod = sites.find((site) => site.name === "Prod SFTP");
     expect(prod?.folder).toEqual(["Production"]);
     expect(prod?.profile.provider).toBe("sftp");
     expect(prod?.profile.port).toBe(22);
-    expect(prod?.password).toBe("secret");
+    expect(prod?.hasStoredPassword).toBe(true);
+    expect(prod?.profile.password).toBeUndefined();
+    expect(JSON.stringify(prod)).not.toContain("secret");
     const legacy = sites.find((site) => site.name === "Legacy FTP");
     expect(legacy?.folder).toEqual(["Production", "Legacy"]);
     expect(legacy?.profile.provider).toBe("ftp");
+    expect(legacy?.hasStoredPassword).toBe(false);
     expect(skipped).toHaveLength(1);
     expect(skipped[0]?.protocol).toBe(13);
   });
@@ -103,7 +106,7 @@ describe("importFileZillaSites", () => {
     expect(result.sites[0]?.name).toBe("fallback.example");
   });
 
-  it("retains plaintext passwords when no encoding attribute is present", () => {
+  it("flags stored passwords without returning their value", () => {
     const result = importFileZillaSites(`<?xml version="1.0"?>
       <FileZilla3><Servers>
         <Server>
@@ -111,7 +114,9 @@ describe("importFileZillaSites", () => {
           <Pass>plaintext</Pass><Name>P</Name>
         </Server>
       </Servers></FileZilla3>`);
-    expect(result.sites[0]?.password).toBe("plaintext");
+    expect(result.sites[0]?.hasStoredPassword).toBe(true);
+    expect(result.sites[0]?.profile.password).toBeUndefined();
+    expect(JSON.stringify(result.sites[0])).not.toContain("plaintext");
   });
 
   it("ignores invalid port numbers", () => {

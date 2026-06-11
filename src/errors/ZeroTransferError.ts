@@ -7,6 +7,7 @@
  *
  * @module errors/ZeroTransferError
  */
+import { redactCommand, redactObject } from "../logging/redaction";
 import type { RemoteProtocol } from "../types/public";
 
 /**
@@ -91,6 +92,11 @@ export class ZeroTransferError extends Error {
   /**
    * Serializes the error into a plain object suitable for logs or API responses.
    *
+   * `details` and `command` are passed through secret redaction so serialized
+   * errors never leak credentials, signed URLs, or raw protocol commands. The
+   * live {@link ZeroTransferError.details | details} property stays unredacted
+   * for programmatic consumers.
+   *
    * @returns A JSON-safe object containing public structured error fields.
    */
   toJSON(): Record<string, unknown> {
@@ -100,12 +106,12 @@ export class ZeroTransferError extends Error {
       message: this.message,
       protocol: this.protocol,
       host: this.host,
-      command: this.command,
+      command: this.command === undefined ? undefined : redactCommand(this.command),
       ftpCode: this.ftpCode,
       sftpCode: this.sftpCode,
       path: this.path,
       retryable: this.retryable,
-      details: this.details,
+      details: this.details === undefined ? undefined : redactObject(this.details),
     };
   }
 }

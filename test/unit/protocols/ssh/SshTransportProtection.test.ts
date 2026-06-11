@@ -1,4 +1,5 @@
 import { Buffer } from "node:buffer";
+import { createCipheriv } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { ProtocolError } from "../../../../src/errors/ZeroTransferError";
 import {
@@ -186,5 +187,35 @@ describe("SshTransportPacketUnprotector.pushBytes (streaming framing)", () => {
     frame[idx] = (frame[idx] ?? 0) ^ 0xff;
 
     expect(() => unprotector.pushBytes(frame)).toThrow(ProtocolError);
+  });
+
+  it("rejects a forged oversized encrypted packet length instead of buffering it", () => {
+    const input = createCtrFixtureInput();
+    const derived = deriveSshSessionKeys(input);
+    const inbound = createSshTransportProtectionContext({
+      deterministicPadding: true,
+      keys: {
+        clientToServer: derived.clientToServer,
+        serverToClient: derived.clientToServer,
+      },
+      negotiatedAlgorithms: {
+        ...input.negotiatedAlgorithms,
+        encryptionServerToClient: input.negotiatedAlgorithms.encryptionClientToServer,
+        macServerToClient: input.negotiatedAlgorithms.macClientToServer,
+      },
+    }).inbound;
+
+    // Encrypt a first block whose packet_length field claims ~4 GiB using the
+    // same direction keys, so the framer decrypts a hostile length prefix.
+    const plainFirstBlock = Buffer.alloc(16);
+    plainFirstBlock.writeUInt32BE(0xffff_ffff, 0);
+    const cipher = createCipheriv(
+      "aes-256-ctr",
+      derived.clientToServer.encryptionKey,
+      derived.clientToServer.iv,
+    );
+    const forged = Buffer.from(cipher.update(plainFirstBlock));
+
+    expect(() => inbound.pushBytes(forged)).toThrow(ProtocolError);
   });
 });
