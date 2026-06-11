@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.7**](../README.md)
+[**ZeroTransfer SDK v0.4.8**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createSyncPlan(options): TransferPlan;
 ```
 
-Defined in: [src/sync/createSyncPlan.ts:109](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/sync/createSyncPlan.ts#L109)
+Defined in: [src/sync/createSyncPlan.ts:109](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/sync/createSyncPlan.ts#L109)
 
 Builds a [TransferPlan](../interfaces/TransferPlan.md) that reconciles two remote subtrees.
 

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.7**](../README.md)
+[**ZeroTransfer SDK v0.4.8**](../README.md)
 
 ***
 
@@ -13,7 +13,7 @@ function emitLog(
    record): void;
 ```
 
-Defined in: [src/logging/Logger.ts:93](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/logging/Logger.ts#L93)
+Defined in: [src/logging/Logger.ts:93](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/logging/Logger.ts#L93)
 
 Emits a structured log record if the logger implements the requested level.
 

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.7**](../README.md)
+[**ZeroTransfer SDK v0.4.8**](../README.md)
 
 ***
 
@@ -10,6 +10,6 @@
 type SyncDirection = "source-to-destination" | "destination-to-source";
 ```
 
-Defined in: [src/sync/createSyncPlan.ts:17](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/sync/createSyncPlan.ts#L17)
+Defined in: [src/sync/createSyncPlan.ts:17](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/sync/createSyncPlan.ts#L17)
 
 Sync direction used by [createSyncPlan](../functions/createSyncPlan.md).

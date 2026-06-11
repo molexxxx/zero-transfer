@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.7**](../README.md)
+[**ZeroTransfer SDK v0.4.8**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createLocalProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/local/LocalProvider.ts:101](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/providers/local/LocalProvider.ts#L101)
+Defined in: [src/providers/local/LocalProvider.ts:101](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/local/LocalProvider.ts#L101)
 
 Creates a provider factory backed by the local filesystem.
 
