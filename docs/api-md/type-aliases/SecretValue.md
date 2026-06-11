@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.7**](../README.md)
+[**ZeroTransfer SDK v0.4.8**](../README.md)
 
 ***
 
@@ -10,6 +10,6 @@
 type SecretValue = string | Buffer;
 ```
 
-Defined in: [src/profiles/SecretSource.ts:12](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/profiles/SecretSource.ts#L12)
+Defined in: [src/profiles/SecretSource.ts:12](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/profiles/SecretSource.ts#L12)
 
 Resolved secret value accepted by profile credential fields.

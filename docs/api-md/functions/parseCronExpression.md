@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.7**](../README.md)
+[**ZeroTransfer SDK v0.4.8**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function parseCronExpression(expression): CronExpression;
 ```
 
-Defined in: [src/mft/cron.ts:41](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/cron.ts#L41)
+Defined in: [src/mft/cron.ts:41](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/mft/cron.ts#L41)
 
 Parses a 5-field cron expression.
 

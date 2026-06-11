@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.7**](../README.md)
+[**ZeroTransfer SDK v0.4.8**](../README.md)
 
 ***
 
@@ -13,7 +13,7 @@ function signWebhookPayload(
    timestamp?): WebhookSignature;
 ```
 
-Defined in: [src/mft/webhooks.ts:88](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/mft/webhooks.ts#L88)
+Defined in: [src/mft/webhooks.ts:88](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/mft/webhooks.ts#L88)
 
 Computes the HMAC-SHA256 signature for a webhook payload.
 

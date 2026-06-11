@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.7**](../README.md)
+[**ZeroTransfer SDK v0.4.8**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: TransferClientDefaults
 
-Defined in: [src/core/TransferClient.ts:52](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L52)
+Defined in: [src/core/TransferClient.ts:52](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/core/TransferClient.ts#L52)
 
 Client-level execution defaults applied when a call site does not supply
 its own value.
@@ -40,5 +40,5 @@ const client = createTransferClient({
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="retry"></a> `retry?` | [`TransferRetryPolicy`](TransferRetryPolicy.md) | Default retry policy for transfers executed through this client. | [src/core/TransferClient.ts:54](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L54) |
-| <a id="timeout"></a> `timeout?` | [`TransferTimeoutPolicy`](TransferTimeoutPolicy.md) | Default timeout policy for transfers executed through this client. | [src/core/TransferClient.ts:56](https://github.com/tonywied17/zero-transfer/blob/598971d8cd1d7c377543b1eea812b5faaecb8591/src/core/TransferClient.ts#L56) |
+| <a id="retry"></a> `retry?` | [`TransferRetryPolicy`](TransferRetryPolicy.md) | Default retry policy for transfers executed through this client. | [src/core/TransferClient.ts:54](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/core/TransferClient.ts#L54) |
+| <a id="timeout"></a> `timeout?` | [`TransferTimeoutPolicy`](TransferTimeoutPolicy.md) | Default timeout policy for transfers executed through this client. | [src/core/TransferClient.ts:56](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/core/TransferClient.ts#L56) |

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.7**](../README.md)
+[**ZeroTransfer SDK v0.4.8**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createDefaultRetryPolicy(options?): TransferRetryPolicy;
 ```
 
-Defined in: src/transfers/createDefaultRetryPolicy.ts:80
+Defined in: [src/transfers/createDefaultRetryPolicy.ts:80](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/transfers/createDefaultRetryPolicy.ts#L80)
 
 Creates the SDK's recommended retry policy for transfer execution.
 
