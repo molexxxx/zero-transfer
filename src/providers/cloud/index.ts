@@ -3,9 +3,14 @@
  *
  * @module providers/cloud
  */
-export { createDropboxProviderFactory, type DropboxProviderOptions } from "./DropboxProvider";
+export {
+  createDropboxProviderFactory,
+  type DropboxMultipartOptions,
+  type DropboxProviderOptions,
+} from "./DropboxProvider";
 export {
   createGoogleDriveProviderFactory,
+  type GoogleDriveMultipartOptions,
   type GoogleDriveProviderOptions,
 } from "./GoogleDriveProvider";
 export {

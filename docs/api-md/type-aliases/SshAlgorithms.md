@@ -10,6 +10,6 @@
 type SshAlgorithms = Record<string, SshAlgorithmOverride | undefined>;
 ```
 
-Defined in: [src/types/public.ts:109](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/types/public.ts#L109)
+Defined in: [src/types/public.ts:109](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/types/public.ts#L109)
 
 SSH transport algorithm overrides accepted by SFTP providers.

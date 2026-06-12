@@ -5,8 +5,9 @@
  * for file content) using a bearer token sourced from the connection profile
  * (`profile.password` resolved as a `SecretSource`). Supports `list` (with
  * pagination via `list_folder/continue`), `stat` (`get_metadata`), `read`
- * (`files/download` with optional `Range`) and single-shot `write`
- * (`files/upload`). Resumable upload sessions are not yet implemented.
+ * (`files/download` with optional `Range`) and `write` via chunked upload
+ * sessions (`upload_session/start` + `append_v2` + `finish`, enabled by
+ * default) or single-shot `files/upload` for small payloads.
  *
  * @module providers/cloud/DropboxProvider
  */
@@ -41,6 +42,7 @@ import {
   webStreamToAsyncIterable,
   type HttpFetch,
 } from "../web/httpInternals";
+import { createSequentialPartReader } from "../web/multipartUploadPool";
 
 export type { HttpFetch };
 
@@ -48,6 +50,15 @@ const DROPBOX_API_BASE = "https://api.dropboxapi.com";
 const DROPBOX_CONTENT_BASE = "https://content.dropboxapi.com";
 
 const DROPBOX_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["dropbox-content-hash"];
+
+const DEFAULT_DROPBOX_PART_SIZE = 8 * 1024 * 1024;
+const DEFAULT_DROPBOX_THRESHOLD = 8 * 1024 * 1024;
+
+interface ResolvedDropboxMultipartOptions {
+  enabled: boolean;
+  partSizeBytes: number;
+  thresholdBytes: number;
+}
 
 /** Options accepted by {@link createDropboxProviderFactory}. */
 export interface DropboxProviderOptions {
@@ -61,6 +72,25 @@ export interface DropboxProviderOptions {
   fetch?: HttpFetch;
   /** Default headers applied to every request before bearer auth. */
   defaultHeaders?: Record<string, string>;
+  /** Upload-session tuning. Enabled by default. */
+  multipart?: DropboxMultipartOptions;
+}
+
+/** Upload-session tuning for the Dropbox provider. */
+export interface DropboxMultipartOptions {
+  /**
+   * Enable chunked uploads via `upload_session/start` + `append_v2` +
+   * `finish`. **Defaults to `true`** so payloads above
+   * {@link DropboxMultipartOptions.thresholdBytes} stream in fixed-size
+   * chunks instead of being buffered into a single `/2/files/upload` call
+   * (which Dropbox caps at 150 MB). Set to `false` to force single-shot
+   * uploads.
+   */
+  enabled?: boolean;
+  /** Payload size threshold above which an upload session is used. Defaults to 8 MiB. */
+  thresholdBytes?: number;
+  /** Bytes per session append. Defaults to 8 MiB; must stay under Dropbox's 150 MB request cap. */
+  partSizeBytes?: number;
 }
 
 /**
@@ -68,10 +98,11 @@ export interface DropboxProviderOptions {
  *
  * The bearer token is resolved per-connection from `profile.password`. The
  * `profile.host` field is unused; Dropbox connections are identified solely by
- * their token. Uploads go to `/2/files/upload` (single-shot); resumable upload
- * sessions are not yet supported.
+ * their token. Large uploads stream through chunked upload sessions
+ * (`upload_session/start` + `append_v2` + `finish`); payloads at or below the
+ * threshold use single-shot `/2/files/upload`.
  *
- * @param options - Optional API base URL overrides and fetch implementation.
+ * @param options - Optional API base URL overrides, upload-session tuning, and fetch implementation.
  * @returns Provider factory suitable for `createTransferClient({ providers: [...] })`.
  *
  * @example Upload a backup to Dropbox
@@ -109,6 +140,12 @@ export function createDropboxProviderFactory(
     });
   }
 
+  const multipart: ResolvedDropboxMultipartOptions = {
+    enabled: options.multipart?.enabled ?? true,
+    partSizeBytes: options.multipart?.partSizeBytes ?? DEFAULT_DROPBOX_PART_SIZE,
+    thresholdBytes: options.multipart?.thresholdBytes ?? DEFAULT_DROPBOX_THRESHOLD,
+  };
+
   const capabilities: CapabilitySet = {
     atomicRename: false,
     authentication: ["token", "oauth"],
@@ -118,9 +155,15 @@ export function createDropboxProviderFactory(
     list: true,
     maxConcurrency: 4,
     metadata: ["modifiedAt", "uniqueId"],
-    notes: [
-      "Dropbox provider performs single-shot uploads via /2/files/upload; resumable upload sessions are not yet supported.",
-    ],
+    notes: multipart.enabled
+      ? [
+          `Dropbox upload sessions enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B); appends are protocol-sequential.`,
+          "Payloads at or below the threshold automatically fall back to single-shot /2/files/upload.",
+          "Pass `multipart: { enabled: false }` to force single-shot uploads (150 MB Dropbox cap applies).",
+        ]
+      : [
+          "Dropbox provider performs single-shot uploads via /2/files/upload (150 MB cap); entire payload is buffered in memory before transmission.",
+        ],
     provider: id,
     readStream: true,
     resumeDownload: true,
@@ -142,6 +185,7 @@ export function createDropboxProviderFactory(
         defaultHeaders: { ...(options.defaultHeaders ?? {}) },
         fetch: fetchImpl,
         id,
+        multipart,
       }),
     id,
   };
@@ -154,6 +198,7 @@ interface DropboxProviderInternalOptions {
   defaultHeaders: Record<string, string>;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedDropboxMultipartOptions;
 }
 
 class DropboxProvider implements TransferProvider {
@@ -186,6 +231,7 @@ class DropboxProvider implements TransferProvider {
       defaultHeaders: this.internals.defaultHeaders,
       fetch: this.internals.fetch,
       id: this.internals.id,
+      multipart: this.internals.multipart,
       token,
     };
     if (profile.timeoutMs !== undefined) sessionOptions.timeoutMs = profile.timeoutMs;
@@ -200,6 +246,7 @@ interface DropboxSessionOptions {
   defaultHeaders: Record<string, string>;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedDropboxMultipartOptions;
   timeoutMs?: number;
   token: string;
 }
@@ -318,12 +365,39 @@ class DropboxTransferOperations implements ProviderTransferOperations {
     if (request.offset !== undefined && request.offset > 0) {
       throw new UnsupportedFeatureError({
         details: { offset: request.offset },
-        message: "Dropbox provider does not yet support resumable upload sessions",
+        message: "Dropbox provider does not yet support cross-attempt resume of upload sessions",
         retryable: false,
       });
     }
     const normalized = normalizeRemotePath(request.endpoint.path);
-    const buffered = await collectChunks(request.content);
+    const multipart = this.options.multipart;
+    if (!multipart.enabled) {
+      const buffered = await collectChunks(request.content);
+      return this.singleShotUpload(request, normalized, buffered);
+    }
+
+    // Buffer up to thresholdBytes so small payloads fall back to single-shot.
+    const iterator = request.content[Symbol.asyncIterator]();
+    const initialChunks: Uint8Array[] = [];
+    let initialSize = 0;
+    while (initialSize <= multipart.thresholdBytes) {
+      const next = await iterator.next();
+      if (next.done === true) break;
+      if (next.value.byteLength === 0) continue;
+      initialChunks.push(next.value);
+      initialSize += next.value.byteLength;
+    }
+    if (initialSize <= multipart.thresholdBytes) {
+      return this.singleShotUpload(request, normalized, concatChunks(initialChunks, initialSize));
+    }
+    return this.writeUploadSession(request, normalized, initialChunks, iterator);
+  }
+
+  private async singleShotUpload(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+    buffered: Uint8Array,
+  ): Promise<ProviderTransferWriteResult> {
     const apiArg = JSON.stringify({
       autorename: false,
       mode: "overwrite",
@@ -348,6 +422,114 @@ class DropboxTransferOperations implements ProviderTransferOperations {
     const result: ProviderTransferWriteResult = {
       bytesTransferred: buffered.byteLength,
       totalBytes: buffered.byteLength,
+    };
+    if (typeof meta.content_hash === "string" && meta.content_hash.length > 0) {
+      result.checksum = meta.content_hash;
+    }
+    return result;
+  }
+
+  /**
+   * Chunked upload via Dropbox upload sessions: `upload_session/start`
+   * carries the first part, `append_v2` streams the rest in order (appends
+   * are protocol-sequential - each cursor offset must match the bytes the
+   * server has), and `finish` commits with an empty body. Memory stays
+   * bounded at roughly two parts regardless of payload size.
+   */
+  private async writeUploadSession(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+    initialChunks: Uint8Array[],
+    iterator: AsyncIterator<Uint8Array>,
+  ): Promise<ProviderTransferWriteResult> {
+    const multipart = this.options.multipart;
+    const reader = createSequentialPartReader({
+      initialChunks,
+      partSizeBytes: multipart.partSizeBytes,
+      source: { [Symbol.asyncIterator]: () => iterator },
+    });
+
+    const firstPart = await reader.next();
+    if (firstPart === undefined) {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: "Dropbox upload session received no content",
+        retryable: false,
+      });
+    }
+
+    const startUrl = `${this.options.contentBaseUrl}/2/files/upload_session/start`;
+    const startResponse = await dropboxFetch(this.options, startUrl, "POST", {
+      ...(request.signal !== undefined ? { signal: request.signal } : {}),
+      body: firstPart.bytes,
+      extraHeaders: {
+        "content-type": "application/octet-stream",
+        "Dropbox-API-Arg": JSON.stringify({ close: false }),
+      },
+    });
+    if (!startResponse.ok) {
+      throw mapDropboxResponseError(startResponse, normalized, await safeReadText(startResponse));
+    }
+    const startBody = (await startResponse.json()) as { session_id?: string };
+    const sessionId = startBody.session_id;
+    if (typeof sessionId !== "string" || sessionId === "") {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: "Dropbox upload_session/start returned no session_id",
+        retryable: true,
+      });
+    }
+    let bytesTransferred = firstPart.byteEnd;
+    request.reportProgress(bytesTransferred, request.totalBytes);
+
+    const appendUrl = `${this.options.contentBaseUrl}/2/files/upload_session/append_v2`;
+    while (true) {
+      request.throwIfAborted();
+      const part = await reader.next();
+      if (part === undefined) break;
+      const response = await dropboxFetch(this.options, appendUrl, "POST", {
+        ...(request.signal !== undefined ? { signal: request.signal } : {}),
+        body: part.bytes,
+        extraHeaders: {
+          "content-type": "application/octet-stream",
+          "Dropbox-API-Arg": JSON.stringify({
+            close: false,
+            cursor: { offset: part.byteStart, session_id: sessionId },
+          }),
+        },
+      });
+      if (!response.ok) {
+        throw mapDropboxResponseError(response, normalized, await safeReadText(response));
+      }
+      bytesTransferred = part.byteEnd;
+      request.reportProgress(bytesTransferred, request.totalBytes);
+    }
+
+    const finishUrl = `${this.options.contentBaseUrl}/2/files/upload_session/finish`;
+    const finishResponse = await dropboxFetch(this.options, finishUrl, "POST", {
+      ...(request.signal !== undefined ? { signal: request.signal } : {}),
+      body: new Uint8Array(0),
+      extraHeaders: {
+        "content-type": "application/octet-stream",
+        "Dropbox-API-Arg": JSON.stringify({
+          commit: {
+            autorename: false,
+            mode: "overwrite",
+            mute: true,
+            path: toDropboxPath(normalized),
+            strict_conflict: false,
+          },
+          cursor: { offset: bytesTransferred, session_id: sessionId },
+        }),
+      },
+    });
+    if (!finishResponse.ok) {
+      throw mapDropboxResponseError(finishResponse, normalized, await safeReadText(finishResponse));
+    }
+    const meta = (await finishResponse.json()) as DropboxFileMetadata;
+    const result: ProviderTransferWriteResult = {
+      bytesTransferred,
+      totalBytes: bytesTransferred,
     };
     if (typeof meta.content_hash === "string" && meta.content_hash.length > 0) {
       result.checksum = meta.content_hash;
@@ -562,7 +744,11 @@ async function collectChunks(source: AsyncIterable<Uint8Array>): Promise<Uint8Ar
     chunks.push(chunk);
     total += chunk.byteLength;
   }
-  const out = new Uint8Array(total);
+  return concatChunks(chunks, total);
+}
+
+function concatChunks(chunks: Uint8Array[], totalSize: number): Uint8Array {
+  const out = new Uint8Array(totalSize);
   let offset = 0;
   for (const chunk of chunks) {
     out.set(chunk, offset);

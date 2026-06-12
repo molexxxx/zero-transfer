@@ -42,6 +42,7 @@ import {
   webStreamToAsyncIterable,
   type HttpFetch,
 } from "../web/httpInternals";
+import { createSequentialPartReader } from "../web/multipartUploadPool";
 
 export type { HttpFetch };
 
@@ -54,6 +55,11 @@ const GDRIVE_CHECKSUM_CAPABILITIES: ChecksumCapability[] = ["md5", "sha256", "cr
 const GDRIVE_FILE_FIELDS =
   "id,name,mimeType,size,modifiedTime,createdTime,md5Checksum,sha256Checksum,parents,trashed";
 const GDRIVE_LIST_FIELDS = `nextPageToken,files(${GDRIVE_FILE_FIELDS})`;
+
+const DEFAULT_GDRIVE_PART_SIZE = 8 * 1024 * 1024;
+const DEFAULT_GDRIVE_THRESHOLD = 8 * 1024 * 1024;
+// Google resumable uploads require chunk sizes in multiples of 256 KiB.
+const GDRIVE_CHUNK_ALIGNMENT = 256 * 1024;
 
 /** Options accepted by {@link createGoogleDriveProviderFactory}. */
 export interface GoogleDriveProviderOptions {
@@ -73,6 +79,30 @@ export interface GoogleDriveProviderOptions {
   fetch?: HttpFetch;
   /** Default headers applied to every request before bearer auth. */
   defaultHeaders?: Record<string, string>;
+  /** Resumable-session upload tuning. Enabled by default. */
+  multipart?: GoogleDriveMultipartOptions;
+}
+
+/** Resumable-session upload tuning for the Google Drive provider. */
+export interface GoogleDriveMultipartOptions {
+  /**
+   * Enable resumable upload sessions (`uploadType=resumable`). **Defaults to
+   * `true`** so payloads above
+   * {@link GoogleDriveMultipartOptions.thresholdBytes} stream in fixed-size
+   * chunks instead of being buffered into a single `multipart/related`
+   * request. Set to `false` to force single-shot uploads.
+   */
+  enabled?: boolean;
+  /** Payload size threshold above which a resumable session is used. Defaults to 8 MiB. */
+  thresholdBytes?: number;
+  /** Bytes per session chunk. Defaults to 8 MiB; must be a multiple of 256 KiB. */
+  partSizeBytes?: number;
+}
+
+interface ResolvedGoogleDriveMultipartOptions {
+  enabled: boolean;
+  partSizeBytes: number;
+  thresholdBytes: number;
 }
 
 /**
@@ -124,6 +154,38 @@ export function createGoogleDriveProviderFactory(
     });
   }
 
+  const multipartEnabled = options.multipart?.enabled ?? true;
+  const partSizeBytes = options.multipart?.partSizeBytes ?? DEFAULT_GDRIVE_PART_SIZE;
+  const thresholdBytes = options.multipart?.thresholdBytes ?? DEFAULT_GDRIVE_THRESHOLD;
+  if (multipartEnabled) {
+    if (!Number.isInteger(partSizeBytes) || partSizeBytes <= 0) {
+      throw new ConfigurationError({
+        details: { partSizeBytes },
+        message: "Google Drive multipart partSizeBytes must be a positive integer",
+        retryable: false,
+      });
+    }
+    if (partSizeBytes % GDRIVE_CHUNK_ALIGNMENT !== 0) {
+      throw new ConfigurationError({
+        details: { alignment: GDRIVE_CHUNK_ALIGNMENT, partSizeBytes },
+        message: `Google Drive multipart partSizeBytes must be a multiple of ${String(GDRIVE_CHUNK_ALIGNMENT)} bytes (256 KiB)`,
+        retryable: false,
+      });
+    }
+    if (!Number.isInteger(thresholdBytes) || thresholdBytes < 0) {
+      throw new ConfigurationError({
+        details: { thresholdBytes },
+        message: "Google Drive multipart thresholdBytes must be a non-negative integer",
+        retryable: false,
+      });
+    }
+  }
+  const multipart: ResolvedGoogleDriveMultipartOptions = {
+    enabled: multipartEnabled,
+    partSizeBytes,
+    thresholdBytes,
+  };
+
   const capabilities: CapabilitySet = {
     atomicRename: false,
     authentication: ["token", "oauth"],
@@ -133,9 +195,15 @@ export function createGoogleDriveProviderFactory(
     list: true,
     maxConcurrency: 4,
     metadata: ["modifiedAt", "createdAt", "mimeType", "uniqueId"],
-    notes: [
-      "Google Drive provider performs single-shot multipart uploads via /upload/drive/v3/files; resumable upload sessions are not yet supported.",
-    ],
+    notes: multipartEnabled
+      ? [
+          `Google Drive resumable-session upload enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B); chunks are protocol-sequential.`,
+          "Payloads at or below the threshold automatically fall back to single-shot multipart/related uploads.",
+          "Pass `multipart: { enabled: false }` to force the legacy single-shot behaviour.",
+        ]
+      : [
+          "Google Drive provider performs single-shot multipart uploads via /upload/drive/v3/files; entire payload is buffered in memory before transmission.",
+        ],
     provider: id,
     readStream: true,
     resumeDownload: true,
@@ -156,6 +224,7 @@ export function createGoogleDriveProviderFactory(
         defaultHeaders: { ...(options.defaultHeaders ?? {}) },
         fetch: fetchImpl,
         id,
+        multipart,
         rootFolderId,
         uploadBaseUrl,
       }),
@@ -169,6 +238,7 @@ interface GoogleDriveInternalOptions {
   defaultHeaders: Record<string, string>;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedGoogleDriveMultipartOptions;
   rootFolderId: string;
   uploadBaseUrl: string;
 }
@@ -202,6 +272,7 @@ class GoogleDriveProvider implements TransferProvider {
       defaultHeaders: this.internals.defaultHeaders,
       fetch: this.internals.fetch,
       id: this.internals.id,
+      multipart: this.internals.multipart,
       rootFolderId: this.internals.rootFolderId,
       token,
       uploadBaseUrl: this.internals.uploadBaseUrl,
@@ -217,6 +288,7 @@ interface GoogleDriveSessionOptions {
   defaultHeaders: Record<string, string>;
   fetch: HttpFetch;
   id: ProviderId;
+  multipart: ResolvedGoogleDriveMultipartOptions;
   rootFolderId: string;
   timeoutMs?: number;
   token: string;
@@ -429,12 +501,39 @@ class GoogleDriveTransferOperations implements ProviderTransferOperations {
     if (request.offset !== undefined && request.offset > 0) {
       throw new UnsupportedFeatureError({
         details: { offset: request.offset },
-        message: "Google Drive provider does not yet support resumable upload sessions",
+        message:
+          "Google Drive provider does not yet support cross-attempt resume of upload sessions",
         retryable: false,
       });
     }
     const normalized = normalizeRemotePath(request.endpoint.path);
-    const buffered = await collectChunks(request.content);
+    const multipart = this.options.multipart;
+    if (!multipart.enabled) {
+      return this.singleShotMultipart(request, normalized, await collectChunks(request.content));
+    }
+
+    // Buffer up to thresholdBytes so small payloads fall back to single-shot.
+    const iterator = request.content[Symbol.asyncIterator]();
+    const initialChunks: Uint8Array[] = [];
+    let initialSize = 0;
+    while (initialSize <= multipart.thresholdBytes) {
+      const next = await iterator.next();
+      if (next.done === true) break;
+      if (next.value.byteLength === 0) continue;
+      initialChunks.push(next.value);
+      initialSize += next.value.byteLength;
+    }
+    if (initialSize <= multipart.thresholdBytes) {
+      return this.singleShotMultipart(request, normalized, concatChunks(initialChunks));
+    }
+    return this.writeResumableSession(request, normalized, initialChunks, iterator);
+  }
+
+  private async singleShotMultipart(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+    buffered: Uint8Array,
+  ): Promise<ProviderTransferWriteResult> {
     const parentId = await this.resolver.resolveParentId(normalized);
     const name = basenameRemotePath(normalized);
     const existing = await this.findExisting(parentId, name);
@@ -477,6 +576,106 @@ class GoogleDriveTransferOperations implements ProviderTransferOperations {
     };
     if (typeof meta.md5Checksum === "string" && meta.md5Checksum.length > 0) {
       result.checksum = meta.md5Checksum;
+    }
+    return result;
+  }
+
+  /**
+   * Streams content through a Drive resumable upload session
+   * (`uploadType=resumable`). Mid-stream chunks declare an unknown total
+   * (`bytes start-end/*`); the final chunk carries the real total, so the
+   * payload size never needs to be known up front. A one-part lookahead
+   * detects the final chunk, bounding memory at roughly two parts.
+   */
+  private async writeResumableSession(
+    request: ProviderTransferWriteRequest,
+    normalized: string,
+    initialChunks: Uint8Array[],
+    iterator: AsyncIterator<Uint8Array>,
+  ): Promise<ProviderTransferWriteResult> {
+    const parentId = await this.resolver.resolveParentId(normalized);
+    const name = basenameRemotePath(normalized);
+    const existing = await this.findExisting(parentId, name);
+
+    const metadata: Record<string, unknown> = { name };
+    if (existing === undefined) metadata["parents"] = [parentId];
+    const initiateUrl =
+      existing === undefined
+        ? `${this.options.uploadBaseUrl}/files?uploadType=resumable&supportsAllDrives=true&fields=${encodeURIComponent(GDRIVE_FILE_FIELDS)}`
+        : `${this.options.uploadBaseUrl}/files/${encodeURIComponent(existing.id)}?uploadType=resumable&supportsAllDrives=true&fields=${encodeURIComponent(GDRIVE_FILE_FIELDS)}`;
+    const initiate = await driveFetch(
+      this.options,
+      existing === undefined ? "POST" : "PATCH",
+      initiateUrl,
+      {
+        ...(request.signal !== undefined ? { signal: request.signal } : {}),
+        body: new TextEncoder().encode(JSON.stringify(metadata)),
+        extraHeaders: { "content-type": "application/json; charset=UTF-8" },
+      },
+    );
+    if (!initiate.ok) {
+      throw mapGoogleDriveResponseError(initiate, normalized, await safeReadText(initiate));
+    }
+    const sessionUri = initiate.headers.get("location");
+    if (sessionUri === null || sessionUri === "") {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: "Google Drive resumable session initiation returned no Location header",
+        retryable: true,
+      });
+    }
+
+    const reader = createSequentialPartReader({
+      initialChunks,
+      partSizeBytes: this.options.multipart.partSizeBytes,
+      source: { [Symbol.asyncIterator]: () => iterator },
+    });
+
+    let bytesTransferred = 0;
+    let finalMeta: DriveFileResource | undefined;
+    let part = await reader.next();
+    while (part !== undefined) {
+      request.throwIfAborted();
+      // Lookahead: the final chunk must declare the real total size.
+      const nextPart = await reader.next();
+      const totalRange = nextPart === undefined ? String(part.byteEnd) : "*";
+      const response = await driveFetch(this.options, "PUT", sessionUri, {
+        ...(request.signal !== undefined ? { signal: request.signal } : {}),
+        body: part.bytes,
+        extraHeaders: {
+          "content-length": String(part.bytes.byteLength),
+          "content-range": `bytes ${String(part.byteStart)}-${String(part.byteEnd - 1)}/${totalRange}`,
+          "content-type": "application/octet-stream",
+        },
+      });
+      if (response.status === 308) {
+        bytesTransferred = part.byteEnd;
+        request.reportProgress(bytesTransferred, request.totalBytes);
+        part = nextPart;
+        continue;
+      }
+      if (response.status === 200 || response.status === 201) {
+        bytesTransferred = part.byteEnd;
+        request.reportProgress(bytesTransferred, bytesTransferred);
+        finalMeta = (await response.json()) as DriveFileResource;
+        break;
+      }
+      throw mapGoogleDriveResponseError(response, normalized, await safeReadText(response));
+    }
+
+    if (finalMeta === undefined) {
+      throw new ConnectionError({
+        details: { observedBytes: bytesTransferred, path: normalized },
+        message: "Google Drive resumable session ended without a final file resource",
+        retryable: true,
+      });
+    }
+    const result: ProviderTransferWriteResult = {
+      bytesTransferred,
+      totalBytes: bytesTransferred,
+    };
+    if (typeof finalMeta.md5Checksum === "string" && finalMeta.md5Checksum.length > 0) {
+      result.checksum = finalMeta.md5Checksum;
     }
     return result;
   }

@@ -43,6 +43,7 @@ import {
   webStreamToAsyncIterable,
   type HttpFetch,
 } from "../web/httpInternals";
+import { createSequentialPartReader } from "../web/multipartUploadPool";
 
 export type { HttpFetch };
 
@@ -416,11 +417,28 @@ class OneDriveTransferOperations implements ProviderTransferOperations {
     }
     const normalized = normalizeRemotePath(request.endpoint.path);
     const multipart = this.options.multipart;
+    if (!multipart.enabled) {
+      return this.singleShotPut(request, normalized, await collectChunks(request.content));
+    }
+    const totalBytes = request.totalBytes;
+    if (totalBytes !== undefined && totalBytes > multipart.thresholdBytes) {
+      // Graph upload sessions require the total size in every Content-Range
+      // header, so the streamed (memory-bounded) path needs a known size.
+      return this.writeUploadSession(request, normalized, request.content, totalBytes);
+    }
+    // Unknown or small size: buffer, then choose by actual length. Payloads
+    // with an unknown size are fully buffered on this path - report a known
+    // totalBytes upstream to stream instead.
     const buffered = await collectChunks(request.content);
-    if (!multipart.enabled || buffered.byteLength <= multipart.thresholdBytes) {
+    if (buffered.byteLength <= multipart.thresholdBytes) {
       return this.singleShotPut(request, normalized, buffered);
     }
-    return this.writeUploadSession(request, normalized, buffered);
+    return this.writeUploadSession(
+      request,
+      normalized,
+      singleChunkIterable(buffered),
+      buffered.byteLength,
+    );
   }
 
   private async singleShotPut(
@@ -448,13 +466,19 @@ class OneDriveTransferOperations implements ProviderTransferOperations {
     return result;
   }
 
+  /**
+   * Streams content through a Graph upload session in `partSizeBytes`
+   * chunks, holding at most one part in memory. Graph requires every
+   * `Content-Range` to carry the total size, so `totalBytes` must be exact:
+   * a source that ends early or runs long fails with a typed error and the
+   * session is cancelled.
+   */
   private async writeUploadSession(
     request: ProviderTransferWriteRequest,
     normalized: string,
-    buffered: Uint8Array,
+    content: AsyncIterable<Uint8Array>,
+    totalBytes: number,
   ): Promise<ProviderTransferWriteResult> {
-    const partSize = this.options.multipart.partSizeBytes;
-    const total = buffered.byteLength;
     const sessionUrl = `${this.options.driveBaseUrl}${itemSegment(normalized)}/createUploadSession`;
     const initiate = await graphFetch(this.options, "POST", sessionUrl, {
       ...(request.signal !== undefined ? { signal: request.signal } : {}),
@@ -476,47 +500,62 @@ class OneDriveTransferOperations implements ProviderTransferOperations {
       });
     }
 
+    const reader = createSequentialPartReader({
+      partSizeBytes: this.options.multipart.partSizeBytes,
+      source: content,
+    });
+
     let bytesTransferred = 0;
     let finalItem: DriveItem | undefined;
     try {
-      while (bytesTransferred < total) {
+      while (true) {
         request.throwIfAborted();
-        const chunkEnd = Math.min(bytesTransferred + partSize, total);
-        const chunk = buffered.subarray(bytesTransferred, chunkEnd);
+        const part = await reader.next();
+        if (part === undefined) break;
+        if (part.byteEnd > totalBytes) {
+          throw new ConfigurationError({
+            details: { observedBytes: part.byteEnd, path: normalized, totalBytes },
+            message: "OneDrive upload content exceeded the declared totalBytes",
+            retryable: false,
+          });
+        }
         const response = await graphSessionFetch(this.options, uploadUrl, {
           ...(request.signal !== undefined ? { signal: request.signal } : {}),
-          body: chunk,
+          body: part.bytes,
           extraHeaders: {
-            "content-length": String(chunk.byteLength),
-            "content-range": `bytes ${String(bytesTransferred)}-${String(chunkEnd - 1)}/${String(total)}`,
+            "content-length": String(part.bytes.byteLength),
+            "content-range": `bytes ${String(part.byteStart)}-${String(part.byteEnd - 1)}/${String(totalBytes)}`,
             "content-type": "application/octet-stream",
           },
         });
         if (response.status === 202) {
-          bytesTransferred = chunkEnd;
-          request.reportProgress(bytesTransferred, total);
+          bytesTransferred = part.byteEnd;
+          request.reportProgress(bytesTransferred, totalBytes);
           continue;
         }
         if (response.status === 200 || response.status === 201) {
-          bytesTransferred = chunkEnd;
-          request.reportProgress(bytesTransferred, total);
+          bytesTransferred = part.byteEnd;
+          request.reportProgress(bytesTransferred, totalBytes);
           finalItem = (await response.json()) as DriveItem;
           break;
         }
         throw mapOneDriveResponseError(response, normalized, await safeReadText(response));
+      }
+
+      if (finalItem === undefined) {
+        throw new ConnectionError({
+          details: { observedBytes: bytesTransferred, path: normalized, totalBytes },
+          message:
+            "OneDrive upload session ended without a final DriveItem " +
+            "(content shorter than the declared totalBytes?)",
+          retryable: true,
+        });
       }
     } catch (error) {
       void graphSessionFetch(this.options, uploadUrl, { method: "DELETE" }).catch(() => undefined);
       throw error;
     }
 
-    if (finalItem === undefined) {
-      throw new ConnectionError({
-        details: { path: normalized },
-        message: "OneDrive upload session did not return a final DriveItem",
-        retryable: true,
-      });
-    }
     const result: ProviderTransferWriteResult = {
       bytesTransferred,
       totalBytes: bytesTransferred,
@@ -783,4 +822,9 @@ async function collectChunks(source: AsyncIterable<Uint8Array>): Promise<Uint8Ar
     offset += chunk.byteLength;
   }
   return out;
+}
+
+async function* singleChunkIterable(bytes: Uint8Array): AsyncGenerator<Uint8Array> {
+  await Promise.resolve();
+  if (bytes.byteLength > 0) yield bytes;
 }

@@ -63,9 +63,11 @@ __export(dropbox_exports, {
   createBandwidthThrottle: () => createBandwidthThrottle,
   createDefaultRetryPolicy: () => createDefaultRetryPolicy,
   createDropboxProviderFactory: () => createDropboxProviderFactory,
+  createFileSystemTransferBatchStateStore: () => createFileSystemTransferBatchStateStore,
   createFileSystemTransferCheckpointStore: () => createFileSystemTransferCheckpointStore,
   createLocalProviderFactory: () => createLocalProviderFactory,
   createMemoryProviderFactory: () => createMemoryProviderFactory,
+  createMemoryTransferBatchStateStore: () => createMemoryTransferBatchStateStore,
   createMemoryTransferCheckpointStore: () => createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource: () => createOAuthTokenSecretSource,
   createPooledTransferClient: () => createPooledTransferClient,
@@ -78,6 +80,7 @@ __export(dropbox_exports, {
   createTransferJobsFromPlan: () => createTransferJobsFromPlan,
   createTransferPlan: () => createTransferPlan,
   createTransferResult: () => createTransferResult,
+  deserializeTransferPlan: () => deserializeTransferPlan,
   diffRemoteTrees: () => diffRemoteTrees,
   downloadFile: () => downloadFile,
   emitLog: () => emitLog,
@@ -111,7 +114,9 @@ __export(dropbox_exports, {
   resolveProviderId: () => resolveProviderId,
   resolveSecret: () => resolveSecret,
   runConnectionDiagnostics: () => runConnectionDiagnostics,
+  runResumableBatch: () => runResumableBatch,
   serializeRemoteManifest: () => serializeRemoteManifest,
+  serializeTransferPlan: () => serializeTransferPlan,
   sortRemoteEntries: () => sortRemoteEntries,
   summarizeClientDiagnostics: () => summarizeClientDiagnostics,
   summarizeTransferPlan: () => summarizeTransferPlan,
@@ -4277,6 +4282,11 @@ function normalizeNonNegative(value, fallback) {
   return Math.floor(value);
 }
 
+// src/transfers/resumableBatch.ts
+var import_node_crypto3 = require("crypto");
+var import_promises4 = require("fs/promises");
+var import_node_path4 = require("path");
+
 // src/transfers/TransferPlan.ts
 function createTransferPlan(input) {
   const plan = {
@@ -4573,6 +4583,180 @@ function cloneTransferJob(job) {
   if (job.resumed !== void 0) clone.resumed = job.resumed;
   if (job.metadata !== void 0) clone.metadata = { ...job.metadata };
   return clone;
+}
+
+// src/transfers/resumableBatch.ts
+function serializeTransferPlan(plan) {
+  return JSON.stringify({
+    createdAt: plan.createdAt.toISOString(),
+    dryRun: plan.dryRun,
+    id: plan.id,
+    ...plan.metadata !== void 0 ? { metadata: plan.metadata } : {},
+    steps: plan.steps,
+    version: 1,
+    warnings: plan.warnings
+  });
+}
+function deserializeTransferPlan(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    throw new ConfigurationError({
+      cause: error,
+      message: "Serialized transfer plan is not valid JSON",
+      retryable: false
+    });
+  }
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new ConfigurationError({
+      message: "Serialized transfer plan must be a JSON object",
+      retryable: false
+    });
+  }
+  const candidate = parsed;
+  if (candidate.version !== 1 || typeof candidate.id !== "string" || !Array.isArray(candidate.steps)) {
+    throw new ConfigurationError({
+      details: { version: candidate.version },
+      message: "Serialized transfer plan has an unsupported shape or version",
+      retryable: false
+    });
+  }
+  const createdAt = typeof candidate.createdAt === "string" ? new Date(candidate.createdAt) : /* @__PURE__ */ new Date(NaN);
+  return createTransferPlan({
+    id: candidate.id,
+    now: () => Number.isNaN(createdAt.getTime()) ? /* @__PURE__ */ new Date() : createdAt,
+    steps: candidate.steps,
+    ...typeof candidate.dryRun === "boolean" ? { dryRun: candidate.dryRun } : {},
+    ...Array.isArray(candidate.warnings) ? { warnings: candidate.warnings } : {},
+    ...typeof candidate.metadata === "object" && candidate.metadata !== null ? { metadata: candidate.metadata } : {}
+  });
+}
+function createMemoryTransferBatchStateStore() {
+  const map = /* @__PURE__ */ new Map();
+  return {
+    clear: (planId) => {
+      map.delete(planId);
+    },
+    load: (planId) => map.get(planId),
+    save: (state) => {
+      map.set(state.planId, state);
+    }
+  };
+}
+function createFileSystemTransferBatchStateStore(options) {
+  const directory = options.directory;
+  if (typeof directory !== "string" || directory.length === 0) {
+    throw new ConfigurationError({
+      message: "createFileSystemTransferBatchStateStore requires a non-empty directory option",
+      retryable: false
+    });
+  }
+  const fileFor = (planId) => {
+    const hash = (0, import_node_crypto3.createHash)("sha256").update(planId).digest("hex");
+    return (0, import_node_path4.join)(directory, `${hash}.batch.json`);
+  };
+  return {
+    async clear(planId) {
+      try {
+        await (0, import_promises4.unlink)(fileFor(planId));
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+    },
+    async load(planId) {
+      let text;
+      try {
+        text = await (0, import_promises4.readFile)(fileFor(planId), "utf8");
+      } catch (error) {
+        if (error.code === "ENOENT") return void 0;
+        throw error;
+      }
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.version !== 1 || parsed.planId !== planId || !Array.isArray(parsed.completedStepIds)) {
+          return void 0;
+        }
+        return parsed;
+      } catch {
+        return void 0;
+      }
+    },
+    async save(state) {
+      await (0, import_promises4.mkdir)(directory, { recursive: true });
+      const target = fileFor(state.planId);
+      const tmp = `${target}.${String(process.pid)}.${String(Date.now())}.tmp`;
+      await (0, import_promises4.writeFile)(tmp, JSON.stringify(state), { encoding: "utf8", mode: 384 });
+      await (0, import_promises4.rename)(tmp, target);
+    }
+  };
+}
+async function runResumableBatch(options) {
+  const { plan, batchStore } = options;
+  const executableSteps = plan.steps.filter((step) => step.action !== "skip");
+  const prior = await batchStore.load(plan.id);
+  const completed = new Set(prior?.completedStepIds ?? []);
+  const previouslyCompletedStepIds = executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id);
+  const pendingSteps = executableSteps.filter((step) => !completed.has(step.id));
+  let saveChain = Promise.resolve();
+  const recordCompletion = (stepId) => {
+    completed.add(stepId);
+    const snapshot = {
+      completedStepIds: executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id),
+      planId: plan.id,
+      updatedAtMs: Date.now(),
+      version: 1
+    };
+    saveChain = saveChain.then(() => batchStore.save(snapshot)).catch(() => void 0);
+  };
+  const jobIdPrefix = `${plan.id}:`;
+  const queue = new TransferQueue({
+    executor: options.executor,
+    onReceipt: (receipt) => {
+      if (receipt.jobId.startsWith(jobIdPrefix)) {
+        recordCompletion(receipt.jobId.slice(jobIdPrefix.length));
+      }
+      options.onReceipt?.(receipt);
+    },
+    ...options.engine !== void 0 ? { engine: options.engine } : {},
+    ...options.client !== void 0 ? { client: options.client } : {},
+    ...options.concurrency !== void 0 ? { concurrency: options.concurrency } : {},
+    ...options.retry !== void 0 ? { retry: options.retry } : {},
+    ...options.timeout !== void 0 ? { timeout: options.timeout } : {},
+    ...options.bandwidthLimit !== void 0 ? { bandwidthLimit: options.bandwidthLimit } : {},
+    ...options.onProgress !== void 0 ? { onProgress: options.onProgress } : {},
+    ...options.onError !== void 0 ? { onError: options.onError } : {}
+  });
+  for (const step of pendingSteps) {
+    queue.add(createStepJob(plan, step));
+  }
+  const summary = await queue.run({
+    ...options.signal !== void 0 ? { signal: options.signal } : {}
+  });
+  await saveChain;
+  const remainingStepIds = executableSteps.filter((step) => !completed.has(step.id)).map((step) => step.id);
+  const complete = remainingStepIds.length === 0;
+  if (complete) {
+    await batchStore.clear(plan.id);
+  }
+  return {
+    complete,
+    completedStepIds: executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id),
+    previouslyCompletedStepIds,
+    remainingStepIds,
+    summary
+  };
+}
+function createStepJob(plan, step) {
+  const job = {
+    id: `${plan.id}:${step.id}`,
+    operation: step.action
+  };
+  if (step.source !== void 0) job.source = { ...step.source };
+  if (step.destination !== void 0) job.destination = { ...step.destination };
+  if (step.expectedBytes !== void 0) job.totalBytes = step.expectedBytes;
+  if (step.metadata !== void 0) job.metadata = { ...step.metadata };
+  return job;
 }
 
 // src/sync/createRemoteBrowser.ts
@@ -5508,10 +5692,89 @@ function secretToString(value) {
   return String(value);
 }
 
+// src/providers/web/multipartUploadPool.ts
+function createSequentialPartReader(options) {
+  const iterator = options.source[Symbol.asyncIterator]();
+  const partSize = options.partSizeBytes;
+  let pending = [...options.initialChunks ?? []];
+  let pendingBytes = pending.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+  let nextPartNumber = options.startPartNumber ?? 1;
+  let nextOffset = options.startOffset ?? 0;
+  let exhausted = false;
+  let mutex = Promise.resolve(void 0);
+  const cutPart = (size) => {
+    const bytes = takeBytes(pending, pendingBytes, size);
+    pending = bytes.remaining;
+    pendingBytes -= bytes.taken.byteLength;
+    const part = {
+      byteEnd: nextOffset + bytes.taken.byteLength,
+      byteStart: nextOffset,
+      bytes: bytes.taken,
+      partNumber: nextPartNumber
+    };
+    nextPartNumber += 1;
+    nextOffset = part.byteEnd;
+    return part;
+  };
+  const nextLocked = async () => {
+    while (pendingBytes < partSize && !exhausted) {
+      const result = await iterator.next();
+      if (result.done === true) {
+        exhausted = true;
+        break;
+      }
+      if (result.value.byteLength === 0) continue;
+      pending.push(result.value);
+      pendingBytes += result.value.byteLength;
+    }
+    if (pendingBytes === 0) return void 0;
+    return cutPart(Math.min(partSize, pendingBytes));
+  };
+  return {
+    next: () => {
+      const result = mutex.then(nextLocked);
+      mutex = result.catch(() => void 0);
+      return result;
+    }
+  };
+}
+function takeBytes(chunks, totalBytes, size) {
+  const first2 = chunks[0];
+  if (first2 !== void 0 && first2.byteLength === size) {
+    return { remaining: chunks.slice(1), taken: first2 };
+  }
+  if (first2 !== void 0 && first2.byteLength > size) {
+    const remaining = chunks.slice(1);
+    remaining.unshift(first2.subarray(size));
+    return { remaining, taken: first2.subarray(0, size) };
+  }
+  const taken = new Uint8Array(Math.min(size, totalBytes));
+  let offset = 0;
+  let index = 0;
+  while (offset < taken.byteLength && index < chunks.length) {
+    const chunk = chunks[index];
+    if (chunk === void 0) break;
+    const needed = taken.byteLength - offset;
+    if (chunk.byteLength <= needed) {
+      taken.set(chunk, offset);
+      offset += chunk.byteLength;
+      index += 1;
+    } else {
+      taken.set(chunk.subarray(0, needed), offset);
+      const remaining = chunks.slice(index + 1);
+      remaining.unshift(chunk.subarray(needed));
+      return { remaining, taken };
+    }
+  }
+  return { remaining: chunks.slice(index), taken };
+}
+
 // src/providers/cloud/DropboxProvider.ts
 var DROPBOX_API_BASE = "https://api.dropboxapi.com";
 var DROPBOX_CONTENT_BASE = "https://content.dropboxapi.com";
 var DROPBOX_CHECKSUM_CAPABILITIES = ["dropbox-content-hash"];
+var DEFAULT_DROPBOX_PART_SIZE = 8 * 1024 * 1024;
+var DEFAULT_DROPBOX_THRESHOLD = 8 * 1024 * 1024;
 function createDropboxProviderFactory(options = {}) {
   const id = options.id ?? "dropbox";
   const fetchImpl = options.fetch ?? globalThis.fetch;
@@ -5523,6 +5786,11 @@ function createDropboxProviderFactory(options = {}) {
       retryable: false
     });
   }
+  const multipart = {
+    enabled: options.multipart?.enabled ?? true,
+    partSizeBytes: options.multipart?.partSizeBytes ?? DEFAULT_DROPBOX_PART_SIZE,
+    thresholdBytes: options.multipart?.thresholdBytes ?? DEFAULT_DROPBOX_THRESHOLD
+  };
   const capabilities = {
     atomicRename: false,
     authentication: ["token", "oauth"],
@@ -5532,8 +5800,12 @@ function createDropboxProviderFactory(options = {}) {
     list: true,
     maxConcurrency: 4,
     metadata: ["modifiedAt", "uniqueId"],
-    notes: [
-      "Dropbox provider performs single-shot uploads via /2/files/upload; resumable upload sessions are not yet supported."
+    notes: multipart.enabled ? [
+      `Dropbox upload sessions enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B); appends are protocol-sequential.`,
+      "Payloads at or below the threshold automatically fall back to single-shot /2/files/upload.",
+      "Pass `multipart: { enabled: false }` to force single-shot uploads (150 MB Dropbox cap applies)."
+    ] : [
+      "Dropbox provider performs single-shot uploads via /2/files/upload (150 MB cap); entire payload is buffered in memory before transmission."
     ],
     provider: id,
     readStream: true,
@@ -5553,7 +5825,8 @@ function createDropboxProviderFactory(options = {}) {
       contentBaseUrl,
       defaultHeaders: { ...options.defaultHeaders ?? {} },
       fetch: fetchImpl,
-      id
+      id,
+      multipart
     }),
     id
   };
@@ -5588,6 +5861,7 @@ var DropboxProvider = class {
       defaultHeaders: this.internals.defaultHeaders,
       fetch: this.internals.fetch,
       id: this.internals.id,
+      multipart: this.internals.multipart,
       token
     };
     if (profile.timeoutMs !== void 0) sessionOptions.timeoutMs = profile.timeoutMs;
@@ -5702,12 +5976,32 @@ var DropboxTransferOperations = class {
     if (request.offset !== void 0 && request.offset > 0) {
       throw new UnsupportedFeatureError({
         details: { offset: request.offset },
-        message: "Dropbox provider does not yet support resumable upload sessions",
+        message: "Dropbox provider does not yet support cross-attempt resume of upload sessions",
         retryable: false
       });
     }
     const normalized = normalizeRemotePath(request.endpoint.path);
-    const buffered = await collectChunks(request.content);
+    const multipart = this.options.multipart;
+    if (!multipart.enabled) {
+      const buffered = await collectChunks(request.content);
+      return this.singleShotUpload(request, normalized, buffered);
+    }
+    const iterator = request.content[Symbol.asyncIterator]();
+    const initialChunks = [];
+    let initialSize = 0;
+    while (initialSize <= multipart.thresholdBytes) {
+      const next = await iterator.next();
+      if (next.done === true) break;
+      if (next.value.byteLength === 0) continue;
+      initialChunks.push(next.value);
+      initialSize += next.value.byteLength;
+    }
+    if (initialSize <= multipart.thresholdBytes) {
+      return this.singleShotUpload(request, normalized, concatChunks2(initialChunks, initialSize));
+    }
+    return this.writeUploadSession(request, normalized, initialChunks, iterator);
+  }
+  async singleShotUpload(request, normalized, buffered) {
     const apiArg = JSON.stringify({
       autorename: false,
       mode: "overwrite",
@@ -5732,6 +6026,104 @@ var DropboxTransferOperations = class {
     const result = {
       bytesTransferred: buffered.byteLength,
       totalBytes: buffered.byteLength
+    };
+    if (typeof meta.content_hash === "string" && meta.content_hash.length > 0) {
+      result.checksum = meta.content_hash;
+    }
+    return result;
+  }
+  /**
+   * Chunked upload via Dropbox upload sessions: `upload_session/start`
+   * carries the first part, `append_v2` streams the rest in order (appends
+   * are protocol-sequential - each cursor offset must match the bytes the
+   * server has), and `finish` commits with an empty body. Memory stays
+   * bounded at roughly two parts regardless of payload size.
+   */
+  async writeUploadSession(request, normalized, initialChunks, iterator) {
+    const multipart = this.options.multipart;
+    const reader = createSequentialPartReader({
+      initialChunks,
+      partSizeBytes: multipart.partSizeBytes,
+      source: { [Symbol.asyncIterator]: () => iterator }
+    });
+    const firstPart = await reader.next();
+    if (firstPart === void 0) {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: "Dropbox upload session received no content",
+        retryable: false
+      });
+    }
+    const startUrl = `${this.options.contentBaseUrl}/2/files/upload_session/start`;
+    const startResponse = await dropboxFetch(this.options, startUrl, "POST", {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      body: firstPart.bytes,
+      extraHeaders: {
+        "content-type": "application/octet-stream",
+        "Dropbox-API-Arg": JSON.stringify({ close: false })
+      }
+    });
+    if (!startResponse.ok) {
+      throw mapDropboxResponseError(startResponse, normalized, await safeReadText(startResponse));
+    }
+    const startBody = await startResponse.json();
+    const sessionId = startBody.session_id;
+    if (typeof sessionId !== "string" || sessionId === "") {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: "Dropbox upload_session/start returned no session_id",
+        retryable: true
+      });
+    }
+    let bytesTransferred = firstPart.byteEnd;
+    request.reportProgress(bytesTransferred, request.totalBytes);
+    const appendUrl = `${this.options.contentBaseUrl}/2/files/upload_session/append_v2`;
+    while (true) {
+      request.throwIfAborted();
+      const part = await reader.next();
+      if (part === void 0) break;
+      const response = await dropboxFetch(this.options, appendUrl, "POST", {
+        ...request.signal !== void 0 ? { signal: request.signal } : {},
+        body: part.bytes,
+        extraHeaders: {
+          "content-type": "application/octet-stream",
+          "Dropbox-API-Arg": JSON.stringify({
+            close: false,
+            cursor: { offset: part.byteStart, session_id: sessionId }
+          })
+        }
+      });
+      if (!response.ok) {
+        throw mapDropboxResponseError(response, normalized, await safeReadText(response));
+      }
+      bytesTransferred = part.byteEnd;
+      request.reportProgress(bytesTransferred, request.totalBytes);
+    }
+    const finishUrl = `${this.options.contentBaseUrl}/2/files/upload_session/finish`;
+    const finishResponse = await dropboxFetch(this.options, finishUrl, "POST", {
+      ...request.signal !== void 0 ? { signal: request.signal } : {},
+      body: new Uint8Array(0),
+      extraHeaders: {
+        "content-type": "application/octet-stream",
+        "Dropbox-API-Arg": JSON.stringify({
+          commit: {
+            autorename: false,
+            mode: "overwrite",
+            mute: true,
+            path: toDropboxPath(normalized),
+            strict_conflict: false
+          },
+          cursor: { offset: bytesTransferred, session_id: sessionId }
+        })
+      }
+    });
+    if (!finishResponse.ok) {
+      throw mapDropboxResponseError(finishResponse, normalized, await safeReadText(finishResponse));
+    }
+    const meta = await finishResponse.json();
+    const result = {
+      bytesTransferred,
+      totalBytes: bytesTransferred
     };
     if (typeof meta.content_hash === "string" && meta.content_hash.length > 0) {
       result.checksum = meta.content_hash;
@@ -5891,7 +6283,10 @@ async function collectChunks(source) {
     chunks.push(chunk);
     total += chunk.byteLength;
   }
-  const out = new Uint8Array(total);
+  return concatChunks2(chunks, total);
+}
+function concatChunks2(chunks, totalSize) {
+  const out = new Uint8Array(totalSize);
   let offset = 0;
   for (const chunk of chunks) {
     out.set(chunk, offset);
@@ -5934,9 +6329,11 @@ async function collectChunks(source) {
   createBandwidthThrottle,
   createDefaultRetryPolicy,
   createDropboxProviderFactory,
+  createFileSystemTransferBatchStateStore,
   createFileSystemTransferCheckpointStore,
   createLocalProviderFactory,
   createMemoryProviderFactory,
+  createMemoryTransferBatchStateStore,
   createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource,
   createPooledTransferClient,
@@ -5949,6 +6346,7 @@ async function collectChunks(source) {
   createTransferJobsFromPlan,
   createTransferPlan,
   createTransferResult,
+  deserializeTransferPlan,
   diffRemoteTrees,
   downloadFile,
   emitLog,
@@ -5982,7 +6380,9 @@ async function collectChunks(source) {
   resolveProviderId,
   resolveSecret,
   runConnectionDiagnostics,
+  runResumableBatch,
   serializeRemoteManifest,
+  serializeTransferPlan,
   sortRemoteEntries,
   summarizeClientDiagnostics,
   summarizeTransferPlan,

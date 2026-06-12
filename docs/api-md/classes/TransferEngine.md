@@ -6,7 +6,7 @@
 
 # Class: TransferEngine
 
-Defined in: [src/transfers/TransferEngine.ts:143](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/transfers/TransferEngine.ts#L143)
+Defined in: [src/transfers/TransferEngine.ts:143](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferEngine.ts#L143)
 
 Executes transfer jobs and produces audit-friendly receipts.
 
@@ -57,7 +57,7 @@ console.log(receipt.attempts.length); // 1 on success
 new TransferEngine(options?): TransferEngine;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:151](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/transfers/TransferEngine.ts#L151)
+Defined in: [src/transfers/TransferEngine.ts:151](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferEngine.ts#L151)
 
 Creates a transfer engine.
 
@@ -82,7 +82,7 @@ execute(
 options?): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:165](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/transfers/TransferEngine.ts#L165)
+Defined in: [src/transfers/TransferEngine.ts:165](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferEngine.ts#L165)
 
 Executes a transfer job through a caller-supplied operation.
 

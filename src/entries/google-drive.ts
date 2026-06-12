@@ -9,5 +9,6 @@
 export * from "./core";
 export {
   createGoogleDriveProviderFactory,
+  type GoogleDriveMultipartOptions,
   type GoogleDriveProviderOptions,
 } from "../providers/cloud/GoogleDriveProvider";

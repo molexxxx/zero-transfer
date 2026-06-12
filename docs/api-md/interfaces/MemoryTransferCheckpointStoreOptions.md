@@ -6,7 +6,7 @@
 
 # Interface: MemoryTransferCheckpointStoreOptions
 
-Defined in: src/transfers/TransferCheckpointStore.ts:213
+Defined in: [src/transfers/TransferCheckpointStore.ts:213](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L213)
 
 Options accepted by [createMemoryTransferCheckpointStore](../functions/createMemoryTransferCheckpointStore.md).
 
@@ -14,5 +14,5 @@ Options accepted by [createMemoryTransferCheckpointStore](../functions/createMem
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="now"></a> `now?` | () => `number` | Clock override for deterministic tests. Defaults to `Date.now`. | src/transfers/TransferCheckpointStore.ts:217 |
-| <a id="ttlms"></a> `ttlMs?` | `number` | Checkpoint time-to-live in milliseconds. Defaults to 7 days. | src/transfers/TransferCheckpointStore.ts:215 |
+| <a id="now"></a> `now?` | () => `number` | Clock override for deterministic tests. Defaults to `Date.now`. | [src/transfers/TransferCheckpointStore.ts:217](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L217) |
+| <a id="ttlms"></a> `ttlMs?` | `number` | Checkpoint time-to-live in milliseconds. Defaults to 7 days. | [src/transfers/TransferCheckpointStore.ts:215](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L215) |

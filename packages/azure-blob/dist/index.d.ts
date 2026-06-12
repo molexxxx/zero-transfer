@@ -3288,6 +3288,154 @@ declare class TransferQueue {
 }
 
 /**
+ * Serializes a transfer plan to JSON for persistence.
+ *
+ * The output round-trips through {@link deserializeTransferPlan}, so a plan
+ * written to disk before a batch starts can be reloaded to resume the batch
+ * in a fresh process.
+ *
+ * @param plan - Plan to serialize.
+ * @returns Stable JSON representation.
+ */
+declare function serializeTransferPlan(plan: TransferPlan): string;
+/**
+ * Parses a plan produced by {@link serializeTransferPlan}.
+ *
+ * @param text - Serialized plan JSON.
+ * @returns The reconstructed plan.
+ * @throws {@link ConfigurationError} When the input is not a serialized plan.
+ */
+declare function deserializeTransferPlan(text: string): TransferPlan;
+/** Persisted batch progress: which plan steps have completed. */
+interface TransferBatchState {
+    /** Record schema version. */
+    version: 1;
+    /** Plan this state belongs to. */
+    planId: string;
+    /** Step ids that completed successfully, in completion order. */
+    completedStepIds: string[];
+    /** Epoch ms when this state was last updated. */
+    updatedAtMs: number;
+}
+/**
+ * Persistence contract for batch progress. `clear` is invoked when every
+ * executable step has completed; it must tolerate missing entries.
+ */
+interface TransferBatchStateStore {
+    /** Loads progress for a plan id, or `undefined` when absent. */
+    load(planId: string): Promise<TransferBatchState | undefined> | TransferBatchState | undefined;
+    /** Persists progress for a plan id. */
+    save(state: TransferBatchState): Promise<void> | void;
+    /** Removes progress for a plan id. */
+    clear(planId: string): Promise<void> | void;
+}
+/** Creates an in-memory {@link TransferBatchStateStore} (tests and single-process retries). */
+declare function createMemoryTransferBatchStateStore(): TransferBatchStateStore;
+/** Options accepted by {@link createFileSystemTransferBatchStateStore}. */
+interface FileSystemTransferBatchStateStoreOptions {
+    /**
+     * Directory under which batch-state JSON files are written. Created
+     * recursively if it does not exist; one file per plan id (SHA-256 hashed
+     * filename), written atomically with mode `0600`.
+     */
+    directory: string;
+}
+/**
+ * File-system backed {@link TransferBatchStateStore} that survives process
+ * restarts, enabling cross-process batch resume.
+ */
+declare function createFileSystemTransferBatchStateStore(options: FileSystemTransferBatchStateStoreOptions): TransferBatchStateStore;
+/** Options accepted by {@link runResumableBatch}. */
+interface ResumableBatchOptions {
+    /** Plan to execute (or re-execute after a crash). */
+    plan: TransferPlan;
+    /**
+     * Executor for individual jobs. Pass an executor created with
+     * {@link createProviderTransferExecutor} and a `resume` option so
+     * interrupted files also resume at the byte level.
+     */
+    executor: TransferExecutor;
+    /** Step-completion persistence. */
+    batchStore: TransferBatchStateStore;
+    /** Transfer engine override forwarded to the queue. */
+    engine?: TransferEngine;
+    /** Client whose defaults seed queue retry/timeout policies. */
+    client?: TransferClient;
+    /** Maximum steps executed concurrently. Defaults to `1`. */
+    concurrency?: number;
+    /** Retry policy forwarded to the queue. */
+    retry?: TransferRetryPolicy;
+    /** Timeout policy forwarded to the queue. */
+    timeout?: TransferTimeoutPolicy;
+    /** Bandwidth limit forwarded to the queue. */
+    bandwidthLimit?: TransferBandwidthLimit;
+    /** Abort signal canceling the batch run. */
+    signal?: AbortSignal;
+    /** Progress observer shared across the batch. */
+    onProgress?: (event: TransferProgressEvent) => void;
+    /** Completion observer per successful step. */
+    onReceipt?: (receipt: TransferReceipt) => void;
+    /** Failure observer per failed step. */
+    onError?: (item: TransferQueueItem, error: unknown) => void;
+}
+/** Result returned by {@link runResumableBatch}. */
+interface ResumableBatchResult {
+    /** Queue drain summary for the steps executed in this run. */
+    summary: TransferQueueSummary;
+    /** Step ids skipped this run because a prior run already completed them. */
+    previouslyCompletedStepIds: string[];
+    /** Every executable step id completed so far, across all runs. */
+    completedStepIds: string[];
+    /** Executable step ids still incomplete after this run. */
+    remainingStepIds: string[];
+    /** Whether every executable step in the plan has now completed. */
+    complete: boolean;
+}
+/**
+ * Executes a transfer plan as a resumable batch job.
+ *
+ * Completed steps are persisted to the batch store as they finish; re-running
+ * with the same plan and store skips them, so a crashed or aborted batch
+ * resumes from the first incomplete step. When the executor is configured
+ * with byte-level resume, a step interrupted mid-file continues from its
+ * checkpoint as well. The batch state is cleared automatically once every
+ * executable step has completed.
+ *
+ * @example Crash-safe nightly sync batch
+ * ```ts
+ * import {
+ *   createFileSystemTransferBatchStateStore,
+ *   createFileSystemTransferCheckpointStore,
+ *   createProviderTransferExecutor,
+ *   deserializeTransferPlan,
+ *   runResumableBatch,
+ *   serializeTransferPlan,
+ * } from "@zero-transfer/sdk";
+ * import { readFile, writeFile } from "node:fs/promises";
+ *
+ * // First run: persist the plan, then execute it.
+ * await writeFile("./batch.plan.json", serializeTransferPlan(plan), "utf8");
+ *
+ * // Every run (first or resumed) is the same call:
+ * const result = await runResumableBatch({
+ *   batchStore: createFileSystemTransferBatchStateStore({ directory: "./.zt-batches" }),
+ *   concurrency: 4,
+ *   executor: createProviderTransferExecutor({
+ *     resolveSession,
+ *     resume: {
+ *       store: createFileSystemTransferCheckpointStore({ directory: "./.zt-checkpoints" }),
+ *     },
+ *   }),
+ *   plan: deserializeTransferPlan(await readFile("./batch.plan.json", "utf8")),
+ *   retry: createDefaultRetryPolicy(),
+ * });
+ *
+ * console.log(result.complete ? "batch done" : `${result.remainingStepIds.length} steps left`);
+ * ```
+ */
+declare function runResumableBatch(options: ResumableBatchOptions): Promise<ResumableBatchResult>;
+
+/**
  * Browser-friendly directory navigation helpers for file-manager UIs.
  *
  * Wraps a {@link RemoteFileSystem} with stateful current-directory tracking,
@@ -4081,4 +4229,4 @@ interface AzureBlobMultipartOptions {
  */
 declare function createAzureBlobProviderFactory(options: AzureBlobProviderOptions): ProviderFactory;
 
-export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type AzureBlobProviderOptions, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionPoolOptions, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, DEFAULT_CHECKPOINT_TTL_MS, type DefaultRetryPolicyOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileSystemTransferCheckpointStoreOptions, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MemoryTransferCheckpointStoreOptions, type MetadataCapability, type MkdirOptions, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type PooledTransferClient, type ProgressEventInput, ProtocolError, type ProviderFactory, type ProviderId, ProviderRegistry, type ProviderSelection, type ProviderTransferDiscardRequest, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type SecretProvider, type SecretSource, type SecretValue, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithms, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshProfile, type SshSocketFactory, type SshSocketFactoryContext, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteOffsetCheckpointState, type TransferByteRange, type TransferCheckpointEndpoint, type TransferCheckpointHandle, type TransferCheckpointKey, type TransferCheckpointPart, type TransferCheckpointRecord, type TransferCheckpointState, type TransferCheckpointStore, TransferClient, type TransferClientDefaults, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPartsCheckpointState, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferResumeMode, type TransferResumeOptions, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferSourceFingerprint, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createAzureBlobProviderFactory, createBandwidthThrottle, createDefaultRetryPolicy, createFileSystemTransferCheckpointStore, createLocalProviderFactory, createMemoryProviderFactory, createMemoryTransferCheckpointStore, createOAuthTokenSecretSource, createPooledTransferClient, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, fingerprintsMatch, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isMainModule, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactErrorForLogging, redactObject, redactSecretSource, redactUrlForLogging, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };
+export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type AzureBlobProviderOptions, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionPoolOptions, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, DEFAULT_CHECKPOINT_TTL_MS, type DefaultRetryPolicyOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileSystemTransferBatchStateStoreOptions, type FileSystemTransferCheckpointStoreOptions, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MemoryTransferCheckpointStoreOptions, type MetadataCapability, type MkdirOptions, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type PooledTransferClient, type ProgressEventInput, ProtocolError, type ProviderFactory, type ProviderId, ProviderRegistry, type ProviderSelection, type ProviderTransferDiscardRequest, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type ResumableBatchOptions, type ResumableBatchResult, type RmdirOptions, type RunConnectionDiagnosticsOptions, type SecretProvider, type SecretSource, type SecretValue, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithms, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshProfile, type SshSocketFactory, type SshSocketFactoryContext, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferBatchState, type TransferBatchStateStore, type TransferByteOffsetCheckpointState, type TransferByteRange, type TransferCheckpointEndpoint, type TransferCheckpointHandle, type TransferCheckpointKey, type TransferCheckpointPart, type TransferCheckpointRecord, type TransferCheckpointState, type TransferCheckpointStore, TransferClient, type TransferClientDefaults, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPartsCheckpointState, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferResumeMode, type TransferResumeOptions, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferSourceFingerprint, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createAzureBlobProviderFactory, createBandwidthThrottle, createDefaultRetryPolicy, createFileSystemTransferBatchStateStore, createFileSystemTransferCheckpointStore, createLocalProviderFactory, createMemoryProviderFactory, createMemoryTransferBatchStateStore, createMemoryTransferCheckpointStore, createOAuthTokenSecretSource, createPooledTransferClient, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, deserializeTransferPlan, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, fingerprintsMatch, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isMainModule, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactErrorForLogging, redactObject, redactSecretSource, redactUrlForLogging, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, runResumableBatch, serializeRemoteManifest, serializeTransferPlan, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };

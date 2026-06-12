@@ -72,9 +72,11 @@ __export(ssh_exports, {
   createAtomicDeployPlan: () => createAtomicDeployPlan,
   createBandwidthThrottle: () => createBandwidthThrottle,
   createDefaultRetryPolicy: () => createDefaultRetryPolicy,
+  createFileSystemTransferBatchStateStore: () => createFileSystemTransferBatchStateStore,
   createFileSystemTransferCheckpointStore: () => createFileSystemTransferCheckpointStore,
   createLocalProviderFactory: () => createLocalProviderFactory,
   createMemoryProviderFactory: () => createMemoryProviderFactory,
+  createMemoryTransferBatchStateStore: () => createMemoryTransferBatchStateStore,
   createMemoryTransferCheckpointStore: () => createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource: () => createOAuthTokenSecretSource,
   createPooledTransferClient: () => createPooledTransferClient,
@@ -87,6 +89,7 @@ __export(ssh_exports, {
   createTransferJobsFromPlan: () => createTransferJobsFromPlan,
   createTransferPlan: () => createTransferPlan,
   createTransferResult: () => createTransferResult,
+  deserializeTransferPlan: () => deserializeTransferPlan,
   diffRemoteTrees: () => diffRemoteTrees,
   downloadFile: () => downloadFile,
   emitLog: () => emitLog,
@@ -121,8 +124,10 @@ __export(ssh_exports, {
   resolveProviderId: () => resolveProviderId,
   resolveSecret: () => resolveSecret,
   runConnectionDiagnostics: () => runConnectionDiagnostics,
+  runResumableBatch: () => runResumableBatch,
   runSshCommand: () => runSshCommand,
   serializeRemoteManifest: () => serializeRemoteManifest,
+  serializeTransferPlan: () => serializeTransferPlan,
   sortRemoteEntries: () => sortRemoteEntries,
   summarizeClientDiagnostics: () => summarizeClientDiagnostics,
   summarizeTransferPlan: () => summarizeTransferPlan,
@@ -4288,6 +4293,11 @@ function normalizeNonNegative(value, fallback) {
   return Math.floor(value);
 }
 
+// src/transfers/resumableBatch.ts
+var import_node_crypto3 = require("crypto");
+var import_promises4 = require("fs/promises");
+var import_node_path4 = require("path");
+
 // src/transfers/TransferPlan.ts
 function createTransferPlan(input) {
   const plan = {
@@ -4584,6 +4594,180 @@ function cloneTransferJob(job) {
   if (job.resumed !== void 0) clone.resumed = job.resumed;
   if (job.metadata !== void 0) clone.metadata = { ...job.metadata };
   return clone;
+}
+
+// src/transfers/resumableBatch.ts
+function serializeTransferPlan(plan) {
+  return JSON.stringify({
+    createdAt: plan.createdAt.toISOString(),
+    dryRun: plan.dryRun,
+    id: plan.id,
+    ...plan.metadata !== void 0 ? { metadata: plan.metadata } : {},
+    steps: plan.steps,
+    version: 1,
+    warnings: plan.warnings
+  });
+}
+function deserializeTransferPlan(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    throw new ConfigurationError({
+      cause: error,
+      message: "Serialized transfer plan is not valid JSON",
+      retryable: false
+    });
+  }
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new ConfigurationError({
+      message: "Serialized transfer plan must be a JSON object",
+      retryable: false
+    });
+  }
+  const candidate = parsed;
+  if (candidate.version !== 1 || typeof candidate.id !== "string" || !Array.isArray(candidate.steps)) {
+    throw new ConfigurationError({
+      details: { version: candidate.version },
+      message: "Serialized transfer plan has an unsupported shape or version",
+      retryable: false
+    });
+  }
+  const createdAt = typeof candidate.createdAt === "string" ? new Date(candidate.createdAt) : /* @__PURE__ */ new Date(NaN);
+  return createTransferPlan({
+    id: candidate.id,
+    now: () => Number.isNaN(createdAt.getTime()) ? /* @__PURE__ */ new Date() : createdAt,
+    steps: candidate.steps,
+    ...typeof candidate.dryRun === "boolean" ? { dryRun: candidate.dryRun } : {},
+    ...Array.isArray(candidate.warnings) ? { warnings: candidate.warnings } : {},
+    ...typeof candidate.metadata === "object" && candidate.metadata !== null ? { metadata: candidate.metadata } : {}
+  });
+}
+function createMemoryTransferBatchStateStore() {
+  const map = /* @__PURE__ */ new Map();
+  return {
+    clear: (planId) => {
+      map.delete(planId);
+    },
+    load: (planId) => map.get(planId),
+    save: (state) => {
+      map.set(state.planId, state);
+    }
+  };
+}
+function createFileSystemTransferBatchStateStore(options) {
+  const directory = options.directory;
+  if (typeof directory !== "string" || directory.length === 0) {
+    throw new ConfigurationError({
+      message: "createFileSystemTransferBatchStateStore requires a non-empty directory option",
+      retryable: false
+    });
+  }
+  const fileFor = (planId) => {
+    const hash = (0, import_node_crypto3.createHash)("sha256").update(planId).digest("hex");
+    return (0, import_node_path4.join)(directory, `${hash}.batch.json`);
+  };
+  return {
+    async clear(planId) {
+      try {
+        await (0, import_promises4.unlink)(fileFor(planId));
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+    },
+    async load(planId) {
+      let text;
+      try {
+        text = await (0, import_promises4.readFile)(fileFor(planId), "utf8");
+      } catch (error) {
+        if (error.code === "ENOENT") return void 0;
+        throw error;
+      }
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.version !== 1 || parsed.planId !== planId || !Array.isArray(parsed.completedStepIds)) {
+          return void 0;
+        }
+        return parsed;
+      } catch {
+        return void 0;
+      }
+    },
+    async save(state) {
+      await (0, import_promises4.mkdir)(directory, { recursive: true });
+      const target = fileFor(state.planId);
+      const tmp = `${target}.${String(process.pid)}.${String(Date.now())}.tmp`;
+      await (0, import_promises4.writeFile)(tmp, JSON.stringify(state), { encoding: "utf8", mode: 384 });
+      await (0, import_promises4.rename)(tmp, target);
+    }
+  };
+}
+async function runResumableBatch(options) {
+  const { plan, batchStore } = options;
+  const executableSteps = plan.steps.filter((step) => step.action !== "skip");
+  const prior = await batchStore.load(plan.id);
+  const completed = new Set(prior?.completedStepIds ?? []);
+  const previouslyCompletedStepIds = executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id);
+  const pendingSteps = executableSteps.filter((step) => !completed.has(step.id));
+  let saveChain = Promise.resolve();
+  const recordCompletion = (stepId) => {
+    completed.add(stepId);
+    const snapshot = {
+      completedStepIds: executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id),
+      planId: plan.id,
+      updatedAtMs: Date.now(),
+      version: 1
+    };
+    saveChain = saveChain.then(() => batchStore.save(snapshot)).catch(() => void 0);
+  };
+  const jobIdPrefix = `${plan.id}:`;
+  const queue = new TransferQueue({
+    executor: options.executor,
+    onReceipt: (receipt) => {
+      if (receipt.jobId.startsWith(jobIdPrefix)) {
+        recordCompletion(receipt.jobId.slice(jobIdPrefix.length));
+      }
+      options.onReceipt?.(receipt);
+    },
+    ...options.engine !== void 0 ? { engine: options.engine } : {},
+    ...options.client !== void 0 ? { client: options.client } : {},
+    ...options.concurrency !== void 0 ? { concurrency: options.concurrency } : {},
+    ...options.retry !== void 0 ? { retry: options.retry } : {},
+    ...options.timeout !== void 0 ? { timeout: options.timeout } : {},
+    ...options.bandwidthLimit !== void 0 ? { bandwidthLimit: options.bandwidthLimit } : {},
+    ...options.onProgress !== void 0 ? { onProgress: options.onProgress } : {},
+    ...options.onError !== void 0 ? { onError: options.onError } : {}
+  });
+  for (const step of pendingSteps) {
+    queue.add(createStepJob(plan, step));
+  }
+  const summary = await queue.run({
+    ...options.signal !== void 0 ? { signal: options.signal } : {}
+  });
+  await saveChain;
+  const remainingStepIds = executableSteps.filter((step) => !completed.has(step.id)).map((step) => step.id);
+  const complete = remainingStepIds.length === 0;
+  if (complete) {
+    await batchStore.clear(plan.id);
+  }
+  return {
+    complete,
+    completedStepIds: executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id),
+    previouslyCompletedStepIds,
+    remainingStepIds,
+    summary
+  };
+}
+function createStepJob(plan, step) {
+  const job = {
+    id: `${plan.id}:${step.id}`,
+    operation: step.action
+  };
+  if (step.source !== void 0) job.source = { ...step.source };
+  if (step.destination !== void 0) job.destination = { ...step.destination };
+  if (step.expectedBytes !== void 0) job.totalBytes = step.expectedBytes;
+  if (step.metadata !== void 0) job.metadata = { ...step.metadata };
+  return job;
 }
 
 // src/sync/createRemoteBrowser.ts
@@ -5820,11 +6004,11 @@ function parseSshIdentificationLine(line) {
 
 // src/protocols/ssh/transport/SshKexInit.ts
 var import_node_buffer7 = require("buffer");
-var import_node_crypto3 = require("crypto");
+var import_node_crypto4 = require("crypto");
 var SSH_MSG_KEXINIT = 20;
 var KEXINIT_COOKIE_LENGTH = 16;
 function encodeSshKexInitMessage(options) {
-  const cookie = options.cookie === void 0 ? (0, import_node_crypto3.randomBytes)(KEXINIT_COOKIE_LENGTH) : import_node_buffer7.Buffer.from(options.cookie);
+  const cookie = options.cookie === void 0 ? (0, import_node_crypto4.randomBytes)(KEXINIT_COOKIE_LENGTH) : import_node_buffer7.Buffer.from(options.cookie);
   if (cookie.length !== KEXINIT_COOKIE_LENGTH) {
     throw new ConfigurationError({
       details: { actualLength: cookie.length, expectedLength: KEXINIT_COOKIE_LENGTH },
@@ -5895,18 +6079,18 @@ function decodeSshKexInitMessage(payload) {
 
 // src/protocols/ssh/transport/SshKexCurve25519.ts
 var import_node_buffer8 = require("buffer");
-var import_node_crypto4 = require("crypto");
+var import_node_crypto5 = require("crypto");
 var SSH_MSG_KEX_ECDH_INIT = 30;
 var SSH_MSG_KEX_ECDH_REPLY = 31;
 var X25519_PUBLIC_KEY_LENGTH = 32;
 var X25519_SPKI_PREFIX = import_node_buffer8.Buffer.from("302a300506032b656e032100", "hex");
 function createCurve25519Ephemeral() {
-  const { privateKey, publicKey } = (0, import_node_crypto4.generateKeyPairSync)("x25519");
+  const { privateKey, publicKey } = (0, import_node_crypto5.generateKeyPairSync)("x25519");
   const encodedPublicKey = exportX25519PublicKeyRaw(publicKey);
   return {
     deriveSharedSecret: (serverPublicKey) => {
       const peer = importX25519PublicKeyRaw(serverPublicKey);
-      return (0, import_node_crypto4.diffieHellman)({ privateKey, publicKey: peer });
+      return (0, import_node_crypto5.diffieHellman)({ privateKey, publicKey: peer });
     },
     publicKey: encodedPublicKey
   };
@@ -5945,7 +6129,7 @@ function exportX25519PublicKeyRaw(publicKey) {
 function importX25519PublicKeyRaw(raw) {
   const normalized = normalizeX25519PublicKey(raw, "server");
   const der = import_node_buffer8.Buffer.concat([X25519_SPKI_PREFIX, normalized]);
-  return (0, import_node_crypto4.createPublicKey)({
+  return (0, import_node_crypto5.createPublicKey)({
     format: "der",
     key: der,
     type: "spki"
@@ -5966,7 +6150,7 @@ function normalizeX25519PublicKey(value, label) {
 
 // src/protocols/ssh/transport/SshKeyDerivation.ts
 var import_node_buffer9 = require("buffer");
-var import_node_crypto5 = require("crypto");
+var import_node_crypto6 = require("crypto");
 function deriveSshSessionKeys(input) {
   const hashAlgorithm = resolveKexHashAlgorithm(input.kexAlgorithm);
   const exchangeHash = computeCurve25519ExchangeHash(input, hashAlgorithm);
@@ -6033,20 +6217,20 @@ function deriveSshSessionKeys(input) {
 }
 function computeCurve25519ExchangeHash(input, hashAlgorithm) {
   const transcript = new SshDataWriter().writeString(input.clientIdentification, "ascii").writeString(input.serverIdentification, "ascii").writeString(input.clientKexInitPayload).writeString(input.serverKexInitPayload).writeString(input.serverHostKey).writeString(input.clientPublicKey).writeString(input.serverPublicKey).writeMpint(input.sharedSecret).toBuffer();
-  return (0, import_node_crypto5.createHash)(hashAlgorithm).update(transcript).digest();
+  return (0, import_node_crypto6.createHash)(hashAlgorithm).update(transcript).digest();
 }
 function deriveMaterial(sharedSecret, exchangeHash, sessionId, letter, length, hashAlgorithm) {
   if (length <= 0) {
     return import_node_buffer9.Buffer.alloc(0);
   }
   const result = [];
-  const first2 = (0, import_node_crypto5.createHash)(hashAlgorithm).update(
+  const first2 = (0, import_node_crypto6.createHash)(hashAlgorithm).update(
     new SshDataWriter().writeMpint(sharedSecret).writeBytes(exchangeHash).writeByte(letter.charCodeAt(0)).writeBytes(sessionId).toBuffer()
   ).digest();
   result.push(first2);
   while (import_node_buffer9.Buffer.concat(result).length < length) {
     const previous = import_node_buffer9.Buffer.concat(result);
-    const next = (0, import_node_crypto5.createHash)(hashAlgorithm).update(
+    const next = (0, import_node_crypto6.createHash)(hashAlgorithm).update(
       new SshDataWriter().writeMpint(sharedSecret).writeBytes(exchangeHash).writeBytes(previous).toBuffer()
     ).digest();
     result.push(next);
@@ -6140,7 +6324,7 @@ function decodeSshNewKeysMessage(payload) {
 
 // src/protocols/ssh/transport/SshTransportPacket.ts
 var import_node_buffer10 = require("buffer");
-var import_node_crypto6 = require("crypto");
+var import_node_crypto7 = require("crypto");
 var MIN_PADDING_LENGTH = 4;
 var MIN_PACKET_LENGTH = 1 + MIN_PADDING_LENGTH;
 var MAX_SSH_PACKET_LENGTH = 256 * 1024;
@@ -6151,7 +6335,7 @@ function encodeSshTransportPacket(payload, options = {}) {
   while ((1 + body.length + paddingLength + 4) % blockSize !== 0) {
     paddingLength += 1;
   }
-  const padding = options.randomPadding === false ? import_node_buffer10.Buffer.alloc(paddingLength) : (0, import_node_crypto6.randomBytes)(paddingLength);
+  const padding = options.randomPadding === false ? import_node_buffer10.Buffer.alloc(paddingLength) : (0, import_node_crypto7.randomBytes)(paddingLength);
   const packetLength = 1 + body.length + paddingLength;
   const frame = import_node_buffer10.Buffer.alloc(4 + packetLength);
   frame.writeUInt32BE(packetLength, 0);
@@ -6263,7 +6447,7 @@ function normalizeBlockSize(blockSize) {
 
 // src/protocols/ssh/transport/SshHostKeyVerification.ts
 var import_node_buffer11 = require("buffer");
-var import_node_crypto7 = require("crypto");
+var import_node_crypto8 = require("crypto");
 var ED25519_RAW_KEY_LENGTH = 32;
 var ED25519_SPKI_PREFIX = import_node_buffer11.Buffer.from("302a300506032b6570032100", "hex");
 function verifySshHostKeySignature(input) {
@@ -6291,7 +6475,7 @@ function verifySshHostKeySignature(input) {
       retryable: false
     });
   }
-  const hostKeySha256 = (0, import_node_crypto7.createHash)("sha256").update(input.hostKeyBlob).digest();
+  const hostKeySha256 = (0, import_node_crypto8.createHash)("sha256").update(input.hostKeyBlob).digest();
   return { algorithmName, hostKeySha256 };
 }
 function parseHostKey(blob) {
@@ -6312,7 +6496,7 @@ function parseHostKey(blob) {
       const spki = import_node_buffer11.Buffer.concat([ED25519_SPKI_PREFIX, raw]);
       return {
         algorithmName,
-        publicKey: (0, import_node_crypto7.createPublicKey)({ format: "der", key: spki, type: "spki" })
+        publicKey: (0, import_node_crypto8.createPublicKey)({ format: "der", key: spki, type: "spki" })
       };
     }
     case "rsa-sha2-256":
@@ -6371,27 +6555,27 @@ function isCompatibleSignatureAlgorithm(hostKeyAlgorithm, signatureAlgorithm) {
 function verifySignature(input) {
   switch (input.signatureAlgorithm) {
     case "ssh-ed25519":
-      return (0, import_node_crypto7.verify)(null, input.data, input.publicKey, input.signature);
+      return (0, import_node_crypto8.verify)(null, input.data, input.publicKey, input.signature);
     case "rsa-sha2-256":
-      return (0, import_node_crypto7.verify)("sha256", input.data, input.publicKey, input.signature);
+      return (0, import_node_crypto8.verify)("sha256", input.data, input.publicKey, input.signature);
     case "rsa-sha2-512":
-      return (0, import_node_crypto7.verify)("sha512", input.data, input.publicKey, input.signature);
+      return (0, import_node_crypto8.verify)("sha512", input.data, input.publicKey, input.signature);
     case "ecdsa-sha2-nistp256":
-      return (0, import_node_crypto7.verify)(
+      return (0, import_node_crypto8.verify)(
         "sha256",
         input.data,
         input.publicKey,
         sshEcdsaSignatureToDer(input.signature)
       );
     case "ecdsa-sha2-nistp384":
-      return (0, import_node_crypto7.verify)(
+      return (0, import_node_crypto8.verify)(
         "sha384",
         input.data,
         input.publicKey,
         sshEcdsaSignatureToDer(input.signature)
       );
     case "ecdsa-sha2-nistp521":
-      return (0, import_node_crypto7.verify)(
+      return (0, import_node_crypto8.verify)(
         "sha512",
         input.data,
         input.publicKey,
@@ -6424,7 +6608,7 @@ function rsaPublicKeyFromComponents(e, n) {
   ]);
   const algoId = import_node_buffer11.Buffer.from("300d06092a864886f70d010101 0500".replace(/\s+/g, ""), "hex");
   const spki = encodeAsn1Sequence(import_node_buffer11.Buffer.concat([algoId, bitString]));
-  return (0, import_node_crypto7.createPublicKey)({ format: "der", key: spki, type: "spki" });
+  return (0, import_node_crypto8.createPublicKey)({ format: "der", key: spki, type: "spki" });
 }
 function encodeAsn1Integer(value) {
   let body = value;
@@ -6475,7 +6659,7 @@ function ecdsaPublicKeyFromPoint(curveIdentifier, point) {
     bitStringContent
   ]);
   const spki = encodeAsn1Sequence(import_node_buffer11.Buffer.concat([algoId, bitString]));
-  return (0, import_node_crypto7.createPublicKey)({ format: "der", key: spki, type: "spki" });
+  return (0, import_node_crypto8.createPublicKey)({ format: "der", key: spki, type: "spki" });
 }
 function sshEcdsaSignatureToDer(sshSignature) {
   const reader = new SshDataReader(sshSignature);
@@ -6782,7 +6966,7 @@ function missingPendingKeyExchangeError() {
 
 // src/protocols/ssh/transport/SshTransportProtection.ts
 var import_node_buffer13 = require("buffer");
-var import_node_crypto8 = require("crypto");
+var import_node_crypto9 = require("crypto");
 function createSshTransportProtectionContext(input) {
   return {
     inbound: new SshTransportPacketUnprotector({
@@ -6916,7 +7100,7 @@ var SshTransportPacketUnprotector = class {
         clearPacket,
         this.macLength
       );
-      if (!(0, import_node_crypto8.timingSafeEqual)(receivedMac, expectedMac)) {
+      if (!(0, import_node_crypto9.timingSafeEqual)(receivedMac, expectedMac)) {
         throw new ProtocolError({
           message: "SSH packet MAC verification failed",
           protocol: "sftp",
@@ -6951,7 +7135,7 @@ var SshTransportPacketUnprotector = class {
       clearPacket,
       this.macLength
     );
-    if (!(0, import_node_crypto8.timingSafeEqual)(receivedMac, expectedMac)) {
+    if (!(0, import_node_crypto9.timingSafeEqual)(receivedMac, expectedMac)) {
       throw new ProtocolError({
         message: "SSH packet MAC verification failed",
         protocol: "sftp",
@@ -6967,7 +7151,7 @@ function createCipher(algorithm, key, iv) {
     return void 0;
   }
   validateCipherMaterial(algorithm, key, iv);
-  const cipher = (0, import_node_crypto8.createCipheriv)(toOpenSslCipherName(algorithm), key, iv);
+  const cipher = (0, import_node_crypto9.createCipheriv)(toOpenSslCipherName(algorithm), key, iv);
   cipher.setAutoPadding(false);
   return cipher;
 }
@@ -6976,7 +7160,7 @@ function createDecipher(algorithm, key, iv) {
     return void 0;
   }
   validateCipherMaterial(algorithm, key, iv);
-  const decipher = (0, import_node_crypto8.createDecipheriv)(toOpenSslCipherName(algorithm), key, iv);
+  const decipher = (0, import_node_crypto9.createDecipheriv)(toOpenSslCipherName(algorithm), key, iv);
   decipher.setAutoPadding(false);
   return decipher;
 }
@@ -7077,7 +7261,7 @@ function computeMac(macAlgorithm, macKey, sequence, packet, macLength) {
   const hashName = macAlgorithm === "hmac-sha2-512" ? "sha512" : "sha256";
   const sequenceBuffer = import_node_buffer13.Buffer.alloc(4);
   sequenceBuffer.writeUInt32BE(sequence >>> 0, 0);
-  return (0, import_node_crypto8.createHmac)(hashName, macKey).update(sequenceBuffer).update(packet).digest().subarray(0, macLength);
+  return (0, import_node_crypto9.createHmac)(hashName, macKey).update(sequenceBuffer).update(packet).digest().subarray(0, macLength);
 }
 
 // src/protocols/ssh/transport/SshTransportConnection.ts
@@ -7751,12 +7935,12 @@ function buildKiRequest(args) {
 
 // src/protocols/ssh/auth/SshPublickeyCredentialBuilder.ts
 var import_node_buffer15 = require("buffer");
-var import_node_crypto9 = require("crypto");
+var import_node_crypto10 = require("crypto");
 var ED25519_RAW_KEY_LENGTH2 = 32;
 var ED25519_SPKI_PREFIX_LENGTH = 12;
 function buildPublickeyCredential(options) {
   const { privateKey, username } = options;
-  const publicKey = (0, import_node_crypto9.createPublicKey)(privateKey);
+  const publicKey = (0, import_node_crypto10.createPublicKey)(privateKey);
   switch (privateKey.asymmetricKeyType) {
     case "ed25519": {
       const spki = publicKey.export({ format: "der", type: "spki" });
@@ -7768,7 +7952,7 @@ function buildPublickeyCredential(options) {
       return {
         algorithmName: "ssh-ed25519",
         publicKeyBlob,
-        sign: (data) => (0, import_node_crypto9.sign)(null, import_node_buffer15.Buffer.from(data), privateKey),
+        sign: (data) => (0, import_node_crypto10.sign)(null, import_node_buffer15.Buffer.from(data), privateKey),
         type: "publickey",
         username
       };
@@ -7786,7 +7970,7 @@ function buildPublickeyCredential(options) {
       return {
         algorithmName,
         publicKeyBlob,
-        sign: (data) => (0, import_node_crypto9.sign)(hash, import_node_buffer15.Buffer.from(data), privateKey),
+        sign: (data) => (0, import_node_crypto10.sign)(hash, import_node_buffer15.Buffer.from(data), privateKey),
         type: "publickey",
         username
       };
@@ -8465,9 +8649,11 @@ function openTcpSocket(host, port, timeoutMs) {
   createAtomicDeployPlan,
   createBandwidthThrottle,
   createDefaultRetryPolicy,
+  createFileSystemTransferBatchStateStore,
   createFileSystemTransferCheckpointStore,
   createLocalProviderFactory,
   createMemoryProviderFactory,
+  createMemoryTransferBatchStateStore,
   createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource,
   createPooledTransferClient,
@@ -8480,6 +8666,7 @@ function openTcpSocket(host, port, timeoutMs) {
   createTransferJobsFromPlan,
   createTransferPlan,
   createTransferResult,
+  deserializeTransferPlan,
   diffRemoteTrees,
   downloadFile,
   emitLog,
@@ -8514,8 +8701,10 @@ function openTcpSocket(host, port, timeoutMs) {
   resolveProviderId,
   resolveSecret,
   runConnectionDiagnostics,
+  runResumableBatch,
   runSshCommand,
   serializeRemoteManifest,
+  serializeTransferPlan,
   sortRemoteEntries,
   summarizeClientDiagnostics,
   summarizeTransferPlan,

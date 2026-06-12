@@ -19,6 +19,18 @@ export {
   type TransferResumeOptions,
 } from "./createProviderTransferExecutor";
 export {
+  createFileSystemTransferBatchStateStore,
+  createMemoryTransferBatchStateStore,
+  deserializeTransferPlan,
+  runResumableBatch,
+  serializeTransferPlan,
+  type FileSystemTransferBatchStateStoreOptions,
+  type ResumableBatchOptions,
+  type ResumableBatchResult,
+  type TransferBatchState,
+  type TransferBatchStateStore,
+} from "./resumableBatch";
+export {
   DEFAULT_CHECKPOINT_TTL_MS,
   createFileSystemTransferCheckpointStore,
   createMemoryTransferCheckpointStore,

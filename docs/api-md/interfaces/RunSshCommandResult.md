@@ -6,7 +6,7 @@
 
 # Interface: RunSshCommandResult
 
-Defined in: [src/protocols/ssh/runSshCommand.ts:55](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/protocols/ssh/runSshCommand.ts#L55)
+Defined in: [src/protocols/ssh/runSshCommand.ts:55](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/protocols/ssh/runSshCommand.ts#L55)
 
 Result of [runSshCommand](../functions/runSshCommand.md). The full captured stdout is provided as
 both a `Buffer` (for binary output) and as a UTF-8 decoded `string`.
@@ -19,6 +19,6 @@ directly if you need them.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="bytesreceived"></a> `bytesReceived` | `number` | Bytes received before the channel closed. | [src/protocols/ssh/runSshCommand.ts:61](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/protocols/ssh/runSshCommand.ts#L61) |
-| <a id="stdout"></a> `stdout` | `Buffer` | Captured stdout as raw bytes. | [src/protocols/ssh/runSshCommand.ts:57](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/protocols/ssh/runSshCommand.ts#L57) |
-| <a id="stdouttext"></a> `stdoutText` | `string` | Captured stdout decoded as UTF-8. | [src/protocols/ssh/runSshCommand.ts:59](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/protocols/ssh/runSshCommand.ts#L59) |
+| <a id="bytesreceived"></a> `bytesReceived` | `number` | Bytes received before the channel closed. | [src/protocols/ssh/runSshCommand.ts:61](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/protocols/ssh/runSshCommand.ts#L61) |
+| <a id="stdout"></a> `stdout` | `Buffer` | Captured stdout as raw bytes. | [src/protocols/ssh/runSshCommand.ts:57](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/protocols/ssh/runSshCommand.ts#L57) |
+| <a id="stdouttext"></a> `stdoutText` | `string` | Captured stdout decoded as UTF-8. | [src/protocols/ssh/runSshCommand.ts:59](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/protocols/ssh/runSshCommand.ts#L59) |

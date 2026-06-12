@@ -10,7 +10,7 @@
 function createProgressEvent(input): TransferProgressEvent;
 ```
 
-Defined in: [src/services/TransferService.ts:80](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/services/TransferService.ts#L80)
+Defined in: [src/services/TransferService.ts:80](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/services/TransferService.ts#L80)
 
 Creates a progress event with elapsed time, rate, and optional percentage.
 

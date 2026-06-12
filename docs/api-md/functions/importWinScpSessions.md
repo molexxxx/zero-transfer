@@ -10,7 +10,7 @@
 function importWinScpSessions(ini): ImportWinScpSessionsResult;
 ```
 
-Defined in: [src/profiles/importers/WinScpImporter.ts:41](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/profiles/importers/WinScpImporter.ts#L41)
+Defined in: [src/profiles/importers/WinScpImporter.ts:41](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/profiles/importers/WinScpImporter.ts#L41)
 
 Parses WinSCP `WinSCP.ini` text and returns generated profiles.
 

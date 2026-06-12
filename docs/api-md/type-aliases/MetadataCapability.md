@@ -23,6 +23,6 @@ type MetadataCapability =
 };
 ```
 
-Defined in: [src/core/CapabilitySet.ts:29](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/core/CapabilitySet.ts#L29)
+Defined in: [src/core/CapabilitySet.ts:29](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/core/CapabilitySet.ts#L29)
 
 Metadata fields a provider can preserve or report.

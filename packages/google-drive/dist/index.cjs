@@ -62,10 +62,12 @@ __export(google_drive_exports, {
   createAtomicDeployPlan: () => createAtomicDeployPlan,
   createBandwidthThrottle: () => createBandwidthThrottle,
   createDefaultRetryPolicy: () => createDefaultRetryPolicy,
+  createFileSystemTransferBatchStateStore: () => createFileSystemTransferBatchStateStore,
   createFileSystemTransferCheckpointStore: () => createFileSystemTransferCheckpointStore,
   createGoogleDriveProviderFactory: () => createGoogleDriveProviderFactory,
   createLocalProviderFactory: () => createLocalProviderFactory,
   createMemoryProviderFactory: () => createMemoryProviderFactory,
+  createMemoryTransferBatchStateStore: () => createMemoryTransferBatchStateStore,
   createMemoryTransferCheckpointStore: () => createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource: () => createOAuthTokenSecretSource,
   createPooledTransferClient: () => createPooledTransferClient,
@@ -78,6 +80,7 @@ __export(google_drive_exports, {
   createTransferJobsFromPlan: () => createTransferJobsFromPlan,
   createTransferPlan: () => createTransferPlan,
   createTransferResult: () => createTransferResult,
+  deserializeTransferPlan: () => deserializeTransferPlan,
   diffRemoteTrees: () => diffRemoteTrees,
   downloadFile: () => downloadFile,
   emitLog: () => emitLog,
@@ -111,7 +114,9 @@ __export(google_drive_exports, {
   resolveProviderId: () => resolveProviderId,
   resolveSecret: () => resolveSecret,
   runConnectionDiagnostics: () => runConnectionDiagnostics,
+  runResumableBatch: () => runResumableBatch,
   serializeRemoteManifest: () => serializeRemoteManifest,
+  serializeTransferPlan: () => serializeTransferPlan,
   sortRemoteEntries: () => sortRemoteEntries,
   summarizeClientDiagnostics: () => summarizeClientDiagnostics,
   summarizeTransferPlan: () => summarizeTransferPlan,
@@ -4277,6 +4282,11 @@ function normalizeNonNegative(value, fallback) {
   return Math.floor(value);
 }
 
+// src/transfers/resumableBatch.ts
+var import_node_crypto3 = require("crypto");
+var import_promises4 = require("fs/promises");
+var import_node_path4 = require("path");
+
 // src/transfers/TransferPlan.ts
 function createTransferPlan(input) {
   const plan = {
@@ -4573,6 +4583,180 @@ function cloneTransferJob(job) {
   if (job.resumed !== void 0) clone.resumed = job.resumed;
   if (job.metadata !== void 0) clone.metadata = { ...job.metadata };
   return clone;
+}
+
+// src/transfers/resumableBatch.ts
+function serializeTransferPlan(plan) {
+  return JSON.stringify({
+    createdAt: plan.createdAt.toISOString(),
+    dryRun: plan.dryRun,
+    id: plan.id,
+    ...plan.metadata !== void 0 ? { metadata: plan.metadata } : {},
+    steps: plan.steps,
+    version: 1,
+    warnings: plan.warnings
+  });
+}
+function deserializeTransferPlan(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    throw new ConfigurationError({
+      cause: error,
+      message: "Serialized transfer plan is not valid JSON",
+      retryable: false
+    });
+  }
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new ConfigurationError({
+      message: "Serialized transfer plan must be a JSON object",
+      retryable: false
+    });
+  }
+  const candidate = parsed;
+  if (candidate.version !== 1 || typeof candidate.id !== "string" || !Array.isArray(candidate.steps)) {
+    throw new ConfigurationError({
+      details: { version: candidate.version },
+      message: "Serialized transfer plan has an unsupported shape or version",
+      retryable: false
+    });
+  }
+  const createdAt = typeof candidate.createdAt === "string" ? new Date(candidate.createdAt) : /* @__PURE__ */ new Date(NaN);
+  return createTransferPlan({
+    id: candidate.id,
+    now: () => Number.isNaN(createdAt.getTime()) ? /* @__PURE__ */ new Date() : createdAt,
+    steps: candidate.steps,
+    ...typeof candidate.dryRun === "boolean" ? { dryRun: candidate.dryRun } : {},
+    ...Array.isArray(candidate.warnings) ? { warnings: candidate.warnings } : {},
+    ...typeof candidate.metadata === "object" && candidate.metadata !== null ? { metadata: candidate.metadata } : {}
+  });
+}
+function createMemoryTransferBatchStateStore() {
+  const map = /* @__PURE__ */ new Map();
+  return {
+    clear: (planId) => {
+      map.delete(planId);
+    },
+    load: (planId) => map.get(planId),
+    save: (state) => {
+      map.set(state.planId, state);
+    }
+  };
+}
+function createFileSystemTransferBatchStateStore(options) {
+  const directory = options.directory;
+  if (typeof directory !== "string" || directory.length === 0) {
+    throw new ConfigurationError({
+      message: "createFileSystemTransferBatchStateStore requires a non-empty directory option",
+      retryable: false
+    });
+  }
+  const fileFor = (planId) => {
+    const hash = (0, import_node_crypto3.createHash)("sha256").update(planId).digest("hex");
+    return (0, import_node_path4.join)(directory, `${hash}.batch.json`);
+  };
+  return {
+    async clear(planId) {
+      try {
+        await (0, import_promises4.unlink)(fileFor(planId));
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+    },
+    async load(planId) {
+      let text;
+      try {
+        text = await (0, import_promises4.readFile)(fileFor(planId), "utf8");
+      } catch (error) {
+        if (error.code === "ENOENT") return void 0;
+        throw error;
+      }
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.version !== 1 || parsed.planId !== planId || !Array.isArray(parsed.completedStepIds)) {
+          return void 0;
+        }
+        return parsed;
+      } catch {
+        return void 0;
+      }
+    },
+    async save(state) {
+      await (0, import_promises4.mkdir)(directory, { recursive: true });
+      const target = fileFor(state.planId);
+      const tmp = `${target}.${String(process.pid)}.${String(Date.now())}.tmp`;
+      await (0, import_promises4.writeFile)(tmp, JSON.stringify(state), { encoding: "utf8", mode: 384 });
+      await (0, import_promises4.rename)(tmp, target);
+    }
+  };
+}
+async function runResumableBatch(options) {
+  const { plan, batchStore } = options;
+  const executableSteps = plan.steps.filter((step) => step.action !== "skip");
+  const prior = await batchStore.load(plan.id);
+  const completed = new Set(prior?.completedStepIds ?? []);
+  const previouslyCompletedStepIds = executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id);
+  const pendingSteps = executableSteps.filter((step) => !completed.has(step.id));
+  let saveChain = Promise.resolve();
+  const recordCompletion = (stepId) => {
+    completed.add(stepId);
+    const snapshot = {
+      completedStepIds: executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id),
+      planId: plan.id,
+      updatedAtMs: Date.now(),
+      version: 1
+    };
+    saveChain = saveChain.then(() => batchStore.save(snapshot)).catch(() => void 0);
+  };
+  const jobIdPrefix = `${plan.id}:`;
+  const queue = new TransferQueue({
+    executor: options.executor,
+    onReceipt: (receipt) => {
+      if (receipt.jobId.startsWith(jobIdPrefix)) {
+        recordCompletion(receipt.jobId.slice(jobIdPrefix.length));
+      }
+      options.onReceipt?.(receipt);
+    },
+    ...options.engine !== void 0 ? { engine: options.engine } : {},
+    ...options.client !== void 0 ? { client: options.client } : {},
+    ...options.concurrency !== void 0 ? { concurrency: options.concurrency } : {},
+    ...options.retry !== void 0 ? { retry: options.retry } : {},
+    ...options.timeout !== void 0 ? { timeout: options.timeout } : {},
+    ...options.bandwidthLimit !== void 0 ? { bandwidthLimit: options.bandwidthLimit } : {},
+    ...options.onProgress !== void 0 ? { onProgress: options.onProgress } : {},
+    ...options.onError !== void 0 ? { onError: options.onError } : {}
+  });
+  for (const step of pendingSteps) {
+    queue.add(createStepJob(plan, step));
+  }
+  const summary = await queue.run({
+    ...options.signal !== void 0 ? { signal: options.signal } : {}
+  });
+  await saveChain;
+  const remainingStepIds = executableSteps.filter((step) => !completed.has(step.id)).map((step) => step.id);
+  const complete = remainingStepIds.length === 0;
+  if (complete) {
+    await batchStore.clear(plan.id);
+  }
+  return {
+    complete,
+    completedStepIds: executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id),
+    previouslyCompletedStepIds,
+    remainingStepIds,
+    summary
+  };
+}
+function createStepJob(plan, step) {
+  const job = {
+    id: `${plan.id}:${step.id}`,
+    operation: step.action
+  };
+  if (step.source !== void 0) job.source = { ...step.source };
+  if (step.destination !== void 0) job.destination = { ...step.destination };
+  if (step.expectedBytes !== void 0) job.totalBytes = step.expectedBytes;
+  if (step.metadata !== void 0) job.metadata = { ...step.metadata };
+  return job;
 }
 
 // src/sync/createRemoteBrowser.ts
@@ -5453,7 +5637,7 @@ function isMainModule(importMetaUrl) {
 
 // src/providers/cloud/GoogleDriveProvider.ts
 var import_node_buffer6 = require("buffer");
-var import_node_crypto3 = require("crypto");
+var import_node_crypto4 = require("crypto");
 
 // src/providers/web/httpInternals.ts
 var import_node_buffer5 = require("buffer");
@@ -5512,6 +5696,83 @@ function secretToString(value) {
   return String(value);
 }
 
+// src/providers/web/multipartUploadPool.ts
+function createSequentialPartReader(options) {
+  const iterator = options.source[Symbol.asyncIterator]();
+  const partSize = options.partSizeBytes;
+  let pending = [...options.initialChunks ?? []];
+  let pendingBytes = pending.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+  let nextPartNumber = options.startPartNumber ?? 1;
+  let nextOffset = options.startOffset ?? 0;
+  let exhausted = false;
+  let mutex = Promise.resolve(void 0);
+  const cutPart = (size) => {
+    const bytes = takeBytes(pending, pendingBytes, size);
+    pending = bytes.remaining;
+    pendingBytes -= bytes.taken.byteLength;
+    const part = {
+      byteEnd: nextOffset + bytes.taken.byteLength,
+      byteStart: nextOffset,
+      bytes: bytes.taken,
+      partNumber: nextPartNumber
+    };
+    nextPartNumber += 1;
+    nextOffset = part.byteEnd;
+    return part;
+  };
+  const nextLocked = async () => {
+    while (pendingBytes < partSize && !exhausted) {
+      const result = await iterator.next();
+      if (result.done === true) {
+        exhausted = true;
+        break;
+      }
+      if (result.value.byteLength === 0) continue;
+      pending.push(result.value);
+      pendingBytes += result.value.byteLength;
+    }
+    if (pendingBytes === 0) return void 0;
+    return cutPart(Math.min(partSize, pendingBytes));
+  };
+  return {
+    next: () => {
+      const result = mutex.then(nextLocked);
+      mutex = result.catch(() => void 0);
+      return result;
+    }
+  };
+}
+function takeBytes(chunks, totalBytes, size) {
+  const first2 = chunks[0];
+  if (first2 !== void 0 && first2.byteLength === size) {
+    return { remaining: chunks.slice(1), taken: first2 };
+  }
+  if (first2 !== void 0 && first2.byteLength > size) {
+    const remaining = chunks.slice(1);
+    remaining.unshift(first2.subarray(size));
+    return { remaining, taken: first2.subarray(0, size) };
+  }
+  const taken = new Uint8Array(Math.min(size, totalBytes));
+  let offset = 0;
+  let index = 0;
+  while (offset < taken.byteLength && index < chunks.length) {
+    const chunk = chunks[index];
+    if (chunk === void 0) break;
+    const needed = taken.byteLength - offset;
+    if (chunk.byteLength <= needed) {
+      taken.set(chunk, offset);
+      offset += chunk.byteLength;
+      index += 1;
+    } else {
+      taken.set(chunk.subarray(0, needed), offset);
+      const remaining = chunks.slice(index + 1);
+      remaining.unshift(chunk.subarray(needed));
+      return { remaining, taken };
+    }
+  }
+  return { remaining: chunks.slice(index), taken };
+}
+
 // src/providers/cloud/GoogleDriveProvider.ts
 var GDRIVE_API_BASE = "https://www.googleapis.com/drive/v3";
 var GDRIVE_UPLOAD_BASE = "https://www.googleapis.com/upload/drive/v3";
@@ -5519,6 +5780,9 @@ var GDRIVE_FOLDER_MIME = "application/vnd.google-apps.folder";
 var GDRIVE_CHECKSUM_CAPABILITIES = ["md5", "sha256", "crc32c"];
 var GDRIVE_FILE_FIELDS = "id,name,mimeType,size,modifiedTime,createdTime,md5Checksum,sha256Checksum,parents,trashed";
 var GDRIVE_LIST_FIELDS = `nextPageToken,files(${GDRIVE_FILE_FIELDS})`;
+var DEFAULT_GDRIVE_PART_SIZE = 8 * 1024 * 1024;
+var DEFAULT_GDRIVE_THRESHOLD = 8 * 1024 * 1024;
+var GDRIVE_CHUNK_ALIGNMENT = 256 * 1024;
 function createGoogleDriveProviderFactory(options = {}) {
   const id = options.id ?? "google-drive";
   const fetchImpl = options.fetch ?? globalThis.fetch;
@@ -5531,6 +5795,37 @@ function createGoogleDriveProviderFactory(options = {}) {
       retryable: false
     });
   }
+  const multipartEnabled = options.multipart?.enabled ?? true;
+  const partSizeBytes = options.multipart?.partSizeBytes ?? DEFAULT_GDRIVE_PART_SIZE;
+  const thresholdBytes = options.multipart?.thresholdBytes ?? DEFAULT_GDRIVE_THRESHOLD;
+  if (multipartEnabled) {
+    if (!Number.isInteger(partSizeBytes) || partSizeBytes <= 0) {
+      throw new ConfigurationError({
+        details: { partSizeBytes },
+        message: "Google Drive multipart partSizeBytes must be a positive integer",
+        retryable: false
+      });
+    }
+    if (partSizeBytes % GDRIVE_CHUNK_ALIGNMENT !== 0) {
+      throw new ConfigurationError({
+        details: { alignment: GDRIVE_CHUNK_ALIGNMENT, partSizeBytes },
+        message: `Google Drive multipart partSizeBytes must be a multiple of ${String(GDRIVE_CHUNK_ALIGNMENT)} bytes (256 KiB)`,
+        retryable: false
+      });
+    }
+    if (!Number.isInteger(thresholdBytes) || thresholdBytes < 0) {
+      throw new ConfigurationError({
+        details: { thresholdBytes },
+        message: "Google Drive multipart thresholdBytes must be a non-negative integer",
+        retryable: false
+      });
+    }
+  }
+  const multipart = {
+    enabled: multipartEnabled,
+    partSizeBytes,
+    thresholdBytes
+  };
   const capabilities = {
     atomicRename: false,
     authentication: ["token", "oauth"],
@@ -5540,8 +5835,12 @@ function createGoogleDriveProviderFactory(options = {}) {
     list: true,
     maxConcurrency: 4,
     metadata: ["modifiedAt", "createdAt", "mimeType", "uniqueId"],
-    notes: [
-      "Google Drive provider performs single-shot multipart uploads via /upload/drive/v3/files; resumable upload sessions are not yet supported."
+    notes: multipartEnabled ? [
+      `Google Drive resumable-session upload enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B); chunks are protocol-sequential.`,
+      "Payloads at or below the threshold automatically fall back to single-shot multipart/related uploads.",
+      "Pass `multipart: { enabled: false }` to force the legacy single-shot behaviour."
+    ] : [
+      "Google Drive provider performs single-shot multipart uploads via /upload/drive/v3/files; entire payload is buffered in memory before transmission."
     ],
     provider: id,
     readStream: true,
@@ -5561,6 +5860,7 @@ function createGoogleDriveProviderFactory(options = {}) {
       defaultHeaders: { ...options.defaultHeaders ?? {} },
       fetch: fetchImpl,
       id,
+      multipart,
       rootFolderId,
       uploadBaseUrl
     }),
@@ -5596,6 +5896,7 @@ var GoogleDriveProvider = class {
       defaultHeaders: this.internals.defaultHeaders,
       fetch: this.internals.fetch,
       id: this.internals.id,
+      multipart: this.internals.multipart,
       rootFolderId: this.internals.rootFolderId,
       token,
       uploadBaseUrl: this.internals.uploadBaseUrl
@@ -5786,18 +6087,37 @@ var GoogleDriveTransferOperations = class {
     if (request.offset !== void 0 && request.offset > 0) {
       throw new UnsupportedFeatureError({
         details: { offset: request.offset },
-        message: "Google Drive provider does not yet support resumable upload sessions",
+        message: "Google Drive provider does not yet support cross-attempt resume of upload sessions",
         retryable: false
       });
     }
     const normalized = normalizeRemotePath(request.endpoint.path);
-    const buffered = await collectChunks(request.content);
+    const multipart = this.options.multipart;
+    if (!multipart.enabled) {
+      return this.singleShotMultipart(request, normalized, await collectChunks(request.content));
+    }
+    const iterator = request.content[Symbol.asyncIterator]();
+    const initialChunks = [];
+    let initialSize = 0;
+    while (initialSize <= multipart.thresholdBytes) {
+      const next = await iterator.next();
+      if (next.done === true) break;
+      if (next.value.byteLength === 0) continue;
+      initialChunks.push(next.value);
+      initialSize += next.value.byteLength;
+    }
+    if (initialSize <= multipart.thresholdBytes) {
+      return this.singleShotMultipart(request, normalized, concatChunks2(initialChunks));
+    }
+    return this.writeResumableSession(request, normalized, initialChunks, iterator);
+  }
+  async singleShotMultipart(request, normalized, buffered) {
     const parentId = await this.resolver.resolveParentId(normalized);
     const name = basenameRemotePath(normalized);
     const existing = await this.findExisting(parentId, name);
     const metadata = { name };
     if (existing === void 0) metadata["parents"] = [parentId];
-    const boundary = `----zt-boundary-${(0, import_node_crypto3.randomBytes)(16).toString("hex")}`;
+    const boundary = `----zt-boundary-${(0, import_node_crypto4.randomBytes)(16).toString("hex")}`;
     const bodyParts = [];
     const enc = new TextEncoder();
     bodyParts.push(
@@ -5836,6 +6156,92 @@ Content-Type: application/octet-stream\r
     };
     if (typeof meta.md5Checksum === "string" && meta.md5Checksum.length > 0) {
       result.checksum = meta.md5Checksum;
+    }
+    return result;
+  }
+  /**
+   * Streams content through a Drive resumable upload session
+   * (`uploadType=resumable`). Mid-stream chunks declare an unknown total
+   * (`bytes start-end/*`); the final chunk carries the real total, so the
+   * payload size never needs to be known up front. A one-part lookahead
+   * detects the final chunk, bounding memory at roughly two parts.
+   */
+  async writeResumableSession(request, normalized, initialChunks, iterator) {
+    const parentId = await this.resolver.resolveParentId(normalized);
+    const name = basenameRemotePath(normalized);
+    const existing = await this.findExisting(parentId, name);
+    const metadata = { name };
+    if (existing === void 0) metadata["parents"] = [parentId];
+    const initiateUrl = existing === void 0 ? `${this.options.uploadBaseUrl}/files?uploadType=resumable&supportsAllDrives=true&fields=${encodeURIComponent(GDRIVE_FILE_FIELDS)}` : `${this.options.uploadBaseUrl}/files/${encodeURIComponent(existing.id)}?uploadType=resumable&supportsAllDrives=true&fields=${encodeURIComponent(GDRIVE_FILE_FIELDS)}`;
+    const initiate = await driveFetch(
+      this.options,
+      existing === void 0 ? "POST" : "PATCH",
+      initiateUrl,
+      {
+        ...request.signal !== void 0 ? { signal: request.signal } : {},
+        body: new TextEncoder().encode(JSON.stringify(metadata)),
+        extraHeaders: { "content-type": "application/json; charset=UTF-8" }
+      }
+    );
+    if (!initiate.ok) {
+      throw mapGoogleDriveResponseError(initiate, normalized, await safeReadText(initiate));
+    }
+    const sessionUri = initiate.headers.get("location");
+    if (sessionUri === null || sessionUri === "") {
+      throw new ConnectionError({
+        details: { path: normalized },
+        message: "Google Drive resumable session initiation returned no Location header",
+        retryable: true
+      });
+    }
+    const reader = createSequentialPartReader({
+      initialChunks,
+      partSizeBytes: this.options.multipart.partSizeBytes,
+      source: { [Symbol.asyncIterator]: () => iterator }
+    });
+    let bytesTransferred = 0;
+    let finalMeta;
+    let part = await reader.next();
+    while (part !== void 0) {
+      request.throwIfAborted();
+      const nextPart = await reader.next();
+      const totalRange = nextPart === void 0 ? String(part.byteEnd) : "*";
+      const response = await driveFetch(this.options, "PUT", sessionUri, {
+        ...request.signal !== void 0 ? { signal: request.signal } : {},
+        body: part.bytes,
+        extraHeaders: {
+          "content-length": String(part.bytes.byteLength),
+          "content-range": `bytes ${String(part.byteStart)}-${String(part.byteEnd - 1)}/${totalRange}`,
+          "content-type": "application/octet-stream"
+        }
+      });
+      if (response.status === 308) {
+        bytesTransferred = part.byteEnd;
+        request.reportProgress(bytesTransferred, request.totalBytes);
+        part = nextPart;
+        continue;
+      }
+      if (response.status === 200 || response.status === 201) {
+        bytesTransferred = part.byteEnd;
+        request.reportProgress(bytesTransferred, bytesTransferred);
+        finalMeta = await response.json();
+        break;
+      }
+      throw mapGoogleDriveResponseError(response, normalized, await safeReadText(response));
+    }
+    if (finalMeta === void 0) {
+      throw new ConnectionError({
+        details: { observedBytes: bytesTransferred, path: normalized },
+        message: "Google Drive resumable session ended without a final file resource",
+        retryable: true
+      });
+    }
+    const result = {
+      bytesTransferred,
+      totalBytes: bytesTransferred
+    };
+    if (typeof finalMeta.md5Checksum === "string" && finalMeta.md5Checksum.length > 0) {
+      result.checksum = finalMeta.md5Checksum;
     }
     return result;
   }
@@ -6043,10 +6449,12 @@ function concatChunks2(chunks, totalSize) {
   createAtomicDeployPlan,
   createBandwidthThrottle,
   createDefaultRetryPolicy,
+  createFileSystemTransferBatchStateStore,
   createFileSystemTransferCheckpointStore,
   createGoogleDriveProviderFactory,
   createLocalProviderFactory,
   createMemoryProviderFactory,
+  createMemoryTransferBatchStateStore,
   createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource,
   createPooledTransferClient,
@@ -6059,6 +6467,7 @@ function concatChunks2(chunks, totalSize) {
   createTransferJobsFromPlan,
   createTransferPlan,
   createTransferResult,
+  deserializeTransferPlan,
   diffRemoteTrees,
   downloadFile,
   emitLog,
@@ -6092,7 +6501,9 @@ function concatChunks2(chunks, totalSize) {
   resolveProviderId,
   resolveSecret,
   runConnectionDiagnostics,
+  runResumableBatch,
   serializeRemoteManifest,
+  serializeTransferPlan,
   sortRemoteEntries,
   summarizeClientDiagnostics,
   summarizeTransferPlan,

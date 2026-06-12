@@ -6,7 +6,7 @@
 
 # Interface: TransferCheckpointPart
 
-Defined in: src/transfers/TransferCheckpointStore.ts:83
+Defined in: [src/transfers/TransferCheckpointStore.ts:83](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L83)
 
 Single completed part recorded in a parts-kind checkpoint.
 
@@ -14,6 +14,6 @@ Single completed part recorded in a parts-kind checkpoint.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="byteend"></a> `byteEnd` | `number` | Cumulative byte offset reached after this part (exclusive). | src/transfers/TransferCheckpointStore.ts:87 |
-| <a id="partnumber"></a> `partNumber` | `number` | One-based part number. | src/transfers/TransferCheckpointStore.ts:85 |
-| <a id="token"></a> `token?` | `string` | Provider part token (S3 part ETag, Azure block id) when required to finalize. | src/transfers/TransferCheckpointStore.ts:89 |
+| <a id="byteend"></a> `byteEnd` | `number` | Cumulative byte offset reached after this part (exclusive). | [src/transfers/TransferCheckpointStore.ts:87](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L87) |
+| <a id="partnumber"></a> `partNumber` | `number` | One-based part number. | [src/transfers/TransferCheckpointStore.ts:85](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L85) |
+| <a id="token"></a> `token?` | `string` | Provider part token (S3 part ETag, Azure block id) when required to finalize. | [src/transfers/TransferCheckpointStore.ts:89](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L89) |
