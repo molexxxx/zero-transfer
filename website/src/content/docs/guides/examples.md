@@ -18,6 +18,16 @@ The repository ships with runnable end-to-end examples in [`examples/`](https://
 | [`profile-from-env.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/profile-from-env.ts)               | Build a `ConnectionProfile` entirely from env vars.            |
 | [`diagnose-connection.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/diagnose-connection.ts)         | Run connection diagnostics with redacted output.               |
 
+## Directory operations
+
+The provider-neutral `session.fs` surface (list, stat, mkdir, rename, remove, rmdir) is identical across protocols - these three show the same flow on each classic backend.
+
+| File                                                                                                            | What it shows                                                     |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| [`ftp-directory-ops.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftp-directory-ops.ts)   | Classic FTP commands (MLSD, MLST, RNFR/RNTO, …) as typed methods. |
+| [`ftps-directory-ops.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftps-directory-ops.ts) | Same surface over encrypted control + data channels.              |
+| [`sftp-directory-ops.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/sftp-directory-ops.ts) | Same surface backed by SSH file-attribute packets.                |
+
 ## Cloud providers
 
 | File                                                                                                                          | What it shows                                          |
@@ -29,14 +39,15 @@ The repository ships with runnable end-to-end examples in [`examples/`](https://
 
 ## Transfers, sync, MFT
 
-| File                                                                                                                              | What it shows                                               |
-| --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| [`local-copy-file.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/local-copy-file.ts)                         | Copy a file using the local filesystem provider.            |
-| [`transfer-queue.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/transfer-queue.ts)                           | Bounded-concurrency queue with progress + retry.            |
-| [`dry-run-sync.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/dry-run-sync.ts)                               | Plan a sync, summarise it, decide whether to execute.       |
-| [`atomic-deploy-with-rollback.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/atomic-deploy-with-rollback.ts) | Stage → swap → rollback pattern for zero-downtime releases. |
-| [`mft-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/mft-route.ts)                                     | Define a route + schedule + scheduler.                      |
-| [`approval-gated-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/approval-gated-route.ts)               | Wrap a route in a human-approval gate before bytes move.    |
+| File                                                                                                                              | What it shows                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| [`local-copy-file.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/local-copy-file.ts)                         | Copy a file using the local filesystem provider.                                             |
+| [`transfer-queue.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/transfer-queue.ts)                           | Bounded-concurrency queue with progress + retry.                                             |
+| [`retry-and-timeouts.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/retry-and-timeouts.ts)                   | Retry policy, two-scope timeouts, stall watchdog, client-wide defaults - runs fully offline. |
+| [`dry-run-sync.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/dry-run-sync.ts)                               | Plan a sync, summarise it, decide whether to execute.                                        |
+| [`atomic-deploy-with-rollback.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/atomic-deploy-with-rollback.ts) | Stage → swap → rollback pattern for zero-downtime releases.                                  |
+| [`mft-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/mft-route.ts)                                     | Define a route + schedule + scheduler.                                                       |
+| [`approval-gated-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/approval-gated-route.ts)               | Wrap a route in a human-approval gate before bytes move.                                     |
 
 ## Running an example
 

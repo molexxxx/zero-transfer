@@ -27,7 +27,7 @@ The table below is the canonical output of `formatCapabilityMatrixMarkdown()` so
 Notes:
 
 - `resume↑` (resume upload) maps to provider-managed multipart / staged-block / resumable-session uploads. As of 0.4.6, S3, Azure Blob, GCS, and OneDrive all enable that path by default for payloads above their respective `multipart.thresholdBytes` (8 MiB for Azure/GCS/S3, 4 MiB for OneDrive). Pass `multipart: { enabled: false }` on the factory to force single-shot uploads.
-- `server-side copy/move` reflects whether the provider can perform the operation atomically on the backend without streaming bytes through the client. Several providers (WebDAV `COPY`, SFTP `rename`) accept the operation but do not advertise it as a first-class capability yet; see [`copyBetween()`](../../api/functions/copybetween/) for the streaming fallback that always works.
+- `server-side copy/move` means the provider can perform the operation on the backend without streaming bytes through the client. No built-in provider implements this yet - the flags exist in the capability model, but every copy today streams through your machine via [`copyBetween()`](../../api/functions/copybetween/), which works across any provider pair. Backend fast paths (S3 `CopyObject`, WebDAV `COPY`/`MOVE`, OpenSSH's `copy-data` SFTP extension, the cloud-drive copy endpoints) are on the roadmap; the column will flip to ✅ per provider as each lands.
 - `checksums` is the sourced checksum format(s) the provider can surface; the engine verifies whichever one the read side returns.
 
 For a live, type-safe view at runtime:
@@ -39,4 +39,4 @@ const matrix = getBuiltinCapabilityMatrix();
 console.table(matrix);
 ```
 
-Operations branch on capabilities at runtime - for example, `copyBetween()` will use server-side copy when both ends support it on the same provider, falling back to a streaming copy otherwise. You don't have to special-case providers in your own code.
+Operations branch on capabilities at runtime - for example, the engine consults `resumeDownload`/`resumeUpload` before attempting ranged or multipart transfers, and resume-capable uploads switch on automatically above the provider's multipart threshold. You don't have to special-case providers in your own code.

@@ -20,7 +20,7 @@ await uploadFile({
 });
 ```
 
-When both ends are on the same provider and that provider supports server-side copy, `copyBetween` will use it automatically - no bytes traverse your machine.
+`copyBetween` streams bytes through your machine, which is what lets it work across any provider pair (SFTP to S3, WebDAV to local, …). Backend-native fast paths for same-provider copies are planned but not implemented yet - see the [capability matrix](../../guides/capabilities/) for what each provider advertises today.
 
 ## Retries, timeouts, and stall detection
 
