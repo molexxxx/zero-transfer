@@ -40,10 +40,10 @@ This package publishes a narrowed surface of **8** exports. These symbols are al
 
 ## Examples
 
-| Example                                                                                                                                | What it shows                           |
-| -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| [`examples/s3-compatible-upload.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/s3-compatible-upload.ts)           | S3-compatible multipart upload example. |
-| [`examples/multi-cloud-orchestration.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase.     |
+| Example                                                                                                                                | What it shows                                    |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| [`examples/s3-compatible-upload.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/s3-compatible-upload.ts)           | S3-compatible parallel multipart upload example. |
+| [`examples/multi-cloud-orchestration.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase.              |
 
 ## Documentation
 
