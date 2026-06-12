@@ -28,6 +28,7 @@ path safety utilities used by future protocol adapters.
 | [createDefaultRetryPolicy](functions/createDefaultRetryPolicy.md) | Creates the SDK's recommended retry policy for transfer execution. |
 | [createDropboxProviderFactory](functions/createDropboxProviderFactory.md) | Creates a Dropbox provider factory. |
 | [createFileSystemS3MultipartResumeStore](functions/createFileSystemS3MultipartResumeStore.md) | File-system backed [S3MultipartResumeStore](interfaces/S3MultipartResumeStore.md) that survives process restarts. Each in-flight multipart upload is checkpointed to a single JSON file in `options.directory` after every part. On retry the upload reuses the stored `uploadId` and skips parts that S3 has already accepted. |
+| [createFileSystemTransferCheckpointStore](functions/createFileSystemTransferCheckpointStore.md) | File-system backed [TransferCheckpointStore](interfaces/TransferCheckpointStore.md) that survives process restarts, enabling cross-process resume. |
 | [createFtpProviderFactory](functions/createFtpProviderFactory.md) | Creates a provider factory for classic FTP connections. |
 | [createFtpsProviderFactory](functions/createFtpsProviderFactory.md) | Creates a provider factory for explicit or implicit FTPS connections. |
 | [createGcsProviderFactory](functions/createGcsProviderFactory.md) | Creates a Google Cloud Storage provider factory. |
@@ -38,6 +39,7 @@ path safety utilities used by future protocol adapters.
 | [createLocalProviderFactory](functions/createLocalProviderFactory.md) | Creates a provider factory backed by the local filesystem. |
 | [createMemoryProviderFactory](functions/createMemoryProviderFactory.md) | Creates a provider factory backed by deterministic in-memory fixture entries. |
 | [createMemoryS3MultipartResumeStore](functions/createMemoryS3MultipartResumeStore.md) | Creates an in-memory [S3MultipartResumeStore](interfaces/S3MultipartResumeStore.md). |
+| [createMemoryTransferCheckpointStore](functions/createMemoryTransferCheckpointStore.md) | Creates an in-memory [TransferCheckpointStore](interfaces/TransferCheckpointStore.md). |
 | [createOAuthTokenSecretSource](functions/createOAuthTokenSecretSource.md) | Builds a [SecretProvider](type-aliases/SecretProvider.md) that exchanges a refresh callback for cached, auto-renewing access tokens. |
 | [createOneDriveProviderFactory](functions/createOneDriveProviderFactory.md) | Creates a OneDrive/SharePoint provider factory backed by Microsoft Graph. |
 | [createOutboxRoute](functions/createOutboxRoute.md) | Creates a route that drops files from a source endpoint into an outbox directory. |
@@ -47,6 +49,7 @@ path safety utilities used by future protocol adapters.
 | [createRemoteBrowser](functions/createRemoteBrowser.md) | Creates a stateful directory browser around a remote file system. |
 | [createRemoteManifest](functions/createRemoteManifest.md) | Walks a remote subtree and produces a serializable manifest snapshot. |
 | [createS3ProviderFactory](functions/createS3ProviderFactory.md) | Creates an S3-compatible provider factory. |
+| [createSequentialPartReader](functions/createSequentialPartReader.md) | Creates a mutex-guarded sequential part reader over a byte stream. |
 | [createSftpProviderFactory](functions/createSftpProviderFactory.md) | Creates a [ProviderFactory](interfaces/ProviderFactory.md) backed by the native SSH/SFTP protocol stack - no `ssh2` dependency required. |
 | [createSyncPlan](functions/createSyncPlan.md) | Builds a [TransferPlan](interfaces/TransferPlan.md) that reconciles two remote subtrees. |
 | [createTransferClient](functions/createTransferClient.md) | Creates a provider-neutral transfer client. |
@@ -62,6 +65,7 @@ path safety utilities used by future protocol adapters.
 | [errorFromFtpReply](functions/errorFromFtpReply.md) | Maps an FTP reply into the closest typed ZeroTransfer error. |
 | [evaluateRetention](functions/evaluateRetention.md) | Splits a listing into retained and evictable entries according to a policy. |
 | [filterRemoteEntries](functions/filterRemoteEntries.md) | Filters entries using the optional predicate plus an optional hidden-file rule. |
+| [fingerprintsMatch](functions/fingerprintsMatch.md) | Compares a stored fingerprint against the current source fingerprint. |
 | [formatCapabilityMatrixMarkdown](functions/formatCapabilityMatrixMarkdown.md) | Renders the matrix returned by [getBuiltinCapabilityMatrix](functions/getBuiltinCapabilityMatrix.md) as a GitHub-flavored Markdown table covering the most commonly-compared capability flags. |
 | [freezeReceipt](functions/freezeReceipt.md) | Returns a deeply frozen copy of a transfer receipt. |
 | [getBuiltinCapabilityMatrix](functions/getBuiltinCapabilityMatrix.md) | Returns the capability matrix for every shipped provider factory. |
@@ -104,6 +108,7 @@ path safety utilities used by future protocol adapters.
 | [resolveProviderId](functions/resolveProviderId.md) | Resolves the provider id from a profile, preferring the new `provider` field. |
 | [resolveSecret](functions/resolveSecret.md) | Resolves a secret source into a string or Buffer without logging the value. |
 | [runConnectionDiagnostics](functions/runConnectionDiagnostics.md) | Connects to a profile, captures capability and listing samples, and returns a redaction-safe report. |
+| [runMultipartUploadPool](functions/runMultipartUploadPool.md) | Uploads parts from a reader with bounded concurrency. |
 | [runRoute](functions/runRoute.md) | Executes an MFT route as a single transfer through the supplied client. |
 | [runSshCommand](functions/runSshCommand.md) | Connects, authenticates, runs `command` on a fresh exec channel, drains stdout, and disconnects. The TCP socket, transport, auth session, and channel are all owned by this helper and torn down before it returns. |
 | [serializeRemoteManifest](functions/serializeRemoteManifest.md) | Serializes a manifest to a JSON string suitable for persistence. |
@@ -203,6 +208,7 @@ path safety utilities used by future protocol adapters.
 | [EvaluateRetentionOptions](interfaces/EvaluateRetentionOptions.md) | Options accepted by [evaluateRetention](functions/evaluateRetention.md). |
 | [FileSecretSource](interfaces/FileSecretSource.md) | File-backed secret descriptor. |
 | [FileSystemS3MultipartResumeStoreOptions](interfaces/FileSystemS3MultipartResumeStoreOptions.md) | Options for [createFileSystemS3MultipartResumeStore](functions/createFileSystemS3MultipartResumeStore.md). |
+| [FileSystemTransferCheckpointStoreOptions](interfaces/FileSystemTransferCheckpointStoreOptions.md) | Options accepted by [createFileSystemTransferCheckpointStore](functions/createFileSystemTransferCheckpointStore.md). |
 | [FileZillaSite](interfaces/FileZillaSite.md) | Imported FileZilla site with the folder hierarchy that contained it. |
 | [FtpFeatures](interfaces/FtpFeatures.md) | Normalized server features returned by an FTP FEAT command. |
 | [FtpProviderOptions](interfaces/FtpProviderOptions.md) | Options used to create the classic FTP provider factory. |
@@ -226,6 +232,7 @@ path safety utilities used by future protocol adapters.
 | [LogRecordInput](interfaces/LogRecordInput.md) | Log record input accepted by [emitLog](functions/emitLog.md); the helper adds the level. |
 | [MemoryProviderEntry](interfaces/MemoryProviderEntry.md) | Fixture entry used to seed a memory provider instance. |
 | [MemoryProviderOptions](interfaces/MemoryProviderOptions.md) | Options used to create a deterministic memory provider factory. |
+| [MemoryTransferCheckpointStoreOptions](interfaces/MemoryTransferCheckpointStoreOptions.md) | Options accepted by [createMemoryTransferCheckpointStore](functions/createMemoryTransferCheckpointStore.md). |
 | [MftAuditEntry](interfaces/MftAuditEntry.md) | Audit record emitted by route execution. |
 | [MftAuditLog](interfaces/MftAuditLog.md) | Append-only audit log surface. |
 | [MftInboxConvention](interfaces/MftInboxConvention.md) | Inbox layout convention. |
@@ -236,6 +243,11 @@ path safety utilities used by future protocol adapters.
 | [MftSchedule](interfaces/MftSchedule.md) | Declarative schedule binding a route id to a trigger. |
 | [MftSchedulerOptions](interfaces/MftSchedulerOptions.md) | Construction options for [MftScheduler](classes/MftScheduler.md). |
 | [MkdirOptions](interfaces/MkdirOptions.md) | Options for creating a remote directory. |
+| [MultipartPart](interfaces/MultipartPart.md) | One part cut from the source stream. |
+| [MultipartPartReader](interfaces/MultipartPartReader.md) | Sequential part source shared by upload workers. |
+| [MultipartUploadedPart](interfaces/MultipartUploadedPart.md) | A finished part paired with the uploader's result. |
+| [MultipartUploadPoolOptions](interfaces/MultipartUploadPoolOptions.md) | Options for [runMultipartUploadPool](functions/runMultipartUploadPool.md). |
+| [MultipartUploadPoolResult](interfaces/MultipartUploadPoolResult.md) | Result of [runMultipartUploadPool](functions/runMultipartUploadPool.md). |
 | [NegotiatedSshAlgorithms](interfaces/NegotiatedSshAlgorithms.md) | Selected algorithms after intersecting client preferences with server capabilities. |
 | [OAuthAccessToken](interfaces/OAuthAccessToken.md) | Token material returned by [OAuthRefreshCallback](type-aliases/OAuthRefreshCallback.md). |
 | [OAuthTokenSecretSourceOptions](interfaces/OAuthTokenSecretSourceOptions.md) | Options accepted by [createOAuthTokenSecretSource](functions/createOAuthTokenSecretSource.md). |
@@ -246,6 +258,7 @@ path safety utilities used by future protocol adapters.
 | [ProgressEventInput](interfaces/ProgressEventInput.md) | Input used to create a transfer progress event. |
 | [ProviderFactory](interfaces/ProviderFactory.md) | Factory registered with [ProviderRegistry](classes/ProviderRegistry.md) to create providers on demand. |
 | [ProviderSelection](interfaces/ProviderSelection.md) | Minimal shape used to resolve a provider from new and compatibility profile fields. |
+| [ProviderTransferDiscardRequest](interfaces/ProviderTransferDiscardRequest.md) | Request passed to [ProviderTransferOperations.discardResumable](interfaces/ProviderTransferOperations.md#discardresumable). |
 | [ProviderTransferExecutorOptions](interfaces/ProviderTransferExecutorOptions.md) | Options for [createProviderTransferExecutor](functions/createProviderTransferExecutor.md). |
 | [ProviderTransferOperations](interfaces/ProviderTransferOperations.md) | Optional read/write surface exposed by provider sessions that support transfer streaming. |
 | [ProviderTransferReadRequest](interfaces/ProviderTransferReadRequest.md) | Request passed to provider read implementations. |
@@ -288,6 +301,8 @@ path safety utilities used by future protocol adapters.
 | [S3MultipartResumeStore](interfaces/S3MultipartResumeStore.md) | Persistence contract for resuming partial multipart uploads across processes or retries. Implementations may be synchronous or asynchronous; `clear` is invoked once the multipart upload completes successfully (or is explicitly aborted). |
 | [S3ProviderOptions](interfaces/S3ProviderOptions.md) | Options accepted by [createS3ProviderFactory](functions/createS3ProviderFactory.md). |
 | [ScheduleTimerHooks](interfaces/ScheduleTimerHooks.md) | Timer hooks injected by tests so fake clocks stay deterministic. |
+| [SequentialPartReaderOptions](interfaces/SequentialPartReaderOptions.md) | Options for [createSequentialPartReader](functions/createSequentialPartReader.md). |
+| [SftpPipelineOptions](interfaces/SftpPipelineOptions.md) | Tuning for pipelined SFTP transfers. |
 | [SftpProviderOptions](interfaces/SftpProviderOptions.md) | Options for [createSftpProviderFactory](functions/createSftpProviderFactory.md). |
 | [SftpRawSession](interfaces/SftpRawSession.md) | Low-level handles exposed by a native SFTP session for diagnostics and advanced extension. Most applications should use the [TransferSession](interfaces/TransferSession.md) returned from `client.connect()` instead. |
 | [SshAlgorithmPreferences](interfaces/SshAlgorithmPreferences.md) | Algorithm lists exchanged during SSH KEXINIT negotiation. |
@@ -306,7 +321,14 @@ path safety utilities used by future protocol adapters.
 | [TransferAttempt](interfaces/TransferAttempt.md) | Execution attempt retained in a transfer receipt. |
 | [TransferAttemptError](interfaces/TransferAttemptError.md) | Serializable error summary retained in failed attempts. |
 | [TransferBandwidthLimit](interfaces/TransferBandwidthLimit.md) | Optional throughput limit shape that concrete transfer executors may honor. |
+| [TransferByteOffsetCheckpointState](interfaces/TransferByteOffsetCheckpointState.md) | Byte-offset checkpoint state used by sequential-append providers. |
 | [TransferByteRange](interfaces/TransferByteRange.md) | Byte range requested from a readable provider endpoint. |
+| [TransferCheckpointEndpoint](interfaces/TransferCheckpointEndpoint.md) | One endpoint half of a [TransferCheckpointKey](interfaces/TransferCheckpointKey.md). |
+| [TransferCheckpointHandle](interfaces/TransferCheckpointHandle.md) | Live handle a provider uses to checkpoint part-aware progress during a write. |
+| [TransferCheckpointKey](interfaces/TransferCheckpointKey.md) | Identity of a checkpointed transfer: the source and destination provider/path pair. |
+| [TransferCheckpointPart](interfaces/TransferCheckpointPart.md) | Single completed part recorded in a parts-kind checkpoint. |
+| [TransferCheckpointRecord](interfaces/TransferCheckpointRecord.md) | Persisted checkpoint record. |
+| [TransferCheckpointStore](interfaces/TransferCheckpointStore.md) | Persistence contract for transfer checkpoints. |
 | [TransferClientDefaults](interfaces/TransferClientDefaults.md) | Client-level execution defaults applied when a call site does not supply its own value. |
 | [TransferClientOptions](interfaces/TransferClientOptions.md) | Options used to create a provider-neutral transfer client. |
 | [TransferEndpoint](interfaces/TransferEndpoint.md) | Endpoint referenced by a transfer job or receipt. |
@@ -315,6 +337,7 @@ path safety utilities used by future protocol adapters.
 | [TransferExecutionContext](interfaces/TransferExecutionContext.md) | Context passed to a concrete transfer operation. |
 | [TransferExecutionResult](interfaces/TransferExecutionResult.md) | Result returned by a transfer operation implementation. |
 | [TransferJob](interfaces/TransferJob.md) | Transfer job input consumed by [TransferEngine](classes/TransferEngine.md). |
+| [TransferPartsCheckpointState](interfaces/TransferPartsCheckpointState.md) | Parts checkpoint state used by multipart/staged-block providers. |
 | [TransferPlan](interfaces/TransferPlan.md) | Provider-neutral transfer plan. |
 | [TransferPlanInput](interfaces/TransferPlanInput.md) | Input used to create a transfer plan. |
 | [TransferPlanStep](interfaces/TransferPlanStep.md) | Step inside a transfer plan. |
@@ -328,9 +351,11 @@ path safety utilities used by future protocol adapters.
 | [TransferReceipt](interfaces/TransferReceipt.md) | Audit-friendly receipt for a completed transfer job. |
 | [TransferResult](interfaces/TransferResult.md) | Final summary for a completed transfer. |
 | [TransferResultInput](interfaces/TransferResultInput.md) | Input used to create a final transfer result. |
+| [TransferResumeOptions](interfaces/TransferResumeOptions.md) | Checkpoint/resume configuration consumed by [createProviderTransferExecutor](functions/createProviderTransferExecutor.md) (directly or through [runRoute](functions/runRoute.md) / client defaults). |
 | [TransferRetryDecisionInput](interfaces/TransferRetryDecisionInput.md) | Input used by retry policy hooks. |
 | [TransferRetryPolicy](interfaces/TransferRetryPolicy.md) | Retry policy for transfer execution. |
 | [TransferSession](interfaces/TransferSession.md) | Connected provider session exposed through [TransferClient.connect](classes/TransferClient.md#connect). |
+| [TransferSourceFingerprint](interfaces/TransferSourceFingerprint.md) | Source-object fingerprint captured when a checkpoint is written. |
 | [TransferTimeoutPolicy](interfaces/TransferTimeoutPolicy.md) | Timeout policy applied by the transfer engine. |
 | [TransferVerificationResult](interfaces/TransferVerificationResult.md) | Normalized post-transfer verification details. |
 | [UploadFileOptions](interfaces/UploadFileOptions.md) | Options for [uploadFile](functions/uploadFile.md). |
@@ -402,6 +427,7 @@ path safety utilities used by future protocol adapters.
 | [SyncDeletePolicy](type-aliases/SyncDeletePolicy.md) | How [createSyncPlan](functions/createSyncPlan.md) reacts to entries that exist only on the destination. |
 | [SyncDirection](type-aliases/SyncDirection.md) | Sync direction used by [createSyncPlan](functions/createSyncPlan.md). |
 | [TlsSecretSource](type-aliases/TlsSecretSource.md) | TLS material source accepted by certificate-aware connection profiles. |
+| [TransferCheckpointState](type-aliases/TransferCheckpointState.md) | Union of checkpoint state shapes. Both expose `committedBytes`. |
 | [TransferDataChunk](type-aliases/TransferDataChunk.md) | Binary chunk shape used by provider transfer streams. |
 | [TransferDataSource](type-aliases/TransferDataSource.md) | Provider-neutral transfer content source. Node readable streams satisfy this shape. |
 | [TransferExecutor](type-aliases/TransferExecutor.md) | Concrete transfer operation implementation used by the engine. |
@@ -409,12 +435,14 @@ path safety utilities used by future protocol adapters.
 | [TransferPlanAction](type-aliases/TransferPlanAction.md) | Non-executing plan action used to explain an intentionally skipped step. |
 | [TransferQueueExecutorResolver](type-aliases/TransferQueueExecutorResolver.md) | Resolver used when jobs do not provide an executor at enqueue time. |
 | [TransferQueueItemStatus](type-aliases/TransferQueueItemStatus.md) | Queue item lifecycle state. |
+| [TransferResumeMode](type-aliases/TransferResumeMode.md) | Resume behavior for a transfer. |
 
 ## Variables
 
 | Variable | Description |
 | ------ | ------ |
 | [CLASSIC\_PROVIDER\_IDS](variables/CLASSIC_PROVIDER_IDS.md) | Classic remote-transfer providers kept compatible with the original protocol field. |
+| [DEFAULT\_CHECKPOINT\_TTL\_MS](variables/DEFAULT_CHECKPOINT_TTL_MS.md) | Default checkpoint time-to-live: 7 days, matching S3/Azure uncommitted-upload lifetimes. |
 | [DEFAULT\_FAILED\_SUBDIR](variables/DEFAULT_FAILED_SUBDIR.md) | Default subdirectory used to quarantine files that failed processing. |
 | [DEFAULT\_PROCESSED\_SUBDIR](variables/DEFAULT_PROCESSED_SUBDIR.md) | Default subdirectory used to archive successfully processed inbox files. |
 | [DEFAULT\_SSH\_ALGORITHM\_PREFERENCES](variables/DEFAULT_SSH_ALGORITHM_PREFERENCES.md) | Baseline algorithm order for the initial native SSH transport implementation. |

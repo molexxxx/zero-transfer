@@ -6,7 +6,7 @@
 
 # Interface: TransferClientDefaults
 
-Defined in: [src/core/TransferClient.ts:52](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/core/TransferClient.ts#L52)
+Defined in: [src/core/TransferClient.ts:60](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/core/TransferClient.ts#L60)
 
 Client-level execution defaults applied when a call site does not supply
 its own value.
@@ -19,19 +19,26 @@ fully explicit: defaults never reach `engine.execute()` directly.
 
 Per-call options always win over client defaults.
 
-Additional default slots (`verify`, `resume`, `compression`, `policy`) land
-here as their features ship in later releases; the shape is additive.
+Additional default slots (`verify`, `compression`, `policy`) land here as
+their features ship in later releases; the shape is additive.
 
 ## Example
 
 ```ts
-import { createDefaultRetryPolicy, createTransferClient } from "@zero-transfer/sdk";
+import {
+  createDefaultRetryPolicy,
+  createFileSystemTransferCheckpointStore,
+  createTransferClient,
+} from "@zero-transfer/sdk";
 
 const client = createTransferClient({
   providers: [createSftpProviderFactory(), createS3ProviderFactory()],
   defaults: {
     retry: createDefaultRetryPolicy(),
     timeout: { stallTimeoutMs: 30_000 },
+    resume: {
+      store: createFileSystemTransferCheckpointStore({ directory: "./.zt-checkpoints" }),
+    },
   },
 });
 ```
@@ -40,5 +47,6 @@ const client = createTransferClient({
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="retry"></a> `retry?` | [`TransferRetryPolicy`](TransferRetryPolicy.md) | Default retry policy for transfers executed through this client. | [src/core/TransferClient.ts:54](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/core/TransferClient.ts#L54) |
-| <a id="timeout"></a> `timeout?` | [`TransferTimeoutPolicy`](TransferTimeoutPolicy.md) | Default timeout policy for transfers executed through this client. | [src/core/TransferClient.ts:56](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/core/TransferClient.ts#L56) |
+| <a id="resume"></a> `resume?` | [`TransferResumeOptions`](TransferResumeOptions.md) | Default checkpoint/resume configuration for transfers executed through this client. | [src/core/TransferClient.ts:66](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/core/TransferClient.ts#L66) |
+| <a id="retry"></a> `retry?` | [`TransferRetryPolicy`](TransferRetryPolicy.md) | Default retry policy for transfers executed through this client. | [src/core/TransferClient.ts:62](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/core/TransferClient.ts#L62) |
+| <a id="timeout"></a> `timeout?` | [`TransferTimeoutPolicy`](TransferTimeoutPolicy.md) | Default timeout policy for transfers executed through this client. | [src/core/TransferClient.ts:64](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/core/TransferClient.ts#L64) |

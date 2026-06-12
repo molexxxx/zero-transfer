@@ -6,7 +6,7 @@
 
 # Interface: S3MultipartResumeKey
 
-Defined in: [src/providers/web/S3Provider.ts:108](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/web/S3Provider.ts#L108)
+Defined in: [src/providers/web/S3Provider.ts:126](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/web/S3Provider.ts#L126)
 
 Resume key identifying an in-flight multipart upload.
 
@@ -14,6 +14,6 @@ Resume key identifying an in-flight multipart upload.
 
 | Property | Type | Defined in |
 | ------ | ------ | ------ |
-| <a id="bucket"></a> `bucket` | `string` | [src/providers/web/S3Provider.ts:109](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/web/S3Provider.ts#L109) |
-| <a id="jobid"></a> `jobId` | `string` | [src/providers/web/S3Provider.ts:110](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/web/S3Provider.ts#L110) |
-| <a id="path"></a> `path` | `string` | [src/providers/web/S3Provider.ts:111](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/web/S3Provider.ts#L111) |
+| <a id="bucket"></a> `bucket` | `string` | [src/providers/web/S3Provider.ts:127](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/web/S3Provider.ts#L127) |
+| <a id="jobid"></a> `jobId` | `string` | [src/providers/web/S3Provider.ts:128](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/web/S3Provider.ts#L128) |
+| <a id="path"></a> `path` | `string` | [src/providers/web/S3Provider.ts:129](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/web/S3Provider.ts#L129) |

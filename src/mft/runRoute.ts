@@ -13,7 +13,10 @@ import type { TransferClient } from "../core/TransferClient";
 import type { TransferSession } from "../core/TransferSession";
 import { ConfigurationError } from "../errors/ZeroTransferError";
 import type { TransferProgressEvent } from "../types/public";
-import { createProviderTransferExecutor } from "../transfers/createProviderTransferExecutor";
+import {
+  createProviderTransferExecutor,
+  type TransferResumeOptions,
+} from "../transfers/createProviderTransferExecutor";
 import { TransferEngine } from "../transfers/TransferEngine";
 import type {
   TransferEngineExecuteOptions,
@@ -50,6 +53,8 @@ export interface RunRouteOptions {
   timeout?: TransferTimeoutPolicy;
   /** Optional bandwidth limit forwarded to the engine. */
   bandwidthLimit?: TransferBandwidthLimit;
+  /** Checkpoint/resume configuration forwarded to the executor. Falls back to `client.defaults.resume`. */
+  resume?: TransferResumeOptions;
   /** Caller-defined metadata merged into the resulting transfer job. */
   metadata?: Record<string, unknown>;
 }
@@ -120,8 +125,10 @@ export async function runRoute(options: RunRouteOptions): Promise<TransferReceip
       ["source", sourceSession],
       ["destination", destinationSession],
     ]);
+    const resume = options.resume ?? client.defaults?.resume;
     const executor = createProviderTransferExecutor({
       resolveSession: ({ role }) => sessions.get(role),
+      ...(resume !== undefined ? { resume } : {}),
     });
 
     return await engine.execute(job, executor, buildExecuteOptions(options, client));

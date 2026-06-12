@@ -10,7 +10,7 @@
 function createProviderTransferExecutor(options): TransferExecutor;
 ```
 
-Defined in: [src/transfers/createProviderTransferExecutor.ts:65](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/transfers/createProviderTransferExecutor.ts#L65)
+Defined in: [src/transfers/createProviderTransferExecutor.ts:142](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/transfers/createProviderTransferExecutor.ts#L142)
 
 Creates a [TransferExecutor](../type-aliases/TransferExecutor.md) that reads from a source provider and writes to a destination provider.
 
@@ -18,11 +18,21 @@ The returned executor supports single-object `upload`, `download`, and `copy` jo
 expose `session.transfers.read()` and `session.transfers.write()`; concrete providers remain responsible for
 the actual streaming implementation.
 
+When [ProviderTransferExecutorOptions.resume](../interfaces/ProviderTransferExecutorOptions.md#resume) is configured the
+executor checkpoints progress against the supplied store and resumes
+interrupted transfers: the source is fingerprinted (size/mtime/etag) and a
+stored checkpoint is honored only when the fingerprint still matches and the
+destination passes a size sanity check. Engine retries resume in-process for
+free, and a fresh process resumes through the same store. Checkpoints are
+cleared on success and invalidated checkpoints trigger best-effort
+provider-side cleanup via
+[ProviderTransferOperations.discardResumable](../interfaces/ProviderTransferOperations.md#discardresumable).
+
 ## Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
-| `options` | [`ProviderTransferExecutorOptions`](../interfaces/ProviderTransferExecutorOptions.md) | Session resolver used for source and destination endpoints. |
+| `options` | [`ProviderTransferExecutorOptions`](../interfaces/ProviderTransferExecutorOptions.md) | Session resolver plus optional throttle and resume configuration. |
 
 ## Returns
 

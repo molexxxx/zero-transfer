@@ -10,7 +10,7 @@
 function summarizeClientDiagnostics(client): ClientDiagnostics;
 ```
 
-Defined in: [src/diagnostics/index.ts:40](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/diagnostics/index.ts#L40)
+Defined in: [src/diagnostics/index.ts:40](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/diagnostics/index.ts#L40)
 
 Returns a redaction-safe snapshot of the providers registered with a client.
 

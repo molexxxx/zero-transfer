@@ -10,7 +10,7 @@
 function redactConnectionProfile(profile): Record<string, unknown>;
 ```
 
-Defined in: [src/profiles/ProfileRedactor.ts:16](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/profiles/ProfileRedactor.ts#L16)
+Defined in: [src/profiles/ProfileRedactor.ts:16](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/profiles/ProfileRedactor.ts#L16)
 
 Produces a diagnostics-safe profile copy with credentials and runtime hooks redacted.
 

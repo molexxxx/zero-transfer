@@ -10,7 +10,7 @@
 function parseRemoteManifest(text): RemoteManifest;
 ```
 
-Defined in: [src/sync/manifest.ts:150](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/sync/manifest.ts#L150)
+Defined in: [src/sync/manifest.ts:150](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/sync/manifest.ts#L150)
 
 Parses a JSON-encoded manifest, validating the schema version and entry shape.
 

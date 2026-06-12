@@ -10,6 +10,6 @@
 type MftRouteOperation = Extract<TransferOperation, "copy" | "download" | "upload">;
 ```
 
-Defined in: [src/mft/MftRoute.ts:31](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/mft/MftRoute.ts#L31)
+Defined in: [src/mft/MftRoute.ts:31](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/mft/MftRoute.ts#L31)
 
 Transfer operations supported by route executors.

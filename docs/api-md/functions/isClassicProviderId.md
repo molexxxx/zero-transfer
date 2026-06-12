@@ -10,7 +10,7 @@
 function isClassicProviderId(providerId): providerId is "ftp" | "ftps" | "sftp";
 ```
 
-Defined in: [src/core/ProviderId.ts:45](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/core/ProviderId.ts#L45)
+Defined in: [src/core/ProviderId.ts:45](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/core/ProviderId.ts#L45)
 
 Checks whether a provider id belongs to the classic FTP/FTPS/SFTP family.
 

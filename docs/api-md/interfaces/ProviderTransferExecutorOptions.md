@@ -6,7 +6,7 @@
 
 # Interface: ProviderTransferExecutorOptions
 
-Defined in: [src/transfers/createProviderTransferExecutor.ts:48](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/transfers/createProviderTransferExecutor.ts#L48)
+Defined in: [src/transfers/createProviderTransferExecutor.ts:110](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/transfers/createProviderTransferExecutor.ts#L110)
 
 Options for [createProviderTransferExecutor](../functions/createProviderTransferExecutor.md).
 
@@ -14,5 +14,6 @@ Options for [createProviderTransferExecutor](../functions/createProviderTransfer
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="resolvesession"></a> `resolveSession` | [`ProviderTransferSessionResolver`](../type-aliases/ProviderTransferSessionResolver.md) | Resolves connected provider sessions for source and destination endpoints. | [src/transfers/createProviderTransferExecutor.ts:50](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/transfers/createProviderTransferExecutor.ts#L50) |
-| <a id="throttle"></a> `throttle?` | [`BandwidthThrottleOptions`](BandwidthThrottleOptions.md) | Optional clock/sleep overrides for the bandwidth throttle. | [src/transfers/createProviderTransferExecutor.ts:52](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/transfers/createProviderTransferExecutor.ts#L52) |
+| <a id="resolvesession"></a> `resolveSession` | [`ProviderTransferSessionResolver`](../type-aliases/ProviderTransferSessionResolver.md) | Resolves connected provider sessions for source and destination endpoints. | [src/transfers/createProviderTransferExecutor.ts:112](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/transfers/createProviderTransferExecutor.ts#L112) |
+| <a id="resume"></a> `resume?` | [`TransferResumeOptions`](TransferResumeOptions.md) | Checkpoint/resume configuration. Resume is disabled when omitted. | [src/transfers/createProviderTransferExecutor.ts:116](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/transfers/createProviderTransferExecutor.ts#L116) |
+| <a id="throttle"></a> `throttle?` | [`BandwidthThrottleOptions`](BandwidthThrottleOptions.md) | Optional clock/sleep overrides for the bandwidth throttle. | [src/transfers/createProviderTransferExecutor.ts:114](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/transfers/createProviderTransferExecutor.ts#L114) |

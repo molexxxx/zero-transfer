@@ -10,7 +10,7 @@
 type SshSocketFactory = (context) => Readable | Promise<Readable>;
 ```
 
-Defined in: [src/types/public.ts:131](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/types/public.ts#L131)
+Defined in: [src/types/public.ts:131](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/types/public.ts#L131)
 
 Creates a preconnected socket-like stream for SSH sessions.
 

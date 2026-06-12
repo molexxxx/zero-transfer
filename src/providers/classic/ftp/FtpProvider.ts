@@ -1131,6 +1131,8 @@ async function writePassiveDataCommand(
   };
 
   try {
+    const baseOffset = options.offset ?? 0;
+
     for await (const chunk of request.content) {
       request.throwIfAborted();
       const output = new Uint8Array(chunk);
@@ -1142,6 +1144,9 @@ async function writePassiveDataCommand(
       );
       bytesTransferred += output.byteLength;
       request.reportProgress(bytesTransferred, request.totalBytes);
+      // Socket writes are not a server ack; resume trims this watermark
+      // against the destination size before trusting it.
+      request.onBytesCommitted?.(baseOffset + bytesTransferred);
     }
 
     await endSocket(dataConnection.socket, control.operationTimeoutMs, timeoutContext);

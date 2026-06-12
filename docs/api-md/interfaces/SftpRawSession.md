@@ -6,7 +6,7 @@
 
 # Interface: SftpRawSession
 
-Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:185](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/native/sftp/NativeSftpProvider.ts#L185)
+Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:199](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/native/sftp/NativeSftpProvider.ts#L199)
 
 Low-level handles exposed by a native SFTP session for diagnostics and
 advanced extension. Most applications should use the
@@ -16,5 +16,5 @@ advanced extension. Most applications should use the
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="sftp"></a> `sftp` | `SftpSession` | SFTP v3 client multiplexed over the SSH session channel. | [src/providers/native/sftp/NativeSftpProvider.ts:187](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/native/sftp/NativeSftpProvider.ts#L187) |
-| <a id="transport"></a> `transport` | [`SshTransportConnection`](../classes/SshTransportConnection.md) | Underlying SSH transport (key exchange, packet protection, channel mux). | [src/providers/native/sftp/NativeSftpProvider.ts:189](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/native/sftp/NativeSftpProvider.ts#L189) |
+| <a id="sftp"></a> `sftp` | `SftpSession` | SFTP v3 client multiplexed over the SSH session channel. | [src/providers/native/sftp/NativeSftpProvider.ts:201](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/native/sftp/NativeSftpProvider.ts#L201) |
+| <a id="transport"></a> `transport` | [`SshTransportConnection`](../classes/SshTransportConnection.md) | Underlying SSH transport (key exchange, packet protection, channel mux). | [src/providers/native/sftp/NativeSftpProvider.ts:203](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/native/sftp/NativeSftpProvider.ts#L203) |

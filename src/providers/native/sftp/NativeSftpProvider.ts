@@ -73,14 +73,18 @@ import {
   type SftpNameEntry,
   SftpSession,
 } from "../../../protocols/sftp/v3/SftpSession";
+import {
+  pipelinedSftpRead,
+  pipelinedSftpWrite,
+  resolveSftpPipelineOptions,
+  type ResolvedSftpPipelineOptions,
+  type SftpPipelineOptions,
+} from "./sftpPipeline";
 
 // -- Constants -----------------------------------------------------------------
 
 const NATIVE_SFTP_PROVIDER_ID = "sftp";
 const NATIVE_SFTP_DEFAULT_PORT = 22;
-
-/** SFTP read chunk size - stay within a single SSH channel max-packet. */
-const SFTP_READ_CHUNK_BYTES = 32_768;
 
 /**
  * Algorithm preferences limited to what the native transport actually implements:
@@ -131,6 +135,7 @@ function buildNativeSftpCapabilities(maxConcurrency: number): CapabilitySet {
     notes: [
       "Native SSH/SFTP provider using the project's own protocol stack (Waves 1\u20133).",
       "Supports password, keyboard-interactive, and public-key (Ed25519/RSA) authentication.",
+      "Single-file transfers are pipelined (default 64 in-flight requests x 32 KiB); tune via SftpProviderOptions.pipeline.",
     ],
   };
 }
@@ -175,6 +180,15 @@ export interface SftpProviderOptions {
    * a positive integer.
    */
   maxConcurrency?: number;
+  /**
+   * Pipelined transfer tuning. Single-file reads and writes keep a sliding
+   * window of outstanding SFTP requests in flight (default 64 requests x
+   * 32 KiB = 2 MiB, matching the OpenSSH client), which hides per-request
+   * round trips and saturates high-latency links. Set
+   * `pipeline: { maxInFlight: 1 }` to reproduce the serial
+   * one-request-at-a-time behavior.
+   */
+  pipeline?: SftpPipelineOptions;
 }
 
 /**
@@ -318,7 +332,11 @@ class NativeSftpProvider implements TransferProvider<NativeSftpSession> {
       const sftp = new SftpSession(channel);
       await sftp.init();
 
-      return new NativeSftpSession(transport, sftp);
+      return new NativeSftpSession(
+        transport,
+        sftp,
+        resolveSftpPipelineOptions(this.options.pipeline),
+      );
     } catch (error) {
       if (socket !== undefined && !socket.destroyed) {
         socket.destroy();
@@ -339,9 +357,10 @@ class NativeSftpSession implements TransferSession<SftpRawSession> {
   constructor(
     private readonly transport: SshTransportConnection,
     private readonly sftp: SftpSession,
+    pipeline: ResolvedSftpPipelineOptions,
   ) {
     this.fs = new NativeSftpFileSystem(sftp);
-    this.transfers = new NativeSftpTransferOperations(sftp);
+    this.transfers = new NativeSftpTransferOperations(sftp, pipeline);
   }
 
   disconnect(): Promise<void> {
@@ -504,7 +523,10 @@ class NativeSftpFileSystem implements RemoteFileSystem {
 // -- Transfer operations -------------------------------------------------------
 
 class NativeSftpTransferOperations implements ProviderTransferOperations {
-  constructor(private readonly sftp: SftpSession) {}
+  constructor(
+    private readonly sftp: SftpSession,
+    private readonly pipeline: ResolvedSftpPipelineOptions,
+  ) {}
 
   async read(request: ProviderTransferReadRequest): Promise<ProviderTransferReadResult> {
     request.throwIfAborted();
@@ -543,20 +565,16 @@ class NativeSftpTransferOperations implements ProviderTransferOperations {
     const handle = await this.sftp.open(path, SFTP_OPEN_FLAG.READ);
 
     try {
-      let remaining = range.length;
-      let offset = range.offset;
-
-      while (remaining > 0) {
-        request.throwIfAborted();
-        const chunkLen = Math.min(SFTP_READ_CHUNK_BYTES, remaining);
-        const data = await this.sftp.read(handle, BigInt(offset), chunkLen);
-
-        if (data === null) break;
-
-        yield new Uint8Array(data);
-        offset += data.length;
-        remaining -= data.length;
-      }
+      yield* pipelinedSftpRead({
+        handle,
+        length: range.length,
+        offset: range.offset,
+        pipeline: this.pipeline,
+        sftp: this.sftp,
+        throwIfAborted: () => {
+          request.throwIfAborted();
+        },
+      });
     } finally {
       await this.sftp.close(handle).catch(() => {
         // Ignore close errors to preserve the original stream error.
@@ -577,19 +595,23 @@ class NativeSftpTransferOperations implements ProviderTransferOperations {
     request.throwIfAborted();
     const handle = await this.sftp.open(remotePath, pflags);
 
-    let bytesTransferred = 0;
+    let bytesTransferred: number;
 
     try {
-      let writeOffset = startOffset ?? 0;
-
-      for await (const chunk of request.content) {
-        request.throwIfAborted();
-        if (chunk.byteLength === 0) continue;
-        await this.sftp.write(handle, BigInt(writeOffset), chunk);
-        writeOffset += chunk.byteLength;
-        bytesTransferred += chunk.byteLength;
-        request.reportProgress(bytesTransferred, request.totalBytes);
-      }
+      bytesTransferred = await pipelinedSftpWrite({
+        content: request.content,
+        handle,
+        onAck: (ackedBytes, absoluteOffset) => {
+          request.reportProgress(ackedBytes, request.totalBytes);
+          request.onBytesCommitted?.(absoluteOffset);
+        },
+        pipeline: this.pipeline,
+        sftp: this.sftp,
+        startOffset: startOffset ?? 0,
+        throwIfAborted: () => {
+          request.throwIfAborted();
+        },
+      });
     } finally {
       await this.sftp.close(handle).catch(() => {});
     }

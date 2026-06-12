@@ -10,7 +10,7 @@
 function createAtomicDeployPlan(options): AtomicDeployPlan;
 ```
 
-Defined in: [src/sync/createAtomicDeployPlan.ts:162](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/sync/createAtomicDeployPlan.ts#L162)
+Defined in: [src/sync/createAtomicDeployPlan.ts:162](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/sync/createAtomicDeployPlan.ts#L162)
 
 Builds an [AtomicDeployPlan](../interfaces/AtomicDeployPlan.md) that stages a release, swaps it live, and prunes old releases.
 

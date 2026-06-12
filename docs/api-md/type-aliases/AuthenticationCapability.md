@@ -18,6 +18,6 @@ type AuthenticationCapability =
 };
 ```
 
-Defined in: [src/core/CapabilitySet.ts:9](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/core/CapabilitySet.ts#L9)
+Defined in: [src/core/CapabilitySet.ts:9](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/core/CapabilitySet.ts#L9)
 
 Authentication mechanisms a provider can advertise.

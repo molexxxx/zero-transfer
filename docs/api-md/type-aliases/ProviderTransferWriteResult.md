@@ -10,6 +10,6 @@
 type ProviderTransferWriteResult = TransferExecutionResult;
 ```
 
-Defined in: [src/providers/ProviderTransferOperations.ts:68](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/ProviderTransferOperations.ts#L68)
+Defined in: [src/providers/ProviderTransferOperations.ts:86](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/ProviderTransferOperations.ts#L86)
 
 Result returned by provider write implementations.

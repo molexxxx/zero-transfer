@@ -16,3 +16,13 @@ export {
   type S3MultipartResumeStore,
   type S3ProviderOptions,
 } from "./S3Provider";
+export {
+  createSequentialPartReader,
+  runMultipartUploadPool,
+  type MultipartPart,
+  type MultipartPartReader,
+  type MultipartUploadedPart,
+  type MultipartUploadPoolOptions,
+  type MultipartUploadPoolResult,
+  type SequentialPartReaderOptions,
+} from "./multipartUploadPool";
