@@ -12,6 +12,7 @@ import {
 } from "../logging/Logger";
 import { validateConnectionProfile } from "../profiles/ProfileValidator";
 import type { ProviderFactory } from "../providers/ProviderFactory";
+import type { TransferResumeOptions } from "../transfers/createProviderTransferExecutor";
 import type { TransferRetryPolicy } from "../transfers/TransferEngine";
 import type { TransferTimeoutPolicy } from "../transfers/TransferJob";
 import type { ConnectionProfile } from "../types/public";
@@ -33,18 +34,25 @@ import type { TransferSession } from "./TransferSession";
  *
  * Per-call options always win over client defaults.
  *
- * Additional default slots (`verify`, `resume`, `compression`, `policy`) land
- * here as their features ship in later releases; the shape is additive.
+ * Additional default slots (`verify`, `compression`, `policy`) land here as
+ * their features ship in later releases; the shape is additive.
  *
- * @example Resilient defaults for every transfer in an application
+ * @example Resilient, resumable defaults for every transfer in an application
  * ```ts
- * import { createDefaultRetryPolicy, createTransferClient } from "@zero-transfer/sdk";
+ * import {
+ *   createDefaultRetryPolicy,
+ *   createFileSystemTransferCheckpointStore,
+ *   createTransferClient,
+ * } from "@zero-transfer/sdk";
  *
  * const client = createTransferClient({
  *   providers: [createSftpProviderFactory(), createS3ProviderFactory()],
  *   defaults: {
  *     retry: createDefaultRetryPolicy(),
  *     timeout: { stallTimeoutMs: 30_000 },
+ *     resume: {
+ *       store: createFileSystemTransferCheckpointStore({ directory: "./.zt-checkpoints" }),
+ *     },
  *   },
  * });
  * ```
@@ -54,6 +62,8 @@ export interface TransferClientDefaults {
   retry?: TransferRetryPolicy;
   /** Default timeout policy for transfers executed through this client. */
   timeout?: TransferTimeoutPolicy;
+  /** Default checkpoint/resume configuration for transfers executed through this client. */
+  resume?: TransferResumeOptions;
 }
 
 /** Options used to create a provider-neutral transfer client. */

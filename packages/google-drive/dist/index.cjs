@@ -36,6 +36,7 @@ __export(google_drive_exports, {
   CLASSIC_PROVIDER_IDS: () => CLASSIC_PROVIDER_IDS,
   ConfigurationError: () => ConfigurationError,
   ConnectionError: () => ConnectionError,
+  DEFAULT_CHECKPOINT_TTL_MS: () => DEFAULT_CHECKPOINT_TTL_MS,
   ParseError: () => ParseError,
   PathAlreadyExistsError: () => PathAlreadyExistsError,
   PathNotFoundError: () => PathNotFoundError,
@@ -61,9 +62,11 @@ __export(google_drive_exports, {
   createAtomicDeployPlan: () => createAtomicDeployPlan,
   createBandwidthThrottle: () => createBandwidthThrottle,
   createDefaultRetryPolicy: () => createDefaultRetryPolicy,
+  createFileSystemTransferCheckpointStore: () => createFileSystemTransferCheckpointStore,
   createGoogleDriveProviderFactory: () => createGoogleDriveProviderFactory,
   createLocalProviderFactory: () => createLocalProviderFactory,
   createMemoryProviderFactory: () => createMemoryProviderFactory,
+  createMemoryTransferCheckpointStore: () => createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource: () => createOAuthTokenSecretSource,
   createPooledTransferClient: () => createPooledTransferClient,
   createProgressEvent: () => createProgressEvent,
@@ -80,6 +83,7 @@ __export(google_drive_exports, {
   emitLog: () => emitLog,
   errorFromFtpReply: () => errorFromFtpReply,
   filterRemoteEntries: () => filterRemoteEntries,
+  fingerprintsMatch: () => fingerprintsMatch,
   importFileZillaSites: () => importFileZillaSites,
   importOpenSshConfig: () => importOpenSshConfig,
   importWinScpSessions: () => importWinScpSessions,
@@ -1005,7 +1009,7 @@ var ZeroTransfer = class _ZeroTransfer extends import_node_events.EventEmitter {
 };
 
 // src/client/operations.ts
-var import_node_path = require("path");
+var import_node_path2 = require("path");
 
 // src/transfers/BandwidthThrottle.ts
 function createBandwidthThrottle(limit, options = {}) {
@@ -1129,7 +1133,147 @@ function defaultSleep(delayMs, signal) {
   });
 }
 
+// src/transfers/TransferCheckpointStore.ts
+var import_node_crypto = require("crypto");
+var import_promises = require("fs/promises");
+var import_node_path = require("path");
+var DEFAULT_CHECKPOINT_TTL_MS = 7 * 24 * 60 * 60 * 1e3;
+function fingerprintsMatch(stored, current) {
+  let comparable = 0;
+  if (stored.sizeBytes !== void 0 && current.sizeBytes !== void 0) {
+    comparable += 1;
+    if (stored.sizeBytes !== current.sizeBytes) return false;
+  }
+  if (stored.modifiedAtMs !== void 0 && current.modifiedAtMs !== void 0) {
+    comparable += 1;
+    if (stored.modifiedAtMs !== current.modifiedAtMs) return false;
+  }
+  if (stored.etag !== void 0 && current.etag !== void 0) {
+    comparable += 1;
+    if (stored.etag !== current.etag) return false;
+  }
+  return comparable > 0;
+}
+function createMemoryTransferCheckpointStore(options = {}) {
+  const ttlMs = normalizeTtlMs(options.ttlMs);
+  const now = options.now ?? Date.now;
+  const map = /* @__PURE__ */ new Map();
+  return {
+    clear: (key) => {
+      map.delete(checkpointKeyId(key));
+    },
+    load: (key) => {
+      const id = checkpointKeyId(key);
+      const record = map.get(id);
+      if (record === void 0) return void 0;
+      if (now() - record.updatedAtMs > ttlMs) {
+        map.delete(id);
+        return void 0;
+      }
+      return record;
+    },
+    save: (key, record) => {
+      map.set(checkpointKeyId(key), record);
+    }
+  };
+}
+function createFileSystemTransferCheckpointStore(options) {
+  const directory = options.directory;
+  if (typeof directory !== "string" || directory.length === 0) {
+    throw new ConfigurationError({
+      message: "createFileSystemTransferCheckpointStore requires a non-empty directory option",
+      retryable: false
+    });
+  }
+  const ttlMs = normalizeTtlMs(options.ttlMs);
+  const now = options.now ?? Date.now;
+  const fileFor = (key) => {
+    const hash = (0, import_node_crypto.createHash)("sha256").update(checkpointKeyId(key)).digest("hex");
+    return (0, import_node_path.join)(directory, `${hash}.json`);
+  };
+  const remove = async (file) => {
+    try {
+      await (0, import_promises.unlink)(file);
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+  };
+  return {
+    async clear(key) {
+      await remove(fileFor(key));
+    },
+    async load(key) {
+      const file = fileFor(key);
+      let text;
+      try {
+        text = await (0, import_promises.readFile)(file, "utf8");
+      } catch (error) {
+        if (error.code === "ENOENT") return void 0;
+        throw error;
+      }
+      const record = parseCheckpointRecord(text);
+      if (record === void 0 || now() - record.updatedAtMs > ttlMs) {
+        await remove(file);
+        return void 0;
+      }
+      return record;
+    },
+    async save(key, record) {
+      await (0, import_promises.mkdir)(directory, { recursive: true });
+      const target = fileFor(key);
+      const tmp = `${target}.${String(process.pid)}.${String(now())}.tmp`;
+      await (0, import_promises.writeFile)(tmp, JSON.stringify(record), { encoding: "utf8", mode: 384 });
+      await (0, import_promises.rename)(tmp, target);
+    }
+  };
+}
+function checkpointKeyId(key) {
+  return [
+    "v1",
+    key.source.provider ?? "",
+    key.source.path,
+    key.destination.provider ?? "",
+    key.destination.path,
+    key.scope ?? ""
+  ].join("\0");
+}
+function parseCheckpointRecord(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return void 0;
+  }
+  if (typeof parsed !== "object" || parsed === null) return void 0;
+  const record = parsed;
+  if (record.version !== 1) return void 0;
+  if (typeof record.createdAtMs !== "number" || typeof record.updatedAtMs !== "number") {
+    return void 0;
+  }
+  if (typeof record.fingerprint !== "object" || record.fingerprint === null) return void 0;
+  if (!isValidCheckpointState(record.state)) return void 0;
+  return record;
+}
+function isValidCheckpointState(state) {
+  if (typeof state !== "object" || state === null) return false;
+  const candidate = state;
+  if (typeof candidate.committedBytes !== "number" || candidate.committedBytes < 0) return false;
+  if (candidate.kind === "byte-offset") return true;
+  if (candidate.kind !== "parts") return false;
+  return typeof candidate.uploadToken === "string" && typeof candidate.partSizeBytes === "number" && Array.isArray(candidate.parts) && candidate.parts.every(
+    (part) => typeof part === "object" && part !== null && typeof part.partNumber === "number" && typeof part.byteEnd === "number"
+  );
+}
+function normalizeTtlMs(value) {
+  if (value === void 0 || !Number.isFinite(value) || value <= 0) {
+    return DEFAULT_CHECKPOINT_TTL_MS;
+  }
+  return Math.floor(value);
+}
+
 // src/transfers/createProviderTransferExecutor.ts
+var DEFAULT_PERSIST_INTERVAL_BYTES = 8 * 1024 * 1024;
+var CONCURRENT_WRITER_WINDOW_MS = 6e4;
 function createProviderTransferExecutor(options) {
   return async (context) => {
     const { job } = context;
@@ -1142,12 +1286,18 @@ function createProviderTransferExecutor(options) {
     }
     const source = requireEndpoint(job, "source");
     const destination = requireEndpoint(job, "destination");
-    const sourceSession = options.resolveSession({ endpoint: source, job, role: "source" });
-    const destinationSession = options.resolveSession({
-      endpoint: destination,
-      job,
-      role: "destination"
-    });
+    const sourceSession = requireSession(
+      options.resolveSession({ endpoint: source, job, role: "source" }),
+      source,
+      "source",
+      job
+    );
+    const destinationSession = requireSession(
+      options.resolveSession({ endpoint: destination, job, role: "destination" }),
+      destination,
+      "destination",
+      job
+    );
     const sourceTransfers = requireTransferOperations(sourceSession, source, "source", job);
     const destinationTransfers = requireTransferOperations(
       destinationSession,
@@ -1156,14 +1306,210 @@ function createProviderTransferExecutor(options) {
       job
     );
     context.throwIfAborted();
-    const readResult = await sourceTransfers.read(createReadRequest(context, source));
+    const resume = await prepareResume(
+      options.resume,
+      context,
+      source,
+      destination,
+      sourceSession,
+      destinationSession,
+      destinationTransfers
+    );
+    context.throwIfAborted();
+    const readResult = await sourceTransfers.read(createReadRequest(context, source, resume));
     context.throwIfAborted();
     const throttledReadResult = applyBandwidthThrottle(readResult, context, options.throttle);
-    const writeResult = await destinationTransfers.write(
-      createWriteRequest(context, destination, throttledReadResult)
-    );
-    return mergeProviderTransferResult(readResult, writeResult, job);
+    let writeResult;
+    try {
+      writeResult = await destinationTransfers.write(
+        createWriteRequest(context, destination, throttledReadResult, resume)
+      );
+    } catch (error) {
+      if (resume !== void 0) await resume.flushOnFailure();
+      throw error;
+    }
+    if (resume !== void 0) await resume.completed();
+    return mergeProviderTransferResult(readResult, writeResult, job, resume);
   };
+}
+async function prepareResume(resume, context, source, destination, sourceSession, destinationSession, destinationTransfers) {
+  if (resume === void 0 || resume.mode === "off") return void 0;
+  const capable = sourceSession.capabilities.resumeDownload && destinationSession.capabilities.resumeUpload;
+  if (!capable) {
+    if (resume.mode === "require") {
+      throw new UnsupportedFeatureError({
+        details: {
+          destinationProvider: destinationSession.provider,
+          jobId: context.job.id,
+          resumeDownload: sourceSession.capabilities.resumeDownload,
+          resumeUpload: destinationSession.capabilities.resumeUpload,
+          sourceProvider: sourceSession.provider
+        },
+        message: `Transfer resume was required but the endpoints do not support it (source resumeDownload=${String(sourceSession.capabilities.resumeDownload)}, destination resumeUpload=${String(destinationSession.capabilities.resumeUpload)})`,
+        retryable: false
+      });
+    }
+    return void 0;
+  }
+  const key = {
+    destination: {
+      path: destination.path,
+      ...destination.provider !== void 0 ? { provider: destination.provider } : {}
+    },
+    source: {
+      path: source.path,
+      ...source.provider !== void 0 ? { provider: source.provider } : {}
+    },
+    ...resume.scope !== void 0 ? { scope: resume.scope } : {}
+  };
+  const sourceStat = await statOrUndefined(sourceSession, source.path);
+  if (sourceStat === void 0) {
+    return void 0;
+  }
+  const fingerprint = createFingerprint(sourceStat);
+  const warnings = [];
+  const record = await resume.store.load(key);
+  let validState;
+  if (record !== void 0) {
+    if (fingerprintsMatch(record.fingerprint, fingerprint)) {
+      validState = record.state;
+      if (record.pid !== process.pid && Date.now() - record.updatedAtMs < CONCURRENT_WRITER_WINDOW_MS) {
+        warnings.push(
+          `Resume checkpoint was updated ${String(Date.now() - record.updatedAtMs)}ms ago by another process (pid ${String(record.pid)}); concurrent transfers to the same destination may conflict`
+        );
+      }
+    } else {
+      await invalidateCheckpoint(
+        resume.store,
+        key,
+        record,
+        destination,
+        destinationTransfers,
+        context.signal
+      );
+    }
+  }
+  let committedBytes = 0;
+  if (validState !== void 0) {
+    committedBytes = validState.committedBytes;
+    if (validState.kind === "byte-offset" && committedBytes > 0) {
+      const destinationStat = await statOrUndefined(destinationSession, destination.path);
+      if (destinationStat === void 0) {
+        await invalidateCheckpoint(
+          resume.store,
+          key,
+          record,
+          destination,
+          destinationTransfers,
+          context.signal
+        );
+        validState = void 0;
+        committedBytes = 0;
+      } else {
+        committedBytes = Math.min(committedBytes, destinationStat.size ?? 0);
+      }
+    }
+    if (fingerprint.sizeBytes !== void 0) {
+      committedBytes = Math.min(committedBytes, fingerprint.sizeBytes);
+    }
+    if (committedBytes <= 0 && validState !== void 0 && validState.kind === "byte-offset") {
+      validState = void 0;
+      committedBytes = 0;
+    }
+  }
+  const createdAtMs = record?.createdAtMs;
+  const buildRecord = (state) => {
+    const nowMs = Date.now();
+    return {
+      createdAtMs: createdAtMs ?? nowMs,
+      fingerprint,
+      pid: process.pid,
+      state,
+      updatedAtMs: nowMs,
+      version: 1
+    };
+  };
+  const handle = {
+    clear: async () => {
+      await resume.store.clear(key);
+    },
+    save: async (state) => {
+      await resume.store.save(key, buildRecord(state));
+    },
+    ...validState !== void 0 ? { state: validState } : {}
+  };
+  const persistInterval = normalizePersistInterval(resume.persistIntervalBytes);
+  let highestCommitted = committedBytes;
+  let persistedBytes = committedBytes;
+  let saveChain = Promise.resolve();
+  let usedByteOffsetCommits = false;
+  const persistWatermark = (committed) => {
+    saveChain = saveChain.then(
+      () => resume.store.save(key, buildRecord({ committedBytes: committed, kind: "byte-offset" }))
+    ).then(() => {
+      persistedBytes = Math.max(persistedBytes, committed);
+    }).catch(() => void 0);
+  };
+  const onBytesCommitted = (committed) => {
+    if (!Number.isFinite(committed) || committed <= highestCommitted) return;
+    highestCommitted = committed;
+    usedByteOffsetCommits = true;
+    if (committed - persistedBytes >= persistInterval) {
+      persistedBytes = committed;
+      persistWatermark(committed);
+    }
+  };
+  return {
+    committedBytes,
+    completed: async () => {
+      await saveChain;
+      await resume.store.clear(key);
+    },
+    flushOnFailure: async () => {
+      try {
+        if (usedByteOffsetCommits && highestCommitted > persistedBytes) {
+          persistWatermark(highestCommitted);
+        }
+        await saveChain;
+      } catch {
+      }
+    },
+    handle,
+    onBytesCommitted,
+    warnings
+  };
+}
+async function invalidateCheckpoint(store, key, record, destination, destinationTransfers, signal) {
+  await store.clear(key);
+  if (record === void 0 || destinationTransfers.discardResumable === void 0) return;
+  try {
+    await destinationTransfers.discardResumable({
+      endpoint: cloneEndpoint(destination),
+      state: record.state,
+      ...signal !== void 0 ? { signal } : {}
+    });
+  } catch {
+  }
+}
+async function statOrUndefined(session, path2) {
+  try {
+    return await session.fs.stat(path2);
+  } catch {
+    return void 0;
+  }
+}
+function createFingerprint(stat) {
+  const fingerprint = {};
+  if (stat.size !== void 0) fingerprint.sizeBytes = stat.size;
+  if (stat.modifiedAt !== void 0) fingerprint.modifiedAtMs = stat.modifiedAt.getTime();
+  if (stat.uniqueId !== void 0) fingerprint.etag = stat.uniqueId;
+  return fingerprint;
+}
+function normalizePersistInterval(value) {
+  if (value === void 0 || !Number.isFinite(value) || value <= 0) {
+    return DEFAULT_PERSIST_INTERVAL_BYTES;
+  }
+  return Math.floor(value);
 }
 function applyBandwidthThrottle(readResult, context, options) {
   const throttle = createBandwidthThrottle(context.bandwidthLimit, options);
@@ -1187,7 +1533,7 @@ function requireEndpoint(job, role) {
   }
   return endpoint;
 }
-function requireTransferOperations(session, endpoint, role, job) {
+function requireSession(session, endpoint, role, job) {
   if (session === void 0) {
     throw new UnsupportedFeatureError({
       details: { endpoint: cloneEndpoint(endpoint), jobId: job.id, operation: job.operation, role },
@@ -1195,6 +1541,9 @@ function requireTransferOperations(session, endpoint, role, job) {
       retryable: false
     });
   }
+  return session;
+}
+function requireTransferOperations(session, endpoint, role, job) {
   if (session.transfers === void 0) {
     throw new UnsupportedFeatureError({
       details: {
@@ -1210,7 +1559,7 @@ function requireTransferOperations(session, endpoint, role, job) {
   }
   return session.transfers;
 }
-function createReadRequest(context, endpoint) {
+function createReadRequest(context, endpoint, resume) {
   const request = {
     attempt: context.attempt,
     endpoint: cloneEndpoint(endpoint),
@@ -1222,9 +1571,12 @@ function createReadRequest(context, endpoint) {
   if (context.bandwidthLimit !== void 0) {
     request.bandwidthLimit = { ...context.bandwidthLimit };
   }
+  if (resume !== void 0 && resume.committedBytes > 0) {
+    request.range = { offset: resume.committedBytes };
+  }
   return request;
 }
-function createWriteRequest(context, endpoint, readResult) {
+function createWriteRequest(context, endpoint, readResult, resume) {
   const request = {
     attempt: context.attempt,
     content: readResult.content,
@@ -1239,20 +1591,31 @@ function createWriteRequest(context, endpoint, readResult) {
     request.bandwidthLimit = { ...context.bandwidthLimit };
   }
   if (totalBytes !== void 0) request.totalBytes = totalBytes;
-  if (context.job.resumed === true) request.offset = readResult.bytesRead ?? 0;
+  if (resume !== void 0) {
+    if (resume.committedBytes > 0) request.offset = resume.committedBytes;
+    request.checkpoint = resume.handle;
+    request.onBytesCommitted = resume.onBytesCommitted;
+  } else if (context.job.resumed === true) {
+    request.offset = readResult.bytesRead ?? 0;
+  }
   if (readResult.verification !== void 0) {
     request.verification = cloneVerification(readResult.verification);
   }
   return request;
 }
-function mergeProviderTransferResult(readResult, writeResult, job) {
+function mergeProviderTransferResult(readResult, writeResult, job, resume) {
   const result = {
     bytesTransferred: writeResult.bytesTransferred
   };
   const totalBytes = writeResult.totalBytes ?? readResult.totalBytes ?? job.totalBytes;
-  const warnings = [...readResult.warnings ?? [], ...writeResult.warnings ?? []];
+  const warnings = [
+    ...resume?.warnings ?? [],
+    ...readResult.warnings ?? [],
+    ...writeResult.warnings ?? []
+  ];
   if (totalBytes !== void 0) result.totalBytes = totalBytes;
-  if (writeResult.resumed !== void 0) result.resumed = writeResult.resumed;
+  if (resume !== void 0 && resume.committedBytes > 0) result.resumed = true;
+  else if (writeResult.resumed !== void 0) result.resumed = writeResult.resumed;
   if (writeResult.verified !== void 0) result.verified = writeResult.verified;
   if (writeResult.checksum !== void 0) result.checksum = writeResult.checksum;
   else if (readResult.checksum !== void 0) result.checksum = readResult.checksum;
@@ -1746,8 +2109,10 @@ async function runRoute(options) {
       ["source", sourceSession],
       ["destination", destinationSession]
     ]);
+    const resume = options.resume ?? client.defaults?.resume;
     const executor = createProviderTransferExecutor({
-      resolveSession: ({ role }) => sessions.get(role)
+      resolveSession: ({ role }) => sessions.get(role),
+      ...resume !== void 0 ? { resume } : {}
     });
     return await engine.execute(job, executor, buildExecuteOptions(options, client));
   } finally {
@@ -1844,7 +2209,7 @@ function buildRoute(input) {
   return route;
 }
 function absolutePath(localPath) {
-  return (0, import_node_path.isAbsolute)(localPath) ? localPath : (0, import_node_path.resolve)(localPath);
+  return (0, import_node_path2.isAbsolute)(localPath) ? localPath : (0, import_node_path2.resolve)(localPath);
 }
 function defaultRouteSuffix(source, destination) {
   return `${source}->${destination}`;
@@ -1852,7 +2217,7 @@ function defaultRouteSuffix(source, destination) {
 
 // src/profiles/SecretSource.ts
 var import_node_buffer2 = require("buffer");
-var import_promises = require("fs/promises");
+var import_promises2 = require("fs/promises");
 async function resolveSecret(source, options = {}) {
   if (isSecretValue(source)) {
     return cloneSecretValue(source);
@@ -1886,7 +2251,7 @@ async function resolveSecret(source, options = {}) {
     return import_node_buffer2.Buffer.from(value, "base64");
   }
   if (isFileSecretSource(source)) {
-    const fileReader = options.readFile ?? import_promises.readFile;
+    const fileReader = options.readFile ?? import_promises2.readFile;
     const value = await fileReader(source.path);
     if (source.encoding === "buffer") {
       return import_node_buffer2.Buffer.from(value);
@@ -2217,8 +2582,8 @@ function wrapTransfers(transfers, guard) {
 
 // src/providers/local/LocalProvider.ts
 var import_node_fs = require("fs");
-var import_promises2 = require("fs/promises");
-var import_node_path2 = __toESM(require("path"));
+var import_promises3 = require("fs/promises");
+var import_node_path3 = __toESM(require("path"));
 
 // src/utils/path.ts
 var UNSAFE_FTP_ARGUMENT_PATTERN = /[\r\n\0]/;
@@ -2311,7 +2676,7 @@ var LocalProvider = class {
   capabilities = LOCAL_PROVIDER_CAPABILITIES;
   connect(profile) {
     return Promise.resolve().then(() => {
-      const rootPath = import_node_path2.default.resolve(this.configuredRootPath ?? profile.host);
+      const rootPath = import_node_path3.default.resolve(this.configuredRootPath ?? profile.host);
       return new LocalTransferSession(rootPath);
     });
   }
@@ -2355,13 +2720,12 @@ var LocalTransferOperations = class {
     request.throwIfAborted();
     const remotePath = normalizeLocalProviderPath(request.endpoint.path);
     const localPath = resolveLocalPath(this.rootPath, remotePath);
-    const content = await collectTransferContent(request);
     const offset = normalizeOptionalByteCount(request.offset, "offset", remotePath);
     await ensureLocalParentDirectory(localPath, remotePath);
-    await writeLocalContent(localPath, remotePath, content, offset);
+    const bytesTransferred = await writeLocalStream(localPath, remotePath, request, offset);
     const stat = await readLocalEntry(this.rootPath, remotePath);
     const result = {
-      bytesTransferred: content.byteLength,
+      bytesTransferred,
       resumed: offset !== void 0 && offset > 0,
       verified: request.verification?.verified ?? false
     };
@@ -2402,7 +2766,7 @@ var LocalFileSystem = class {
     const remotePath = normalizeLocalProviderPath(remote);
     const localPath = resolveLocalPath(this.rootPath, remotePath);
     try {
-      await (0, import_promises2.unlink)(localPath);
+      await (0, import_promises3.unlink)(localPath);
     } catch (error) {
       if (options.ignoreMissing && isNodeErrno(error, "ENOENT")) return;
       if (isNodeErrno(error, "ENOENT")) {
@@ -2417,7 +2781,7 @@ var LocalFileSystem = class {
     const fromLocal = resolveLocalPath(this.rootPath, fromRemote);
     const toLocal = resolveLocalPath(this.rootPath, toRemote);
     try {
-      await (0, import_promises2.rename)(fromLocal, toLocal);
+      await (0, import_promises3.rename)(fromLocal, toLocal);
     } catch (error) {
       if (isNodeErrno(error, "ENOENT")) {
         throw createPathNotFoundError(fromRemote, `Local path not found: ${fromRemote}`);
@@ -2428,13 +2792,13 @@ var LocalFileSystem = class {
   async mkdir(remote, options = {}) {
     const remotePath = normalizeLocalProviderPath(remote);
     const localPath = resolveLocalPath(this.rootPath, remotePath);
-    await (0, import_promises2.mkdir)(localPath, { recursive: options.recursive === true });
+    await (0, import_promises3.mkdir)(localPath, { recursive: options.recursive === true });
   }
   async rmdir(remote, options = {}) {
     const remotePath = normalizeLocalProviderPath(remote);
     const localPath = resolveLocalPath(this.rootPath, remotePath);
     try {
-      await (0, import_promises2.rm)(localPath, { recursive: options.recursive === true, force: false });
+      await (0, import_promises3.rm)(localPath, { recursive: options.recursive === true, force: false });
     } catch (error) {
       if (isNodeErrno(error, "ENOENT")) {
         if (options.ignoreMissing) return;
@@ -2469,56 +2833,47 @@ async function* createLocalReadSource(localPath, range) {
     yield new Uint8Array(chunk);
   }
 }
-async function collectTransferContent(request) {
-  const chunks = [];
-  let byteLength = 0;
-  for await (const chunk of request.content) {
-    request.throwIfAborted();
-    const clonedChunk = new Uint8Array(chunk);
-    chunks.push(clonedChunk);
-    byteLength += clonedChunk.byteLength;
-    request.reportProgress(byteLength, request.totalBytes);
-  }
-  return concatChunks(chunks, byteLength);
-}
-function concatChunks(chunks, byteLength) {
-  const content = new Uint8Array(byteLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    content.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return content;
-}
 async function ensureLocalParentDirectory(localPath, remotePath) {
   try {
-    await (0, import_promises2.mkdir)(import_node_path2.default.dirname(localPath), { recursive: true });
+    await (0, import_promises3.mkdir)(import_node_path3.default.dirname(localPath), { recursive: true });
   } catch (error) {
     throw mapLocalFileSystemError(error, remotePath);
   }
 }
-async function writeLocalContent(localPath, remotePath, content, offset) {
+async function writeLocalStream(localPath, remotePath, request, offset) {
+  let handle;
   try {
-    if (offset === void 0) {
-      await (0, import_promises2.writeFile)(localPath, content);
-      return;
-    }
-    const handle = await openLocalFileForOffsetWrite(localPath);
-    try {
-      await handle.write(content, 0, content.byteLength, offset);
-    } finally {
-      await handle.close();
-    }
+    handle = offset === void 0 ? await (0, import_promises3.open)(localPath, "w") : await openLocalFileForOffsetWrite(localPath);
   } catch (error) {
     throw mapLocalFileSystemError(error, remotePath);
   }
+  let bytesTransferred = 0;
+  try {
+    let writeOffset = offset ?? 0;
+    for await (const chunk of request.content) {
+      request.throwIfAborted();
+      if (chunk.byteLength === 0) continue;
+      try {
+        await handle.write(chunk, 0, chunk.byteLength, writeOffset);
+      } catch (error) {
+        throw mapLocalFileSystemError(error, remotePath);
+      }
+      writeOffset += chunk.byteLength;
+      bytesTransferred += chunk.byteLength;
+      request.reportProgress(bytesTransferred, request.totalBytes);
+      request.onBytesCommitted?.(writeOffset);
+    }
+  } finally {
+    await handle.close().catch(() => void 0);
+  }
+  return bytesTransferred;
 }
 async function openLocalFileForOffsetWrite(localPath) {
   try {
-    return await (0, import_promises2.open)(localPath, "r+");
+    return await (0, import_promises3.open)(localPath, "r+");
   } catch (error) {
     if (getErrorCode(error) === "ENOENT") {
-      return (0, import_promises2.open)(localPath, "w+");
+      return (0, import_promises3.open)(localPath, "w+");
     }
     throw error;
   }
@@ -2550,7 +2905,7 @@ function cloneVerification2(verification) {
 }
 async function readLocalDirectory(localPath, remotePath) {
   try {
-    return await (0, import_promises2.readdir)(localPath);
+    return await (0, import_promises3.readdir)(localPath);
   } catch (error) {
     throw mapLocalFileSystemError(error, remotePath);
   }
@@ -2559,7 +2914,7 @@ async function readLocalEntry(rootPath, remotePath) {
   const localPath = resolveLocalPath(rootPath, remotePath);
   let stats;
   try {
-    stats = await (0, import_promises2.lstat)(localPath);
+    stats = await (0, import_promises3.lstat)(localPath);
   } catch (error) {
     throw mapLocalFileSystemError(error, remotePath);
   }
@@ -2587,7 +2942,7 @@ async function readLocalEntry(rootPath, remotePath) {
 }
 async function readSymlinkTarget(localPath) {
   try {
-    return await (0, import_promises2.readlink)(localPath);
+    return await (0, import_promises3.readlink)(localPath);
   } catch {
     return void 0;
   }
@@ -2609,15 +2964,15 @@ function normalizeLocalProviderPath(input) {
 }
 function resolveLocalPath(rootPath, remotePath) {
   const normalizedRemotePath = normalizeLocalProviderPath(remotePath);
-  const resolvedRootPath = import_node_path2.default.resolve(rootPath);
-  const candidateAbsolute = import_node_path2.default.resolve(normalizedRemotePath.split("/").join(import_node_path2.default.sep));
-  if (candidateAbsolute === resolvedRootPath || candidateAbsolute.startsWith(resolvedRootPath + import_node_path2.default.sep)) {
+  const resolvedRootPath = import_node_path3.default.resolve(rootPath);
+  const candidateAbsolute = import_node_path3.default.resolve(normalizedRemotePath.split("/").join(import_node_path3.default.sep));
+  if (candidateAbsolute === resolvedRootPath || candidateAbsolute.startsWith(resolvedRootPath + import_node_path3.default.sep)) {
     return candidateAbsolute;
   }
   const relativePath = normalizedRemotePath === "/" ? "." : normalizedRemotePath.slice(1);
-  const resolvedPath = import_node_path2.default.resolve(rootPath, relativePath.split("/").join(import_node_path2.default.sep));
-  const relativeToRoot = import_node_path2.default.relative(rootPath, resolvedPath);
-  if (relativeToRoot === "" || !relativeToRoot.startsWith("..") && !import_node_path2.default.isAbsolute(relativeToRoot)) {
+  const resolvedPath = import_node_path3.default.resolve(rootPath, relativePath.split("/").join(import_node_path3.default.sep));
+  const relativeToRoot = import_node_path3.default.relative(rootPath, resolvedPath);
+  if (relativeToRoot === "" || !relativeToRoot.startsWith("..") && !import_node_path3.default.isAbsolute(relativeToRoot)) {
     return resolvedPath;
   }
   throw new ConfigurationError({
@@ -2893,7 +3248,7 @@ var MemoryTransferOperations = class {
     if (existing?.type === "directory") {
       throw createInvalidFixtureError(path2, `Memory path is a directory: ${path2}`);
     }
-    const writtenContent = await collectTransferContent2(request);
+    const writtenContent = await collectTransferContent(request);
     const offset = normalizeOptionalByteCount2(request.offset, "offset");
     const previousContent = this.state.content.get(path2) ?? new Uint8Array(0);
     const content = offset === void 0 ? writtenContent : mergeContentAtOffset(previousContent, writtenContent, offset);
@@ -3045,7 +3400,7 @@ function resolveByteRange(size, range) {
   const length = Math.max(0, Math.min(requestedLength, size - offset));
   return { length, offset };
 }
-async function collectTransferContent2(request) {
+async function collectTransferContent(request) {
   const chunks = [];
   let byteLength = 0;
   for await (const chunk of request.content) {
@@ -3055,9 +3410,9 @@ async function collectTransferContent2(request) {
     byteLength += clonedChunk.byteLength;
     request.reportProgress(byteLength, request.totalBytes);
   }
-  return concatChunks2(chunks, byteLength);
+  return concatChunks(chunks, byteLength);
 }
-function concatChunks2(chunks, byteLength) {
+function concatChunks(chunks, byteLength) {
   const content = new Uint8Array(byteLength);
   let offset = 0;
   for (const chunk of chunks) {
@@ -3265,7 +3620,7 @@ function isFresh(token, skewMs, now) {
 
 // src/profiles/importers/KnownHostsParser.ts
 var import_node_buffer4 = require("buffer");
-var import_node_crypto = require("crypto");
+var import_node_crypto2 = require("crypto");
 function parseKnownHosts(text) {
   const entries = [];
   const lines = text.split(/\r?\n/);
@@ -3358,7 +3713,7 @@ function matchesHashedEntry(salt, hash, host, port) {
   if (saltBuffer.length === 0) return false;
   const candidates = port === DEFAULT_SSH_PORT ? [host] : [`[${host}]:${String(port)}`, host];
   for (const candidate of candidates) {
-    const expected = (0, import_node_crypto.createHmac)("sha1", saltBuffer).update(candidate).digest("base64");
+    const expected = (0, import_node_crypto2.createHmac)("sha1", saltBuffer).update(candidate).digest("base64");
     if (expected === hash) return true;
   }
   return false;
@@ -5098,7 +5453,7 @@ function isMainModule(importMetaUrl) {
 
 // src/providers/cloud/GoogleDriveProvider.ts
 var import_node_buffer6 = require("buffer");
-var import_node_crypto2 = require("crypto");
+var import_node_crypto3 = require("crypto");
 
 // src/providers/web/httpInternals.ts
 var import_node_buffer5 = require("buffer");
@@ -5442,7 +5797,7 @@ var GoogleDriveTransferOperations = class {
     const existing = await this.findExisting(parentId, name);
     const metadata = { name };
     if (existing === void 0) metadata["parents"] = [parentId];
-    const boundary = `----zt-boundary-${(0, import_node_crypto2.randomBytes)(16).toString("hex")}`;
+    const boundary = `----zt-boundary-${(0, import_node_crypto3.randomBytes)(16).toString("hex")}`;
     const bodyParts = [];
     const enc = new TextEncoder();
     bodyParts.push(
@@ -5462,7 +5817,7 @@ Content-Type: application/octet-stream\r
     bodyParts.push(enc.encode(`\r
 --${boundary}--\r
 `));
-    const body = concatChunks3(bodyParts);
+    const body = concatChunks2(bodyParts);
     const url = existing === void 0 ? `${this.options.uploadBaseUrl}/files?uploadType=multipart&supportsAllDrives=true&fields=${encodeURIComponent(GDRIVE_FILE_FIELDS)}` : `${this.options.uploadBaseUrl}/files/${encodeURIComponent(existing.id)}?uploadType=multipart&supportsAllDrives=true&fields=${encodeURIComponent(GDRIVE_FILE_FIELDS)}`;
     const method = existing === void 0 ? "POST" : "PATCH";
     const response = await driveFetch(this.options, method, url, {
@@ -5642,9 +5997,9 @@ async function collectChunks(source) {
     chunks.push(chunk);
     total += chunk.byteLength;
   }
-  return concatChunks3(chunks, total);
+  return concatChunks2(chunks, total);
 }
-function concatChunks3(chunks, totalSize) {
+function concatChunks2(chunks, totalSize) {
   const total = totalSize ?? chunks.reduce((acc, c) => acc + c.byteLength, 0);
   const out = new Uint8Array(total);
   let offset = 0;
@@ -5662,6 +6017,7 @@ function concatChunks3(chunks, totalSize) {
   CLASSIC_PROVIDER_IDS,
   ConfigurationError,
   ConnectionError,
+  DEFAULT_CHECKPOINT_TTL_MS,
   ParseError,
   PathAlreadyExistsError,
   PathNotFoundError,
@@ -5687,9 +6043,11 @@ function concatChunks3(chunks, totalSize) {
   createAtomicDeployPlan,
   createBandwidthThrottle,
   createDefaultRetryPolicy,
+  createFileSystemTransferCheckpointStore,
   createGoogleDriveProviderFactory,
   createLocalProviderFactory,
   createMemoryProviderFactory,
+  createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource,
   createPooledTransferClient,
   createProgressEvent,
@@ -5706,6 +6064,7 @@ function concatChunks3(chunks, totalSize) {
   emitLog,
   errorFromFtpReply,
   filterRemoteEntries,
+  fingerprintsMatch,
   importFileZillaSites,
   importOpenSshConfig,
   importWinScpSessions,

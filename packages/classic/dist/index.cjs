@@ -36,6 +36,7 @@ __export(classic_exports, {
   CLASSIC_PROVIDER_IDS: () => CLASSIC_PROVIDER_IDS,
   ConfigurationError: () => ConfigurationError,
   ConnectionError: () => ConnectionError,
+  DEFAULT_CHECKPOINT_TTL_MS: () => DEFAULT_CHECKPOINT_TTL_MS,
   FtpResponseParser: () => FtpResponseParser,
   ParseError: () => ParseError,
   PathAlreadyExistsError: () => PathAlreadyExistsError,
@@ -45,6 +46,9 @@ __export(classic_exports, {
   ProviderRegistry: () => ProviderRegistry,
   REDACTED: () => REDACTED,
   REMOTE_MANIFEST_FORMAT_VERSION: () => REMOTE_MANIFEST_FORMAT_VERSION,
+  SFTP_PIPELINE_DEFAULT_CHUNK_BYTES: () => SFTP_PIPELINE_DEFAULT_CHUNK_BYTES,
+  SFTP_PIPELINE_DEFAULT_MAX_IN_FLIGHT: () => SFTP_PIPELINE_DEFAULT_MAX_IN_FLIGHT,
+  SFTP_PIPELINE_MAX_CHUNK_BYTES: () => SFTP_PIPELINE_MAX_CHUNK_BYTES,
   TimeoutError: () => TimeoutError,
   TransferClient: () => TransferClient,
   TransferEngine: () => TransferEngine,
@@ -62,10 +66,12 @@ __export(classic_exports, {
   createAtomicDeployPlan: () => createAtomicDeployPlan,
   createBandwidthThrottle: () => createBandwidthThrottle,
   createDefaultRetryPolicy: () => createDefaultRetryPolicy,
+  createFileSystemTransferCheckpointStore: () => createFileSystemTransferCheckpointStore,
   createFtpProviderFactory: () => createFtpProviderFactory,
   createFtpsProviderFactory: () => createFtpsProviderFactory,
   createLocalProviderFactory: () => createLocalProviderFactory,
   createMemoryProviderFactory: () => createMemoryProviderFactory,
+  createMemoryTransferCheckpointStore: () => createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource: () => createOAuthTokenSecretSource,
   createPooledTransferClient: () => createPooledTransferClient,
   createProgressEvent: () => createProgressEvent,
@@ -83,6 +89,7 @@ __export(classic_exports, {
   emitLog: () => emitLog,
   errorFromFtpReply: () => errorFromFtpReply,
   filterRemoteEntries: () => filterRemoteEntries,
+  fingerprintsMatch: () => fingerprintsMatch,
   importFileZillaSites: () => importFileZillaSites,
   importOpenSshConfig: () => importOpenSshConfig,
   importWinScpSessions: () => importWinScpSessions,
@@ -1015,7 +1022,7 @@ var ZeroTransfer = class _ZeroTransfer extends import_node_events.EventEmitter {
 };
 
 // src/client/operations.ts
-var import_node_path = require("path");
+var import_node_path2 = require("path");
 
 // src/transfers/BandwidthThrottle.ts
 function createBandwidthThrottle(limit, options = {}) {
@@ -1139,7 +1146,147 @@ function defaultSleep(delayMs, signal) {
   });
 }
 
+// src/transfers/TransferCheckpointStore.ts
+var import_node_crypto = require("crypto");
+var import_promises = require("fs/promises");
+var import_node_path = require("path");
+var DEFAULT_CHECKPOINT_TTL_MS = 7 * 24 * 60 * 60 * 1e3;
+function fingerprintsMatch(stored, current) {
+  let comparable = 0;
+  if (stored.sizeBytes !== void 0 && current.sizeBytes !== void 0) {
+    comparable += 1;
+    if (stored.sizeBytes !== current.sizeBytes) return false;
+  }
+  if (stored.modifiedAtMs !== void 0 && current.modifiedAtMs !== void 0) {
+    comparable += 1;
+    if (stored.modifiedAtMs !== current.modifiedAtMs) return false;
+  }
+  if (stored.etag !== void 0 && current.etag !== void 0) {
+    comparable += 1;
+    if (stored.etag !== current.etag) return false;
+  }
+  return comparable > 0;
+}
+function createMemoryTransferCheckpointStore(options = {}) {
+  const ttlMs = normalizeTtlMs(options.ttlMs);
+  const now = options.now ?? Date.now;
+  const map = /* @__PURE__ */ new Map();
+  return {
+    clear: (key) => {
+      map.delete(checkpointKeyId(key));
+    },
+    load: (key) => {
+      const id = checkpointKeyId(key);
+      const record = map.get(id);
+      if (record === void 0) return void 0;
+      if (now() - record.updatedAtMs > ttlMs) {
+        map.delete(id);
+        return void 0;
+      }
+      return record;
+    },
+    save: (key, record) => {
+      map.set(checkpointKeyId(key), record);
+    }
+  };
+}
+function createFileSystemTransferCheckpointStore(options) {
+  const directory = options.directory;
+  if (typeof directory !== "string" || directory.length === 0) {
+    throw new ConfigurationError({
+      message: "createFileSystemTransferCheckpointStore requires a non-empty directory option",
+      retryable: false
+    });
+  }
+  const ttlMs = normalizeTtlMs(options.ttlMs);
+  const now = options.now ?? Date.now;
+  const fileFor = (key) => {
+    const hash = (0, import_node_crypto.createHash)("sha256").update(checkpointKeyId(key)).digest("hex");
+    return (0, import_node_path.join)(directory, `${hash}.json`);
+  };
+  const remove = async (file) => {
+    try {
+      await (0, import_promises.unlink)(file);
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+  };
+  return {
+    async clear(key) {
+      await remove(fileFor(key));
+    },
+    async load(key) {
+      const file = fileFor(key);
+      let text;
+      try {
+        text = await (0, import_promises.readFile)(file, "utf8");
+      } catch (error) {
+        if (error.code === "ENOENT") return void 0;
+        throw error;
+      }
+      const record = parseCheckpointRecord(text);
+      if (record === void 0 || now() - record.updatedAtMs > ttlMs) {
+        await remove(file);
+        return void 0;
+      }
+      return record;
+    },
+    async save(key, record) {
+      await (0, import_promises.mkdir)(directory, { recursive: true });
+      const target = fileFor(key);
+      const tmp = `${target}.${String(process.pid)}.${String(now())}.tmp`;
+      await (0, import_promises.writeFile)(tmp, JSON.stringify(record), { encoding: "utf8", mode: 384 });
+      await (0, import_promises.rename)(tmp, target);
+    }
+  };
+}
+function checkpointKeyId(key) {
+  return [
+    "v1",
+    key.source.provider ?? "",
+    key.source.path,
+    key.destination.provider ?? "",
+    key.destination.path,
+    key.scope ?? ""
+  ].join("\0");
+}
+function parseCheckpointRecord(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return void 0;
+  }
+  if (typeof parsed !== "object" || parsed === null) return void 0;
+  const record = parsed;
+  if (record.version !== 1) return void 0;
+  if (typeof record.createdAtMs !== "number" || typeof record.updatedAtMs !== "number") {
+    return void 0;
+  }
+  if (typeof record.fingerprint !== "object" || record.fingerprint === null) return void 0;
+  if (!isValidCheckpointState(record.state)) return void 0;
+  return record;
+}
+function isValidCheckpointState(state) {
+  if (typeof state !== "object" || state === null) return false;
+  const candidate = state;
+  if (typeof candidate.committedBytes !== "number" || candidate.committedBytes < 0) return false;
+  if (candidate.kind === "byte-offset") return true;
+  if (candidate.kind !== "parts") return false;
+  return typeof candidate.uploadToken === "string" && typeof candidate.partSizeBytes === "number" && Array.isArray(candidate.parts) && candidate.parts.every(
+    (part) => typeof part === "object" && part !== null && typeof part.partNumber === "number" && typeof part.byteEnd === "number"
+  );
+}
+function normalizeTtlMs(value) {
+  if (value === void 0 || !Number.isFinite(value) || value <= 0) {
+    return DEFAULT_CHECKPOINT_TTL_MS;
+  }
+  return Math.floor(value);
+}
+
 // src/transfers/createProviderTransferExecutor.ts
+var DEFAULT_PERSIST_INTERVAL_BYTES = 8 * 1024 * 1024;
+var CONCURRENT_WRITER_WINDOW_MS = 6e4;
 function createProviderTransferExecutor(options) {
   return async (context) => {
     const { job } = context;
@@ -1152,12 +1299,18 @@ function createProviderTransferExecutor(options) {
     }
     const source = requireEndpoint(job, "source");
     const destination = requireEndpoint(job, "destination");
-    const sourceSession = options.resolveSession({ endpoint: source, job, role: "source" });
-    const destinationSession = options.resolveSession({
-      endpoint: destination,
-      job,
-      role: "destination"
-    });
+    const sourceSession = requireSession(
+      options.resolveSession({ endpoint: source, job, role: "source" }),
+      source,
+      "source",
+      job
+    );
+    const destinationSession = requireSession(
+      options.resolveSession({ endpoint: destination, job, role: "destination" }),
+      destination,
+      "destination",
+      job
+    );
     const sourceTransfers = requireTransferOperations(sourceSession, source, "source", job);
     const destinationTransfers = requireTransferOperations(
       destinationSession,
@@ -1166,14 +1319,210 @@ function createProviderTransferExecutor(options) {
       job
     );
     context.throwIfAborted();
-    const readResult = await sourceTransfers.read(createReadRequest(context, source));
+    const resume = await prepareResume(
+      options.resume,
+      context,
+      source,
+      destination,
+      sourceSession,
+      destinationSession,
+      destinationTransfers
+    );
+    context.throwIfAborted();
+    const readResult = await sourceTransfers.read(createReadRequest(context, source, resume));
     context.throwIfAborted();
     const throttledReadResult = applyBandwidthThrottle(readResult, context, options.throttle);
-    const writeResult = await destinationTransfers.write(
-      createWriteRequest(context, destination, throttledReadResult)
-    );
-    return mergeProviderTransferResult(readResult, writeResult, job);
+    let writeResult;
+    try {
+      writeResult = await destinationTransfers.write(
+        createWriteRequest(context, destination, throttledReadResult, resume)
+      );
+    } catch (error) {
+      if (resume !== void 0) await resume.flushOnFailure();
+      throw error;
+    }
+    if (resume !== void 0) await resume.completed();
+    return mergeProviderTransferResult(readResult, writeResult, job, resume);
   };
+}
+async function prepareResume(resume, context, source, destination, sourceSession, destinationSession, destinationTransfers) {
+  if (resume === void 0 || resume.mode === "off") return void 0;
+  const capable = sourceSession.capabilities.resumeDownload && destinationSession.capabilities.resumeUpload;
+  if (!capable) {
+    if (resume.mode === "require") {
+      throw new UnsupportedFeatureError({
+        details: {
+          destinationProvider: destinationSession.provider,
+          jobId: context.job.id,
+          resumeDownload: sourceSession.capabilities.resumeDownload,
+          resumeUpload: destinationSession.capabilities.resumeUpload,
+          sourceProvider: sourceSession.provider
+        },
+        message: `Transfer resume was required but the endpoints do not support it (source resumeDownload=${String(sourceSession.capabilities.resumeDownload)}, destination resumeUpload=${String(destinationSession.capabilities.resumeUpload)})`,
+        retryable: false
+      });
+    }
+    return void 0;
+  }
+  const key = {
+    destination: {
+      path: destination.path,
+      ...destination.provider !== void 0 ? { provider: destination.provider } : {}
+    },
+    source: {
+      path: source.path,
+      ...source.provider !== void 0 ? { provider: source.provider } : {}
+    },
+    ...resume.scope !== void 0 ? { scope: resume.scope } : {}
+  };
+  const sourceStat = await statOrUndefined(sourceSession, source.path);
+  if (sourceStat === void 0) {
+    return void 0;
+  }
+  const fingerprint = createFingerprint(sourceStat);
+  const warnings = [];
+  const record = await resume.store.load(key);
+  let validState;
+  if (record !== void 0) {
+    if (fingerprintsMatch(record.fingerprint, fingerprint)) {
+      validState = record.state;
+      if (record.pid !== process.pid && Date.now() - record.updatedAtMs < CONCURRENT_WRITER_WINDOW_MS) {
+        warnings.push(
+          `Resume checkpoint was updated ${String(Date.now() - record.updatedAtMs)}ms ago by another process (pid ${String(record.pid)}); concurrent transfers to the same destination may conflict`
+        );
+      }
+    } else {
+      await invalidateCheckpoint(
+        resume.store,
+        key,
+        record,
+        destination,
+        destinationTransfers,
+        context.signal
+      );
+    }
+  }
+  let committedBytes = 0;
+  if (validState !== void 0) {
+    committedBytes = validState.committedBytes;
+    if (validState.kind === "byte-offset" && committedBytes > 0) {
+      const destinationStat = await statOrUndefined(destinationSession, destination.path);
+      if (destinationStat === void 0) {
+        await invalidateCheckpoint(
+          resume.store,
+          key,
+          record,
+          destination,
+          destinationTransfers,
+          context.signal
+        );
+        validState = void 0;
+        committedBytes = 0;
+      } else {
+        committedBytes = Math.min(committedBytes, destinationStat.size ?? 0);
+      }
+    }
+    if (fingerprint.sizeBytes !== void 0) {
+      committedBytes = Math.min(committedBytes, fingerprint.sizeBytes);
+    }
+    if (committedBytes <= 0 && validState !== void 0 && validState.kind === "byte-offset") {
+      validState = void 0;
+      committedBytes = 0;
+    }
+  }
+  const createdAtMs = record?.createdAtMs;
+  const buildRecord = (state) => {
+    const nowMs = Date.now();
+    return {
+      createdAtMs: createdAtMs ?? nowMs,
+      fingerprint,
+      pid: process.pid,
+      state,
+      updatedAtMs: nowMs,
+      version: 1
+    };
+  };
+  const handle = {
+    clear: async () => {
+      await resume.store.clear(key);
+    },
+    save: async (state) => {
+      await resume.store.save(key, buildRecord(state));
+    },
+    ...validState !== void 0 ? { state: validState } : {}
+  };
+  const persistInterval = normalizePersistInterval(resume.persistIntervalBytes);
+  let highestCommitted = committedBytes;
+  let persistedBytes = committedBytes;
+  let saveChain = Promise.resolve();
+  let usedByteOffsetCommits = false;
+  const persistWatermark = (committed) => {
+    saveChain = saveChain.then(
+      () => resume.store.save(key, buildRecord({ committedBytes: committed, kind: "byte-offset" }))
+    ).then(() => {
+      persistedBytes = Math.max(persistedBytes, committed);
+    }).catch(() => void 0);
+  };
+  const onBytesCommitted = (committed) => {
+    if (!Number.isFinite(committed) || committed <= highestCommitted) return;
+    highestCommitted = committed;
+    usedByteOffsetCommits = true;
+    if (committed - persistedBytes >= persistInterval) {
+      persistedBytes = committed;
+      persistWatermark(committed);
+    }
+  };
+  return {
+    committedBytes,
+    completed: async () => {
+      await saveChain;
+      await resume.store.clear(key);
+    },
+    flushOnFailure: async () => {
+      try {
+        if (usedByteOffsetCommits && highestCommitted > persistedBytes) {
+          persistWatermark(highestCommitted);
+        }
+        await saveChain;
+      } catch {
+      }
+    },
+    handle,
+    onBytesCommitted,
+    warnings
+  };
+}
+async function invalidateCheckpoint(store, key, record, destination, destinationTransfers, signal) {
+  await store.clear(key);
+  if (record === void 0 || destinationTransfers.discardResumable === void 0) return;
+  try {
+    await destinationTransfers.discardResumable({
+      endpoint: cloneEndpoint(destination),
+      state: record.state,
+      ...signal !== void 0 ? { signal } : {}
+    });
+  } catch {
+  }
+}
+async function statOrUndefined(session, path2) {
+  try {
+    return await session.fs.stat(path2);
+  } catch {
+    return void 0;
+  }
+}
+function createFingerprint(stat) {
+  const fingerprint = {};
+  if (stat.size !== void 0) fingerprint.sizeBytes = stat.size;
+  if (stat.modifiedAt !== void 0) fingerprint.modifiedAtMs = stat.modifiedAt.getTime();
+  if (stat.uniqueId !== void 0) fingerprint.etag = stat.uniqueId;
+  return fingerprint;
+}
+function normalizePersistInterval(value) {
+  if (value === void 0 || !Number.isFinite(value) || value <= 0) {
+    return DEFAULT_PERSIST_INTERVAL_BYTES;
+  }
+  return Math.floor(value);
 }
 function applyBandwidthThrottle(readResult, context, options) {
   const throttle = createBandwidthThrottle(context.bandwidthLimit, options);
@@ -1197,7 +1546,7 @@ function requireEndpoint(job, role) {
   }
   return endpoint;
 }
-function requireTransferOperations(session, endpoint, role, job) {
+function requireSession(session, endpoint, role, job) {
   if (session === void 0) {
     throw new UnsupportedFeatureError({
       details: { endpoint: cloneEndpoint(endpoint), jobId: job.id, operation: job.operation, role },
@@ -1205,6 +1554,9 @@ function requireTransferOperations(session, endpoint, role, job) {
       retryable: false
     });
   }
+  return session;
+}
+function requireTransferOperations(session, endpoint, role, job) {
   if (session.transfers === void 0) {
     throw new UnsupportedFeatureError({
       details: {
@@ -1220,7 +1572,7 @@ function requireTransferOperations(session, endpoint, role, job) {
   }
   return session.transfers;
 }
-function createReadRequest(context, endpoint) {
+function createReadRequest(context, endpoint, resume) {
   const request = {
     attempt: context.attempt,
     endpoint: cloneEndpoint(endpoint),
@@ -1232,9 +1584,12 @@ function createReadRequest(context, endpoint) {
   if (context.bandwidthLimit !== void 0) {
     request.bandwidthLimit = { ...context.bandwidthLimit };
   }
+  if (resume !== void 0 && resume.committedBytes > 0) {
+    request.range = { offset: resume.committedBytes };
+  }
   return request;
 }
-function createWriteRequest(context, endpoint, readResult) {
+function createWriteRequest(context, endpoint, readResult, resume) {
   const request = {
     attempt: context.attempt,
     content: readResult.content,
@@ -1249,20 +1604,31 @@ function createWriteRequest(context, endpoint, readResult) {
     request.bandwidthLimit = { ...context.bandwidthLimit };
   }
   if (totalBytes !== void 0) request.totalBytes = totalBytes;
-  if (context.job.resumed === true) request.offset = readResult.bytesRead ?? 0;
+  if (resume !== void 0) {
+    if (resume.committedBytes > 0) request.offset = resume.committedBytes;
+    request.checkpoint = resume.handle;
+    request.onBytesCommitted = resume.onBytesCommitted;
+  } else if (context.job.resumed === true) {
+    request.offset = readResult.bytesRead ?? 0;
+  }
   if (readResult.verification !== void 0) {
     request.verification = cloneVerification(readResult.verification);
   }
   return request;
 }
-function mergeProviderTransferResult(readResult, writeResult, job) {
+function mergeProviderTransferResult(readResult, writeResult, job, resume) {
   const result = {
     bytesTransferred: writeResult.bytesTransferred
   };
   const totalBytes = writeResult.totalBytes ?? readResult.totalBytes ?? job.totalBytes;
-  const warnings = [...readResult.warnings ?? [], ...writeResult.warnings ?? []];
+  const warnings = [
+    ...resume?.warnings ?? [],
+    ...readResult.warnings ?? [],
+    ...writeResult.warnings ?? []
+  ];
   if (totalBytes !== void 0) result.totalBytes = totalBytes;
-  if (writeResult.resumed !== void 0) result.resumed = writeResult.resumed;
+  if (resume !== void 0 && resume.committedBytes > 0) result.resumed = true;
+  else if (writeResult.resumed !== void 0) result.resumed = writeResult.resumed;
   if (writeResult.verified !== void 0) result.verified = writeResult.verified;
   if (writeResult.checksum !== void 0) result.checksum = writeResult.checksum;
   else if (readResult.checksum !== void 0) result.checksum = readResult.checksum;
@@ -1756,8 +2122,10 @@ async function runRoute(options) {
       ["source", sourceSession],
       ["destination", destinationSession]
     ]);
+    const resume = options.resume ?? client.defaults?.resume;
     const executor = createProviderTransferExecutor({
-      resolveSession: ({ role }) => sessions.get(role)
+      resolveSession: ({ role }) => sessions.get(role),
+      ...resume !== void 0 ? { resume } : {}
     });
     return await engine.execute(job, executor, buildExecuteOptions(options, client));
   } finally {
@@ -1854,7 +2222,7 @@ function buildRoute(input) {
   return route;
 }
 function absolutePath(localPath) {
-  return (0, import_node_path.isAbsolute)(localPath) ? localPath : (0, import_node_path.resolve)(localPath);
+  return (0, import_node_path2.isAbsolute)(localPath) ? localPath : (0, import_node_path2.resolve)(localPath);
 }
 function defaultRouteSuffix(source, destination) {
   return `${source}->${destination}`;
@@ -1862,7 +2230,7 @@ function defaultRouteSuffix(source, destination) {
 
 // src/profiles/SecretSource.ts
 var import_node_buffer2 = require("buffer");
-var import_promises = require("fs/promises");
+var import_promises2 = require("fs/promises");
 async function resolveSecret(source, options = {}) {
   if (isSecretValue(source)) {
     return cloneSecretValue(source);
@@ -1896,7 +2264,7 @@ async function resolveSecret(source, options = {}) {
     return import_node_buffer2.Buffer.from(value, "base64");
   }
   if (isFileSecretSource(source)) {
-    const fileReader = options.readFile ?? import_promises.readFile;
+    const fileReader = options.readFile ?? import_promises2.readFile;
     const value = await fileReader(source.path);
     if (source.encoding === "buffer") {
       return import_node_buffer2.Buffer.from(value);
@@ -2227,8 +2595,8 @@ function wrapTransfers(transfers, guard) {
 
 // src/providers/local/LocalProvider.ts
 var import_node_fs = require("fs");
-var import_promises2 = require("fs/promises");
-var import_node_path2 = __toESM(require("path"));
+var import_promises3 = require("fs/promises");
+var import_node_path3 = __toESM(require("path"));
 
 // src/utils/path.ts
 var UNSAFE_FTP_ARGUMENT_PATTERN = /[\r\n\0]/;
@@ -2321,7 +2689,7 @@ var LocalProvider = class {
   capabilities = LOCAL_PROVIDER_CAPABILITIES;
   connect(profile) {
     return Promise.resolve().then(() => {
-      const rootPath = import_node_path2.default.resolve(this.configuredRootPath ?? profile.host);
+      const rootPath = import_node_path3.default.resolve(this.configuredRootPath ?? profile.host);
       return new LocalTransferSession(rootPath);
     });
   }
@@ -2365,13 +2733,12 @@ var LocalTransferOperations = class {
     request.throwIfAborted();
     const remotePath = normalizeLocalProviderPath(request.endpoint.path);
     const localPath = resolveLocalPath(this.rootPath, remotePath);
-    const content = await collectTransferContent(request);
     const offset = normalizeOptionalByteCount(request.offset, "offset", remotePath);
     await ensureLocalParentDirectory(localPath, remotePath);
-    await writeLocalContent(localPath, remotePath, content, offset);
+    const bytesTransferred = await writeLocalStream(localPath, remotePath, request, offset);
     const stat = await readLocalEntry(this.rootPath, remotePath);
     const result = {
-      bytesTransferred: content.byteLength,
+      bytesTransferred,
       resumed: offset !== void 0 && offset > 0,
       verified: request.verification?.verified ?? false
     };
@@ -2412,7 +2779,7 @@ var LocalFileSystem = class {
     const remotePath = normalizeLocalProviderPath(remote);
     const localPath = resolveLocalPath(this.rootPath, remotePath);
     try {
-      await (0, import_promises2.unlink)(localPath);
+      await (0, import_promises3.unlink)(localPath);
     } catch (error) {
       if (options.ignoreMissing && isNodeErrno(error, "ENOENT")) return;
       if (isNodeErrno(error, "ENOENT")) {
@@ -2427,7 +2794,7 @@ var LocalFileSystem = class {
     const fromLocal = resolveLocalPath(this.rootPath, fromRemote);
     const toLocal = resolveLocalPath(this.rootPath, toRemote);
     try {
-      await (0, import_promises2.rename)(fromLocal, toLocal);
+      await (0, import_promises3.rename)(fromLocal, toLocal);
     } catch (error) {
       if (isNodeErrno(error, "ENOENT")) {
         throw createPathNotFoundError(fromRemote, `Local path not found: ${fromRemote}`);
@@ -2438,13 +2805,13 @@ var LocalFileSystem = class {
   async mkdir(remote, options = {}) {
     const remotePath = normalizeLocalProviderPath(remote);
     const localPath = resolveLocalPath(this.rootPath, remotePath);
-    await (0, import_promises2.mkdir)(localPath, { recursive: options.recursive === true });
+    await (0, import_promises3.mkdir)(localPath, { recursive: options.recursive === true });
   }
   async rmdir(remote, options = {}) {
     const remotePath = normalizeLocalProviderPath(remote);
     const localPath = resolveLocalPath(this.rootPath, remotePath);
     try {
-      await (0, import_promises2.rm)(localPath, { recursive: options.recursive === true, force: false });
+      await (0, import_promises3.rm)(localPath, { recursive: options.recursive === true, force: false });
     } catch (error) {
       if (isNodeErrno(error, "ENOENT")) {
         if (options.ignoreMissing) return;
@@ -2479,56 +2846,47 @@ async function* createLocalReadSource(localPath, range) {
     yield new Uint8Array(chunk);
   }
 }
-async function collectTransferContent(request) {
-  const chunks = [];
-  let byteLength = 0;
-  for await (const chunk of request.content) {
-    request.throwIfAborted();
-    const clonedChunk = new Uint8Array(chunk);
-    chunks.push(clonedChunk);
-    byteLength += clonedChunk.byteLength;
-    request.reportProgress(byteLength, request.totalBytes);
-  }
-  return concatChunks(chunks, byteLength);
-}
-function concatChunks(chunks, byteLength) {
-  const content = new Uint8Array(byteLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    content.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return content;
-}
 async function ensureLocalParentDirectory(localPath, remotePath) {
   try {
-    await (0, import_promises2.mkdir)(import_node_path2.default.dirname(localPath), { recursive: true });
+    await (0, import_promises3.mkdir)(import_node_path3.default.dirname(localPath), { recursive: true });
   } catch (error) {
     throw mapLocalFileSystemError(error, remotePath);
   }
 }
-async function writeLocalContent(localPath, remotePath, content, offset) {
+async function writeLocalStream(localPath, remotePath, request, offset) {
+  let handle;
   try {
-    if (offset === void 0) {
-      await (0, import_promises2.writeFile)(localPath, content);
-      return;
-    }
-    const handle = await openLocalFileForOffsetWrite(localPath);
-    try {
-      await handle.write(content, 0, content.byteLength, offset);
-    } finally {
-      await handle.close();
-    }
+    handle = offset === void 0 ? await (0, import_promises3.open)(localPath, "w") : await openLocalFileForOffsetWrite(localPath);
   } catch (error) {
     throw mapLocalFileSystemError(error, remotePath);
   }
+  let bytesTransferred = 0;
+  try {
+    let writeOffset = offset ?? 0;
+    for await (const chunk of request.content) {
+      request.throwIfAborted();
+      if (chunk.byteLength === 0) continue;
+      try {
+        await handle.write(chunk, 0, chunk.byteLength, writeOffset);
+      } catch (error) {
+        throw mapLocalFileSystemError(error, remotePath);
+      }
+      writeOffset += chunk.byteLength;
+      bytesTransferred += chunk.byteLength;
+      request.reportProgress(bytesTransferred, request.totalBytes);
+      request.onBytesCommitted?.(writeOffset);
+    }
+  } finally {
+    await handle.close().catch(() => void 0);
+  }
+  return bytesTransferred;
 }
 async function openLocalFileForOffsetWrite(localPath) {
   try {
-    return await (0, import_promises2.open)(localPath, "r+");
+    return await (0, import_promises3.open)(localPath, "r+");
   } catch (error) {
     if (getErrorCode(error) === "ENOENT") {
-      return (0, import_promises2.open)(localPath, "w+");
+      return (0, import_promises3.open)(localPath, "w+");
     }
     throw error;
   }
@@ -2560,7 +2918,7 @@ function cloneVerification2(verification) {
 }
 async function readLocalDirectory(localPath, remotePath) {
   try {
-    return await (0, import_promises2.readdir)(localPath);
+    return await (0, import_promises3.readdir)(localPath);
   } catch (error) {
     throw mapLocalFileSystemError(error, remotePath);
   }
@@ -2569,7 +2927,7 @@ async function readLocalEntry(rootPath, remotePath) {
   const localPath = resolveLocalPath(rootPath, remotePath);
   let stats;
   try {
-    stats = await (0, import_promises2.lstat)(localPath);
+    stats = await (0, import_promises3.lstat)(localPath);
   } catch (error) {
     throw mapLocalFileSystemError(error, remotePath);
   }
@@ -2597,7 +2955,7 @@ async function readLocalEntry(rootPath, remotePath) {
 }
 async function readSymlinkTarget(localPath) {
   try {
-    return await (0, import_promises2.readlink)(localPath);
+    return await (0, import_promises3.readlink)(localPath);
   } catch {
     return void 0;
   }
@@ -2619,15 +2977,15 @@ function normalizeLocalProviderPath(input) {
 }
 function resolveLocalPath(rootPath, remotePath) {
   const normalizedRemotePath = normalizeLocalProviderPath(remotePath);
-  const resolvedRootPath = import_node_path2.default.resolve(rootPath);
-  const candidateAbsolute = import_node_path2.default.resolve(normalizedRemotePath.split("/").join(import_node_path2.default.sep));
-  if (candidateAbsolute === resolvedRootPath || candidateAbsolute.startsWith(resolvedRootPath + import_node_path2.default.sep)) {
+  const resolvedRootPath = import_node_path3.default.resolve(rootPath);
+  const candidateAbsolute = import_node_path3.default.resolve(normalizedRemotePath.split("/").join(import_node_path3.default.sep));
+  if (candidateAbsolute === resolvedRootPath || candidateAbsolute.startsWith(resolvedRootPath + import_node_path3.default.sep)) {
     return candidateAbsolute;
   }
   const relativePath = normalizedRemotePath === "/" ? "." : normalizedRemotePath.slice(1);
-  const resolvedPath = import_node_path2.default.resolve(rootPath, relativePath.split("/").join(import_node_path2.default.sep));
-  const relativeToRoot = import_node_path2.default.relative(rootPath, resolvedPath);
-  if (relativeToRoot === "" || !relativeToRoot.startsWith("..") && !import_node_path2.default.isAbsolute(relativeToRoot)) {
+  const resolvedPath = import_node_path3.default.resolve(rootPath, relativePath.split("/").join(import_node_path3.default.sep));
+  const relativeToRoot = import_node_path3.default.relative(rootPath, resolvedPath);
+  if (relativeToRoot === "" || !relativeToRoot.startsWith("..") && !import_node_path3.default.isAbsolute(relativeToRoot)) {
     return resolvedPath;
   }
   throw new ConfigurationError({
@@ -2903,7 +3261,7 @@ var MemoryTransferOperations = class {
     if (existing?.type === "directory") {
       throw createInvalidFixtureError(path2, `Memory path is a directory: ${path2}`);
     }
-    const writtenContent = await collectTransferContent2(request);
+    const writtenContent = await collectTransferContent(request);
     const offset = normalizeOptionalByteCount2(request.offset, "offset");
     const previousContent = this.state.content.get(path2) ?? new Uint8Array(0);
     const content = offset === void 0 ? writtenContent : mergeContentAtOffset(previousContent, writtenContent, offset);
@@ -3055,7 +3413,7 @@ function resolveByteRange(size, range) {
   const length = Math.max(0, Math.min(requestedLength, size - offset));
   return { length, offset };
 }
-async function collectTransferContent2(request) {
+async function collectTransferContent(request) {
   const chunks = [];
   let byteLength = 0;
   for await (const chunk of request.content) {
@@ -3065,9 +3423,9 @@ async function collectTransferContent2(request) {
     byteLength += clonedChunk.byteLength;
     request.reportProgress(byteLength, request.totalBytes);
   }
-  return concatChunks2(chunks, byteLength);
+  return concatChunks(chunks, byteLength);
 }
-function concatChunks2(chunks, byteLength) {
+function concatChunks(chunks, byteLength) {
   const content = new Uint8Array(byteLength);
   let offset = 0;
   for (const chunk of chunks) {
@@ -3275,7 +3633,7 @@ function isFresh(token, skewMs, now) {
 
 // src/profiles/importers/KnownHostsParser.ts
 var import_node_buffer4 = require("buffer");
-var import_node_crypto = require("crypto");
+var import_node_crypto2 = require("crypto");
 function parseKnownHosts(text) {
   const entries = [];
   const lines = text.split(/\r?\n/);
@@ -3368,7 +3726,7 @@ function matchesHashedEntry(salt, hash, host, port) {
   if (saltBuffer.length === 0) return false;
   const candidates = port === DEFAULT_SSH_PORT ? [host] : [`[${host}]:${String(port)}`, host];
   for (const candidate of candidates) {
-    const expected = (0, import_node_crypto.createHmac)("sha1", saltBuffer).update(candidate).digest("base64");
+    const expected = (0, import_node_crypto2.createHmac)("sha1", saltBuffer).update(candidate).digest("base64");
     if (expected === hash) return true;
   }
   return false;
@@ -6140,6 +6498,7 @@ async function writePassiveDataCommand(control, command, path2, request, options
     providerId: control.providerId
   };
   try {
+    const baseOffset = options.offset ?? 0;
     for await (const chunk of request.content) {
       request.throwIfAborted();
       const output = new Uint8Array(chunk);
@@ -6151,6 +6510,7 @@ async function writePassiveDataCommand(control, command, path2, request, options
       );
       bytesTransferred += output.byteLength;
       request.reportProgress(bytesTransferred, request.totalBytes);
+      request.onBytesCommitted?.(baseOffset + bytesTransferred);
     }
     await endSocket(dataConnection.socket, control.operationTimeoutMs, timeoutContext);
     const finalResponse = await control.readFinalResponse({
@@ -6831,8 +7191,8 @@ function normalizeFeatureLines(input) {
 }
 
 // src/providers/native/sftp/NativeSftpProvider.ts
-var import_node_buffer20 = require("buffer");
-var import_node_crypto9 = require("crypto");
+var import_node_buffer21 = require("buffer");
+var import_node_crypto10 = require("crypto");
 var import_node_net2 = require("net");
 
 // src/protocols/ssh/binary/SshDataWriter.ts
@@ -7338,12 +7698,12 @@ function buildKiRequest(args) {
 
 // src/protocols/ssh/auth/SshPublickeyCredentialBuilder.ts
 var import_node_buffer8 = require("buffer");
-var import_node_crypto2 = require("crypto");
+var import_node_crypto3 = require("crypto");
 var ED25519_RAW_KEY_LENGTH = 32;
 var ED25519_SPKI_PREFIX_LENGTH = 12;
 function buildPublickeyCredential(options) {
   const { privateKey, username } = options;
-  const publicKey = (0, import_node_crypto2.createPublicKey)(privateKey);
+  const publicKey = (0, import_node_crypto3.createPublicKey)(privateKey);
   switch (privateKey.asymmetricKeyType) {
     case "ed25519": {
       const spki = publicKey.export({ format: "der", type: "spki" });
@@ -7355,7 +7715,7 @@ function buildPublickeyCredential(options) {
       return {
         algorithmName: "ssh-ed25519",
         publicKeyBlob,
-        sign: (data) => (0, import_node_crypto2.sign)(null, import_node_buffer8.Buffer.from(data), privateKey),
+        sign: (data) => (0, import_node_crypto3.sign)(null, import_node_buffer8.Buffer.from(data), privateKey),
         type: "publickey",
         username
       };
@@ -7373,7 +7733,7 @@ function buildPublickeyCredential(options) {
       return {
         algorithmName,
         publicKeyBlob,
-        sign: (data) => (0, import_node_crypto2.sign)(hash, import_node_buffer8.Buffer.from(data), privateKey),
+        sign: (data) => (0, import_node_crypto3.sign)(hash, import_node_buffer8.Buffer.from(data), privateKey),
         type: "publickey",
         username
       };
@@ -7513,9 +7873,9 @@ function encodeSshChannelClose(recipientChannel) {
 
 // src/protocols/ssh/connection/SshSessionChannel.ts
 var import_node_buffer9 = require("buffer");
-var INITIAL_WINDOW_SIZE = 256 * 1024;
+var INITIAL_WINDOW_SIZE = 2 * 1024 * 1024;
 var MAX_PACKET_SIZE = 32 * 1024;
-var WINDOW_REFILL_THRESHOLD = 64 * 1024;
+var WINDOW_REFILL_THRESHOLD = INITIAL_WINDOW_SIZE / 2;
 var SshSessionChannel = class {
   constructor(transport, options = {}) {
     this.transport = transport;
@@ -8098,11 +8458,11 @@ function parseSshIdentificationLine(line) {
 
 // src/protocols/ssh/transport/SshKexInit.ts
 var import_node_buffer10 = require("buffer");
-var import_node_crypto3 = require("crypto");
+var import_node_crypto4 = require("crypto");
 var SSH_MSG_KEXINIT = 20;
 var KEXINIT_COOKIE_LENGTH = 16;
 function encodeSshKexInitMessage(options) {
-  const cookie = options.cookie === void 0 ? (0, import_node_crypto3.randomBytes)(KEXINIT_COOKIE_LENGTH) : import_node_buffer10.Buffer.from(options.cookie);
+  const cookie = options.cookie === void 0 ? (0, import_node_crypto4.randomBytes)(KEXINIT_COOKIE_LENGTH) : import_node_buffer10.Buffer.from(options.cookie);
   if (cookie.length !== KEXINIT_COOKIE_LENGTH) {
     throw new ConfigurationError({
       details: { actualLength: cookie.length, expectedLength: KEXINIT_COOKIE_LENGTH },
@@ -8173,18 +8533,18 @@ function decodeSshKexInitMessage(payload) {
 
 // src/protocols/ssh/transport/SshKexCurve25519.ts
 var import_node_buffer11 = require("buffer");
-var import_node_crypto4 = require("crypto");
+var import_node_crypto5 = require("crypto");
 var SSH_MSG_KEX_ECDH_INIT = 30;
 var SSH_MSG_KEX_ECDH_REPLY = 31;
 var X25519_PUBLIC_KEY_LENGTH = 32;
 var X25519_SPKI_PREFIX = import_node_buffer11.Buffer.from("302a300506032b656e032100", "hex");
 function createCurve25519Ephemeral() {
-  const { privateKey, publicKey } = (0, import_node_crypto4.generateKeyPairSync)("x25519");
+  const { privateKey, publicKey } = (0, import_node_crypto5.generateKeyPairSync)("x25519");
   const encodedPublicKey = exportX25519PublicKeyRaw(publicKey);
   return {
     deriveSharedSecret: (serverPublicKey) => {
       const peer = importX25519PublicKeyRaw(serverPublicKey);
-      return (0, import_node_crypto4.diffieHellman)({ privateKey, publicKey: peer });
+      return (0, import_node_crypto5.diffieHellman)({ privateKey, publicKey: peer });
     },
     publicKey: encodedPublicKey
   };
@@ -8223,7 +8583,7 @@ function exportX25519PublicKeyRaw(publicKey) {
 function importX25519PublicKeyRaw(raw) {
   const normalized = normalizeX25519PublicKey(raw, "server");
   const der = import_node_buffer11.Buffer.concat([X25519_SPKI_PREFIX, normalized]);
-  return (0, import_node_crypto4.createPublicKey)({
+  return (0, import_node_crypto5.createPublicKey)({
     format: "der",
     key: der,
     type: "spki"
@@ -8244,7 +8604,7 @@ function normalizeX25519PublicKey(value, label) {
 
 // src/protocols/ssh/transport/SshKeyDerivation.ts
 var import_node_buffer12 = require("buffer");
-var import_node_crypto5 = require("crypto");
+var import_node_crypto6 = require("crypto");
 function deriveSshSessionKeys(input) {
   const hashAlgorithm = resolveKexHashAlgorithm(input.kexAlgorithm);
   const exchangeHash = computeCurve25519ExchangeHash(input, hashAlgorithm);
@@ -8311,20 +8671,20 @@ function deriveSshSessionKeys(input) {
 }
 function computeCurve25519ExchangeHash(input, hashAlgorithm) {
   const transcript = new SshDataWriter().writeString(input.clientIdentification, "ascii").writeString(input.serverIdentification, "ascii").writeString(input.clientKexInitPayload).writeString(input.serverKexInitPayload).writeString(input.serverHostKey).writeString(input.clientPublicKey).writeString(input.serverPublicKey).writeMpint(input.sharedSecret).toBuffer();
-  return (0, import_node_crypto5.createHash)(hashAlgorithm).update(transcript).digest();
+  return (0, import_node_crypto6.createHash)(hashAlgorithm).update(transcript).digest();
 }
 function deriveMaterial(sharedSecret, exchangeHash, sessionId, letter, length, hashAlgorithm) {
   if (length <= 0) {
     return import_node_buffer12.Buffer.alloc(0);
   }
   const result = [];
-  const first2 = (0, import_node_crypto5.createHash)(hashAlgorithm).update(
+  const first2 = (0, import_node_crypto6.createHash)(hashAlgorithm).update(
     new SshDataWriter().writeMpint(sharedSecret).writeBytes(exchangeHash).writeByte(letter.charCodeAt(0)).writeBytes(sessionId).toBuffer()
   ).digest();
   result.push(first2);
   while (import_node_buffer12.Buffer.concat(result).length < length) {
     const previous = import_node_buffer12.Buffer.concat(result);
-    const next = (0, import_node_crypto5.createHash)(hashAlgorithm).update(
+    const next = (0, import_node_crypto6.createHash)(hashAlgorithm).update(
       new SshDataWriter().writeMpint(sharedSecret).writeBytes(exchangeHash).writeBytes(previous).toBuffer()
     ).digest();
     result.push(next);
@@ -8418,7 +8778,7 @@ function decodeSshNewKeysMessage(payload) {
 
 // src/protocols/ssh/transport/SshTransportPacket.ts
 var import_node_buffer13 = require("buffer");
-var import_node_crypto6 = require("crypto");
+var import_node_crypto7 = require("crypto");
 var MIN_PADDING_LENGTH = 4;
 var MIN_PACKET_LENGTH = 1 + MIN_PADDING_LENGTH;
 var MAX_SSH_PACKET_LENGTH = 256 * 1024;
@@ -8429,7 +8789,7 @@ function encodeSshTransportPacket(payload, options = {}) {
   while ((1 + body.length + paddingLength + 4) % blockSize !== 0) {
     paddingLength += 1;
   }
-  const padding = options.randomPadding === false ? import_node_buffer13.Buffer.alloc(paddingLength) : (0, import_node_crypto6.randomBytes)(paddingLength);
+  const padding = options.randomPadding === false ? import_node_buffer13.Buffer.alloc(paddingLength) : (0, import_node_crypto7.randomBytes)(paddingLength);
   const packetLength = 1 + body.length + paddingLength;
   const frame = import_node_buffer13.Buffer.alloc(4 + packetLength);
   frame.writeUInt32BE(packetLength, 0);
@@ -8541,7 +8901,7 @@ function normalizeBlockSize(blockSize) {
 
 // src/protocols/ssh/transport/SshHostKeyVerification.ts
 var import_node_buffer14 = require("buffer");
-var import_node_crypto7 = require("crypto");
+var import_node_crypto8 = require("crypto");
 var ED25519_RAW_KEY_LENGTH2 = 32;
 var ED25519_SPKI_PREFIX = import_node_buffer14.Buffer.from("302a300506032b6570032100", "hex");
 function verifySshHostKeySignature(input) {
@@ -8569,7 +8929,7 @@ function verifySshHostKeySignature(input) {
       retryable: false
     });
   }
-  const hostKeySha256 = (0, import_node_crypto7.createHash)("sha256").update(input.hostKeyBlob).digest();
+  const hostKeySha256 = (0, import_node_crypto8.createHash)("sha256").update(input.hostKeyBlob).digest();
   return { algorithmName, hostKeySha256 };
 }
 function parseHostKey(blob) {
@@ -8590,7 +8950,7 @@ function parseHostKey(blob) {
       const spki = import_node_buffer14.Buffer.concat([ED25519_SPKI_PREFIX, raw]);
       return {
         algorithmName,
-        publicKey: (0, import_node_crypto7.createPublicKey)({ format: "der", key: spki, type: "spki" })
+        publicKey: (0, import_node_crypto8.createPublicKey)({ format: "der", key: spki, type: "spki" })
       };
     }
     case "rsa-sha2-256":
@@ -8649,27 +9009,27 @@ function isCompatibleSignatureAlgorithm(hostKeyAlgorithm, signatureAlgorithm) {
 function verifySignature(input) {
   switch (input.signatureAlgorithm) {
     case "ssh-ed25519":
-      return (0, import_node_crypto7.verify)(null, input.data, input.publicKey, input.signature);
+      return (0, import_node_crypto8.verify)(null, input.data, input.publicKey, input.signature);
     case "rsa-sha2-256":
-      return (0, import_node_crypto7.verify)("sha256", input.data, input.publicKey, input.signature);
+      return (0, import_node_crypto8.verify)("sha256", input.data, input.publicKey, input.signature);
     case "rsa-sha2-512":
-      return (0, import_node_crypto7.verify)("sha512", input.data, input.publicKey, input.signature);
+      return (0, import_node_crypto8.verify)("sha512", input.data, input.publicKey, input.signature);
     case "ecdsa-sha2-nistp256":
-      return (0, import_node_crypto7.verify)(
+      return (0, import_node_crypto8.verify)(
         "sha256",
         input.data,
         input.publicKey,
         sshEcdsaSignatureToDer(input.signature)
       );
     case "ecdsa-sha2-nistp384":
-      return (0, import_node_crypto7.verify)(
+      return (0, import_node_crypto8.verify)(
         "sha384",
         input.data,
         input.publicKey,
         sshEcdsaSignatureToDer(input.signature)
       );
     case "ecdsa-sha2-nistp521":
-      return (0, import_node_crypto7.verify)(
+      return (0, import_node_crypto8.verify)(
         "sha512",
         input.data,
         input.publicKey,
@@ -8702,7 +9062,7 @@ function rsaPublicKeyFromComponents(e, n) {
   ]);
   const algoId = import_node_buffer14.Buffer.from("300d06092a864886f70d010101 0500".replace(/\s+/g, ""), "hex");
   const spki = encodeAsn1Sequence(import_node_buffer14.Buffer.concat([algoId, bitString]));
-  return (0, import_node_crypto7.createPublicKey)({ format: "der", key: spki, type: "spki" });
+  return (0, import_node_crypto8.createPublicKey)({ format: "der", key: spki, type: "spki" });
 }
 function encodeAsn1Integer(value) {
   let body = value;
@@ -8753,7 +9113,7 @@ function ecdsaPublicKeyFromPoint(curveIdentifier, point) {
     bitStringContent
   ]);
   const spki = encodeAsn1Sequence(import_node_buffer14.Buffer.concat([algoId, bitString]));
-  return (0, import_node_crypto7.createPublicKey)({ format: "der", key: spki, type: "spki" });
+  return (0, import_node_crypto8.createPublicKey)({ format: "der", key: spki, type: "spki" });
 }
 function sshEcdsaSignatureToDer(sshSignature) {
   const reader = new SshDataReader(sshSignature);
@@ -9060,7 +9420,7 @@ function missingPendingKeyExchangeError() {
 
 // src/protocols/ssh/transport/SshTransportProtection.ts
 var import_node_buffer16 = require("buffer");
-var import_node_crypto8 = require("crypto");
+var import_node_crypto9 = require("crypto");
 function createSshTransportProtectionContext(input) {
   return {
     inbound: new SshTransportPacketUnprotector({
@@ -9194,7 +9554,7 @@ var SshTransportPacketUnprotector = class {
         clearPacket,
         this.macLength
       );
-      if (!(0, import_node_crypto8.timingSafeEqual)(receivedMac, expectedMac)) {
+      if (!(0, import_node_crypto9.timingSafeEqual)(receivedMac, expectedMac)) {
         throw new ProtocolError({
           message: "SSH packet MAC verification failed",
           protocol: "sftp",
@@ -9229,7 +9589,7 @@ var SshTransportPacketUnprotector = class {
       clearPacket,
       this.macLength
     );
-    if (!(0, import_node_crypto8.timingSafeEqual)(receivedMac, expectedMac)) {
+    if (!(0, import_node_crypto9.timingSafeEqual)(receivedMac, expectedMac)) {
       throw new ProtocolError({
         message: "SSH packet MAC verification failed",
         protocol: "sftp",
@@ -9245,7 +9605,7 @@ function createCipher(algorithm, key, iv) {
     return void 0;
   }
   validateCipherMaterial(algorithm, key, iv);
-  const cipher = (0, import_node_crypto8.createCipheriv)(toOpenSslCipherName(algorithm), key, iv);
+  const cipher = (0, import_node_crypto9.createCipheriv)(toOpenSslCipherName(algorithm), key, iv);
   cipher.setAutoPadding(false);
   return cipher;
 }
@@ -9254,7 +9614,7 @@ function createDecipher(algorithm, key, iv) {
     return void 0;
   }
   validateCipherMaterial(algorithm, key, iv);
-  const decipher = (0, import_node_crypto8.createDecipheriv)(toOpenSslCipherName(algorithm), key, iv);
+  const decipher = (0, import_node_crypto9.createDecipheriv)(toOpenSslCipherName(algorithm), key, iv);
   decipher.setAutoPadding(false);
   return decipher;
 }
@@ -9355,7 +9715,7 @@ function computeMac(macAlgorithm, macKey, sequence, packet, macLength) {
   const hashName = macAlgorithm === "hmac-sha2-512" ? "sha512" : "sha256";
   const sequenceBuffer = import_node_buffer16.Buffer.alloc(4);
   sequenceBuffer.writeUInt32BE(sequence >>> 0, 0);
-  return (0, import_node_crypto8.createHmac)(hashName, macKey).update(sequenceBuffer).update(packet).digest().subarray(0, macLength);
+  return (0, import_node_crypto9.createHmac)(hashName, macKey).update(sequenceBuffer).update(packet).digest().subarray(0, macLength);
 }
 
 // src/protocols/ssh/transport/SshTransportConnection.ts
@@ -10408,10 +10768,116 @@ var SftpSession = class {
   }
 };
 
+// src/providers/native/sftp/sftpPipeline.ts
+var import_node_buffer20 = require("buffer");
+var SFTP_PIPELINE_DEFAULT_MAX_IN_FLIGHT = 64;
+var SFTP_PIPELINE_DEFAULT_CHUNK_BYTES = 32768;
+var SFTP_PIPELINE_MAX_CHUNK_BYTES = 245760;
+function resolveSftpPipelineOptions(options) {
+  const maxInFlight = normalizePositiveInteger2(
+    options?.maxInFlight,
+    SFTP_PIPELINE_DEFAULT_MAX_IN_FLIGHT
+  );
+  const chunkBytes = Math.min(
+    normalizePositiveInteger2(options?.chunkBytes, SFTP_PIPELINE_DEFAULT_CHUNK_BYTES),
+    SFTP_PIPELINE_MAX_CHUNK_BYTES
+  );
+  return { chunkBytes, maxInFlight };
+}
+async function* pipelinedSftpRead(input) {
+  const { sftp, handle, pipeline } = input;
+  if (input.length <= 0) return;
+  let nextOffset = input.offset;
+  let remaining = input.length;
+  const window = [];
+  const issueNext = () => {
+    if (remaining <= 0) return;
+    const slotLength = Math.min(pipeline.chunkBytes, remaining);
+    const slotOffset = nextOffset;
+    nextOffset += slotLength;
+    remaining -= slotLength;
+    const promise = readFullSlot(sftp, handle, slotOffset, slotLength);
+    void promise.catch(() => void 0);
+    window.push(promise);
+  };
+  try {
+    while (window.length < pipeline.maxInFlight && remaining > 0) issueNext();
+    while (window.length > 0) {
+      const head = window[0];
+      if (head === void 0) break;
+      const data = await head;
+      void window.shift();
+      if (data === null || data.length === 0) {
+        return;
+      }
+      input.throwIfAborted?.();
+      yield new Uint8Array(data);
+      issueNext();
+    }
+  } finally {
+    await Promise.allSettled(window);
+  }
+}
+async function readFullSlot(sftp, handle, offset, length) {
+  let collected;
+  let received = 0;
+  while (received < length) {
+    const data = await sftp.read(handle, BigInt(offset + received), length - received);
+    if (data === null) break;
+    if (collected === void 0 && data.length === length) return data;
+    collected = collected === void 0 ? data : import_node_buffer20.Buffer.concat([collected, data]);
+    received += data.length;
+  }
+  return collected ?? null;
+}
+async function pipelinedSftpWrite(input) {
+  const { sftp, handle, pipeline } = input;
+  const window = [];
+  let issuedBytes = 0;
+  let ackedBytes = 0;
+  const awaitOldest = async () => {
+    const oldest = window[0];
+    if (oldest === void 0) return;
+    window.shift();
+    await oldest.promise;
+    ackedBytes = oldest.end;
+    input.onAck?.(ackedBytes, input.startOffset + ackedBytes);
+  };
+  const issueWrite = (bytes) => {
+    const writeOffset = BigInt(input.startOffset + issuedBytes);
+    issuedBytes += bytes.byteLength;
+    const promise = sftp.write(handle, writeOffset, bytes);
+    void promise.catch(() => void 0);
+    window.push({ end: issuedBytes, promise });
+  };
+  try {
+    for await (const chunk of input.content) {
+      input.throwIfAborted?.();
+      if (chunk.byteLength === 0) continue;
+      for (let position = 0; position < chunk.byteLength; position += pipeline.chunkBytes) {
+        const slice = chunk.subarray(
+          position,
+          Math.min(position + pipeline.chunkBytes, chunk.byteLength)
+        );
+        if (window.length >= pipeline.maxInFlight) await awaitOldest();
+        input.throwIfAborted?.();
+        issueWrite(slice);
+      }
+    }
+    while (window.length > 0) await awaitOldest();
+    return ackedBytes;
+  } finally {
+    await Promise.allSettled(window.map((entry) => entry.promise));
+  }
+}
+function normalizePositiveInteger2(value, fallback) {
+  if (value === void 0 || !Number.isFinite(value) || value < 1) return fallback;
+  return Math.floor(value);
+}
+
 // src/providers/native/sftp/NativeSftpProvider.ts
 var NATIVE_SFTP_PROVIDER_ID = "sftp";
 var NATIVE_SFTP_DEFAULT_PORT = 22;
-var SFTP_READ_CHUNK_BYTES = 32768;
 var NATIVE_SFTP_ALGORITHM_PREFERENCES = {
   compressionClientToServer: ["none"],
   compressionServerToClient: ["none"],
@@ -10453,7 +10919,8 @@ function buildNativeSftpCapabilities(maxConcurrency) {
     maxConcurrency,
     notes: [
       "Native SSH/SFTP provider using the project's own protocol stack (Waves 1\u20133).",
-      "Supports password, keyboard-interactive, and public-key (Ed25519/RSA) authentication."
+      "Supports password, keyboard-interactive, and public-key (Ed25519/RSA) authentication.",
+      "Single-file transfers are pipelined (default 64 in-flight requests x 32 KiB); tune via SftpProviderOptions.pipeline."
     ]
   };
 }
@@ -10516,7 +10983,11 @@ var NativeSftpProvider = class {
       });
       const sftp = new SftpSession(channel);
       await sftp.init();
-      return new NativeSftpSession(transport, sftp);
+      return new NativeSftpSession(
+        transport,
+        sftp,
+        resolveSftpPipelineOptions(this.options.pipeline)
+      );
     } catch (error) {
       if (socket !== void 0 && !socket.destroyed) {
         socket.destroy();
@@ -10526,11 +10997,11 @@ var NativeSftpProvider = class {
   }
 };
 var NativeSftpSession = class {
-  constructor(transport, sftp) {
+  constructor(transport, sftp, pipeline) {
     this.transport = transport;
     this.sftp = sftp;
     this.fs = new NativeSftpFileSystem(sftp);
-    this.transfers = new NativeSftpTransferOperations(sftp);
+    this.transfers = new NativeSftpTransferOperations(sftp, pipeline);
   }
   transport;
   sftp;
@@ -10654,10 +11125,12 @@ var NativeSftpFileSystem = class {
   }
 };
 var NativeSftpTransferOperations = class {
-  constructor(sftp) {
+  constructor(sftp, pipeline) {
     this.sftp = sftp;
+    this.pipeline = pipeline;
   }
   sftp;
+  pipeline;
   async read(request) {
     request.throwIfAborted();
     const remotePath = normalizeRemotePath(request.endpoint.path);
@@ -10684,17 +11157,16 @@ var NativeSftpTransferOperations = class {
     request.throwIfAborted();
     const handle = await this.sftp.open(path2, SFTP_OPEN_FLAG.READ);
     try {
-      let remaining = range.length;
-      let offset = range.offset;
-      while (remaining > 0) {
-        request.throwIfAborted();
-        const chunkLen = Math.min(SFTP_READ_CHUNK_BYTES, remaining);
-        const data = await this.sftp.read(handle, BigInt(offset), chunkLen);
-        if (data === null) break;
-        yield new Uint8Array(data);
-        offset += data.length;
-        remaining -= data.length;
-      }
+      yield* pipelinedSftpRead({
+        handle,
+        length: range.length,
+        offset: range.offset,
+        pipeline: this.pipeline,
+        sftp: this.sftp,
+        throwIfAborted: () => {
+          request.throwIfAborted();
+        }
+      });
     } finally {
       await this.sftp.close(handle).catch(() => {
       });
@@ -10707,17 +11179,22 @@ var NativeSftpTransferOperations = class {
     const pflags = startOffset !== void 0 && startOffset > 0 ? SFTP_OPEN_FLAG.WRITE : SFTP_OPEN_FLAG.WRITE | SFTP_OPEN_FLAG.CREAT | SFTP_OPEN_FLAG.TRUNC;
     request.throwIfAborted();
     const handle = await this.sftp.open(remotePath, pflags);
-    let bytesTransferred = 0;
+    let bytesTransferred;
     try {
-      let writeOffset = startOffset ?? 0;
-      for await (const chunk of request.content) {
-        request.throwIfAborted();
-        if (chunk.byteLength === 0) continue;
-        await this.sftp.write(handle, BigInt(writeOffset), chunk);
-        writeOffset += chunk.byteLength;
-        bytesTransferred += chunk.byteLength;
-        request.reportProgress(bytesTransferred, request.totalBytes);
-      }
+      bytesTransferred = await pipelinedSftpWrite({
+        content: request.content,
+        handle,
+        onAck: (ackedBytes, absoluteOffset) => {
+          request.reportProgress(ackedBytes, request.totalBytes);
+          request.onBytesCommitted?.(absoluteOffset);
+        },
+        pipeline: this.pipeline,
+        sftp: this.sftp,
+        startOffset: startOffset ?? 0,
+        throwIfAborted: () => {
+          request.throwIfAborted();
+        }
+      });
     } finally {
       await this.sftp.close(handle).catch(() => {
       });
@@ -10855,10 +11332,10 @@ function buildNativePublickeyCredential(profile, username) {
   }
   const passphrase = profile.ssh?.passphrase;
   try {
-    const privateKey = (0, import_node_crypto9.createPrivateKey)({
-      key: import_node_buffer20.Buffer.isBuffer(keyMaterial) ? keyMaterial : keyMaterial,
+    const privateKey = (0, import_node_crypto10.createPrivateKey)({
+      key: import_node_buffer21.Buffer.isBuffer(keyMaterial) ? keyMaterial : keyMaterial,
       ...passphrase === void 0 ? {} : {
-        passphrase: import_node_buffer20.Buffer.isBuffer(passphrase) ? passphrase : passphrase
+        passphrase: import_node_buffer21.Buffer.isBuffer(passphrase) ? passphrase : passphrase
       }
     });
     return buildPublickeyCredential({ privateKey, username });
@@ -10985,12 +11462,12 @@ function normalizeNativeHostKeyPins(value) {
     const trimmed = pin.trim();
     const hex = trimmed.replace(/:/g, "");
     if (hex.length === 64 && /^[a-f0-9]+$/i.test(hex)) {
-      normalized.add(import_node_buffer20.Buffer.from(hex, "hex").toString("base64").replace(/=+$/g, ""));
+      normalized.add(import_node_buffer21.Buffer.from(hex, "hex").toString("base64").replace(/=+$/g, ""));
       continue;
     }
     const bare = trimmed.startsWith("SHA256:") ? trimmed.slice("SHA256:".length) : trimmed;
     const padded = bare.length % 4 === 0 ? bare : `${bare}${"=".repeat(4 - bare.length % 4)}`;
-    normalized.add(import_node_buffer20.Buffer.from(padded, "base64").toString("base64").replace(/=+$/g, ""));
+    normalized.add(import_node_buffer21.Buffer.from(padded, "base64").toString("base64").replace(/=+$/g, ""));
   }
   return normalized;
 }
@@ -11000,7 +11477,7 @@ function parseNativeKnownHosts(source) {
   const entries = [];
   let sawNonEmpty = false;
   for (const value of sources) {
-    const text = import_node_buffer20.Buffer.isBuffer(value) ? value.toString("utf8") : String(value);
+    const text = import_node_buffer21.Buffer.isBuffer(value) ? value.toString("utf8") : String(value);
     if (text.length === 0) continue;
     sawNonEmpty = true;
     entries.push(...parseKnownHosts(text));
@@ -11020,7 +11497,7 @@ function buildNativeHostKeyVerifier(input) {
   if (pins === void 0 && knownHosts === void 0) return void 0;
   return ({ hostKeyBlob }) => {
     if (pins !== void 0) {
-      const fingerprint = (0, import_node_crypto9.createHash)("sha256").update(hostKeyBlob).digest("base64").replace(/=+$/g, "");
+      const fingerprint = (0, import_node_crypto10.createHash)("sha256").update(hostKeyBlob).digest("base64").replace(/=+$/g, "");
       if (!pins.has(fingerprint)) {
         throw new AuthenticationError({
           details: { fingerprint, host },
@@ -11073,7 +11550,7 @@ function requireNativeSftpUsername(profile) {
 }
 function resolveNativeSftpTextSecret(value) {
   if (value === void 0) return void 0;
-  const text = import_node_buffer20.Buffer.isBuffer(value) ? value.toString("utf8") : value;
+  const text = import_node_buffer21.Buffer.isBuffer(value) ? value.toString("utf8") : value;
   if (text.length === 0) return void 0;
   return text;
 }
@@ -11124,6 +11601,7 @@ function validateNativeSftpOptions(options) {
   CLASSIC_PROVIDER_IDS,
   ConfigurationError,
   ConnectionError,
+  DEFAULT_CHECKPOINT_TTL_MS,
   FtpResponseParser,
   ParseError,
   PathAlreadyExistsError,
@@ -11133,6 +11611,9 @@ function validateNativeSftpOptions(options) {
   ProviderRegistry,
   REDACTED,
   REMOTE_MANIFEST_FORMAT_VERSION,
+  SFTP_PIPELINE_DEFAULT_CHUNK_BYTES,
+  SFTP_PIPELINE_DEFAULT_MAX_IN_FLIGHT,
+  SFTP_PIPELINE_MAX_CHUNK_BYTES,
   TimeoutError,
   TransferClient,
   TransferEngine,
@@ -11150,10 +11631,12 @@ function validateNativeSftpOptions(options) {
   createAtomicDeployPlan,
   createBandwidthThrottle,
   createDefaultRetryPolicy,
+  createFileSystemTransferCheckpointStore,
   createFtpProviderFactory,
   createFtpsProviderFactory,
   createLocalProviderFactory,
   createMemoryProviderFactory,
+  createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource,
   createPooledTransferClient,
   createProgressEvent,
@@ -11171,6 +11654,7 @@ function validateNativeSftpOptions(options) {
   emitLog,
   errorFromFtpReply,
   filterRemoteEntries,
+  fingerprintsMatch,
   importFileZillaSites,
   importOpenSshConfig,
   importWinScpSessions,

@@ -13,7 +13,7 @@ function createRemoteManifest(
 options?): Promise<RemoteManifest>;
 ```
 
-Defined in: [src/sync/manifest.ts:100](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/sync/manifest.ts#L100)
+Defined in: [src/sync/manifest.ts:100](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/sync/manifest.ts#L100)
 
 Walks a remote subtree and produces a serializable manifest snapshot.
 

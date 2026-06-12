@@ -1009,7 +1009,153 @@ function defaultSleep(delayMs, signal) {
   });
 }
 
+// src/transfers/TransferCheckpointStore.ts
+import { createHash } from "crypto";
+import {
+  mkdir as fsMkdir,
+  readFile as fsReadFile,
+  rename as fsRename,
+  unlink as fsUnlink,
+  writeFile as fsWriteFile
+} from "fs/promises";
+import { join as joinPath } from "path";
+var DEFAULT_CHECKPOINT_TTL_MS = 7 * 24 * 60 * 60 * 1e3;
+function fingerprintsMatch(stored, current) {
+  let comparable = 0;
+  if (stored.sizeBytes !== void 0 && current.sizeBytes !== void 0) {
+    comparable += 1;
+    if (stored.sizeBytes !== current.sizeBytes) return false;
+  }
+  if (stored.modifiedAtMs !== void 0 && current.modifiedAtMs !== void 0) {
+    comparable += 1;
+    if (stored.modifiedAtMs !== current.modifiedAtMs) return false;
+  }
+  if (stored.etag !== void 0 && current.etag !== void 0) {
+    comparable += 1;
+    if (stored.etag !== current.etag) return false;
+  }
+  return comparable > 0;
+}
+function createMemoryTransferCheckpointStore(options = {}) {
+  const ttlMs = normalizeTtlMs(options.ttlMs);
+  const now = options.now ?? Date.now;
+  const map = /* @__PURE__ */ new Map();
+  return {
+    clear: (key) => {
+      map.delete(checkpointKeyId(key));
+    },
+    load: (key) => {
+      const id = checkpointKeyId(key);
+      const record = map.get(id);
+      if (record === void 0) return void 0;
+      if (now() - record.updatedAtMs > ttlMs) {
+        map.delete(id);
+        return void 0;
+      }
+      return record;
+    },
+    save: (key, record) => {
+      map.set(checkpointKeyId(key), record);
+    }
+  };
+}
+function createFileSystemTransferCheckpointStore(options) {
+  const directory = options.directory;
+  if (typeof directory !== "string" || directory.length === 0) {
+    throw new ConfigurationError({
+      message: "createFileSystemTransferCheckpointStore requires a non-empty directory option",
+      retryable: false
+    });
+  }
+  const ttlMs = normalizeTtlMs(options.ttlMs);
+  const now = options.now ?? Date.now;
+  const fileFor = (key) => {
+    const hash = createHash("sha256").update(checkpointKeyId(key)).digest("hex");
+    return joinPath(directory, `${hash}.json`);
+  };
+  const remove = async (file) => {
+    try {
+      await fsUnlink(file);
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+  };
+  return {
+    async clear(key) {
+      await remove(fileFor(key));
+    },
+    async load(key) {
+      const file = fileFor(key);
+      let text;
+      try {
+        text = await fsReadFile(file, "utf8");
+      } catch (error) {
+        if (error.code === "ENOENT") return void 0;
+        throw error;
+      }
+      const record = parseCheckpointRecord(text);
+      if (record === void 0 || now() - record.updatedAtMs > ttlMs) {
+        await remove(file);
+        return void 0;
+      }
+      return record;
+    },
+    async save(key, record) {
+      await fsMkdir(directory, { recursive: true });
+      const target = fileFor(key);
+      const tmp = `${target}.${String(process.pid)}.${String(now())}.tmp`;
+      await fsWriteFile(tmp, JSON.stringify(record), { encoding: "utf8", mode: 384 });
+      await fsRename(tmp, target);
+    }
+  };
+}
+function checkpointKeyId(key) {
+  return [
+    "v1",
+    key.source.provider ?? "",
+    key.source.path,
+    key.destination.provider ?? "",
+    key.destination.path,
+    key.scope ?? ""
+  ].join("\0");
+}
+function parseCheckpointRecord(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return void 0;
+  }
+  if (typeof parsed !== "object" || parsed === null) return void 0;
+  const record = parsed;
+  if (record.version !== 1) return void 0;
+  if (typeof record.createdAtMs !== "number" || typeof record.updatedAtMs !== "number") {
+    return void 0;
+  }
+  if (typeof record.fingerprint !== "object" || record.fingerprint === null) return void 0;
+  if (!isValidCheckpointState(record.state)) return void 0;
+  return record;
+}
+function isValidCheckpointState(state) {
+  if (typeof state !== "object" || state === null) return false;
+  const candidate = state;
+  if (typeof candidate.committedBytes !== "number" || candidate.committedBytes < 0) return false;
+  if (candidate.kind === "byte-offset") return true;
+  if (candidate.kind !== "parts") return false;
+  return typeof candidate.uploadToken === "string" && typeof candidate.partSizeBytes === "number" && Array.isArray(candidate.parts) && candidate.parts.every(
+    (part) => typeof part === "object" && part !== null && typeof part.partNumber === "number" && typeof part.byteEnd === "number"
+  );
+}
+function normalizeTtlMs(value) {
+  if (value === void 0 || !Number.isFinite(value) || value <= 0) {
+    return DEFAULT_CHECKPOINT_TTL_MS;
+  }
+  return Math.floor(value);
+}
+
 // src/transfers/createProviderTransferExecutor.ts
+var DEFAULT_PERSIST_INTERVAL_BYTES = 8 * 1024 * 1024;
+var CONCURRENT_WRITER_WINDOW_MS = 6e4;
 function createProviderTransferExecutor(options) {
   return async (context) => {
     const { job } = context;
@@ -1022,12 +1168,18 @@ function createProviderTransferExecutor(options) {
     }
     const source = requireEndpoint(job, "source");
     const destination = requireEndpoint(job, "destination");
-    const sourceSession = options.resolveSession({ endpoint: source, job, role: "source" });
-    const destinationSession = options.resolveSession({
-      endpoint: destination,
-      job,
-      role: "destination"
-    });
+    const sourceSession = requireSession(
+      options.resolveSession({ endpoint: source, job, role: "source" }),
+      source,
+      "source",
+      job
+    );
+    const destinationSession = requireSession(
+      options.resolveSession({ endpoint: destination, job, role: "destination" }),
+      destination,
+      "destination",
+      job
+    );
     const sourceTransfers = requireTransferOperations(sourceSession, source, "source", job);
     const destinationTransfers = requireTransferOperations(
       destinationSession,
@@ -1036,14 +1188,210 @@ function createProviderTransferExecutor(options) {
       job
     );
     context.throwIfAborted();
-    const readResult = await sourceTransfers.read(createReadRequest(context, source));
+    const resume = await prepareResume(
+      options.resume,
+      context,
+      source,
+      destination,
+      sourceSession,
+      destinationSession,
+      destinationTransfers
+    );
+    context.throwIfAborted();
+    const readResult = await sourceTransfers.read(createReadRequest(context, source, resume));
     context.throwIfAborted();
     const throttledReadResult = applyBandwidthThrottle(readResult, context, options.throttle);
-    const writeResult = await destinationTransfers.write(
-      createWriteRequest(context, destination, throttledReadResult)
-    );
-    return mergeProviderTransferResult(readResult, writeResult, job);
+    let writeResult;
+    try {
+      writeResult = await destinationTransfers.write(
+        createWriteRequest(context, destination, throttledReadResult, resume)
+      );
+    } catch (error) {
+      if (resume !== void 0) await resume.flushOnFailure();
+      throw error;
+    }
+    if (resume !== void 0) await resume.completed();
+    return mergeProviderTransferResult(readResult, writeResult, job, resume);
   };
+}
+async function prepareResume(resume, context, source, destination, sourceSession, destinationSession, destinationTransfers) {
+  if (resume === void 0 || resume.mode === "off") return void 0;
+  const capable = sourceSession.capabilities.resumeDownload && destinationSession.capabilities.resumeUpload;
+  if (!capable) {
+    if (resume.mode === "require") {
+      throw new UnsupportedFeatureError({
+        details: {
+          destinationProvider: destinationSession.provider,
+          jobId: context.job.id,
+          resumeDownload: sourceSession.capabilities.resumeDownload,
+          resumeUpload: destinationSession.capabilities.resumeUpload,
+          sourceProvider: sourceSession.provider
+        },
+        message: `Transfer resume was required but the endpoints do not support it (source resumeDownload=${String(sourceSession.capabilities.resumeDownload)}, destination resumeUpload=${String(destinationSession.capabilities.resumeUpload)})`,
+        retryable: false
+      });
+    }
+    return void 0;
+  }
+  const key = {
+    destination: {
+      path: destination.path,
+      ...destination.provider !== void 0 ? { provider: destination.provider } : {}
+    },
+    source: {
+      path: source.path,
+      ...source.provider !== void 0 ? { provider: source.provider } : {}
+    },
+    ...resume.scope !== void 0 ? { scope: resume.scope } : {}
+  };
+  const sourceStat = await statOrUndefined(sourceSession, source.path);
+  if (sourceStat === void 0) {
+    return void 0;
+  }
+  const fingerprint = createFingerprint(sourceStat);
+  const warnings = [];
+  const record = await resume.store.load(key);
+  let validState;
+  if (record !== void 0) {
+    if (fingerprintsMatch(record.fingerprint, fingerprint)) {
+      validState = record.state;
+      if (record.pid !== process.pid && Date.now() - record.updatedAtMs < CONCURRENT_WRITER_WINDOW_MS) {
+        warnings.push(
+          `Resume checkpoint was updated ${String(Date.now() - record.updatedAtMs)}ms ago by another process (pid ${String(record.pid)}); concurrent transfers to the same destination may conflict`
+        );
+      }
+    } else {
+      await invalidateCheckpoint(
+        resume.store,
+        key,
+        record,
+        destination,
+        destinationTransfers,
+        context.signal
+      );
+    }
+  }
+  let committedBytes = 0;
+  if (validState !== void 0) {
+    committedBytes = validState.committedBytes;
+    if (validState.kind === "byte-offset" && committedBytes > 0) {
+      const destinationStat = await statOrUndefined(destinationSession, destination.path);
+      if (destinationStat === void 0) {
+        await invalidateCheckpoint(
+          resume.store,
+          key,
+          record,
+          destination,
+          destinationTransfers,
+          context.signal
+        );
+        validState = void 0;
+        committedBytes = 0;
+      } else {
+        committedBytes = Math.min(committedBytes, destinationStat.size ?? 0);
+      }
+    }
+    if (fingerprint.sizeBytes !== void 0) {
+      committedBytes = Math.min(committedBytes, fingerprint.sizeBytes);
+    }
+    if (committedBytes <= 0 && validState !== void 0 && validState.kind === "byte-offset") {
+      validState = void 0;
+      committedBytes = 0;
+    }
+  }
+  const createdAtMs = record?.createdAtMs;
+  const buildRecord = (state) => {
+    const nowMs = Date.now();
+    return {
+      createdAtMs: createdAtMs ?? nowMs,
+      fingerprint,
+      pid: process.pid,
+      state,
+      updatedAtMs: nowMs,
+      version: 1
+    };
+  };
+  const handle = {
+    clear: async () => {
+      await resume.store.clear(key);
+    },
+    save: async (state) => {
+      await resume.store.save(key, buildRecord(state));
+    },
+    ...validState !== void 0 ? { state: validState } : {}
+  };
+  const persistInterval = normalizePersistInterval(resume.persistIntervalBytes);
+  let highestCommitted = committedBytes;
+  let persistedBytes = committedBytes;
+  let saveChain = Promise.resolve();
+  let usedByteOffsetCommits = false;
+  const persistWatermark = (committed) => {
+    saveChain = saveChain.then(
+      () => resume.store.save(key, buildRecord({ committedBytes: committed, kind: "byte-offset" }))
+    ).then(() => {
+      persistedBytes = Math.max(persistedBytes, committed);
+    }).catch(() => void 0);
+  };
+  const onBytesCommitted = (committed) => {
+    if (!Number.isFinite(committed) || committed <= highestCommitted) return;
+    highestCommitted = committed;
+    usedByteOffsetCommits = true;
+    if (committed - persistedBytes >= persistInterval) {
+      persistedBytes = committed;
+      persistWatermark(committed);
+    }
+  };
+  return {
+    committedBytes,
+    completed: async () => {
+      await saveChain;
+      await resume.store.clear(key);
+    },
+    flushOnFailure: async () => {
+      try {
+        if (usedByteOffsetCommits && highestCommitted > persistedBytes) {
+          persistWatermark(highestCommitted);
+        }
+        await saveChain;
+      } catch {
+      }
+    },
+    handle,
+    onBytesCommitted,
+    warnings
+  };
+}
+async function invalidateCheckpoint(store, key, record, destination, destinationTransfers, signal) {
+  await store.clear(key);
+  if (record === void 0 || destinationTransfers.discardResumable === void 0) return;
+  try {
+    await destinationTransfers.discardResumable({
+      endpoint: cloneEndpoint(destination),
+      state: record.state,
+      ...signal !== void 0 ? { signal } : {}
+    });
+  } catch {
+  }
+}
+async function statOrUndefined(session, path2) {
+  try {
+    return await session.fs.stat(path2);
+  } catch {
+    return void 0;
+  }
+}
+function createFingerprint(stat) {
+  const fingerprint = {};
+  if (stat.size !== void 0) fingerprint.sizeBytes = stat.size;
+  if (stat.modifiedAt !== void 0) fingerprint.modifiedAtMs = stat.modifiedAt.getTime();
+  if (stat.uniqueId !== void 0) fingerprint.etag = stat.uniqueId;
+  return fingerprint;
+}
+function normalizePersistInterval(value) {
+  if (value === void 0 || !Number.isFinite(value) || value <= 0) {
+    return DEFAULT_PERSIST_INTERVAL_BYTES;
+  }
+  return Math.floor(value);
 }
 function applyBandwidthThrottle(readResult, context, options) {
   const throttle = createBandwidthThrottle(context.bandwidthLimit, options);
@@ -1067,7 +1415,7 @@ function requireEndpoint(job, role) {
   }
   return endpoint;
 }
-function requireTransferOperations(session, endpoint, role, job) {
+function requireSession(session, endpoint, role, job) {
   if (session === void 0) {
     throw new UnsupportedFeatureError({
       details: { endpoint: cloneEndpoint(endpoint), jobId: job.id, operation: job.operation, role },
@@ -1075,6 +1423,9 @@ function requireTransferOperations(session, endpoint, role, job) {
       retryable: false
     });
   }
+  return session;
+}
+function requireTransferOperations(session, endpoint, role, job) {
   if (session.transfers === void 0) {
     throw new UnsupportedFeatureError({
       details: {
@@ -1090,7 +1441,7 @@ function requireTransferOperations(session, endpoint, role, job) {
   }
   return session.transfers;
 }
-function createReadRequest(context, endpoint) {
+function createReadRequest(context, endpoint, resume) {
   const request = {
     attempt: context.attempt,
     endpoint: cloneEndpoint(endpoint),
@@ -1102,9 +1453,12 @@ function createReadRequest(context, endpoint) {
   if (context.bandwidthLimit !== void 0) {
     request.bandwidthLimit = { ...context.bandwidthLimit };
   }
+  if (resume !== void 0 && resume.committedBytes > 0) {
+    request.range = { offset: resume.committedBytes };
+  }
   return request;
 }
-function createWriteRequest(context, endpoint, readResult) {
+function createWriteRequest(context, endpoint, readResult, resume) {
   const request = {
     attempt: context.attempt,
     content: readResult.content,
@@ -1119,20 +1473,31 @@ function createWriteRequest(context, endpoint, readResult) {
     request.bandwidthLimit = { ...context.bandwidthLimit };
   }
   if (totalBytes !== void 0) request.totalBytes = totalBytes;
-  if (context.job.resumed === true) request.offset = readResult.bytesRead ?? 0;
+  if (resume !== void 0) {
+    if (resume.committedBytes > 0) request.offset = resume.committedBytes;
+    request.checkpoint = resume.handle;
+    request.onBytesCommitted = resume.onBytesCommitted;
+  } else if (context.job.resumed === true) {
+    request.offset = readResult.bytesRead ?? 0;
+  }
   if (readResult.verification !== void 0) {
     request.verification = cloneVerification(readResult.verification);
   }
   return request;
 }
-function mergeProviderTransferResult(readResult, writeResult, job) {
+function mergeProviderTransferResult(readResult, writeResult, job, resume) {
   const result = {
     bytesTransferred: writeResult.bytesTransferred
   };
   const totalBytes = writeResult.totalBytes ?? readResult.totalBytes ?? job.totalBytes;
-  const warnings = [...readResult.warnings ?? [], ...writeResult.warnings ?? []];
+  const warnings = [
+    ...resume?.warnings ?? [],
+    ...readResult.warnings ?? [],
+    ...writeResult.warnings ?? []
+  ];
   if (totalBytes !== void 0) result.totalBytes = totalBytes;
-  if (writeResult.resumed !== void 0) result.resumed = writeResult.resumed;
+  if (resume !== void 0 && resume.committedBytes > 0) result.resumed = true;
+  else if (writeResult.resumed !== void 0) result.resumed = writeResult.resumed;
   if (writeResult.verified !== void 0) result.verified = writeResult.verified;
   if (writeResult.checksum !== void 0) result.checksum = writeResult.checksum;
   else if (readResult.checksum !== void 0) result.checksum = readResult.checksum;
@@ -1626,8 +1991,10 @@ async function runRoute(options) {
       ["source", sourceSession],
       ["destination", destinationSession]
     ]);
+    const resume = options.resume ?? client.defaults?.resume;
     const executor = createProviderTransferExecutor({
-      resolveSession: ({ role }) => sessions.get(role)
+      resolveSession: ({ role }) => sessions.get(role),
+      ...resume !== void 0 ? { resume } : {}
     });
     return await engine.execute(job, executor, buildExecuteOptions(options, client));
   } finally {
@@ -2097,17 +2464,7 @@ function wrapTransfers(transfers, guard) {
 
 // src/providers/local/LocalProvider.ts
 import { createReadStream } from "fs";
-import {
-  lstat,
-  mkdir,
-  open,
-  readdir,
-  readlink,
-  rename,
-  rm,
-  unlink,
-  writeFile
-} from "fs/promises";
+import { lstat, mkdir, open, readdir, readlink, rename, rm, unlink } from "fs/promises";
 import path from "path";
 
 // src/utils/path.ts
@@ -2245,13 +2602,12 @@ var LocalTransferOperations = class {
     request.throwIfAborted();
     const remotePath = normalizeLocalProviderPath(request.endpoint.path);
     const localPath = resolveLocalPath(this.rootPath, remotePath);
-    const content = await collectTransferContent(request);
     const offset = normalizeOptionalByteCount(request.offset, "offset", remotePath);
     await ensureLocalParentDirectory(localPath, remotePath);
-    await writeLocalContent(localPath, remotePath, content, offset);
+    const bytesTransferred = await writeLocalStream(localPath, remotePath, request, offset);
     const stat = await readLocalEntry(this.rootPath, remotePath);
     const result = {
-      bytesTransferred: content.byteLength,
+      bytesTransferred,
       resumed: offset !== void 0 && offset > 0,
       verified: request.verification?.verified ?? false
     };
@@ -2359,27 +2715,6 @@ async function* createLocalReadSource(localPath, range) {
     yield new Uint8Array(chunk);
   }
 }
-async function collectTransferContent(request) {
-  const chunks = [];
-  let byteLength = 0;
-  for await (const chunk of request.content) {
-    request.throwIfAborted();
-    const clonedChunk = new Uint8Array(chunk);
-    chunks.push(clonedChunk);
-    byteLength += clonedChunk.byteLength;
-    request.reportProgress(byteLength, request.totalBytes);
-  }
-  return concatChunks(chunks, byteLength);
-}
-function concatChunks(chunks, byteLength) {
-  const content = new Uint8Array(byteLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    content.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-  return content;
-}
 async function ensureLocalParentDirectory(localPath, remotePath) {
   try {
     await mkdir(path.dirname(localPath), { recursive: true });
@@ -2387,21 +2722,33 @@ async function ensureLocalParentDirectory(localPath, remotePath) {
     throw mapLocalFileSystemError(error, remotePath);
   }
 }
-async function writeLocalContent(localPath, remotePath, content, offset) {
+async function writeLocalStream(localPath, remotePath, request, offset) {
+  let handle;
   try {
-    if (offset === void 0) {
-      await writeFile(localPath, content);
-      return;
-    }
-    const handle = await openLocalFileForOffsetWrite(localPath);
-    try {
-      await handle.write(content, 0, content.byteLength, offset);
-    } finally {
-      await handle.close();
-    }
+    handle = offset === void 0 ? await open(localPath, "w") : await openLocalFileForOffsetWrite(localPath);
   } catch (error) {
     throw mapLocalFileSystemError(error, remotePath);
   }
+  let bytesTransferred = 0;
+  try {
+    let writeOffset = offset ?? 0;
+    for await (const chunk of request.content) {
+      request.throwIfAborted();
+      if (chunk.byteLength === 0) continue;
+      try {
+        await handle.write(chunk, 0, chunk.byteLength, writeOffset);
+      } catch (error) {
+        throw mapLocalFileSystemError(error, remotePath);
+      }
+      writeOffset += chunk.byteLength;
+      bytesTransferred += chunk.byteLength;
+      request.reportProgress(bytesTransferred, request.totalBytes);
+      request.onBytesCommitted?.(writeOffset);
+    }
+  } finally {
+    await handle.close().catch(() => void 0);
+  }
+  return bytesTransferred;
 }
 async function openLocalFileForOffsetWrite(localPath) {
   try {
@@ -2783,7 +3130,7 @@ var MemoryTransferOperations = class {
     if (existing?.type === "directory") {
       throw createInvalidFixtureError(path2, `Memory path is a directory: ${path2}`);
     }
-    const writtenContent = await collectTransferContent2(request);
+    const writtenContent = await collectTransferContent(request);
     const offset = normalizeOptionalByteCount2(request.offset, "offset");
     const previousContent = this.state.content.get(path2) ?? new Uint8Array(0);
     const content = offset === void 0 ? writtenContent : mergeContentAtOffset(previousContent, writtenContent, offset);
@@ -2935,7 +3282,7 @@ function resolveByteRange(size, range) {
   const length = Math.max(0, Math.min(requestedLength, size - offset));
   return { length, offset };
 }
-async function collectTransferContent2(request) {
+async function collectTransferContent(request) {
   const chunks = [];
   let byteLength = 0;
   for await (const chunk of request.content) {
@@ -2945,9 +3292,9 @@ async function collectTransferContent2(request) {
     byteLength += clonedChunk.byteLength;
     request.reportProgress(byteLength, request.totalBytes);
   }
-  return concatChunks2(chunks, byteLength);
+  return concatChunks(chunks, byteLength);
 }
-function concatChunks2(chunks, byteLength) {
+function concatChunks(chunks, byteLength) {
   const content = new Uint8Array(byteLength);
   let offset = 0;
   for (const chunk of chunks) {
@@ -4987,18 +5334,18 @@ function isMainModule(importMetaUrl) {
 }
 
 // src/providers/web/S3Provider.ts
-import { createHash as createHash2 } from "crypto";
+import { createHash as createHash3 } from "crypto";
 import {
-  mkdir as fsMkdir,
-  readFile as fsReadFile,
-  rename as fsRename,
-  unlink as fsUnlink,
-  writeFile as fsWriteFile
+  mkdir as fsMkdir2,
+  readFile as fsReadFile2,
+  rename as fsRename2,
+  unlink as fsUnlink2,
+  writeFile as fsWriteFile2
 } from "fs/promises";
-import { join as joinPath } from "path";
+import { join as joinPath2 } from "path";
 
 // src/providers/web/awsSigv4.ts
-import { createHash, createHmac as createHmac2 } from "crypto";
+import { createHash as createHash2, createHmac as createHmac2 } from "crypto";
 var UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD";
 function signSigV4(input) {
   const now = input.now ?? /* @__PURE__ */ new Date();
@@ -5069,13 +5416,139 @@ function encodeRfc3986(value) {
   );
 }
 function sha256Hex(data) {
-  return createHash("sha256").update(data).digest("hex");
+  return createHash2("sha256").update(data).digest("hex");
 }
 function hmac(key, data) {
   return createHmac2("sha256", key).update(data, "utf8").digest();
 }
 function hmacHex(key, data) {
   return createHmac2("sha256", key).update(data, "utf8").digest("hex");
+}
+
+// src/providers/web/multipartUploadPool.ts
+function createSequentialPartReader(options) {
+  const iterator = options.source[Symbol.asyncIterator]();
+  const partSize = options.partSizeBytes;
+  let pending = [...options.initialChunks ?? []];
+  let pendingBytes = pending.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+  let nextPartNumber = options.startPartNumber ?? 1;
+  let nextOffset = options.startOffset ?? 0;
+  let exhausted = false;
+  let mutex = Promise.resolve(void 0);
+  const cutPart = (size) => {
+    const bytes = takeBytes(pending, pendingBytes, size);
+    pending = bytes.remaining;
+    pendingBytes -= bytes.taken.byteLength;
+    const part = {
+      byteEnd: nextOffset + bytes.taken.byteLength,
+      byteStart: nextOffset,
+      bytes: bytes.taken,
+      partNumber: nextPartNumber
+    };
+    nextPartNumber += 1;
+    nextOffset = part.byteEnd;
+    return part;
+  };
+  const nextLocked = async () => {
+    while (pendingBytes < partSize && !exhausted) {
+      const result = await iterator.next();
+      if (result.done === true) {
+        exhausted = true;
+        break;
+      }
+      if (result.value.byteLength === 0) continue;
+      pending.push(result.value);
+      pendingBytes += result.value.byteLength;
+    }
+    if (pendingBytes === 0) return void 0;
+    return cutPart(Math.min(partSize, pendingBytes));
+  };
+  return {
+    next: () => {
+      const result = mutex.then(nextLocked);
+      mutex = result.catch(() => void 0);
+      return result;
+    }
+  };
+}
+async function runMultipartUploadPool(options) {
+  const concurrency = Math.max(1, Math.floor(options.partConcurrency));
+  const completed = /* @__PURE__ */ new Map();
+  let failure;
+  let failed = false;
+  let nextToCommit = Math.max(1, Math.floor(options.firstPartNumber ?? 1));
+  let commitChain = Promise.resolve();
+  const scheduleCommits = () => {
+    if (options.onCommitted === void 0) return;
+    while (completed.has(nextToCommit)) {
+      const part = completed.get(nextToCommit);
+      if (part === void 0) break;
+      commitChain = commitChain.then(() => options.onCommitted?.(part, part.byteEnd));
+      nextToCommit += 1;
+    }
+  };
+  const worker = async () => {
+    while (!failed) {
+      options.throwIfAborted?.();
+      const part = await options.reader.next();
+      if (part === void 0 || failed) return;
+      const result = await options.uploadPart(part);
+      completed.set(part.partNumber, {
+        byteEnd: part.byteEnd,
+        byteStart: part.byteStart,
+        partNumber: part.partNumber,
+        result
+      });
+      scheduleCommits();
+    }
+  };
+  const workers = [];
+  for (let index = 0; index < concurrency; index += 1) {
+    workers.push(
+      worker().catch((error) => {
+        if (!failed) {
+          failed = true;
+          failure = error;
+        }
+      })
+    );
+  }
+  await Promise.all(workers);
+  await commitChain;
+  if (failed) throw failure;
+  const parts = [...completed.values()].sort((a, b) => a.partNumber - b.partNumber);
+  const bytesUploaded = parts.reduce((sum, part) => sum + (part.byteEnd - part.byteStart), 0);
+  return { bytesUploaded, parts };
+}
+function takeBytes(chunks, totalBytes, size) {
+  const first2 = chunks[0];
+  if (first2 !== void 0 && first2.byteLength === size) {
+    return { remaining: chunks.slice(1), taken: first2 };
+  }
+  if (first2 !== void 0 && first2.byteLength > size) {
+    const remaining = chunks.slice(1);
+    remaining.unshift(first2.subarray(size));
+    return { remaining, taken: first2.subarray(0, size) };
+  }
+  const taken = new Uint8Array(Math.min(size, totalBytes));
+  let offset = 0;
+  let index = 0;
+  while (offset < taken.byteLength && index < chunks.length) {
+    const chunk = chunks[index];
+    if (chunk === void 0) break;
+    const needed = taken.byteLength - offset;
+    if (chunk.byteLength <= needed) {
+      taken.set(chunk, offset);
+      offset += chunk.byteLength;
+      index += 1;
+    } else {
+      taken.set(chunk.subarray(0, needed), offset);
+      const remaining = chunks.slice(index + 1);
+      remaining.unshift(chunk.subarray(needed));
+      return { remaining, taken };
+    }
+  }
+  return { remaining: chunks.slice(index), taken };
 }
 
 // src/providers/web/httpInternals.ts
@@ -5257,20 +5730,20 @@ function createFileSystemS3MultipartResumeStore(options) {
     });
   }
   const fileFor = (key) => {
-    const hash = createHash2("sha256").update(`${key.bucket}\0${key.jobId}\0${key.path}`).digest("hex");
-    return joinPath(directory, `${hash}.json`);
+    const hash = createHash3("sha256").update(`${key.bucket}\0${key.jobId}\0${key.path}`).digest("hex");
+    return joinPath2(directory, `${hash}.json`);
   };
   return {
     async clear(key) {
       try {
-        await fsUnlink(fileFor(key));
+        await fsUnlink2(fileFor(key));
       } catch (error) {
         if (error.code !== "ENOENT") throw error;
       }
     },
     async load(key) {
       try {
-        const text = await fsReadFile(fileFor(key), "utf8");
+        const text = await fsReadFile2(fileFor(key), "utf8");
         const parsed = JSON.parse(text);
         if (typeof parsed !== "object" || parsed === null || typeof parsed.uploadId !== "string" || !Array.isArray(parsed.parts)) {
           return void 0;
@@ -5282,16 +5755,17 @@ function createFileSystemS3MultipartResumeStore(options) {
       }
     },
     async save(key, checkpoint) {
-      await fsMkdir(directory, { recursive: true });
+      await fsMkdir2(directory, { recursive: true });
       const target = fileFor(key);
       const tmp = `${target}.${String(process.pid)}.${String(Date.now())}.tmp`;
-      await fsWriteFile(tmp, JSON.stringify(checkpoint), { encoding: "utf8", mode: 384 });
-      await fsRename(tmp, target);
+      await fsWriteFile2(tmp, JSON.stringify(checkpoint), { encoding: "utf8", mode: 384 });
+      await fsRename2(tmp, target);
     }
   };
 }
 var DEFAULT_MULTIPART_PART_SIZE = 8 * 1024 * 1024;
 var DEFAULT_MULTIPART_THRESHOLD = 8 * 1024 * 1024;
+var DEFAULT_MULTIPART_PART_CONCURRENCY = 4;
 var S3_CHECKSUM_CAPABILITIES = ["etag"];
 function createS3ProviderFactory(options = {}) {
   const id = options.id ?? "s3";
@@ -5320,6 +5794,10 @@ function createS3ProviderFactory(options = {}) {
   const multipartEnabled = options.multipart?.enabled ?? true;
   const multipart = {
     enabled: multipartEnabled,
+    partConcurrency: Math.max(
+      1,
+      Math.floor(options.multipart?.partConcurrency ?? DEFAULT_MULTIPART_PART_CONCURRENCY)
+    ),
     partSizeBytes: options.multipart?.partSizeBytes ?? DEFAULT_MULTIPART_PART_SIZE,
     thresholdBytes: options.multipart?.thresholdBytes ?? DEFAULT_MULTIPART_THRESHOLD,
     ...options.multipart?.resumeStore !== void 0 ? { resumeStore: options.multipart.resumeStore } : {}
@@ -5334,7 +5812,8 @@ function createS3ProviderFactory(options = {}) {
     maxConcurrency: 16,
     metadata: ["modifiedAt", "mimeType", "uniqueId"],
     notes: multipartEnabled ? [
-      `S3 multipart upload enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`,
+      `S3 multipart upload enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B, partConcurrency=${String(multipart.partConcurrency)}).`,
+      "Parts upload in parallel; progress and checkpoints advance on the contiguous completed prefix.",
       "Payloads at or below the threshold automatically fall back to single-shot PUT.",
       "Pass `multipart: { enabled: false }` to force the legacy single-shot behaviour."
     ] : [
@@ -5516,10 +5995,11 @@ var S3TransferOperations = class {
     const multipart = this.options.multipart;
     const offset = request.offset ?? 0;
     if (offset > 0) {
-      if (!multipart.enabled || multipart.resumeStore === void 0) {
+      const hasCheckpointState = request.checkpoint?.state?.kind === "parts";
+      if (!multipart.enabled || multipart.resumeStore === void 0 && !hasCheckpointState) {
         throw new UnsupportedFeatureError({
           details: { offset },
-          message: "S3 provider requires multipart.enabled and multipart.resumeStore to resume an upload",
+          message: "S3 provider requires multipart.enabled plus a resume checkpoint (unified checkpoint store or legacy multipart.resumeStore) to resume an upload",
           retryable: false
         });
       }
@@ -5529,6 +6009,16 @@ var S3TransferOperations = class {
       return this.writeMultipart(request, normalized, 0);
     }
     return this.writeSingleShot(request, normalized);
+  }
+  /**
+   * Aborts the orphaned multipart upload referenced by an invalidated
+   * checkpoint so its parts stop accruing storage costs.
+   */
+  async discardResumable(request) {
+    if (request.state.kind !== "parts") return;
+    const normalized = normalizeRemotePath(request.endpoint.path);
+    const objectUrl = buildObjectUrl(this.options, normalized);
+    await abortMultipart(this.options, objectUrl, request.state.uploadToken);
   }
   /**
    * Single PUT upload used when multipart is disabled. Streams the body with
@@ -5564,55 +6054,83 @@ var S3TransferOperations = class {
   }
   async writeMultipart(request, normalized, requestedOffset) {
     const multipart = this.options.multipart;
-    const partSize = multipart.partSizeBytes;
     const objectUrl = buildObjectUrl(this.options, normalized);
+    const checkpoint = request.checkpoint;
     const resumeStore = multipart.resumeStore;
     const resumeKey = {
       bucket: this.options.bucket,
       jobId: request.job.id,
       path: normalized
     };
-    let existing;
-    if (resumeStore !== void 0) {
-      existing = await resumeStore.load(resumeKey) ?? void 0;
+    let resumeState;
+    if (checkpoint?.state?.kind === "parts") {
+      resumeState = checkpoint.state;
+    } else if (resumeStore !== void 0) {
+      const legacy = await resumeStore.load(resumeKey) ?? void 0;
+      if (legacy !== void 0) {
+        resumeState = {
+          committedBytes: legacy.parts[legacy.parts.length - 1]?.byteEnd ?? 0,
+          kind: "parts",
+          parts: legacy.parts.map((part) => ({
+            byteEnd: part.byteEnd,
+            partNumber: part.partNumber,
+            token: part.etag
+          })),
+          partSizeBytes: multipart.partSizeBytes,
+          uploadToken: legacy.uploadId
+        };
+      }
     }
     if (requestedOffset > 0) {
-      if (existing === void 0) {
+      if (resumeState === void 0) {
         throw new UnsupportedFeatureError({
           details: { offset: requestedOffset },
           message: "S3 provider has no resume checkpoint for this transfer",
           retryable: false
         });
       }
-      const lastByteEnd = existing.parts[existing.parts.length - 1]?.byteEnd ?? 0;
-      if (lastByteEnd !== requestedOffset) {
+      if (resumeState.committedBytes !== requestedOffset) {
         throw new UnsupportedFeatureError({
-          details: { checkpointOffset: lastByteEnd, requestedOffset },
+          details: { checkpointOffset: resumeState.committedBytes, requestedOffset },
           message: "S3 resume offset does not match the stored multipart checkpoint",
           retryable: false
         });
       }
+    } else if (resumeState !== void 0 && resumeState.committedBytes > 0) {
+      resumeState = void 0;
     }
+    const partSize = resumeState?.partSizeBytes ?? multipart.partSizeBytes;
     const iterator = request.content[Symbol.asyncIterator]();
-    const initialBuffer = [];
+    const initialChunks = [];
     let initialSize = 0;
-    if (existing === void 0) {
+    if (resumeState === void 0) {
       while (initialSize <= multipart.thresholdBytes) {
         const next = await iterator.next();
         if (next.done === true) break;
         const chunk = next.value;
         if (chunk.byteLength === 0) continue;
-        initialBuffer.push(chunk);
+        initialChunks.push(chunk);
         initialSize += chunk.byteLength;
       }
       if (initialSize <= multipart.thresholdBytes) {
-        const buffered = concat(initialBuffer, initialSize);
+        const buffered = concat(initialChunks, initialSize);
         return this.singleShotFromBuffer(request, normalized, buffered);
       }
     }
+    const parts = [];
     let uploadId;
-    if (existing !== void 0) {
-      uploadId = existing.uploadId;
+    if (resumeState !== void 0) {
+      uploadId = resumeState.uploadToken;
+      for (const part of resumeState.parts) {
+        if (part.token === void 0) {
+          throw new UnsupportedFeatureError({
+            details: { partNumber: part.partNumber },
+            message: "S3 resume checkpoint is missing part ETags",
+            retryable: false
+          });
+        }
+        parts.push({ byteEnd: part.byteEnd, etag: part.token, partNumber: part.partNumber });
+      }
     } else {
       const initiateUrl = new URL(objectUrl.toString());
       initiateUrl.searchParams.set("uploads", "");
@@ -5630,73 +6148,85 @@ var S3TransferOperations = class {
         });
       }
       uploadId = initiated;
+    }
+    const buildState = () => ({
+      committedBytes: parts[parts.length - 1]?.byteEnd ?? 0,
+      kind: "parts",
+      parts: parts.map((part) => ({
+        byteEnd: part.byteEnd,
+        partNumber: part.partNumber,
+        token: part.etag
+      })),
+      partSizeBytes: partSize,
+      uploadToken: uploadId
+    });
+    const saveProgress = async () => {
+      if (checkpoint !== void 0) await checkpoint.save(buildState());
       if (resumeStore !== void 0) {
-        await resumeStore.save(resumeKey, { parts: [], uploadId });
-      }
-    }
-    const parts = existing !== void 0 ? [...existing.parts] : [];
-    const startedBytes = parts.length > 0 ? parts[parts.length - 1]?.byteEnd ?? 0 : 0;
-    let bytesTransferred = startedBytes;
-    let partNumber = parts.length + 1;
-    let buffer = [];
-    let bufferSize = 0;
-    if (existing === void 0) {
-      const trailing = concat(initialBuffer, initialSize);
-      buffer = [trailing];
-      bufferSize = trailing.byteLength;
-    }
-    const flushPart = async (final) => {
-      while (bufferSize >= partSize || final && bufferSize > 0) {
-        const take = final ? bufferSize : partSize;
-        const partBytes = sliceFromBuffers(buffer, take);
-        buffer = partBytes.remaining;
-        bufferSize -= partBytes.bytes.byteLength;
-        const partUrl = new URL(objectUrl.toString());
-        partUrl.searchParams.set("partNumber", String(partNumber));
-        partUrl.searchParams.set("uploadId", uploadId);
-        const partResponse = await s3Fetch(this.options, "PUT", partUrl, {
-          ...request.signal !== void 0 ? { signal: request.signal } : {},
-          body: partBytes.bytes
+        await resumeStore.save(resumeKey, {
+          parts: parts.map((part) => ({ ...part })),
+          uploadId
         });
-        if (!partResponse.ok) {
-          throw await mapResponseErrorWithBody(partResponse, normalized);
-        }
-        const partEtag = partResponse.headers.get("etag");
-        if (partEtag === null) {
-          throw new ConnectionError({
-            message: `S3 UploadPart returned no ETag for part ${String(partNumber)}`,
-            retryable: true
-          });
-        }
-        bytesTransferred += partBytes.bytes.byteLength;
-        parts.push({ byteEnd: bytesTransferred, etag: partEtag, partNumber });
-        if (resumeStore !== void 0) {
-          await resumeStore.save(resumeKey, { parts: [...parts], uploadId });
-        }
-        request.reportProgress(bytesTransferred, void 0);
-        partNumber += 1;
       }
     };
+    if (resumeState === void 0) {
+      await saveProgress();
+    }
+    const startOffset = resumeState?.committedBytes ?? 0;
+    const lastResumedPart = parts[parts.length - 1];
+    const startPartNumber = lastResumedPart !== void 0 ? lastResumedPart.partNumber + 1 : 1;
+    let bytesTransferred = startOffset;
+    const reader = createSequentialPartReader({
+      initialChunks,
+      partSizeBytes: partSize,
+      source: { [Symbol.asyncIterator]: () => iterator },
+      startOffset,
+      startPartNumber
+    });
     try {
-      await flushPart(false);
-      while (true) {
-        request.throwIfAborted();
-        const next = await iterator.next();
-        if (next.done === true) break;
-        if (next.value.byteLength === 0) continue;
-        buffer.push(next.value);
-        bufferSize += next.value.byteLength;
-        await flushPart(false);
-      }
-      await flushPart(true);
+      await runMultipartUploadPool({
+        firstPartNumber: startPartNumber,
+        onCommitted: async (part, committedBytes) => {
+          parts.push({ byteEnd: part.byteEnd, etag: part.result, partNumber: part.partNumber });
+          bytesTransferred = committedBytes;
+          await saveProgress();
+          request.reportProgress(committedBytes, request.totalBytes);
+        },
+        partConcurrency: multipart.partConcurrency,
+        reader,
+        throwIfAborted: () => {
+          request.throwIfAborted();
+        },
+        uploadPart: async (part) => {
+          const partUrl = new URL(objectUrl.toString());
+          partUrl.searchParams.set("partNumber", String(part.partNumber));
+          partUrl.searchParams.set("uploadId", uploadId);
+          const partResponse = await s3Fetch(this.options, "PUT", partUrl, {
+            ...request.signal !== void 0 ? { signal: request.signal } : {},
+            body: part.bytes
+          });
+          if (!partResponse.ok) {
+            throw await mapResponseErrorWithBody(partResponse, normalized);
+          }
+          const partEtag = partResponse.headers.get("etag");
+          if (partEtag === null) {
+            throw new ConnectionError({
+              message: `S3 UploadPart returned no ETag for part ${String(part.partNumber)}`,
+              retryable: true
+            });
+          }
+          return partEtag;
+        }
+      });
     } catch (error) {
-      if (resumeStore === void 0) {
+      if (resumeStore === void 0 && checkpoint === void 0) {
         await abortMultipart(this.options, objectUrl, uploadId).catch(() => void 0);
       }
       throw error;
     }
     if (parts.length === 0) {
       if (resumeStore !== void 0) await resumeStore.clear(resumeKey);
+      if (checkpoint !== void 0) await checkpoint.clear();
       await abortMultipart(this.options, objectUrl, uploadId).catch(() => void 0);
       throw new ConnectionError({
         message: "S3 multipart upload completed with zero parts",
@@ -5712,7 +6242,7 @@ var S3TransferOperations = class {
       extraHeaders: { "content-type": "application/xml" }
     });
     if (!completeResponse.ok) {
-      if (resumeStore === void 0) {
+      if (resumeStore === void 0 && checkpoint === void 0) {
         await abortMultipart(this.options, objectUrl, uploadId).catch(() => void 0);
       }
       throw await mapResponseErrorWithBody(completeResponse, normalized);
@@ -5846,31 +6376,6 @@ function concat(chunks, totalSize) {
   }
   return out;
 }
-function sliceFromBuffers(buffers, size) {
-  const out = new Uint8Array(size);
-  let offset = 0;
-  let i = 0;
-  while (offset < size && i < buffers.length) {
-    const chunk = buffers[i];
-    if (chunk === void 0) {
-      i += 1;
-      continue;
-    }
-    const remaining = size - offset;
-    if (chunk.byteLength <= remaining) {
-      out.set(chunk, offset);
-      offset += chunk.byteLength;
-      i += 1;
-    } else {
-      out.set(chunk.subarray(0, remaining), offset);
-      const leftover = chunk.subarray(remaining);
-      const next = buffers.slice(i + 1);
-      next.unshift(leftover);
-      return { bytes: out, remaining: next };
-    }
-  }
-  return { bytes: out.subarray(0, offset), remaining: buffers.slice(i) };
-}
 async function abortMultipart(options, objectUrl, uploadId) {
   const url = new URL(objectUrl.toString());
   url.searchParams.set("uploadId", uploadId);
@@ -5943,6 +6448,7 @@ export {
   CLASSIC_PROVIDER_IDS,
   ConfigurationError,
   ConnectionError,
+  DEFAULT_CHECKPOINT_TTL_MS,
   ParseError,
   PathAlreadyExistsError,
   PathNotFoundError,
@@ -5969,9 +6475,11 @@ export {
   createBandwidthThrottle,
   createDefaultRetryPolicy,
   createFileSystemS3MultipartResumeStore,
+  createFileSystemTransferCheckpointStore,
   createLocalProviderFactory,
   createMemoryProviderFactory,
   createMemoryS3MultipartResumeStore,
+  createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource,
   createPooledTransferClient,
   createProgressEvent,
@@ -5979,6 +6487,7 @@ export {
   createRemoteBrowser,
   createRemoteManifest,
   createS3ProviderFactory,
+  createSequentialPartReader,
   createSyncPlan,
   createTransferClient,
   createTransferJobsFromPlan,
@@ -5989,6 +6498,7 @@ export {
   emitLog,
   errorFromFtpReply,
   filterRemoteEntries,
+  fingerprintsMatch,
   importFileZillaSites,
   importOpenSshConfig,
   importWinScpSessions,
@@ -6016,6 +6526,7 @@ export {
   resolveProviderId,
   resolveSecret,
   runConnectionDiagnostics,
+  runMultipartUploadPool,
   serializeRemoteManifest,
   sortRemoteEntries,
   summarizeClientDiagnostics,

@@ -10,7 +10,7 @@
 function createS3ProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/web/S3Provider.ts:288](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/web/S3Provider.ts#L288)
+Defined in: [src/providers/web/S3Provider.ts:307](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/web/S3Provider.ts#L307)
 
 Creates an S3-compatible provider factory.
 

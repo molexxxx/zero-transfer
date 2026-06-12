@@ -10,7 +10,7 @@
 function createLocalProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/local/LocalProvider.ts:101](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/local/LocalProvider.ts#L101)
+Defined in: [src/providers/local/LocalProvider.ts:91](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/local/LocalProvider.ts#L91)
 
 Creates a provider factory backed by the local filesystem.
 

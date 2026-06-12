@@ -30,6 +30,10 @@ export {
 } from "../providers/classic/ftp";
 export {
   createSftpProviderFactory,
+  SFTP_PIPELINE_DEFAULT_CHUNK_BYTES,
+  SFTP_PIPELINE_DEFAULT_MAX_IN_FLIGHT,
+  SFTP_PIPELINE_MAX_CHUNK_BYTES,
+  type SftpPipelineOptions,
   type SftpProviderOptions,
   type SftpRawSession,
 } from "../providers/native/sftp";

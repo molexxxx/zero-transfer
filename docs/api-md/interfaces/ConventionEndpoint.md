@@ -6,7 +6,7 @@
 
 # Interface: ConventionEndpoint
 
-Defined in: [src/mft/conventions.ts:46](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/mft/conventions.ts#L46)
+Defined in: [src/mft/conventions.ts:46](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/mft/conventions.ts#L46)
 
 Endpoint shape used by [createInboxRoute](../functions/createInboxRoute.md)/[createOutboxRoute](../functions/createOutboxRoute.md).
 
@@ -14,5 +14,5 @@ Endpoint shape used by [createInboxRoute](../functions/createInboxRoute.md)/[cre
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="path"></a> `path` | `string` | Path on the endpoint side. | [src/mft/conventions.ts:50](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/mft/conventions.ts#L50) |
-| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Profile used to connect to the endpoint provider. | [src/mft/conventions.ts:48](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/mft/conventions.ts#L48) |
+| <a id="path"></a> `path` | `string` | Path on the endpoint side. | [src/mft/conventions.ts:50](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/mft/conventions.ts#L50) |
+| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Profile used to connect to the endpoint provider. | [src/mft/conventions.ts:48](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/mft/conventions.ts#L48) |

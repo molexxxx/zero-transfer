@@ -640,6 +640,215 @@ interface RemoteFileSystem {
     rmdir?(path: string, options?: RmdirOptions): Promise<void>;
 }
 
+/** One endpoint half of a {@link TransferCheckpointKey}. */
+interface TransferCheckpointEndpoint {
+    /** Provider id that owns the endpoint when known. */
+    provider?: string;
+    /** Provider, remote, or local path for the endpoint. */
+    path: string;
+}
+/**
+ * Identity of a checkpointed transfer: the source and destination
+ * provider/path pair.
+ *
+ * Two processes (or two attempts) that move the same source path to the same
+ * destination path resolve to the same key, which is what makes cross-process
+ * resume possible. Endpoint paths do not embed hostnames; when the same
+ * provider/path pair can refer to different servers (for example two SFTP
+ * accounts both exposing `/data/out.bin`), set
+ * {@link TransferResumeOptions.scope} to disambiguate.
+ */
+interface TransferCheckpointKey {
+    /** Source endpoint of the transfer. */
+    source: TransferCheckpointEndpoint;
+    /** Destination endpoint of the transfer. */
+    destination: TransferCheckpointEndpoint;
+    /** Optional caller-supplied namespace (for example a host or profile id). */
+    scope?: string;
+}
+/**
+ * Source-object fingerprint captured when a checkpoint is written.
+ *
+ * On resume the current source fingerprint is compared against the stored
+ * one; any mismatch invalidates the checkpoint so a changed source file is
+ * never spliced onto stale destination bytes. At least one field must be
+ * comparable for a checkpoint to be considered valid.
+ */
+interface TransferSourceFingerprint {
+    /** Source size in bytes when known. */
+    sizeBytes?: number;
+    /** Source modification time in epoch milliseconds when known. */
+    modifiedAtMs?: number;
+    /** Source entity tag / unique id when the provider exposes one. */
+    etag?: string;
+}
+/** Single completed part recorded in a parts-kind checkpoint. */
+interface TransferCheckpointPart {
+    /** One-based part number. */
+    partNumber: number;
+    /** Cumulative byte offset reached after this part (exclusive). */
+    byteEnd: number;
+    /** Provider part token (S3 part ETag, Azure block id) when required to finalize. */
+    token?: string;
+}
+/** Byte-offset checkpoint state used by sequential-append providers. */
+interface TransferByteOffsetCheckpointState {
+    kind: "byte-offset";
+    /** Bytes durably committed at the destination. */
+    committedBytes: number;
+}
+/** Parts checkpoint state used by multipart/staged-block providers. */
+interface TransferPartsCheckpointState {
+    kind: "parts";
+    /** Provider upload token (S3 `uploadId`, Azure block-id nonce, tus upload URL). */
+    uploadToken: string;
+    /** Contiguous prefix of completed parts in part-number order. */
+    parts: TransferCheckpointPart[];
+    /** Bytes durably committed at the destination (end of the contiguous prefix). */
+    committedBytes: number;
+    /** Part size the upload was cut with; resume must reuse it. */
+    partSizeBytes: number;
+}
+/** Union of checkpoint state shapes. Both expose `committedBytes`. */
+type TransferCheckpointState = TransferByteOffsetCheckpointState | TransferPartsCheckpointState;
+/** Persisted checkpoint record. */
+interface TransferCheckpointRecord {
+    /** Record schema version. */
+    version: 1;
+    /** Source fingerprint captured when the checkpoint was written. */
+    fingerprint: TransferSourceFingerprint;
+    /** Progress state. */
+    state: TransferCheckpointState;
+    /** Epoch ms when this checkpoint was first created. */
+    createdAtMs: number;
+    /** Epoch ms when this checkpoint was last updated. */
+    updatedAtMs: number;
+    /** Process id that last wrote the record (concurrent-writer diagnostics). */
+    pid: number;
+}
+/**
+ * Persistence contract for transfer checkpoints.
+ *
+ * Implementations may be synchronous or asynchronous. `clear` is invoked when
+ * a transfer completes successfully or a checkpoint is invalidated; it must
+ * tolerate missing entries.
+ */
+interface TransferCheckpointStore {
+    /** Loads the checkpoint for a transfer identity, or `undefined` when absent. */
+    load(key: TransferCheckpointKey): Promise<TransferCheckpointRecord | undefined> | TransferCheckpointRecord | undefined;
+    /** Persists the checkpoint for a transfer identity. */
+    save(key: TransferCheckpointKey, record: TransferCheckpointRecord): Promise<void> | void;
+    /** Removes the checkpoint for a transfer identity. */
+    clear(key: TransferCheckpointKey): Promise<void> | void;
+}
+/**
+ * Live handle a provider uses to checkpoint part-aware progress during a
+ * write.
+ *
+ * The transfer executor constructs the handle (binding the store, key, and
+ * source fingerprint) and attaches it to
+ * {@link ProviderTransferWriteRequest.checkpoint}. Providers that upload in
+ * discrete parts call {@link save} as the contiguous completed-part prefix
+ * advances and read {@link state} to pick up prior progress. Clearing on
+ * success is the executor's responsibility - providers only ever record
+ * progress.
+ */
+interface TransferCheckpointHandle {
+    /**
+     * Validated state loaded for this transfer, when prior progress exists.
+     * `undefined` means start fresh (no checkpoint, or it was invalidated).
+     */
+    readonly state?: TransferCheckpointState;
+    /** Persists new progress state for this transfer. */
+    save(state: TransferCheckpointState): Promise<void>;
+    /** Removes the stored checkpoint (for example when the provider restarts the upload). */
+    clear(): Promise<void>;
+}
+/** Default checkpoint time-to-live: 7 days, matching S3/Azure uncommitted-upload lifetimes. */
+declare const DEFAULT_CHECKPOINT_TTL_MS: number;
+/**
+ * Compares a stored fingerprint against the current source fingerprint.
+ *
+ * A checkpoint is only trustworthy when at least one field is comparable on
+ * both sides and every comparable field matches exactly. A source with no
+ * comparable metadata never matches - resuming without any change detection
+ * risks corrupting the destination.
+ *
+ * @param stored - Fingerprint captured when the checkpoint was written.
+ * @param current - Fingerprint of the source object right now.
+ * @returns `true` when the source is provably unchanged.
+ */
+declare function fingerprintsMatch(stored: TransferSourceFingerprint, current: TransferSourceFingerprint): boolean;
+/** Options accepted by {@link createMemoryTransferCheckpointStore}. */
+interface MemoryTransferCheckpointStoreOptions {
+    /** Checkpoint time-to-live in milliseconds. Defaults to 7 days. */
+    ttlMs?: number;
+    /** Clock override for deterministic tests. Defaults to `Date.now`. */
+    now?: () => number;
+}
+/**
+ * Creates an in-memory {@link TransferCheckpointStore}.
+ *
+ * Suitable for in-process retry resume (the engine's retry policy re-enters
+ * the executor with the store still populated) and for tests. Does not
+ * survive process restarts - use
+ * {@link createFileSystemTransferCheckpointStore} for cross-process resume.
+ */
+declare function createMemoryTransferCheckpointStore(options?: MemoryTransferCheckpointStoreOptions): TransferCheckpointStore;
+/** Options accepted by {@link createFileSystemTransferCheckpointStore}. */
+interface FileSystemTransferCheckpointStoreOptions {
+    /**
+     * Directory under which checkpoint JSON files are written. Created
+     * recursively if it does not exist. Each transfer identity occupies a
+     * single file named after a SHA-256 hash of the key, so the directory is
+     * safe to share across many concurrent transfers.
+     */
+    directory: string;
+    /**
+     * Checkpoint time-to-live in milliseconds. Records older than this are
+     * deleted on load and treated as absent. Defaults to 7 days, matching the
+     * default lifecycle window for uncommitted S3 multipart uploads and Azure
+     * staged blocks - resuming after the remote side has expired its half of
+     * the state would fail anyway.
+     */
+    ttlMs?: number;
+    /** Clock override for deterministic tests. Defaults to `Date.now`. */
+    now?: () => number;
+}
+/**
+ * File-system backed {@link TransferCheckpointStore} that survives process
+ * restarts, enabling cross-process resume.
+ *
+ * Each checkpoint is one JSON file named after a SHA-256 hash of the
+ * transfer key. Writes are atomic (`<file>.tmp` then `rename`) with mode
+ * `0600`, so a crash mid-write cannot leave a corrupt checkpoint and other
+ * local users cannot read transfer metadata. Corrupt or expired files are
+ * deleted on load and treated as absent.
+ *
+ * @example Resumable downloads that survive restarts
+ * ```ts
+ * import {
+ *   createFileSystemTransferCheckpointStore,
+ *   createTransferClient,
+ *   downloadFile,
+ * } from "@zero-transfer/sdk";
+ *
+ * const store = createFileSystemTransferCheckpointStore({
+ *   directory: "./.zt-checkpoints",
+ * });
+ *
+ * const client = createTransferClient({
+ *   providers: [createSftpProviderFactory(), createLocalProviderFactory()],
+ *   defaults: { resume: { store } },
+ * });
+ *
+ * // Kill the process mid-transfer and run it again: the download resumes
+ * // from the last committed byte instead of restarting.
+ * await downloadFile({ client, source, destination });
+ * ```
+ */
+declare function createFileSystemTransferCheckpointStore(options: FileSystemTransferCheckpointStoreOptions): TransferCheckpointStore;
+
 /**
  * Transfer job and receipt contracts used by the transfer engine foundation.
  *
@@ -1001,15 +1210,44 @@ interface ProviderTransferWriteRequest extends ProviderTransferRequest {
     offset?: number;
     /** Verification details from the read side that a writer may preserve or compare. */
     verification?: TransferVerificationResult;
+    /**
+     * Checkpoint handle for part-aware providers (multipart/staged-block
+     * uploads). Attached by the transfer executor when resume is configured;
+     * providers persist progress through it and read prior state from it.
+     */
+    checkpoint?: TransferCheckpointHandle;
+    /**
+     * Reports the absolute contiguous byte watermark durably acknowledged by
+     * the destination (including any resume offset). Sequential-append
+     * providers call this after each acknowledged write so the executor can
+     * persist byte-offset checkpoints; unlike {@link reportProgress} the value
+     * must never include unacknowledged in-flight bytes.
+     */
+    onBytesCommitted?: (committedBytes: number) => void;
 }
 /** Result returned by provider write implementations. */
 type ProviderTransferWriteResult = TransferExecutionResult;
+/** Request passed to {@link ProviderTransferOperations.discardResumable}. */
+interface ProviderTransferDiscardRequest {
+    /** Endpoint whose orphaned resumable state should be discarded. */
+    endpoint: TransferEndpoint;
+    /** Checkpoint state being invalidated. */
+    state: TransferCheckpointState;
+    /** Abort signal active for the surrounding execution when supplied. */
+    signal?: AbortSignal;
+}
 /** Optional read/write surface exposed by provider sessions that support transfer streaming. */
 interface ProviderTransferOperations {
     /** Opens readable content for a provider endpoint. */
     read(request: ProviderTransferReadRequest): Promise<ProviderTransferReadResult> | ProviderTransferReadResult;
     /** Writes readable content to a provider endpoint. */
     write(request: ProviderTransferWriteRequest): Promise<ProviderTransferWriteResult> | ProviderTransferWriteResult;
+    /**
+     * Discards provider-side resumable state referenced by an invalidated
+     * checkpoint (for example aborting an orphaned S3 multipart upload so its
+     * parts stop accruing storage). Best-effort: callers ignore failures.
+     */
+    discardResumable?(request: ProviderTransferDiscardRequest): Promise<void> | void;
 }
 
 /**
@@ -1067,6 +1305,156 @@ interface ProviderFactory<TProvider extends TransferProvider = TransferProvider>
     /** Creates an isolated provider instance for a connection attempt. */
     create(): TProvider;
 }
+
+/** Sleep helper signature used by {@link createBandwidthThrottle}. */
+type BandwidthSleep = (delayMs: number, signal?: AbortSignal) => Promise<void>;
+/** Construction overrides for deterministic tests. */
+interface BandwidthThrottleOptions {
+    /** Monotonic clock returning milliseconds since an arbitrary epoch. Defaults to `Date.now`. */
+    now?: () => number;
+    /** Sleep implementation honoring an optional abort signal. Defaults to a `setTimeout` helper. */
+    sleep?: BandwidthSleep;
+}
+/** Token-bucket throttle used to pace transfer chunks. */
+interface BandwidthThrottle {
+    /** Maximum sustained transfer rate in bytes per second. */
+    readonly bytesPerSecond: number;
+    /** Burst capacity in bytes available before throttling kicks in. */
+    readonly burstBytes: number;
+    /**
+     * Consumes `bytes` from the bucket, awaiting refill when not enough tokens are available.
+     *
+     * @param bytes - Non-negative byte count being released by the throttle.
+     * @param signal - Optional abort signal that interrupts pending waits.
+     * @throws {@link AbortError} When the signal is aborted while waiting.
+     */
+    consume(bytes: number, signal?: AbortSignal): Promise<void>;
+}
+/**
+ * Creates a token-bucket throttle that paces an asynchronous data pipeline to
+ * a sustained {@link TransferBandwidthLimit}.
+ *
+ * Returns `undefined` when no limit is supplied so callers can omit throttling
+ * without conditional branches at the call site.
+ *
+ * @param limit - Optional throughput limit. Returns `undefined` when omitted.
+ * @param options - Optional clock/sleep overrides for deterministic tests.
+ * @returns Throttle implementation when a limit is supplied, otherwise `undefined`.
+ * @throws {@link ConfigurationError} When the supplied limit shape is invalid.
+ */
+declare function createBandwidthThrottle(limit: TransferBandwidthLimit | undefined, options?: BandwidthThrottleOptions): BandwidthThrottle | undefined;
+/**
+ * Wraps an async iterable of byte chunks so each chunk is released only after
+ * the throttle has admitted its byte count.
+ *
+ * When `throttle` is `undefined`, the source iterable is returned unchanged.
+ *
+ * @param source - Async iterable that produces byte chunks.
+ * @param throttle - Optional throttle that paces chunk emission.
+ * @param signal - Optional abort signal interrupting pending waits.
+ * @returns Async generator emitting the original chunks at the throttled rate.
+ */
+declare function throttleByteIterable(source: AsyncIterable<Uint8Array>, throttle: BandwidthThrottle | undefined, signal?: AbortSignal): AsyncIterable<Uint8Array>;
+
+/**
+ * Transfer executor bridge for provider-backed read/write sessions.
+ *
+ * @module transfers/createProviderTransferExecutor
+ */
+
+/** Endpoint role used while resolving provider sessions for a transfer job. */
+type ProviderTransferEndpointRole = "source" | "destination";
+/** Input passed to provider transfer session resolvers. */
+interface ProviderTransferSessionResolverInput {
+    /** Endpoint being resolved. */
+    endpoint: TransferEndpoint;
+    /** Whether the endpoint is the source or destination side of the transfer. */
+    role: ProviderTransferEndpointRole;
+    /** Job currently being executed. */
+    job: TransferJob;
+}
+/** Resolves the connected provider session that owns an endpoint. */
+type ProviderTransferSessionResolver = (input: ProviderTransferSessionResolverInput) => TransferSession | undefined;
+/**
+ * Resume behavior for a transfer.
+ *
+ * - `"auto"` (default) - resume when both endpoints are capable
+ *   (`resumeDownload` on the source, `resumeUpload` on the destination) and a
+ *   valid checkpoint exists; otherwise transfer from scratch.
+ * - `"require"` - throw {@link UnsupportedFeatureError} when either endpoint
+ *   cannot resume, instead of silently restarting.
+ * - `"off"` - never consult or write checkpoints.
+ */
+type TransferResumeMode = "auto" | "require" | "off";
+/**
+ * Checkpoint/resume configuration consumed by
+ * {@link createProviderTransferExecutor} (directly or through
+ * {@link runRoute} / client defaults).
+ *
+ * @example Cross-process resumable transfers
+ * ```ts
+ * import {
+ *   createFileSystemTransferCheckpointStore,
+ *   createProviderTransferExecutor,
+ * } from "@zero-transfer/sdk";
+ *
+ * const executor = createProviderTransferExecutor({
+ *   resolveSession,
+ *   resume: {
+ *     store: createFileSystemTransferCheckpointStore({ directory: "./.zt-checkpoints" }),
+ *   },
+ * });
+ * ```
+ */
+interface TransferResumeOptions {
+    /** Checkpoint persistence backend. */
+    store: TransferCheckpointStore;
+    /** Resume behavior. Defaults to `"auto"`. */
+    mode?: TransferResumeMode;
+    /**
+     * Minimum bytes of new committed progress between byte-offset checkpoint
+     * persists. Defaults to 8 MiB. Part-aware providers persist per committed
+     * part instead and ignore this value.
+     */
+    persistIntervalBytes?: number;
+    /**
+     * Optional namespace mixed into checkpoint keys. Checkpoints are keyed by
+     * source+destination provider/path; set a scope (for example the host or
+     * profile id) when identical provider/path pairs can refer to different
+     * servers.
+     */
+    scope?: string;
+}
+/** Options for {@link createProviderTransferExecutor}. */
+interface ProviderTransferExecutorOptions {
+    /** Resolves connected provider sessions for source and destination endpoints. */
+    resolveSession: ProviderTransferSessionResolver;
+    /** Optional clock/sleep overrides for the bandwidth throttle. */
+    throttle?: BandwidthThrottleOptions;
+    /** Checkpoint/resume configuration. Resume is disabled when omitted. */
+    resume?: TransferResumeOptions;
+}
+/**
+ * Creates a {@link TransferExecutor} that reads from a source provider and writes to a destination provider.
+ *
+ * The returned executor supports single-object `upload`, `download`, and `copy` jobs. Provider sessions must
+ * expose `session.transfers.read()` and `session.transfers.write()`; concrete providers remain responsible for
+ * the actual streaming implementation.
+ *
+ * When {@link ProviderTransferExecutorOptions.resume} is configured the
+ * executor checkpoints progress against the supplied store and resumes
+ * interrupted transfers: the source is fingerprinted (size/mtime/etag) and a
+ * stored checkpoint is honored only when the fingerprint still matches and the
+ * destination passes a size sanity check. Engine retries resume in-process for
+ * free, and a fresh process resumes through the same store. Checkpoints are
+ * cleared on success and invalidated checkpoints trigger best-effort
+ * provider-side cleanup via
+ * {@link ProviderTransferOperations.discardResumable}.
+ *
+ * @param options - Session resolver plus optional throttle and resume configuration.
+ * @returns Transfer executor suitable for {@link TransferEngine.execute} or {@link TransferQueue}.
+ */
+declare function createProviderTransferExecutor(options: ProviderTransferExecutorOptions): TransferExecutor;
 
 /** Mutable registry of provider factories available to a transfer client. */
 declare class ProviderRegistry {
@@ -1155,18 +1543,25 @@ declare class ProviderRegistry {
  *
  * Per-call options always win over client defaults.
  *
- * Additional default slots (`verify`, `resume`, `compression`, `policy`) land
- * here as their features ship in later releases; the shape is additive.
+ * Additional default slots (`verify`, `compression`, `policy`) land here as
+ * their features ship in later releases; the shape is additive.
  *
- * @example Resilient defaults for every transfer in an application
+ * @example Resilient, resumable defaults for every transfer in an application
  * ```ts
- * import { createDefaultRetryPolicy, createTransferClient } from "@zero-transfer/sdk";
+ * import {
+ *   createDefaultRetryPolicy,
+ *   createFileSystemTransferCheckpointStore,
+ *   createTransferClient,
+ * } from "@zero-transfer/sdk";
  *
  * const client = createTransferClient({
  *   providers: [createSftpProviderFactory(), createS3ProviderFactory()],
  *   defaults: {
  *     retry: createDefaultRetryPolicy(),
  *     timeout: { stallTimeoutMs: 30_000 },
+ *     resume: {
+ *       store: createFileSystemTransferCheckpointStore({ directory: "./.zt-checkpoints" }),
+ *     },
  *   },
  * });
  * ```
@@ -1176,6 +1571,8 @@ interface TransferClientDefaults {
     retry?: TransferRetryPolicy;
     /** Default timeout policy for transfers executed through this client. */
     timeout?: TransferTimeoutPolicy;
+    /** Default checkpoint/resume configuration for transfers executed through this client. */
+    resume?: TransferResumeOptions;
 }
 /** Options used to create a provider-neutral transfer client. */
 interface TransferClientOptions {
@@ -1540,6 +1937,8 @@ interface RunRouteOptions {
     timeout?: TransferTimeoutPolicy;
     /** Optional bandwidth limit forwarded to the engine. */
     bandwidthLimit?: TransferBandwidthLimit;
+    /** Checkpoint/resume configuration forwarded to the executor. Falls back to `client.defaults.resume`. */
+    resume?: TransferResumeOptions;
     /** Caller-defined metadata merged into the resulting transfer job. */
     metadata?: Record<string, unknown>;
 }
@@ -2542,56 +2941,6 @@ declare function redactUrlForLogging(url: string | URL): string;
  */
 declare function redactErrorForLogging(error: unknown): Record<string, unknown>;
 
-/** Sleep helper signature used by {@link createBandwidthThrottle}. */
-type BandwidthSleep = (delayMs: number, signal?: AbortSignal) => Promise<void>;
-/** Construction overrides for deterministic tests. */
-interface BandwidthThrottleOptions {
-    /** Monotonic clock returning milliseconds since an arbitrary epoch. Defaults to `Date.now`. */
-    now?: () => number;
-    /** Sleep implementation honoring an optional abort signal. Defaults to a `setTimeout` helper. */
-    sleep?: BandwidthSleep;
-}
-/** Token-bucket throttle used to pace transfer chunks. */
-interface BandwidthThrottle {
-    /** Maximum sustained transfer rate in bytes per second. */
-    readonly bytesPerSecond: number;
-    /** Burst capacity in bytes available before throttling kicks in. */
-    readonly burstBytes: number;
-    /**
-     * Consumes `bytes` from the bucket, awaiting refill when not enough tokens are available.
-     *
-     * @param bytes - Non-negative byte count being released by the throttle.
-     * @param signal - Optional abort signal that interrupts pending waits.
-     * @throws {@link AbortError} When the signal is aborted while waiting.
-     */
-    consume(bytes: number, signal?: AbortSignal): Promise<void>;
-}
-/**
- * Creates a token-bucket throttle that paces an asynchronous data pipeline to
- * a sustained {@link TransferBandwidthLimit}.
- *
- * Returns `undefined` when no limit is supplied so callers can omit throttling
- * without conditional branches at the call site.
- *
- * @param limit - Optional throughput limit. Returns `undefined` when omitted.
- * @param options - Optional clock/sleep overrides for deterministic tests.
- * @returns Throttle implementation when a limit is supplied, otherwise `undefined`.
- * @throws {@link ConfigurationError} When the supplied limit shape is invalid.
- */
-declare function createBandwidthThrottle(limit: TransferBandwidthLimit | undefined, options?: BandwidthThrottleOptions): BandwidthThrottle | undefined;
-/**
- * Wraps an async iterable of byte chunks so each chunk is released only after
- * the throttle has admitted its byte count.
- *
- * When `throttle` is `undefined`, the source iterable is returned unchanged.
- *
- * @param source - Async iterable that produces byte chunks.
- * @param throttle - Optional throttle that paces chunk emission.
- * @param signal - Optional abort signal interrupting pending waits.
- * @returns Async generator emitting the original chunks at the throttled rate.
- */
-declare function throttleByteIterable(source: AsyncIterable<Uint8Array>, throttle: BandwidthThrottle | undefined, signal?: AbortSignal): AsyncIterable<Uint8Array>;
-
 /** Options for {@link createDefaultRetryPolicy}. */
 interface DefaultRetryPolicyOptions {
     /** Maximum total attempts, including the first attempt. Defaults to `4`. */
@@ -2658,44 +3007,6 @@ interface DefaultRetryPolicyOptions {
  * @see {@link TransferRetryPolicy} for the underlying hook contract.
  */
 declare function createDefaultRetryPolicy(options?: DefaultRetryPolicyOptions): TransferRetryPolicy;
-
-/**
- * Transfer executor bridge for provider-backed read/write sessions.
- *
- * @module transfers/createProviderTransferExecutor
- */
-
-/** Endpoint role used while resolving provider sessions for a transfer job. */
-type ProviderTransferEndpointRole = "source" | "destination";
-/** Input passed to provider transfer session resolvers. */
-interface ProviderTransferSessionResolverInput {
-    /** Endpoint being resolved. */
-    endpoint: TransferEndpoint;
-    /** Whether the endpoint is the source or destination side of the transfer. */
-    role: ProviderTransferEndpointRole;
-    /** Job currently being executed. */
-    job: TransferJob;
-}
-/** Resolves the connected provider session that owns an endpoint. */
-type ProviderTransferSessionResolver = (input: ProviderTransferSessionResolverInput) => TransferSession | undefined;
-/** Options for {@link createProviderTransferExecutor}. */
-interface ProviderTransferExecutorOptions {
-    /** Resolves connected provider sessions for source and destination endpoints. */
-    resolveSession: ProviderTransferSessionResolver;
-    /** Optional clock/sleep overrides for the bandwidth throttle. */
-    throttle?: BandwidthThrottleOptions;
-}
-/**
- * Creates a {@link TransferExecutor} that reads from a source provider and writes to a destination provider.
- *
- * The returned executor supports single-object `upload`, `download`, and `copy` jobs. Provider sessions must
- * expose `session.transfers.read()` and `session.transfers.write()`; concrete providers remain responsible for
- * the actual streaming implementation.
- *
- * @param options - Session resolver used for source and destination endpoints.
- * @returns Transfer executor suitable for {@link TransferEngine.execute} or {@link TransferQueue}.
- */
-declare function createProviderTransferExecutor(options: ProviderTransferExecutorOptions): TransferExecutor;
 
 /**
  * Transfer plan and dry-run primitives.
@@ -3755,4 +4066,4 @@ interface FtpsProviderOptions extends FtpProviderOptions {
  */
 declare function createFtpsProviderFactory(options?: FtpsProviderOptions): ProviderFactory;
 
-export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionPoolOptions, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, type DefaultRetryPolicyOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type FtpsDataProtection, type FtpsMode, type FtpsProviderOptions, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MetadataCapability, type MkdirOptions, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type PooledTransferClient, type ProgressEventInput, ProtocolError, type ProviderFactory, type ProviderId, ProviderRegistry, type ProviderSelection, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type SecretProvider, type SecretSource, type SecretValue, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithms, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshProfile, type SshSocketFactory, type SshSocketFactoryContext, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteRange, TransferClient, type TransferClientDefaults, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createDefaultRetryPolicy, createFtpsProviderFactory, createLocalProviderFactory, createMemoryProviderFactory, createOAuthTokenSecretSource, createPooledTransferClient, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isMainModule, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactErrorForLogging, redactObject, redactSecretSource, redactUrlForLogging, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };
+export { AbortError, type AtomicDeployActivateOperation, type AtomicDeployActivateStep, type AtomicDeployPlan, type AtomicDeployPruneStep, type AtomicDeployStrategy, type AuthenticationCapability, AuthenticationError, AuthorizationError, type BandwidthSleep, type BandwidthThrottle, type BandwidthThrottleOptions, type Base64EnvSecretSource, type BuiltInProviderId, CLASSIC_PROVIDER_IDS, type CapabilitySet, type ChecksumCapability, type ClassicProviderId, type ClientDiagnostics, type CompareRemoteManifestsOptions, ConfigurationError, type ConnectionDiagnosticTimings, type ConnectionDiagnosticsResult, ConnectionError, type ConnectionPoolOptions, type ConnectionProfile, type CopyBetweenOptions, type CreateAtomicDeployPlanOptions, type CreateRemoteBrowserOptions, type CreateRemoteManifestOptions, type CreateSyncPlanOptions, DEFAULT_CHECKPOINT_TTL_MS, type DefaultRetryPolicyOptions, type DiffRemoteTreesOptions, type DownloadFileOptions, type EnvSecretSource, type FileSecretSource, type FileSystemTransferCheckpointStoreOptions, type FileZillaSite, type FriendlyTransferOptions, type FtpReplyErrorInput, type FtpsDataProtection, type FtpsMode, type FtpsProviderOptions, type ImportFileZillaSitesResult, type ImportOpenSshConfigOptions, type ImportOpenSshConfigResult, type ImportWinScpSessionsResult, type KnownHostsEntry, type KnownHostsMarker, type ListOptions, type LocalProviderOptions, type LogLevel, type LogRecord, type LogRecordInput, type LoggerMethod, type MemoryProviderEntry, type MemoryProviderOptions, type MemoryTransferCheckpointStoreOptions, type MetadataCapability, type MkdirOptions, type OAuthAccessToken, type OAuthRefreshCallback, type OAuthTokenSecretSourceOptions, type OpenSshConfigEntry, ParseError, PathAlreadyExistsError, PathNotFoundError, PermissionDeniedError, type PooledTransferClient, type ProgressEventInput, ProtocolError, type ProviderFactory, type ProviderId, ProviderRegistry, type ProviderSelection, type ProviderTransferDiscardRequest, type ProviderTransferEndpointRole, type ProviderTransferExecutorOptions, type ProviderTransferOperations, type ProviderTransferReadRequest, type ProviderTransferReadResult, type ProviderTransferRequest, type ProviderTransferSessionResolver, type ProviderTransferSessionResolverInput, type ProviderTransferWriteRequest, type ProviderTransferWriteResult, REDACTED, REMOTE_MANIFEST_FORMAT_VERSION, type RemoteBreadcrumb, type RemoteBrowser, type RemoteBrowserFilter, type RemoteBrowserSnapshot, type RemoteEntry, type RemoteEntrySortKey, type RemoteEntrySortOrder, type RemoteEntryType, type RemoteFileAdapter, type RemoteFileEndpoint, type RemoteFileSystem, type RemoteManifest, type RemoteManifestEntry, type RemotePermissions, type RemoteProtocol, type RemoteStat, type RemoteTreeDiff, type RemoteTreeDiffEntry, type RemoteTreeDiffReason, type RemoteTreeDiffStatus, type RemoteTreeDiffSummary, type RemoteTreeEntry, type RemoteTreeFilter, type RemoveOptions, type RenameOptions, type ResolveSecretOptions, type ResolvedConnectionProfile, type ResolvedOpenSshHost, type ResolvedSshProfile, type ResolvedTlsProfile, type RmdirOptions, type RunConnectionDiagnosticsOptions, type SecretProvider, type SecretSource, type SecretValue, type SpecializedErrorDetails, type SshAgentSource, type SshAlgorithms, type SshKeyboardInteractiveChallenge, type SshKeyboardInteractiveHandler, type SshKeyboardInteractivePrompt, type SshKnownHostsSource, type SshProfile, type SshSocketFactory, type SshSocketFactoryContext, type StatOptions, type SyncConflictPolicy, type SyncDeletePolicy, type SyncDirection, type SyncEndpointInput, TimeoutError, type TlsProfile, type TlsSecretSource, type TransferAttempt, type TransferAttemptError, type TransferBandwidthLimit, type TransferByteOffsetCheckpointState, type TransferByteRange, type TransferCheckpointEndpoint, type TransferCheckpointHandle, type TransferCheckpointKey, type TransferCheckpointPart, type TransferCheckpointRecord, type TransferCheckpointState, type TransferCheckpointStore, TransferClient, type TransferClientDefaults, type TransferClientOptions, type TransferDataChunk, type TransferDataSource, type TransferEndpoint, TransferEngine, type TransferEngineExecuteOptions, type TransferEngineOptions, TransferError, type TransferExecutionContext, type TransferExecutionResult, type TransferExecutor, type TransferJob, type TransferOperation, type TransferPartsCheckpointState, type TransferPlan, type TransferPlanAction, type TransferPlanInput, type TransferPlanStep, type TransferPlanSummary, type TransferProgressEvent, type TransferProvider, TransferQueue, type TransferQueueExecutorResolver, type TransferQueueItem, type TransferQueueItemStatus, type TransferQueueOptions, type TransferQueueRunOptions, type TransferQueueSummary, type TransferReceipt, type TransferResult, type TransferResultInput, type TransferResumeMode, type TransferResumeOptions, type TransferRetryDecisionInput, type TransferRetryPolicy, type TransferSession, type TransferSourceFingerprint, type TransferTimeoutPolicy, type TransferVerificationResult, UnsupportedFeatureError, type UploadFileOptions, type ValueSecretSource, VerificationError, type WalkRemoteTreeOptions, type WinScpSession, ZeroTransfer, type ZeroTransferCapabilities, ZeroTransferError, type ZeroTransferErrorDetails, type ZeroTransferLogger, type ZeroTransferOptions, assertSafeFtpArgument, basenameRemotePath, buildRemoteBreadcrumbs, compareRemoteManifests, copyBetween, createAtomicDeployPlan, createBandwidthThrottle, createDefaultRetryPolicy, createFileSystemTransferCheckpointStore, createFtpsProviderFactory, createLocalProviderFactory, createMemoryProviderFactory, createMemoryTransferCheckpointStore, createOAuthTokenSecretSource, createPooledTransferClient, createProgressEvent, createProviderTransferExecutor, createRemoteBrowser, createRemoteManifest, createSyncPlan, createTransferClient, createTransferJobsFromPlan, createTransferPlan, createTransferResult, diffRemoteTrees, downloadFile, emitLog, errorFromFtpReply, filterRemoteEntries, fingerprintsMatch, importFileZillaSites, importOpenSshConfig, importWinScpSessions, isClassicProviderId, isMainModule, isSensitiveKey, joinRemotePath, matchKnownHosts, matchKnownHostsEntry, noopLogger, normalizeRemotePath, parentRemotePath, parseKnownHosts, parseOpenSshConfig, parseRemoteManifest, redactCommand, redactConnectionProfile, redactErrorForLogging, redactObject, redactSecretSource, redactUrlForLogging, redactValue, resolveConnectionProfileSecrets, resolveOpenSshHost, resolveProviderId, resolveSecret, runConnectionDiagnostics, serializeRemoteManifest, sortRemoteEntries, summarizeClientDiagnostics, summarizeTransferPlan, throttleByteIterable, uploadFile, validateConnectionProfile, walkRemoteTree };

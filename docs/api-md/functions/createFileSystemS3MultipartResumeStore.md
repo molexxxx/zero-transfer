@@ -10,7 +10,7 @@
 function createFileSystemS3MultipartResumeStore(options): S3MultipartResumeStore;
 ```
 
-Defined in: [src/providers/web/S3Provider.ts:194](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/web/S3Provider.ts#L194)
+Defined in: [src/providers/web/S3Provider.ts:212](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/web/S3Provider.ts#L212)
 
 File-system backed [S3MultipartResumeStore](../interfaces/S3MultipartResumeStore.md) that survives process
 restarts. Each in-flight multipart upload is checkpointed to a single

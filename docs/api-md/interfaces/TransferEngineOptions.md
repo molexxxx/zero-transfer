@@ -6,7 +6,7 @@
 
 # Interface: TransferEngineOptions
 
-Defined in: [src/transfers/TransferEngine.ts:97](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/transfers/TransferEngine.ts#L97)
+Defined in: [src/transfers/TransferEngine.ts:97](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/transfers/TransferEngine.ts#L97)
 
 Construction options for deterministic tests and host integration.
 
@@ -14,4 +14,4 @@ Construction options for deterministic tests and host integration.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="now"></a> `now?` | () => `Date` | Clock used for receipts and progress events. Defaults to `new Date()`. | [src/transfers/TransferEngine.ts:99](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/transfers/TransferEngine.ts#L99) |
+| <a id="now"></a> `now?` | () => `Date` | Clock used for receipts and progress events. Defaults to `new Date()`. | [src/transfers/TransferEngine.ts:99](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/transfers/TransferEngine.ts#L99) |

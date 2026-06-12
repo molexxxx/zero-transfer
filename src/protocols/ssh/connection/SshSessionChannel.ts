@@ -38,9 +38,12 @@ import {
 } from "./SshConnectionMessages";
 import type { SshTransportConnection } from "../transport/SshTransportConnection";
 
-const INITIAL_WINDOW_SIZE = 256 * 1024; // 256 KiB
+// 2 MiB window / 32 KiB packets match OpenSSH's session channel defaults
+// (CHAN_SES_WINDOW_DEFAULT = 64 * CHAN_SES_PACKET_DEFAULT) and cover the
+// 64 x 32 KiB pipelined SFTP read window without round-trip stalls.
+const INITIAL_WINDOW_SIZE = 2 * 1024 * 1024; // 2 MiB
 const MAX_PACKET_SIZE = 32 * 1024; // 32 KiB
-const WINDOW_REFILL_THRESHOLD = 64 * 1024;
+const WINDOW_REFILL_THRESHOLD = INITIAL_WINDOW_SIZE / 2;
 
 // -- Channel state -------------------------------------------------------------
 

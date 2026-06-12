@@ -65,6 +65,43 @@ const client = createTransferClient({
 
 Defaults apply to `runRoute`, the one-shot helpers, `TransferQueue` (via its `client` option), and scheduled routes. The `TransferEngine` primitive stays fully explicit - defaults never reach `engine.execute()` directly.
 
+## Checkpoints and resume
+
+Configure `resume` with a checkpoint store and interrupted transfers pick up where they left off - across in-process retries and across process restarts. Checkpoints are keyed by the source and destination provider/path pair, so any job moving the same bytes to the same place can resume prior work, no matter which process started it.
+
+```ts
+import { createFileSystemTransferCheckpointStore, createTransferClient } from "@zero-transfer/sdk";
+
+const client = createTransferClient({
+  providers: [...],
+  defaults: {
+    retry: createDefaultRetryPolicy(),
+    resume: {
+      store: createFileSystemTransferCheckpointStore({ directory: "./.zt-checkpoints" }),
+    },
+  },
+});
+
+// Kill the process mid-transfer and run it again: the transfer resumes from
+// the last committed byte instead of restarting.
+await downloadFile({ client, source, destination });
+```
+
+Safety comes first, speed second:
+
+- The source is fingerprinted (size, mtime, etag) when a checkpoint is written; on resume any mismatch invalidates the checkpoint so a changed source is never spliced onto stale destination bytes. Invalidation also triggers best-effort provider cleanup (for example aborting an orphaned S3 multipart upload).
+- Byte-offset checkpoints are sanity-trimmed against the actual destination size before being trusted, and only acknowledged bytes are ever recorded - never bytes merely read or in flight.
+- Checkpoints are cleared on success and expire after 7 days (matching S3/Azure uncommitted-upload lifetimes). The filesystem store ([`createFileSystemTransferCheckpointStore`](../../api/functions/createfilesystemtransfercheckpointstore/)) writes atomically with `0600` permissions; [`createMemoryTransferCheckpointStore`](../../api/functions/creatememorytransfercheckpointstore/) covers in-process retry and tests.
+
+Two checkpoint shapes cover every provider: sequential-append providers (SFTP, FTP, local) record a committed-byte watermark, while part-based providers (S3 multipart, Azure staged blocks) record the upload token plus the contiguous prefix of completed parts. Resume is capability-gated (`resumeDownload` on the source, `resumeUpload` on the destination); `mode: "require"` makes an incapable pair an error instead of a silent restart, and `mode: "off"` disables checkpoints entirely. See [`TransferResumeOptions`](../../api/interfaces/transferresumeoptions/).
+
+## Throughput
+
+Two provider families gained windowed parallelism designed so progress and checkpoints stay monotonic:
+
+- **SFTP pipelining** - single-file reads and writes keep a sliding window of outstanding requests in flight (default 64 requests x 32 KiB = 2 MiB, matching the OpenSSH client). On high-latency links this is the difference between ~320 KiB/s and saturating the path. Chunks still arrive in order, write progress reports only the contiguous acknowledged watermark, and `pipeline: { maxInFlight: 1 }` reproduces the serial behavior. Tune via [`SftpProviderOptions`](../../api/interfaces/sftpprovideroptions/)`.pipeline`.
+- **Parallel multipart uploads** - S3 multipart parts and Azure staged blocks upload concurrently (default `partConcurrency: 4`, memory bounded at `(partConcurrency + 1) x partSizeBytes`). Part numbering stays deterministic, finalization is always in part order, and progress/checkpoints advance on the contiguous completed prefix, so parallelism never produces a misleading watermark. `partConcurrency: 1` reproduces the sequential behavior bit-for-bit.
+
 ## Memory-bounded streaming
 
 The core transports stream end to end instead of buffering whole files: S3 single-shot uploads with a known size stream with `UNSIGNED-PAYLOAD` SigV4 signing (the same mode presigned URLs use), WebDAV uploads default to chunked streaming (`uploadStreaming: "always"`; legacy servers that reject chunked encoding can opt back into `"when-known-size"`), and FTP directory listings parse incrementally with a bounded per-line size. The SSH/SFTP framers cap declared packet sizes at 256 KiB, matching OpenSSH, so a misbehaving server cannot force unbounded buffering.

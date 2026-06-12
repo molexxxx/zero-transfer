@@ -4,17 +4,7 @@
  * @module providers/local/LocalProvider
  */
 import { createReadStream } from "node:fs";
-import {
-  lstat,
-  mkdir,
-  open,
-  readdir,
-  readlink,
-  rename,
-  rm,
-  unlink,
-  writeFile,
-} from "node:fs/promises";
+import { lstat, mkdir, open, readdir, readlink, rename, rm, unlink } from "node:fs/promises";
 import path from "node:path";
 import type { Buffer } from "node:buffer";
 import type { Stats } from "node:fs";
@@ -165,15 +155,14 @@ class LocalTransferOperations implements ProviderTransferOperations {
     request.throwIfAborted();
     const remotePath = normalizeLocalProviderPath(request.endpoint.path);
     const localPath = resolveLocalPath(this.rootPath, remotePath);
-    const content = await collectTransferContent(request);
     const offset = normalizeOptionalByteCount(request.offset, "offset", remotePath);
 
     await ensureLocalParentDirectory(localPath, remotePath);
-    await writeLocalContent(localPath, remotePath, content, offset);
+    const bytesTransferred = await writeLocalStream(localPath, remotePath, request, offset);
 
     const stat = await readLocalEntry(this.rootPath, remotePath);
     const result: ProviderTransferWriteResult = {
-      bytesTransferred: content.byteLength,
+      bytesTransferred,
       resumed: offset !== undefined && offset > 0,
       verified: request.verification?.verified ?? false,
     };
@@ -318,33 +307,6 @@ async function* createLocalReadSource(
   }
 }
 
-async function collectTransferContent(request: ProviderTransferWriteRequest): Promise<Uint8Array> {
-  const chunks: Uint8Array[] = [];
-  let byteLength = 0;
-
-  for await (const chunk of request.content) {
-    request.throwIfAborted();
-    const clonedChunk = new Uint8Array(chunk);
-    chunks.push(clonedChunk);
-    byteLength += clonedChunk.byteLength;
-    request.reportProgress(byteLength, request.totalBytes);
-  }
-
-  return concatChunks(chunks, byteLength);
-}
-
-function concatChunks(chunks: Uint8Array[], byteLength: number): Uint8Array {
-  const content = new Uint8Array(byteLength);
-  let offset = 0;
-
-  for (const chunk of chunks) {
-    content.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  return content;
-}
-
 async function ensureLocalParentDirectory(localPath: string, remotePath: string): Promise<void> {
   try {
     await mkdir(path.dirname(localPath), { recursive: true });
@@ -353,28 +315,52 @@ async function ensureLocalParentDirectory(localPath: string, remotePath: string)
   }
 }
 
-async function writeLocalContent(
+/**
+ * Streams transfer content to disk chunk-by-chunk (never buffering the whole
+ * payload), reporting committed bytes after each flushed write so byte-offset
+ * checkpoints can persist real durable progress.
+ */
+async function writeLocalStream(
   localPath: string,
   remotePath: string,
-  content: Uint8Array,
+  request: ProviderTransferWriteRequest,
   offset: number | undefined,
-): Promise<void> {
+): Promise<number> {
+  let handle: Awaited<ReturnType<typeof open>>;
   try {
-    if (offset === undefined) {
-      await writeFile(localPath, content);
-      return;
-    }
-
-    const handle = await openLocalFileForOffsetWrite(localPath);
-
-    try {
-      await handle.write(content, 0, content.byteLength, offset);
-    } finally {
-      await handle.close();
-    }
+    handle =
+      offset === undefined
+        ? await open(localPath, "w")
+        : await openLocalFileForOffsetWrite(localPath);
   } catch (error) {
     throw mapLocalFileSystemError(error, remotePath);
   }
+
+  let bytesTransferred = 0;
+  try {
+    let writeOffset = offset ?? 0;
+
+    // Source-stream failures must propagate untouched (they carry the
+    // retryability of the read side); only filesystem failures map to
+    // local-provider errors.
+    for await (const chunk of request.content) {
+      request.throwIfAborted();
+      if (chunk.byteLength === 0) continue;
+      try {
+        await handle.write(chunk, 0, chunk.byteLength, writeOffset);
+      } catch (error) {
+        throw mapLocalFileSystemError(error, remotePath);
+      }
+      writeOffset += chunk.byteLength;
+      bytesTransferred += chunk.byteLength;
+      request.reportProgress(bytesTransferred, request.totalBytes);
+      request.onBytesCommitted?.(writeOffset);
+    }
+  } finally {
+    await handle.close().catch(() => undefined);
+  }
+
+  return bytesTransferred;
 }
 
 async function openLocalFileForOffsetWrite(localPath: string) {

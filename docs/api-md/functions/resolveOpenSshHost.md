@@ -10,7 +10,7 @@
 function resolveOpenSshHost(entries, alias): ResolvedOpenSshHost;
 ```
 
-Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:99](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/profiles/importers/OpenSshConfigImporter.ts#L99)
+Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:99](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/profiles/importers/OpenSshConfigImporter.ts#L99)
 
 Resolves the merged option set for an OpenSSH host alias.
 

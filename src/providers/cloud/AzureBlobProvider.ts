@@ -34,6 +34,10 @@ import type {
   ProviderTransferWriteResult,
 } from "../ProviderTransferOperations";
 import type { RemoteFileSystem } from "../RemoteFileSystem";
+import type {
+  TransferCheckpointPart,
+  TransferPartsCheckpointState,
+} from "../../transfers/TransferCheckpointStore";
 import {
   formatRangeHeader,
   parseTotalBytes,
@@ -41,6 +45,7 @@ import {
   webStreamToAsyncIterable,
   type HttpFetch,
 } from "../web/httpInternals";
+import { createSequentialPartReader, runMultipartUploadPool } from "../web/multipartUploadPool";
 
 export type { HttpFetch };
 
@@ -90,12 +95,20 @@ export interface AzureBlobMultipartOptions {
   thresholdBytes?: number;
   /** Target block size in bytes. Defaults to 8 MiB. Maximum 4000 MiB per Azure. */
   partSizeBytes?: number;
+  /**
+   * Number of blocks staged concurrently. Defaults to `4`; `1` reproduces
+   * the sequential one-block-at-a-time behavior. Buffered memory is bounded
+   * at `(partConcurrency + 1) x partSizeBytes`. Progress and resume
+   * checkpoints advance on the contiguous prefix of staged blocks.
+   */
+  partConcurrency?: number;
 }
 
 interface ResolvedAzureMultipartOptions {
   enabled: boolean;
   thresholdBytes: number;
   partSizeBytes: number;
+  partConcurrency: number;
 }
 
 /**
@@ -185,6 +198,7 @@ export function createAzureBlobProviderFactory(options: AzureBlobProviderOptions
   }
   const multipart: ResolvedAzureMultipartOptions = {
     enabled: multipartEnabled,
+    partConcurrency: Math.max(1, Math.floor(options.multipart?.partConcurrency ?? 4)),
     partSizeBytes,
     thresholdBytes,
   };
@@ -200,7 +214,8 @@ export function createAzureBlobProviderFactory(options: AzureBlobProviderOptions
     metadata: ["modifiedAt", "uniqueId"],
     notes: multipartEnabled
       ? [
-          `Azure Blob staged-block upload enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B).`,
+          `Azure Blob staged-block upload enabled by default (partSize=${String(multipart.partSizeBytes)}B, threshold=${String(multipart.thresholdBytes)}B, partConcurrency=${String(multipart.partConcurrency)}).`,
+          "Blocks stage in parallel; progress and checkpoints advance on the contiguous staged prefix.",
           "Payloads at or below the threshold automatically fall back to single-shot block-blob PUT.",
           "Pass `multipart: { enabled: false }` to force the legacy single-shot behaviour.",
         ]
@@ -440,21 +455,27 @@ class AzureBlobTransferOperations implements ProviderTransferOperations {
 
   async write(request: ProviderTransferWriteRequest): Promise<ProviderTransferWriteResult> {
     request.throwIfAborted();
-    if (request.offset !== undefined && request.offset > 0) {
-      throw new UnsupportedFeatureError({
-        details: { offset: request.offset },
-        message:
-          "Azure Blob provider does not yet support cross-attempt resume of staged-block uploads",
-        retryable: false,
-      });
-    }
     const normalized = normalizeRemotePath(request.endpoint.path);
     const multipart = this.options.multipart;
+    const offset = request.offset ?? 0;
+    if (offset > 0) {
+      const hasCheckpointState = request.checkpoint?.state?.kind === "parts";
+      if (!multipart.enabled || !hasCheckpointState) {
+        throw new UnsupportedFeatureError({
+          details: { offset },
+          message:
+            "Azure Blob provider requires multipart.enabled plus a unified resume checkpoint " +
+            "to resume a staged-block upload",
+          retryable: false,
+        });
+      }
+      return this.writeStagedBlocks(request, normalized, offset);
+    }
     if (!multipart.enabled) {
       const buffered = await collectChunks(request.content);
       return this.singleShotPut(request, normalized, buffered);
     }
-    return this.writeStagedBlocks(request, normalized);
+    return this.writeStagedBlocks(request, normalized, 0);
   }
 
   private async singleShotPut(
@@ -487,72 +508,117 @@ class AzureBlobTransferOperations implements ProviderTransferOperations {
   private async writeStagedBlocks(
     request: ProviderTransferWriteRequest,
     normalized: string,
+    requestedOffset: number,
   ): Promise<ProviderTransferWriteResult> {
     const multipart = this.options.multipart;
-    const partSize = multipart.partSizeBytes;
+    const checkpoint = request.checkpoint;
+
+    // Resolve prior progress from the executor-managed checkpoint handle.
+    // Uncommitted Azure blocks linger for 7 days, so a resumed upload only
+    // needs the original block-id nonce plus the staged prefix.
+    let resumeState: TransferPartsCheckpointState | undefined;
+    if (checkpoint?.state?.kind === "parts") {
+      resumeState = checkpoint.state;
+    }
+    if (requestedOffset > 0) {
+      if (resumeState === undefined || resumeState.committedBytes !== requestedOffset) {
+        throw new UnsupportedFeatureError({
+          details: {
+            checkpointOffset: resumeState?.committedBytes,
+            requestedOffset,
+          },
+          message: "Azure Blob resume offset does not match the stored staged-block checkpoint",
+          retryable: false,
+        });
+      }
+    } else if (resumeState !== undefined && resumeState.committedBytes > 0) {
+      // The caller did not request a resume, so the source has not been
+      // advanced: starting fresh is the only safe option.
+      resumeState = undefined;
+    }
+
+    const partSize = resumeState?.partSizeBytes ?? multipart.partSizeBytes;
     const iterator = request.content[Symbol.asyncIterator]();
-    // Per-upload nonce keeps block ids unique across concurrent writers targeting
-    // the same blob path (uncommitted blocks linger for 7 days on Azure).
-    const uploadNonce = generateUploadNonce();
+    // Per-upload nonce keeps block ids unique across concurrent writers
+    // targeting the same blob path; resume reuses the original nonce so
+    // re-staged block ids line up with the prior attempt.
+    const uploadNonce = resumeState?.uploadToken ?? generateUploadNonce();
 
-    // Buffer up to thresholdBytes so small payloads fall back to single-shot PUT.
-    const initialBuffer: Uint8Array[] = [];
+    // Buffer up to thresholdBytes so small payloads fall back to single-shot
+    // PUT. When resuming, the caller has already advanced the source.
+    const initialChunks: Uint8Array[] = [];
     let initialSize = 0;
-    while (initialSize <= multipart.thresholdBytes) {
-      const next = await iterator.next();
-      if (next.done === true) break;
-      const chunk = next.value;
-      if (chunk.byteLength === 0) continue;
-      initialBuffer.push(chunk);
-      initialSize += chunk.byteLength;
-    }
-    if (initialSize <= multipart.thresholdBytes) {
-      return this.singleShotPut(request, normalized, concatChunks(initialBuffer, initialSize));
+    if (resumeState === undefined) {
+      while (initialSize <= multipart.thresholdBytes) {
+        const next = await iterator.next();
+        if (next.done === true) break;
+        const chunk = next.value;
+        if (chunk.byteLength === 0) continue;
+        initialChunks.push(chunk);
+        initialSize += chunk.byteLength;
+      }
+      if (initialSize <= multipart.thresholdBytes) {
+        return this.singleShotPut(request, normalized, concatChunks(initialChunks, initialSize));
+      }
     }
 
-    const blockIds: string[] = [];
-    let bytesTransferred = 0;
-    let partNumber = 1;
-    let buffer: Uint8Array[] = [...initialBuffer];
-    let bufferSize = initialSize;
+    const parts: TransferCheckpointPart[] =
+      resumeState !== undefined ? resumeState.parts.map((part) => ({ ...part })) : [];
+    const blockIds: string[] = parts.map(
+      (part) => part.token ?? encodeBlockId(uploadNonce, part.partNumber),
+    );
+    const startOffset = resumeState?.committedBytes ?? 0;
+    const lastResumedPart = parts[parts.length - 1];
+    const startPartNumber = lastResumedPart !== undefined ? lastResumedPart.partNumber + 1 : 1;
+    let bytesTransferred = startOffset;
 
-    const flushBlocks = async (final: boolean): Promise<void> => {
-      while (bufferSize >= partSize || (final && bufferSize > 0)) {
-        const take = Math.min(bufferSize, partSize);
-        const sliced = sliceFromBuffers(buffer, take);
-        buffer = sliced.remaining;
-        bufferSize -= sliced.bytes.byteLength;
-        const blockId = encodeBlockId(uploadNonce, partNumber);
+    const reader = createSequentialPartReader({
+      initialChunks,
+      partSizeBytes: partSize,
+      source: { [Symbol.asyncIterator]: () => iterator },
+      startOffset,
+      startPartNumber,
+    });
+
+    await runMultipartUploadPool<string>({
+      firstPartNumber: startPartNumber,
+      onCommitted: async (part, committedBytes) => {
+        blockIds.push(part.result);
+        parts.push({ byteEnd: part.byteEnd, partNumber: part.partNumber, token: part.result });
+        bytesTransferred = committedBytes;
+        if (checkpoint !== undefined) {
+          await checkpoint.save({
+            committedBytes,
+            kind: "parts",
+            parts: parts.map((entry) => ({ ...entry })),
+            partSizeBytes: partSize,
+            uploadToken: uploadNonce,
+          });
+        }
+        request.reportProgress(committedBytes, request.totalBytes);
+      },
+      partConcurrency: multipart.partConcurrency,
+      reader,
+      throwIfAborted: () => {
+        request.throwIfAborted();
+      },
+      uploadPart: async (part) => {
+        const blockId = encodeBlockId(uploadNonce, part.partNumber);
         const blockUrl = buildBlobUrl(this.options, normalized, {
           blockid: blockId,
           comp: "block",
         });
         const response = await azureFetch(this.options, "PUT", blockUrl, {
           ...(request.signal !== undefined ? { signal: request.signal } : {}),
-          body: sliced.bytes,
+          body: part.bytes,
           extraHeaders: { "content-type": "application/octet-stream" },
         });
         if (!response.ok) {
           throw mapAzureResponseError(response, normalized, await safeReadText(response));
         }
-        blockIds.push(blockId);
-        bytesTransferred += sliced.bytes.byteLength;
-        request.reportProgress(bytesTransferred, undefined);
-        partNumber += 1;
-      }
-    };
-
-    await flushBlocks(false);
-    while (true) {
-      request.throwIfAborted();
-      const next = await iterator.next();
-      if (next.done === true) break;
-      if (next.value.byteLength === 0) continue;
-      buffer.push(next.value);
-      bufferSize += next.value.byteLength;
-      await flushBlocks(false);
-    }
-    await flushBlocks(true);
+        return blockId;
+      },
+    });
 
     if (blockIds.length === 0) {
       throw new ConnectionError({
@@ -864,35 +930,6 @@ function concatChunks(chunks: Uint8Array[], totalSize: number): Uint8Array {
     offset += chunk.byteLength;
   }
   return out;
-}
-
-function sliceFromBuffers(
-  buffers: Uint8Array[],
-  size: number,
-): { bytes: Uint8Array; remaining: Uint8Array[] } {
-  const out = new Uint8Array(size);
-  let offset = 0;
-  let i = 0;
-  while (offset < size && i < buffers.length) {
-    const chunk = buffers[i];
-    if (chunk === undefined) {
-      i += 1;
-      continue;
-    }
-    const remaining = size - offset;
-    if (chunk.byteLength <= remaining) {
-      out.set(chunk, offset);
-      offset += chunk.byteLength;
-      i += 1;
-    } else {
-      out.set(chunk.subarray(0, remaining), offset);
-      const leftover = chunk.subarray(remaining);
-      const next = buffers.slice(i + 1);
-      next.unshift(leftover);
-      return { bytes: out, remaining: next };
-    }
-  }
-  return { bytes: out.subarray(0, offset), remaining: buffers.slice(i) };
 }
 
 /**

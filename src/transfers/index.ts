@@ -15,7 +15,27 @@ export {
   type ProviderTransferExecutorOptions,
   type ProviderTransferSessionResolver,
   type ProviderTransferSessionResolverInput,
+  type TransferResumeMode,
+  type TransferResumeOptions,
 } from "./createProviderTransferExecutor";
+export {
+  DEFAULT_CHECKPOINT_TTL_MS,
+  createFileSystemTransferCheckpointStore,
+  createMemoryTransferCheckpointStore,
+  fingerprintsMatch,
+  type FileSystemTransferCheckpointStoreOptions,
+  type MemoryTransferCheckpointStoreOptions,
+  type TransferByteOffsetCheckpointState,
+  type TransferCheckpointEndpoint,
+  type TransferCheckpointHandle,
+  type TransferCheckpointKey,
+  type TransferCheckpointPart,
+  type TransferCheckpointRecord,
+  type TransferCheckpointState,
+  type TransferCheckpointStore,
+  type TransferPartsCheckpointState,
+  type TransferSourceFingerprint,
+} from "./TransferCheckpointStore";
 export {
   TransferEngine,
   type TransferEngineExecuteOptions,

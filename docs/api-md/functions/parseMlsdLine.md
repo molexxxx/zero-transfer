@@ -10,7 +10,7 @@
 function parseMlsdLine(line, directory?): RemoteEntry;
 ```
 
-Defined in: [src/providers/classic/ftp/FtpListParser.ts:108](https://github.com/tonywied17/zero-transfer/blob/032c9e1827a8094533bf65e161bbb7d390b93de3/src/providers/classic/ftp/FtpListParser.ts#L108)
+Defined in: [src/providers/classic/ftp/FtpListParser.ts:108](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/classic/ftp/FtpListParser.ts#L108)
 
 Parses a single MLSD or MLST fact line.
 
