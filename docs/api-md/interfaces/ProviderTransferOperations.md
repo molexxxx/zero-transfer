@@ -6,7 +6,7 @@
 
 # Interface: ProviderTransferOperations
 
-Defined in: [src/providers/ProviderTransferOperations.ts:99](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/ProviderTransferOperations.ts#L99)
+Defined in: [src/providers/ProviderTransferOperations.ts:99](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/ProviderTransferOperations.ts#L99)
 
 Optional read/write surface exposed by provider sessions that support transfer streaming.
 
@@ -18,7 +18,7 @@ Optional read/write surface exposed by provider sessions that support transfer s
 optional discardResumable(request): void | Promise<void>;
 ```
 
-Defined in: [src/providers/ProviderTransferOperations.ts:113](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/ProviderTransferOperations.ts#L113)
+Defined in: [src/providers/ProviderTransferOperations.ts:113](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/ProviderTransferOperations.ts#L113)
 
 Discards provider-side resumable state referenced by an invalidated
 checkpoint (for example aborting an orphaned S3 multipart upload so its
@@ -44,7 +44,7 @@ read(request):
 | Promise<ProviderTransferReadResult>;
 ```
 
-Defined in: [src/providers/ProviderTransferOperations.ts:101](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/ProviderTransferOperations.ts#L101)
+Defined in: [src/providers/ProviderTransferOperations.ts:101](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/ProviderTransferOperations.ts#L101)
 
 Opens readable content for a provider endpoint.
 
@@ -69,7 +69,7 @@ write(request):
 | Promise<TransferExecutionResult>;
 ```
 
-Defined in: [src/providers/ProviderTransferOperations.ts:105](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/ProviderTransferOperations.ts#L105)
+Defined in: [src/providers/ProviderTransferOperations.ts:105](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/ProviderTransferOperations.ts#L105)
 
 Writes readable content to a provider endpoint.
 

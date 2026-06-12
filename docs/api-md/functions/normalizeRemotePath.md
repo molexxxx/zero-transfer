@@ -10,7 +10,7 @@
 function normalizeRemotePath(input): string;
 ```
 
-Defined in: [src/utils/path.ts:47](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/utils/path.ts#L47)
+Defined in: [src/utils/path.ts:47](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/utils/path.ts#L47)
 
 Normalizes a remote path using POSIX-style separators without escaping absolute roots.
 

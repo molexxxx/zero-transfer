@@ -10,7 +10,7 @@
 type LoggerMethod = (record, message?) => void;
 ```
 
-Defined in: [src/logging/Logger.ts:56](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/logging/Logger.ts#L56)
+Defined in: [src/logging/Logger.ts:56](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/logging/Logger.ts#L56)
 
 Logger method signature used for each severity level.
 

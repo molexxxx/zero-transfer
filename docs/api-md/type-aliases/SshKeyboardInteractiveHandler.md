@@ -10,7 +10,7 @@
 type SshKeyboardInteractiveHandler = (challenge) => readonly string[] | Promise<readonly string[]>;
 ```
 
-Defined in: [src/types/public.ts:154](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/types/public.ts#L154)
+Defined in: [src/types/public.ts:154](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/types/public.ts#L154)
 
 Provides ordered answers for an SSH keyboard-interactive authentication challenge.
 

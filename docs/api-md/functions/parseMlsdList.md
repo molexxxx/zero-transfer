@@ -10,7 +10,7 @@
 function parseMlsdList(input, directory?): RemoteEntry[];
 ```
 
-Defined in: [src/providers/classic/ftp/FtpListParser.ts:27](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/classic/ftp/FtpListParser.ts#L27)
+Defined in: [src/providers/classic/ftp/FtpListParser.ts:27](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/classic/ftp/FtpListParser.ts#L27)
 
 Parses an MLSD directory listing into normalized remote entries.
 

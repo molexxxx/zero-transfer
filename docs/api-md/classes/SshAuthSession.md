@@ -6,7 +6,7 @@
 
 # Class: SshAuthSession
 
-Defined in: [src/protocols/ssh/auth/SshAuthSession.ts:98](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/protocols/ssh/auth/SshAuthSession.ts#L98)
+Defined in: [src/protocols/ssh/auth/SshAuthSession.ts:98](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/protocols/ssh/auth/SshAuthSession.ts#L98)
 
 Runs SSH user authentication over an encrypted transport connection.
 
@@ -22,7 +22,7 @@ Resolves with an `SshAuthResult` on success; throws `AuthenticationError` on fai
 new SshAuthSession(transport): SshAuthSession;
 ```
 
-Defined in: [src/protocols/ssh/auth/SshAuthSession.ts:99](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/protocols/ssh/auth/SshAuthSession.ts#L99)
+Defined in: [src/protocols/ssh/auth/SshAuthSession.ts:99](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/protocols/ssh/auth/SshAuthSession.ts#L99)
 
 #### Parameters
 
@@ -42,7 +42,7 @@ Defined in: [src/protocols/ssh/auth/SshAuthSession.ts:99](https://github.com/ton
 authenticate(options): Promise<SshAuthResult>;
 ```
 
-Defined in: [src/protocols/ssh/auth/SshAuthSession.ts:101](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/protocols/ssh/auth/SshAuthSession.ts#L101)
+Defined in: [src/protocols/ssh/auth/SshAuthSession.ts:101](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/protocols/ssh/auth/SshAuthSession.ts#L101)
 
 #### Parameters
 

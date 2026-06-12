@@ -13,7 +13,7 @@ function walkRemoteTree(
 options?): AsyncGenerator<RemoteTreeEntry>;
 ```
 
-Defined in: [src/sync/walkRemoteTree.ts:55](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/sync/walkRemoteTree.ts#L55)
+Defined in: [src/sync/walkRemoteTree.ts:55](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/sync/walkRemoteTree.ts#L55)
 
 Walks a remote file system depth-first, yielding entries in a stable order.
 

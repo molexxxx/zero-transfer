@@ -10,6 +10,6 @@
 type RemoteEntrySortKey = "name" | "size" | "modifiedAt" | "type";
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:15](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/sync/createRemoteBrowser.ts#L15)
+Defined in: [src/sync/createRemoteBrowser.ts:15](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/sync/createRemoteBrowser.ts#L15)
 
 Sort key supported by [sortRemoteEntries](../functions/sortRemoteEntries.md).

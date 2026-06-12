@@ -6,17 +6,24 @@ description: How TransferClient, TransferSession, and the unified fs facade fit 
 A `TransferClient` is the central registry - it owns the provider registry, the connection pool, and any logger / capability overrides. You'll typically create exactly one per process.
 
 ```ts
-import { createDefaultRetryPolicy, createTransferClient } from "@zero-transfer/sdk";
+import {
+  createDefaultRetryPolicy,
+  createFileSystemTransferCheckpointStore,
+  createTransferClient,
+} from "@zero-transfer/sdk";
 
 const client = createTransferClient({
   defaults: {
     retry: createDefaultRetryPolicy(),
     timeout: { stallTimeoutMs: 30_000 },
+    resume: {
+      store: createFileSystemTransferCheckpointStore({ directory: "./.zt-checkpoints" }),
+    },
   },
 });
 ```
 
-The optional `defaults` block sets client-wide retry and timeout policies that every transfer helper inherits unless a call site overrides them - see [Transfers & sync](../../concepts/transfers/) for how the scopes interact.
+The optional `defaults` block sets client-wide retry, timeout, and checkpoint/resume policies that every transfer helper inherits unless a call site overrides them - see [Transfers & sync](../../concepts/transfers/) for how the scopes interact and how checkpointed resume works.
 
 `client.connect(profile)` returns a [`TransferSession`](../../api/interfaces/transfersession/). A session is a live, authenticated handle to one remote system.
 

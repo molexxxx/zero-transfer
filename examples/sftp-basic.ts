@@ -19,6 +19,10 @@ import {
 } from "@zero-transfer/sftp";
 
 const client = createTransferClient({
+  // Single-file transfers are pipelined by default: a sliding window of 64
+  // in-flight requests x 32 KiB (OpenSSH parity) hides per-request round
+  // trips on high-latency links. Tune or serialize via the pipeline option:
+  //   createSftpProviderFactory({ pipeline: { maxInFlight: 64, chunkBytes: 32_768 } })
   providers: [createSftpProviderFactory()],
 });
 

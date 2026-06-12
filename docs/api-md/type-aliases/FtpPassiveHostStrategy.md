@@ -10,7 +10,7 @@
 type FtpPassiveHostStrategy = "advertised" | "control";
 ```
 
-Defined in: [src/providers/classic/ftp/FtpProvider.ts:150](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/classic/ftp/FtpProvider.ts#L150)
+Defined in: [src/providers/classic/ftp/FtpProvider.ts:150](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/classic/ftp/FtpProvider.ts#L150)
 
 Host selection strategy for PASV data endpoints.
 

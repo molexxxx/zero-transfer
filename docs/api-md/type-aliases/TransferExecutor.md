@@ -12,7 +12,7 @@ type TransferExecutor = (context) =>
   | TransferExecutionResult;
 ```
 
-Defined in: [src/transfers/TransferEngine.ts:42](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferEngine.ts#L42)
+Defined in: [src/transfers/TransferEngine.ts:42](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/transfers/TransferEngine.ts#L42)
 
 Concrete transfer operation implementation used by the engine.
 

@@ -6,7 +6,7 @@
 
 # Interface: ImportOpenSshConfigResult
 
-Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:149](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/profiles/importers/OpenSshConfigImporter.ts#L149)
+Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:149](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/profiles/importers/OpenSshConfigImporter.ts#L149)
 
 Result of [importOpenSshConfig](../functions/importOpenSshConfig.md).
 
@@ -14,7 +14,7 @@ Result of [importOpenSshConfig](../functions/importOpenSshConfig.md).
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="identityfiles"></a> `identityFiles` | readonly `string`[] | Identity file paths declared in the config, in declaration order. | [src/profiles/importers/OpenSshConfigImporter.ts:155](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/profiles/importers/OpenSshConfigImporter.ts#L155) |
-| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Generated SFTP connection profile. | [src/profiles/importers/OpenSshConfigImporter.ts:151](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/profiles/importers/OpenSshConfigImporter.ts#L151) |
-| <a id="proxyjump"></a> `proxyJump?` | `string` | Optional `ProxyJump` value preserved from the config. | [src/profiles/importers/OpenSshConfigImporter.ts:157](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/profiles/importers/OpenSshConfigImporter.ts#L157) |
-| <a id="resolved"></a> `resolved` | [`ResolvedOpenSshHost`](ResolvedOpenSshHost.md) | Resolved directive set used to build the profile. | [src/profiles/importers/OpenSshConfigImporter.ts:153](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/profiles/importers/OpenSshConfigImporter.ts#L153) |
+| <a id="identityfiles"></a> `identityFiles` | readonly `string`[] | Identity file paths declared in the config, in declaration order. | [src/profiles/importers/OpenSshConfigImporter.ts:155](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/profiles/importers/OpenSshConfigImporter.ts#L155) |
+| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Generated SFTP connection profile. | [src/profiles/importers/OpenSshConfigImporter.ts:151](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/profiles/importers/OpenSshConfigImporter.ts#L151) |
+| <a id="proxyjump"></a> `proxyJump?` | `string` | Optional `ProxyJump` value preserved from the config. | [src/profiles/importers/OpenSshConfigImporter.ts:157](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/profiles/importers/OpenSshConfigImporter.ts#L157) |
+| <a id="resolved"></a> `resolved` | [`ResolvedOpenSshHost`](ResolvedOpenSshHost.md) | Resolved directive set used to build the profile. | [src/profiles/importers/OpenSshConfigImporter.ts:153](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/profiles/importers/OpenSshConfigImporter.ts#L153) |

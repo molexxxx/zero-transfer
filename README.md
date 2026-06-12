@@ -59,7 +59,9 @@ await uploadFile({
 
 - **One API, every provider.** Replace bespoke FTP, SFTP, S3, and cloud-drive code with a single `TransferClient` and provider-neutral sessions.
 - **TypeScript-first.** Strict types, exact optional properties, exhaustive capability discovery, and typed errors for every protocol failure mode.
-- **Streaming + resume.** Backpressure via `stream.pipeline`, byte-range downloads, multipart uploads, and cross-process resume stores for object storage. Memory-bounded end to end - no whole-file buffering, and framing layers cap declared packet sizes.
+- **Checkpointed resume.** Interrupted transfers pick up from the committed byte watermark - across retries, fresh calls, and process restarts. Checkpoints are keyed by source+destination path, fingerprint the source (size/mtime/etag) so a changed file never resumes onto stale bytes, and extend to whole batches: `runResumableBatch()` re-runs a plan and skips every step that already succeeded.
+- **Built for throughput.** Pipelined SFTP (64 in-flight requests x 32 KiB, OpenSSH parity) saturates high-latency links; S3 multipart and Azure staged blocks upload parts in parallel with progress that only ever reports the contiguous completed prefix.
+- **Streaming everywhere.** Backpressure via async iterables, byte-range downloads, multipart/staged/resumable-session uploads on every object store and cloud drive. Memory-bounded end to end - no whole-file buffering, and framing layers cap declared packet sizes.
 - **Resilient by default.** `createDefaultRetryPolicy()` retries only retryable failures with exponential backoff + full jitter and honors `Retry-After` hints; job-scope and attempt-scope timeouts plus a stall watchdog catch connections that go silent; every receipt records per-attempt history.
 - **Dry-run-first sync.** Diff remote trees, generate `TransferPlan`s, and review every step before any byte moves.
 - **MFT batteries.** Routes, cron + interval schedules, audit logs, HMAC-signed webhooks, retention policies, and approval gates that block on human sign-off.
@@ -319,11 +321,11 @@ Every provider advertises its own [`CapabilitySet`](docs/api-md/interfaces/Capab
 | SFTP          |    ✅     |               ⬆/⬇                |      rename      |        -         |            -             |
 | HTTP(S)       | ✅ (read) |           ⬇ via Range            |        -         |        -         |           ETag           |
 | WebDAV        |    ✅     |           ⬇ via Range            |       COPY       |        -         |           ETag           |
-| S3-compatible |    ✅     | ⬆ via multipart resume / ⬇ Range |    CopyObject    |        ✅        |      SHA-256 / md5       |
-| Azure Blob    |    ✅     |           ⬇ via Range            |        -         |        ✅        |           md5            |
+| S3-compatible |    ✅     | ⬆ via multipart resume / ⬇ Range |    CopyObject    |   ✅ parallel    |      SHA-256 / md5       |
+| Azure Blob    |    ✅     |  ⬆ via staged blocks / ⬇ Range   |        -         |   ✅ parallel    |           md5            |
 | GCS           |    ✅     |           ⬇ via Range            |        -         |        ✅        |       crc32c / md5       |
-| Google Drive  |    ✅     |           ⬇ via Range            |        -         |        -         |           md5            |
-| Dropbox       |    ✅     |           ⬇ via Range            |        -         |        -         |       content_hash       |
+| Google Drive  |    ✅     |           ⬇ via Range            |        -         |        ✅        |           md5            |
+| Dropbox       |    ✅     |           ⬇ via Range            |        -         |        ✅        |       content_hash       |
 | OneDrive      |    ✅     |           ⬇ via Range            |        -         |        ✅        | sha256 / sha1 / quickXor |
 | Local         |    ✅     |               ⬆/⬇                |        -         |        -         |            -             |
 | Memory        |    ✅     |               ⬆/⬇                |        -         |        -         |            -             |
@@ -344,11 +346,13 @@ Real-world examples live in [`examples/`](https://github.com/tonywied17/zero-tra
 | [`sftp-private-key.ts`](examples/sftp-private-key.ts)                       | SFTP hardened: private-key auth + pinned host-key SHA-256.        |
 | [`sftp-directory-ops.ts`](examples/sftp-directory-ops.ts)                   | SFTP `session.fs`: list, stat, mkdir, rename, remove, rmdir.      |
 | [`ssh-exec-command.ts`](examples/ssh-exec-command.ts)                       | Standalone SSH stack: handshake, auth, run a remote command.      |
-| [`s3-compatible-upload.ts`](examples/s3-compatible-upload.ts)               | S3 multipart upload with cross-process resume store.              |
+| [`s3-compatible-upload.ts`](examples/s3-compatible-upload.ts)               | S3 parallel multipart upload with resumable checkpoints.          |
 | [`webdav-sync.ts`](examples/webdav-sync.ts)                                 | WebDAV diff + sync plan with deterministic ordering.              |
 | [`signed-url-download.ts`](examples/signed-url-download.ts)                 | HTTPS signed-URL download with progress reporting.                |
 | [`transfer-queue.ts`](examples/transfer-queue.ts)                           | Concurrent transfers with `TransferQueue` + executor.             |
 | [`retry-and-timeouts.ts`](examples/retry-and-timeouts.ts)                   | Retry policy, timeout scopes, stall watchdog, client defaults.    |
+| [`resume-checkpoints.ts`](examples/resume-checkpoints.ts)                   | Dropped transfer resuming from the checkpoint watermark.          |
+| [`resumable-batch.ts`](examples/resumable-batch.ts)                         | Crash-safe batch plan: re-runs skip already-completed steps.      |
 | [`dry-run-sync.ts`](examples/dry-run-sync.ts)                               | Plan a sync, print a summary, never touch bytes.                  |
 | [`mft-route.ts`](examples/mft-route.ts)                                     | SFTP→S3 cron-scheduled MFT route with audit hooks.                |
 | [`profile-from-env.ts`](examples/profile-from-env.ts)                       | Build a `ConnectionProfile` from env / file / base64-env secrets. |
@@ -372,7 +376,7 @@ npm run docs:all      # HTML + Markdown api refs + per-scope pages + per-package
 
 ## Project status
 
-ZeroTransfer is in **alpha** under the `alpha` npm dist-tag. The provider-neutral foundation, transfer engine, queue, sync planner, atomic deploy planner, MFT layer, friendly client surface, and diagnostics module are stable. Multipart / resumable upload sessions are wired up across S3, Azure Blob, GCS, and OneDrive, and the resilience layer (default retry policy with backoff + jitter, job/attempt timeout scopes, stall detection, approval timeouts, redaction-safe error logging, memory-bounded streaming) is in place. Phase work in progress: unified checkpoint/resume, SFTP pipelining, and parallel multipart pools.
+ZeroTransfer is in **alpha** under the `alpha` npm dist-tag. The provider-neutral foundation, transfer engine, queue, sync planner, atomic deploy planner, MFT layer, friendly client surface, and diagnostics module are stable. The massive-file engine is in place: unified checkpoint/resume (cross-process, fingerprint-validated, batch-aware via `runResumableBatch`), pipelined SFTP transfers, parallel multipart uploads on S3 and Azure, and streaming upload sessions across every cloud drive (Dropbox, Google Drive, OneDrive, GCS), on top of the resilience layer (default retry policy with backoff + jitter, job/attempt timeout scopes, stall detection, redaction-safe error logging, memory-bounded streaming). Next up: verification engine, segmented parallel downloads, and proxy/HTTP2 support.
 
 ## Contributing
 

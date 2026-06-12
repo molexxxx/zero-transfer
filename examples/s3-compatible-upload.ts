@@ -1,27 +1,37 @@
 /**
- * @file S3-compatible multipart upload example.
+ * @file S3-compatible parallel multipart upload example.
  *
- * Shows how to wire `createS3ProviderFactory` with multipart enabled and a
- * persistent resume store, then upload a large file via the friendly helper.
- * Works against AWS S3, MinIO, R2, Wasabi, and other SigV4-compatible APIs.
+ * Shows how to wire `createS3ProviderFactory` with parallel multipart upload
+ * (parts upload concurrently; progress and checkpoints advance on the
+ * contiguous completed prefix) plus the unified checkpoint store so
+ * interrupted uploads resume across retries and process restarts. Works
+ * against AWS S3, MinIO, R2, Wasabi, and other SigV4-compatible APIs.
  */
 import {
-  createMemoryS3MultipartResumeStore,
+  createFileSystemTransferCheckpointStore,
   createS3ProviderFactory,
   createTransferClient,
   uploadFile,
   type ConnectionProfile,
 } from "@zero-transfer/s3";
 
-const resumeStore = createMemoryS3MultipartResumeStore();
 const client = createTransferClient({
+  defaults: {
+    // Unified checkpoints: keyed by source+destination path, so a re-run of
+    // this script resumes the multipart upload instead of restarting it.
+    resume: {
+      store: createFileSystemTransferCheckpointStore({ directory: "./.zt-checkpoints" }),
+    },
+  },
   providers: [
     createS3ProviderFactory({
       endpoint: "https://s3.us-east-1.amazonaws.com",
       multipart: {
         enabled: true,
+        // 4 parts in flight at once (the default). Memory stays bounded at
+        // (partConcurrency + 1) x partSizeBytes; 1 reproduces sequential uploads.
+        partConcurrency: 4,
         partSizeBytes: 8 * 1024 * 1024,
-        resumeStore,
         thresholdBytes: 8 * 1024 * 1024,
       },
       region: "us-east-1",
@@ -45,4 +55,4 @@ const receipt = await uploadFile({
   },
 });
 
-console.log(`Upload complete (job=${receipt.jobId}).`);
+console.log(`Upload complete (job=${receipt.jobId}, resumed=${receipt.resumed}).`);
