@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.8**](../README.md)
+[**ZeroTransfer SDK v0.5.0**](../README.md)
 
 ***
 
@@ -6,7 +6,7 @@
 
 # Interface: ProviderTransferReadResult
 
-Defined in: [src/providers/ProviderTransferOperations.ts:44](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/ProviderTransferOperations.ts#L44)
+Defined in: [src/providers/ProviderTransferOperations.ts:44](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/providers/ProviderTransferOperations.ts#L44)
 
 Result returned by provider read implementations.
 
@@ -14,9 +14,9 @@ Result returned by provider read implementations.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="bytesread"></a> `bytesRead?` | `number` | Bytes already read by the provider before returning the content stream, if any. | [src/providers/ProviderTransferOperations.ts:48](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/ProviderTransferOperations.ts#L48) |
-| <a id="checksum"></a> `checksum?` | `string` | Checksum produced while opening or reading the source. | [src/providers/ProviderTransferOperations.ts:54](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/ProviderTransferOperations.ts#L54) |
-| <a id="content"></a> `content` | [`TransferDataSource`](../type-aliases/TransferDataSource.md) | Content stream produced by the provider. | [src/providers/ProviderTransferOperations.ts:46](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/ProviderTransferOperations.ts#L46) |
-| <a id="totalbytes"></a> `totalBytes?` | `number` | Expected total bytes for the content stream when known. | [src/providers/ProviderTransferOperations.ts:50](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/ProviderTransferOperations.ts#L50) |
-| <a id="verification"></a> `verification?` | [`TransferVerificationResult`](TransferVerificationResult.md) | Verification details produced while opening or reading the source. | [src/providers/ProviderTransferOperations.ts:52](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/ProviderTransferOperations.ts#L52) |
-| <a id="warnings"></a> `warnings?` | `string`[] | Non-fatal warnings produced by the read side. | [src/providers/ProviderTransferOperations.ts:56](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/ProviderTransferOperations.ts#L56) |
+| <a id="bytesread"></a> `bytesRead?` | `number` | Bytes already read by the provider before returning the content stream, if any. | [src/providers/ProviderTransferOperations.ts:48](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/providers/ProviderTransferOperations.ts#L48) |
+| <a id="checksum"></a> `checksum?` | `string` | Checksum produced while opening or reading the source. | [src/providers/ProviderTransferOperations.ts:54](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/providers/ProviderTransferOperations.ts#L54) |
+| <a id="content"></a> `content` | [`TransferDataSource`](../type-aliases/TransferDataSource.md) | Content stream produced by the provider. | [src/providers/ProviderTransferOperations.ts:46](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/providers/ProviderTransferOperations.ts#L46) |
+| <a id="totalbytes"></a> `totalBytes?` | `number` | Expected total bytes for the content stream when known. | [src/providers/ProviderTransferOperations.ts:50](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/providers/ProviderTransferOperations.ts#L50) |
+| <a id="verification"></a> `verification?` | [`TransferVerificationResult`](TransferVerificationResult.md) | Verification details produced while opening or reading the source. | [src/providers/ProviderTransferOperations.ts:52](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/providers/ProviderTransferOperations.ts#L52) |
+| <a id="warnings"></a> `warnings?` | `string`[] | Non-fatal warnings produced by the read side. | [src/providers/ProviderTransferOperations.ts:56](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/providers/ProviderTransferOperations.ts#L56) |

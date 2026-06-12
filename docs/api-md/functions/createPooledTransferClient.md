@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.8**](../README.md)
+[**ZeroTransfer SDK v0.5.0**](../README.md)
 
 ***
 
@@ -10,7 +10,7 @@
 function createPooledTransferClient(inner, options?): PooledTransferClient;
 ```
 
-Defined in: [src/core/ConnectionPool.ts:111](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/core/ConnectionPool.ts#L111)
+Defined in: [src/core/ConnectionPool.ts:111](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/core/ConnectionPool.ts#L111)
 
 Wraps a [TransferClient](../classes/TransferClient.md) with connection pooling.
 

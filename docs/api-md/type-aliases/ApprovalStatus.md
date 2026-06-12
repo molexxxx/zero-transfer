@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.8**](../README.md)
+[**ZeroTransfer SDK v0.5.0**](../README.md)
 
 ***
 
@@ -10,6 +10,6 @@
 type ApprovalStatus = "pending" | "approved" | "rejected";
 ```
 
-Defined in: [src/mft/approvals.ts:17](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/mft/approvals.ts#L17)
+Defined in: [src/mft/approvals.ts:17](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/mft/approvals.ts#L17)
 
 Lifecycle status of an approval request.

@@ -1,4 +1,4 @@
-[**ZeroTransfer SDK v0.4.8**](../README.md)
+[**ZeroTransfer SDK v0.5.0**](../README.md)
 
 ***
 
@@ -6,12 +6,12 @@
 
 # Interface: SshPasswordCredential
 
-Defined in: [src/protocols/ssh/auth/SshAuthSession.ts:39](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/protocols/ssh/auth/SshAuthSession.ts#L39)
+Defined in: [src/protocols/ssh/auth/SshAuthSession.ts:39](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/protocols/ssh/auth/SshAuthSession.ts#L39)
 
 ## Properties
 
 | Property | Type | Defined in |
 | ------ | ------ | ------ |
-| <a id="password"></a> `password` | `string` | [src/protocols/ssh/auth/SshAuthSession.ts:42](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/protocols/ssh/auth/SshAuthSession.ts#L42) |
-| <a id="type"></a> `type` | `"password"` | [src/protocols/ssh/auth/SshAuthSession.ts:40](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/protocols/ssh/auth/SshAuthSession.ts#L40) |
-| <a id="username"></a> `username` | `string` | [src/protocols/ssh/auth/SshAuthSession.ts:41](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/protocols/ssh/auth/SshAuthSession.ts#L41) |
+| <a id="password"></a> `password` | `string` | [src/protocols/ssh/auth/SshAuthSession.ts:42](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/protocols/ssh/auth/SshAuthSession.ts#L42) |
+| <a id="type"></a> `type` | `"password"` | [src/protocols/ssh/auth/SshAuthSession.ts:40](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/protocols/ssh/auth/SshAuthSession.ts#L40) |
+| <a id="username"></a> `username` | `string` | [src/protocols/ssh/auth/SshAuthSession.ts:41](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/protocols/ssh/auth/SshAuthSession.ts#L41) |
