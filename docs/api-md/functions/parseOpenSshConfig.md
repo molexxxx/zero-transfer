@@ -10,7 +10,7 @@
 function parseOpenSshConfig(text): OpenSshConfigEntry[];
 ```
 
-Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:29](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/profiles/importers/OpenSshConfigImporter.ts#L29)
+Defined in: [src/profiles/importers/OpenSshConfigImporter.ts:29](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/profiles/importers/OpenSshConfigImporter.ts#L29)
 
 Parses OpenSSH `ssh_config` text into structured `Host` blocks.
 

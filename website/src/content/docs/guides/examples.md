@@ -30,24 +30,26 @@ The provider-neutral `session.fs` surface (list, stat, mkdir, rename, remove, rm
 
 ## Cloud providers
 
-| File                                                                                                                          | What it shows                                          |
-| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| [`s3-compatible-upload.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/s3-compatible-upload.ts)           | Multipart upload to S3 (and any S3-compatible bucket). |
-| [`signed-url-download.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/signed-url-download.ts)             | Resolve an HTTP signed URL and stream it to disk.      |
-| [`webdav-sync.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/webdav-sync.ts)                             | One-way sync to a WebDAV server, with delete-policy.   |
-| [`multi-cloud-orchestration.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Pull from S3, push to Azure Blob + GCS in parallel.    |
+| File                                                                                                                          | What it shows                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| [`s3-compatible-upload.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/s3-compatible-upload.ts)           | Parallel multipart upload to S3 (and any S3-compatible bucket) with resumable checkpoints. |
+| [`signed-url-download.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/signed-url-download.ts)             | Resolve an HTTP signed URL and stream it to disk.                                          |
+| [`webdav-sync.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/webdav-sync.ts)                             | One-way sync to a WebDAV server, with delete-policy.                                       |
+| [`multi-cloud-orchestration.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Pull from S3, push to Azure Blob + GCS in parallel.                                        |
 
 ## Transfers, sync, MFT
 
-| File                                                                                                                              | What it shows                                                                                |
-| --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [`local-copy-file.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/local-copy-file.ts)                         | Copy a file using the local filesystem provider.                                             |
-| [`transfer-queue.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/transfer-queue.ts)                           | Bounded-concurrency queue with progress + retry.                                             |
-| [`retry-and-timeouts.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/retry-and-timeouts.ts)                   | Retry policy, two-scope timeouts, stall watchdog, client-wide defaults - runs fully offline. |
-| [`dry-run-sync.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/dry-run-sync.ts)                               | Plan a sync, summarise it, decide whether to execute.                                        |
-| [`atomic-deploy-with-rollback.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/atomic-deploy-with-rollback.ts) | Stage → swap → rollback pattern for zero-downtime releases.                                  |
-| [`mft-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/mft-route.ts)                                     | Define a route + schedule + scheduler.                                                       |
-| [`approval-gated-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/approval-gated-route.ts)               | Wrap a route in a human-approval gate before bytes move.                                     |
+| File                                                                                                                              | What it shows                                                                                             |
+| --------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [`local-copy-file.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/local-copy-file.ts)                         | Copy a file using the local filesystem provider.                                                          |
+| [`transfer-queue.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/transfer-queue.ts)                           | Bounded-concurrency queue with progress + retry.                                                          |
+| [`retry-and-timeouts.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/retry-and-timeouts.ts)                   | Retry policy, two-scope timeouts, stall watchdog, client-wide defaults - runs fully offline.              |
+| [`resume-checkpoints.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/resume-checkpoints.ts)                   | Checkpoint store + retry resuming a dropped transfer from the byte watermark - runs fully offline.        |
+| [`resumable-batch.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/resumable-batch.ts)                         | Crash-safe batch plan: completed steps skip on re-run, only failed work re-executes - runs fully offline. |
+| [`dry-run-sync.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/dry-run-sync.ts)                               | Plan a sync, summarise it, decide whether to execute.                                                     |
+| [`atomic-deploy-with-rollback.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/atomic-deploy-with-rollback.ts) | Stage → swap → rollback pattern for zero-downtime releases.                                               |
+| [`mft-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/mft-route.ts)                                     | Define a route + schedule + scheduler.                                                                    |
+| [`approval-gated-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/approval-gated-route.ts)               | Wrap a route in a human-approval gate before bytes move.                                                  |
 
 ## Running an example
 

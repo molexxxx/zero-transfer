@@ -95,6 +95,8 @@ Safety comes first, speed second:
 
 Two checkpoint shapes cover every provider: sequential-append providers (SFTP, FTP, local) record a committed-byte watermark, while part-based providers (S3 multipart, Azure staged blocks) record the upload token plus the contiguous prefix of completed parts. Resume is capability-gated (`resumeDownload` on the source, `resumeUpload` on the destination); `mode: "require"` makes an incapable pair an error instead of a silent restart, and `mode: "off"` disables checkpoints entirely. See [`TransferResumeOptions`](../../api/interfaces/transferresumeoptions/).
 
+See [`examples/resume-checkpoints.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/resume-checkpoints.ts) for a runnable, offline walkthrough: a transfer whose connection drops mid-stream, retried and resumed from the committed watermark in a single `engine.execute()` call.
+
 ### Resumable batch jobs
 
 [`runResumableBatch`](../../api/functions/runresumablebatch/) extends resume from single files to whole plans. Completed steps are recorded in a [`TransferBatchStateStore`](../../api/interfaces/transferbatchstatestore/) as they finish; re-running the same plan skips them, so a crashed thousand-file batch resumes from the first incomplete step - and with byte-level resume on the executor, the interrupted file itself continues from its checkpoint. Plans persist across processes via [`serializeTransferPlan`](../../api/functions/serializetransferplan/) / [`deserializeTransferPlan`](../../api/functions/deserializetransferplan/).
@@ -116,6 +118,8 @@ const result = await runResumableBatch({
 });
 console.log(result.complete ? "done" : `${result.remainingStepIds.length} steps left`);
 ```
+
+See [`examples/resumable-batch.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/resumable-batch.ts) for a runnable, offline walkthrough of a flaky batch resuming across two runs.
 
 ## Throughput
 

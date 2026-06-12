@@ -10,7 +10,7 @@
 function createSftpProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:257](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/native/sftp/NativeSftpProvider.ts#L257)
+Defined in: [src/providers/native/sftp/NativeSftpProvider.ts:257](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/native/sftp/NativeSftpProvider.ts#L257)
 
 Creates a [ProviderFactory](../interfaces/ProviderFactory.md) backed by the native SSH/SFTP protocol
 stack - no `ssh2` dependency required.

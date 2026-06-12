@@ -6,7 +6,7 @@
 
 # Interface: MftOutboxConvention
 
-Defined in: [src/mft/conventions.ts:38](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/mft/conventions.ts#L38)
+Defined in: [src/mft/conventions.ts:38](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/mft/conventions.ts#L38)
 
 Outbox layout convention.
 
@@ -14,5 +14,5 @@ Outbox layout convention.
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="basepath"></a> `basePath` | `string` | Base outbox directory where files are dropped. | [src/mft/conventions.ts:42](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/mft/conventions.ts#L42) |
-| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Profile used to connect to the outbox provider. | [src/mft/conventions.ts:40](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/mft/conventions.ts#L40) |
+| <a id="basepath"></a> `basePath` | `string` | Base outbox directory where files are dropped. | [src/mft/conventions.ts:42](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/mft/conventions.ts#L42) |
+| <a id="profile"></a> `profile` | [`ConnectionProfile`](ConnectionProfile.md) | Profile used to connect to the outbox provider. | [src/mft/conventions.ts:40](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/mft/conventions.ts#L40) |

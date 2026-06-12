@@ -13,7 +13,7 @@ function compareRemoteManifests(
    options?): RemoteTreeDiff;
 ```
 
-Defined in: [src/sync/manifest.ts:225](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/sync/manifest.ts#L225)
+Defined in: [src/sync/manifest.ts:225](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/sync/manifest.ts#L225)
 
 Compares two manifests and produces an entry-level diff.
 

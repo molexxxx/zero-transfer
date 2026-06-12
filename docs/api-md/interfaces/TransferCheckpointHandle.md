@@ -6,7 +6,7 @@
 
 # Interface: TransferCheckpointHandle
 
-Defined in: [src/transfers/TransferCheckpointStore.ts:163](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L163)
+Defined in: [src/transfers/TransferCheckpointStore.ts:163](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/transfers/TransferCheckpointStore.ts#L163)
 
 Live handle a provider uses to checkpoint part-aware progress during a
 write.
@@ -27,7 +27,7 @@ progress.
 clear(): Promise<void>;
 ```
 
-Defined in: [src/transfers/TransferCheckpointStore.ts:172](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L172)
+Defined in: [src/transfers/TransferCheckpointStore.ts:172](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/transfers/TransferCheckpointStore.ts#L172)
 
 Removes the stored checkpoint (for example when the provider restarts the upload).
 
@@ -43,7 +43,7 @@ Removes the stored checkpoint (for example when the provider restarts the upload
 save(state): Promise<void>;
 ```
 
-Defined in: [src/transfers/TransferCheckpointStore.ts:170](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L170)
+Defined in: [src/transfers/TransferCheckpointStore.ts:170](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/transfers/TransferCheckpointStore.ts#L170)
 
 Persists new progress state for this transfer.
 
@@ -61,4 +61,4 @@ Persists new progress state for this transfer.
 
 | Property | Modifier | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ | ------ |
-| <a id="state"></a> `state?` | `readonly` | [`TransferCheckpointState`](../type-aliases/TransferCheckpointState.md) | Validated state loaded for this transfer, when prior progress exists. `undefined` means start fresh (no checkpoint, or it was invalidated). | [src/transfers/TransferCheckpointStore.ts:168](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L168) |
+| <a id="state"></a> `state?` | `readonly` | [`TransferCheckpointState`](../type-aliases/TransferCheckpointState.md) | Validated state loaded for this transfer, when prior progress exists. `undefined` means start fresh (no checkpoint, or it was invalidated). | [src/transfers/TransferCheckpointStore.ts:168](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/transfers/TransferCheckpointStore.ts#L168) |

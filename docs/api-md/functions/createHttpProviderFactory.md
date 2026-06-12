@@ -10,7 +10,7 @@
 function createHttpProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/web/HttpProvider.ts:115](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/web/HttpProvider.ts#L115)
+Defined in: [src/providers/web/HttpProvider.ts:115](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/web/HttpProvider.ts#L115)
 
 Creates a provider factory backed by HTTP(S) GET/HEAD.
 

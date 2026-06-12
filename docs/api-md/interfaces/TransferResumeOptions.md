@@ -6,7 +6,7 @@
 
 # Interface: TransferResumeOptions
 
-Defined in: [src/transfers/createProviderTransferExecutor.ts:89](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/createProviderTransferExecutor.ts#L89)
+Defined in: [src/transfers/createProviderTransferExecutor.ts:89](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/transfers/createProviderTransferExecutor.ts#L89)
 
 Checkpoint/resume configuration consumed by
 [createProviderTransferExecutor](../functions/createProviderTransferExecutor.md) (directly or through
@@ -32,7 +32,7 @@ const executor = createProviderTransferExecutor({
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="mode"></a> `mode?` | [`TransferResumeMode`](../type-aliases/TransferResumeMode.md) | Resume behavior. Defaults to `"auto"`. | [src/transfers/createProviderTransferExecutor.ts:93](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/createProviderTransferExecutor.ts#L93) |
-| <a id="persistintervalbytes"></a> `persistIntervalBytes?` | `number` | Minimum bytes of new committed progress between byte-offset checkpoint persists. Defaults to 8 MiB. Part-aware providers persist per committed part instead and ignore this value. | [src/transfers/createProviderTransferExecutor.ts:99](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/createProviderTransferExecutor.ts#L99) |
-| <a id="scope"></a> `scope?` | `string` | Optional namespace mixed into checkpoint keys. Checkpoints are keyed by source+destination provider/path; set a scope (for example the host or profile id) when identical provider/path pairs can refer to different servers. | [src/transfers/createProviderTransferExecutor.ts:106](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/createProviderTransferExecutor.ts#L106) |
-| <a id="store"></a> `store` | [`TransferCheckpointStore`](TransferCheckpointStore.md) | Checkpoint persistence backend. | [src/transfers/createProviderTransferExecutor.ts:91](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/createProviderTransferExecutor.ts#L91) |
+| <a id="mode"></a> `mode?` | [`TransferResumeMode`](../type-aliases/TransferResumeMode.md) | Resume behavior. Defaults to `"auto"`. | [src/transfers/createProviderTransferExecutor.ts:93](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/transfers/createProviderTransferExecutor.ts#L93) |
+| <a id="persistintervalbytes"></a> `persistIntervalBytes?` | `number` | Minimum bytes of new committed progress between byte-offset checkpoint persists. Defaults to 8 MiB. Part-aware providers persist per committed part instead and ignore this value. | [src/transfers/createProviderTransferExecutor.ts:99](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/transfers/createProviderTransferExecutor.ts#L99) |
+| <a id="scope"></a> `scope?` | `string` | Optional namespace mixed into checkpoint keys. Checkpoints are keyed by source+destination provider/path; set a scope (for example the host or profile id) when identical provider/path pairs can refer to different servers. | [src/transfers/createProviderTransferExecutor.ts:106](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/transfers/createProviderTransferExecutor.ts#L106) |
+| <a id="store"></a> `store` | [`TransferCheckpointStore`](TransferCheckpointStore.md) | Checkpoint persistence backend. | [src/transfers/createProviderTransferExecutor.ts:91](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/transfers/createProviderTransferExecutor.ts#L91) |

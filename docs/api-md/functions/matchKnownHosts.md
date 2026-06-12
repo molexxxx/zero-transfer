@@ -13,7 +13,7 @@ function matchKnownHosts(
    port?): KnownHostsEntry[];
 ```
 
-Defined in: [src/profiles/importers/KnownHostsParser.ts:133](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/profiles/importers/KnownHostsParser.ts#L133)
+Defined in: [src/profiles/importers/KnownHostsParser.ts:133](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/profiles/importers/KnownHostsParser.ts#L133)
 
 Filters parsed entries down to those that match the given host/port. Negations are honored.
 

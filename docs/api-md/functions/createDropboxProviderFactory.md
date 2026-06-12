@@ -10,7 +10,7 @@
 function createDropboxProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/cloud/DropboxProvider.ts:128](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/cloud/DropboxProvider.ts#L128)
+Defined in: [src/providers/cloud/DropboxProvider.ts:128](https://github.com/tonywied17/zero-transfer/blob/4642fef99167d4e8cbae741b0ecfe095645afa85/src/providers/cloud/DropboxProvider.ts#L128)
 
 Creates a Dropbox provider factory.
 

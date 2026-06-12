@@ -36,9 +36,9 @@ import { Card, CardGrid } from "@astrojs/starlight/components";
     use.
   </Card>
   <Card title="Production-grade transfers" icon="approve-check">
-    Memory-bounded streaming, resume, multipart, jittered retries, stall detection, and structured
-    progress events on the providers that support them - discoverable through the [capability
-    matrix](./guides/capabilities/).
+    Memory-bounded streaming, checkpointed resume that survives crashes and restarts, pipelined
+    SFTP, parallel multipart uploads, jittered retries, stall detection, and structured progress
+    events - discoverable through the [capability matrix](./guides/capabilities/).
   </Card>
   <Card title="MFT-grade orchestration" icon="setting">
     Compose transfers into routes, schedules, approvals, and audit logs. Plan syncs without moving
