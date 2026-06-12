@@ -95,6 +95,28 @@ Safety comes first, speed second:
 
 Two checkpoint shapes cover every provider: sequential-append providers (SFTP, FTP, local) record a committed-byte watermark, while part-based providers (S3 multipart, Azure staged blocks) record the upload token plus the contiguous prefix of completed parts. Resume is capability-gated (`resumeDownload` on the source, `resumeUpload` on the destination); `mode: "require"` makes an incapable pair an error instead of a silent restart, and `mode: "off"` disables checkpoints entirely. See [`TransferResumeOptions`](../../api/interfaces/transferresumeoptions/).
 
+### Resumable batch jobs
+
+[`runResumableBatch`](../../api/functions/runresumablebatch/) extends resume from single files to whole plans. Completed steps are recorded in a [`TransferBatchStateStore`](../../api/interfaces/transferbatchstatestore/) as they finish; re-running the same plan skips them, so a crashed thousand-file batch resumes from the first incomplete step - and with byte-level resume on the executor, the interrupted file itself continues from its checkpoint. Plans persist across processes via [`serializeTransferPlan`](../../api/functions/serializetransferplan/) / [`deserializeTransferPlan`](../../api/functions/deserializetransferplan/).
+
+```ts
+import {
+  createFileSystemTransferBatchStateStore,
+  deserializeTransferPlan,
+  runResumableBatch,
+} from "@zero-transfer/sdk";
+import { readFile } from "node:fs/promises";
+
+// The same call works for the first run and every resume after a crash.
+const result = await runResumableBatch({
+  batchStore: createFileSystemTransferBatchStateStore({ directory: "./.zt-batches" }),
+  concurrency: 4,
+  executor,
+  plan: deserializeTransferPlan(await readFile("./batch.plan.json", "utf8")),
+});
+console.log(result.complete ? "done" : `${result.remainingStepIds.length} steps left`);
+```
+
 ## Throughput
 
 Two provider families gained windowed parallelism designed so progress and checkpoints stay monotonic:
@@ -105,6 +127,8 @@ Two provider families gained windowed parallelism designed so progress and check
 ## Memory-bounded streaming
 
 The core transports stream end to end instead of buffering whole files: S3 single-shot uploads with a known size stream with `UNSIGNED-PAYLOAD` SigV4 signing (the same mode presigned URLs use), WebDAV uploads default to chunked streaming (`uploadStreaming: "always"`; legacy servers that reject chunked encoding can opt back into `"when-known-size"`), and FTP directory listings parse incrementally with a bounded per-line size. The SSH/SFTP framers cap declared packet sizes at 256 KiB, matching OpenSSH, so a misbehaving server cannot force unbounded buffering.
+
+The cloud drives stream too: Dropbox uploads use chunked upload sessions (`upload_session/start` + `append_v2` + `finish`, lifting the 150 MB single-request cap), Google Drive and GCS stream through resumable sessions with unknown-size `Content-Range` chunks, and OneDrive streams through Graph upload sessions whenever the total size is known (Graph requires the total in every `Content-Range`; unknown-size OneDrive payloads still buffer). Memory stays bounded at one or two chunks per transfer regardless of file size, and payloads at or below each provider's threshold fall back to the single-shot path automatically.
 
 ## Bounded-concurrency queue
 

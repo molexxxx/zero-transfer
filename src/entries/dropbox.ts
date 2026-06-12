@@ -9,5 +9,6 @@
 export * from "./core";
 export {
   createDropboxProviderFactory,
+  type DropboxMultipartOptions,
   type DropboxProviderOptions,
 } from "../providers/cloud/DropboxProvider";

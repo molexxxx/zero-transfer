@@ -6,7 +6,7 @@
 
 # Interface: TransferClientDefaults
 
-Defined in: [src/core/TransferClient.ts:60](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/core/TransferClient.ts#L60)
+Defined in: [src/core/TransferClient.ts:60](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/core/TransferClient.ts#L60)
 
 Client-level execution defaults applied when a call site does not supply
 its own value.
@@ -47,6 +47,6 @@ const client = createTransferClient({
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="resume"></a> `resume?` | [`TransferResumeOptions`](TransferResumeOptions.md) | Default checkpoint/resume configuration for transfers executed through this client. | [src/core/TransferClient.ts:66](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/core/TransferClient.ts#L66) |
-| <a id="retry"></a> `retry?` | [`TransferRetryPolicy`](TransferRetryPolicy.md) | Default retry policy for transfers executed through this client. | [src/core/TransferClient.ts:62](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/core/TransferClient.ts#L62) |
-| <a id="timeout"></a> `timeout?` | [`TransferTimeoutPolicy`](TransferTimeoutPolicy.md) | Default timeout policy for transfers executed through this client. | [src/core/TransferClient.ts:64](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/core/TransferClient.ts#L64) |
+| <a id="resume"></a> `resume?` | [`TransferResumeOptions`](TransferResumeOptions.md) | Default checkpoint/resume configuration for transfers executed through this client. | [src/core/TransferClient.ts:66](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/core/TransferClient.ts#L66) |
+| <a id="retry"></a> `retry?` | [`TransferRetryPolicy`](TransferRetryPolicy.md) | Default retry policy for transfers executed through this client. | [src/core/TransferClient.ts:62](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/core/TransferClient.ts#L62) |
+| <a id="timeout"></a> `timeout?` | [`TransferTimeoutPolicy`](TransferTimeoutPolicy.md) | Default timeout policy for transfers executed through this client. | [src/core/TransferClient.ts:64](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/core/TransferClient.ts#L64) |

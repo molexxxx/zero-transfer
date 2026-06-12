@@ -4159,6 +4159,17 @@ function normalizeNonNegative(value, fallback) {
   return Math.floor(value);
 }
 
+// src/transfers/resumableBatch.ts
+import { createHash as createHash2 } from "crypto";
+import {
+  mkdir as fsMkdir2,
+  readFile as fsReadFile2,
+  rename as fsRename2,
+  unlink as fsUnlink2,
+  writeFile as fsWriteFile2
+} from "fs/promises";
+import { join as joinPath2 } from "path";
+
 // src/transfers/TransferPlan.ts
 function createTransferPlan(input) {
   const plan = {
@@ -4455,6 +4466,180 @@ function cloneTransferJob(job) {
   if (job.resumed !== void 0) clone.resumed = job.resumed;
   if (job.metadata !== void 0) clone.metadata = { ...job.metadata };
   return clone;
+}
+
+// src/transfers/resumableBatch.ts
+function serializeTransferPlan(plan) {
+  return JSON.stringify({
+    createdAt: plan.createdAt.toISOString(),
+    dryRun: plan.dryRun,
+    id: plan.id,
+    ...plan.metadata !== void 0 ? { metadata: plan.metadata } : {},
+    steps: plan.steps,
+    version: 1,
+    warnings: plan.warnings
+  });
+}
+function deserializeTransferPlan(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    throw new ConfigurationError({
+      cause: error,
+      message: "Serialized transfer plan is not valid JSON",
+      retryable: false
+    });
+  }
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new ConfigurationError({
+      message: "Serialized transfer plan must be a JSON object",
+      retryable: false
+    });
+  }
+  const candidate = parsed;
+  if (candidate.version !== 1 || typeof candidate.id !== "string" || !Array.isArray(candidate.steps)) {
+    throw new ConfigurationError({
+      details: { version: candidate.version },
+      message: "Serialized transfer plan has an unsupported shape or version",
+      retryable: false
+    });
+  }
+  const createdAt = typeof candidate.createdAt === "string" ? new Date(candidate.createdAt) : /* @__PURE__ */ new Date(NaN);
+  return createTransferPlan({
+    id: candidate.id,
+    now: () => Number.isNaN(createdAt.getTime()) ? /* @__PURE__ */ new Date() : createdAt,
+    steps: candidate.steps,
+    ...typeof candidate.dryRun === "boolean" ? { dryRun: candidate.dryRun } : {},
+    ...Array.isArray(candidate.warnings) ? { warnings: candidate.warnings } : {},
+    ...typeof candidate.metadata === "object" && candidate.metadata !== null ? { metadata: candidate.metadata } : {}
+  });
+}
+function createMemoryTransferBatchStateStore() {
+  const map = /* @__PURE__ */ new Map();
+  return {
+    clear: (planId) => {
+      map.delete(planId);
+    },
+    load: (planId) => map.get(planId),
+    save: (state) => {
+      map.set(state.planId, state);
+    }
+  };
+}
+function createFileSystemTransferBatchStateStore(options) {
+  const directory = options.directory;
+  if (typeof directory !== "string" || directory.length === 0) {
+    throw new ConfigurationError({
+      message: "createFileSystemTransferBatchStateStore requires a non-empty directory option",
+      retryable: false
+    });
+  }
+  const fileFor = (planId) => {
+    const hash = createHash2("sha256").update(planId).digest("hex");
+    return joinPath2(directory, `${hash}.batch.json`);
+  };
+  return {
+    async clear(planId) {
+      try {
+        await fsUnlink2(fileFor(planId));
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+    },
+    async load(planId) {
+      let text;
+      try {
+        text = await fsReadFile2(fileFor(planId), "utf8");
+      } catch (error) {
+        if (error.code === "ENOENT") return void 0;
+        throw error;
+      }
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.version !== 1 || parsed.planId !== planId || !Array.isArray(parsed.completedStepIds)) {
+          return void 0;
+        }
+        return parsed;
+      } catch {
+        return void 0;
+      }
+    },
+    async save(state) {
+      await fsMkdir2(directory, { recursive: true });
+      const target = fileFor(state.planId);
+      const tmp = `${target}.${String(process.pid)}.${String(Date.now())}.tmp`;
+      await fsWriteFile2(tmp, JSON.stringify(state), { encoding: "utf8", mode: 384 });
+      await fsRename2(tmp, target);
+    }
+  };
+}
+async function runResumableBatch(options) {
+  const { plan, batchStore } = options;
+  const executableSteps = plan.steps.filter((step) => step.action !== "skip");
+  const prior = await batchStore.load(plan.id);
+  const completed = new Set(prior?.completedStepIds ?? []);
+  const previouslyCompletedStepIds = executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id);
+  const pendingSteps = executableSteps.filter((step) => !completed.has(step.id));
+  let saveChain = Promise.resolve();
+  const recordCompletion = (stepId) => {
+    completed.add(stepId);
+    const snapshot = {
+      completedStepIds: executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id),
+      planId: plan.id,
+      updatedAtMs: Date.now(),
+      version: 1
+    };
+    saveChain = saveChain.then(() => batchStore.save(snapshot)).catch(() => void 0);
+  };
+  const jobIdPrefix = `${plan.id}:`;
+  const queue = new TransferQueue({
+    executor: options.executor,
+    onReceipt: (receipt) => {
+      if (receipt.jobId.startsWith(jobIdPrefix)) {
+        recordCompletion(receipt.jobId.slice(jobIdPrefix.length));
+      }
+      options.onReceipt?.(receipt);
+    },
+    ...options.engine !== void 0 ? { engine: options.engine } : {},
+    ...options.client !== void 0 ? { client: options.client } : {},
+    ...options.concurrency !== void 0 ? { concurrency: options.concurrency } : {},
+    ...options.retry !== void 0 ? { retry: options.retry } : {},
+    ...options.timeout !== void 0 ? { timeout: options.timeout } : {},
+    ...options.bandwidthLimit !== void 0 ? { bandwidthLimit: options.bandwidthLimit } : {},
+    ...options.onProgress !== void 0 ? { onProgress: options.onProgress } : {},
+    ...options.onError !== void 0 ? { onError: options.onError } : {}
+  });
+  for (const step of pendingSteps) {
+    queue.add(createStepJob(plan, step));
+  }
+  const summary = await queue.run({
+    ...options.signal !== void 0 ? { signal: options.signal } : {}
+  });
+  await saveChain;
+  const remainingStepIds = executableSteps.filter((step) => !completed.has(step.id)).map((step) => step.id);
+  const complete = remainingStepIds.length === 0;
+  if (complete) {
+    await batchStore.clear(plan.id);
+  }
+  return {
+    complete,
+    completedStepIds: executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id),
+    previouslyCompletedStepIds,
+    remainingStepIds,
+    summary
+  };
+}
+function createStepJob(plan, step) {
+  const job = {
+    id: `${plan.id}:${step.id}`,
+    operation: step.action
+  };
+  if (step.source !== void 0) job.source = { ...step.source };
+  if (step.destination !== void 0) job.destination = { ...step.destination };
+  if (step.expectedBytes !== void 0) job.totalBytes = step.expectedBytes;
+  if (step.metadata !== void 0) job.metadata = { ...step.metadata };
+  return job;
 }
 
 // src/sync/createRemoteBrowser.ts
@@ -6059,7 +6244,7 @@ function blobToEntry(blob, prefix, parent) {
   if (tail === "" || tail.includes("/")) return void 0;
   const entry = {
     name: tail,
-    path: joinPath2(parent, tail),
+    path: joinPath3(parent, tail),
     raw: blob,
     type: "file",
     uniqueId: blob.etag ?? blob.contentMd5 ?? blob.name
@@ -6076,7 +6261,7 @@ function prefixToEntry(prefixedName, prefix, parent) {
   if (tail === "" || tail.includes("/")) return void 0;
   return {
     name: tail,
-    path: joinPath2(parent, tail),
+    path: joinPath3(parent, tail),
     type: "directory",
     uniqueId: prefixedName
   };
@@ -6086,7 +6271,7 @@ function toAzureBlobPrefix(normalized) {
   const trimmed = normalized.replace(/^\/+/u, "");
   return trimmed.endsWith("/") ? trimmed : `${trimmed}/`;
 }
-function joinPath2(parent, name) {
+function joinPath3(parent, name) {
   if (parent === "" || parent === "/") return `/${name}`;
   return parent.endsWith("/") ? `${parent}${name}` : `${parent}/${name}`;
 }
@@ -6217,9 +6402,11 @@ export {
   createAzureBlobProviderFactory,
   createBandwidthThrottle,
   createDefaultRetryPolicy,
+  createFileSystemTransferBatchStateStore,
   createFileSystemTransferCheckpointStore,
   createLocalProviderFactory,
   createMemoryProviderFactory,
+  createMemoryTransferBatchStateStore,
   createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource,
   createPooledTransferClient,
@@ -6232,6 +6419,7 @@ export {
   createTransferJobsFromPlan,
   createTransferPlan,
   createTransferResult,
+  deserializeTransferPlan,
   diffRemoteTrees,
   downloadFile,
   emitLog,
@@ -6265,7 +6453,9 @@ export {
   resolveProviderId,
   resolveSecret,
   runConnectionDiagnostics,
+  runResumableBatch,
   serializeRemoteManifest,
+  serializeTransferPlan,
   sortRemoteEntries,
   summarizeClientDiagnostics,
   summarizeTransferPlan,

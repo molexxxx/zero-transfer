@@ -6,7 +6,7 @@
 
 # Interface: MultipartUploadPoolOptions\<TResult\>
 
-Defined in: src/providers/web/multipartUploadPool.ts:139
+Defined in: [src/providers/web/multipartUploadPool.ts:139](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/web/multipartUploadPool.ts#L139)
 
 Options for [runMultipartUploadPool](../functions/runMultipartUploadPool.md).
 
@@ -24,7 +24,7 @@ Options for [runMultipartUploadPool](../functions/runMultipartUploadPool.md).
 optional onCommitted(part, committedBytes): void | Promise<void>;
 ```
 
-Defined in: src/providers/web/multipartUploadPool.ts:162
+Defined in: [src/providers/web/multipartUploadPool.ts:162](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/web/multipartUploadPool.ts#L162)
 
 Observes the contiguous prefix of completed parts advancing. Called once
 per part in strict part-number order; `committedBytes` is the byte end
@@ -51,7 +51,7 @@ safe to checkpoint. Awaited before further notifications fire.
 uploadPart(part): Promise<TResult>;
 ```
 
-Defined in: src/providers/web/multipartUploadPool.ts:154
+Defined in: [src/providers/web/multipartUploadPool.ts:154](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/web/multipartUploadPool.ts#L154)
 
 Uploads one part and returns its provider token (ETag, block id, ...).
 
@@ -69,7 +69,7 @@ Uploads one part and returns its provider token (ETag, block id, ...).
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="firstpartnumber"></a> `firstPartNumber?` | `number` | Part number of the first part the reader will produce (the reader's `startPartNumber`). Anchors contiguous-prefix commit tracking. Defaults to `1`. | src/providers/web/multipartUploadPool.ts:152 |
-| <a id="partconcurrency"></a> `partConcurrency` | `number` | Number of parts uploaded concurrently. `1` reproduces sequential behavior. Memory bound: `(partConcurrency + 1) x partSizeBytes`. | src/providers/web/multipartUploadPool.ts:146 |
-| <a id="reader"></a> `reader` | [`MultipartPartReader`](MultipartPartReader.md) | Sequential part source (see [createSequentialPartReader](../functions/createSequentialPartReader.md)). | src/providers/web/multipartUploadPool.ts:141 |
-| <a id="throwifaborted"></a> `throwIfAborted?` | () => `void` | Abort check invoked before each part upload. | src/providers/web/multipartUploadPool.ts:164 |
+| <a id="firstpartnumber"></a> `firstPartNumber?` | `number` | Part number of the first part the reader will produce (the reader's `startPartNumber`). Anchors contiguous-prefix commit tracking. Defaults to `1`. | [src/providers/web/multipartUploadPool.ts:152](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/web/multipartUploadPool.ts#L152) |
+| <a id="partconcurrency"></a> `partConcurrency` | `number` | Number of parts uploaded concurrently. `1` reproduces sequential behavior. Memory bound: `(partConcurrency + 1) x partSizeBytes`. | [src/providers/web/multipartUploadPool.ts:146](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/web/multipartUploadPool.ts#L146) |
+| <a id="reader"></a> `reader` | [`MultipartPartReader`](MultipartPartReader.md) | Sequential part source (see [createSequentialPartReader](../functions/createSequentialPartReader.md)). | [src/providers/web/multipartUploadPool.ts:141](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/web/multipartUploadPool.ts#L141) |
+| <a id="throwifaborted"></a> `throwIfAborted?` | () => `void` | Abort check invoked before each part upload. | [src/providers/web/multipartUploadPool.ts:164](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/web/multipartUploadPool.ts#L164) |

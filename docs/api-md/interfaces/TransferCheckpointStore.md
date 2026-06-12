@@ -6,7 +6,7 @@
 
 # Interface: TransferCheckpointStore
 
-Defined in: src/transfers/TransferCheckpointStore.ts:140
+Defined in: [src/transfers/TransferCheckpointStore.ts:140](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L140)
 
 Persistence contract for transfer checkpoints.
 
@@ -22,7 +22,7 @@ tolerate missing entries.
 clear(key): void | Promise<void>;
 ```
 
-Defined in: src/transfers/TransferCheckpointStore.ts:148
+Defined in: [src/transfers/TransferCheckpointStore.ts:148](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L148)
 
 Removes the checkpoint for a transfer identity.
 
@@ -47,7 +47,7 @@ load(key):
   | undefined;
 ```
 
-Defined in: src/transfers/TransferCheckpointStore.ts:142
+Defined in: [src/transfers/TransferCheckpointStore.ts:142](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L142)
 
 Loads the checkpoint for a transfer identity, or `undefined` when absent.
 
@@ -71,7 +71,7 @@ Loads the checkpoint for a transfer identity, or `undefined` when absent.
 save(key, record): void | Promise<void>;
 ```
 
-Defined in: src/transfers/TransferCheckpointStore.ts:146
+Defined in: [src/transfers/TransferCheckpointStore.ts:146](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/transfers/TransferCheckpointStore.ts#L146)
 
 Persists the checkpoint for a transfer identity.
 

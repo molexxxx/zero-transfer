@@ -63,10 +63,12 @@ __export(s3_exports, {
   createBandwidthThrottle: () => createBandwidthThrottle,
   createDefaultRetryPolicy: () => createDefaultRetryPolicy,
   createFileSystemS3MultipartResumeStore: () => createFileSystemS3MultipartResumeStore,
+  createFileSystemTransferBatchStateStore: () => createFileSystemTransferBatchStateStore,
   createFileSystemTransferCheckpointStore: () => createFileSystemTransferCheckpointStore,
   createLocalProviderFactory: () => createLocalProviderFactory,
   createMemoryProviderFactory: () => createMemoryProviderFactory,
   createMemoryS3MultipartResumeStore: () => createMemoryS3MultipartResumeStore,
+  createMemoryTransferBatchStateStore: () => createMemoryTransferBatchStateStore,
   createMemoryTransferCheckpointStore: () => createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource: () => createOAuthTokenSecretSource,
   createPooledTransferClient: () => createPooledTransferClient,
@@ -81,6 +83,7 @@ __export(s3_exports, {
   createTransferJobsFromPlan: () => createTransferJobsFromPlan,
   createTransferPlan: () => createTransferPlan,
   createTransferResult: () => createTransferResult,
+  deserializeTransferPlan: () => deserializeTransferPlan,
   diffRemoteTrees: () => diffRemoteTrees,
   downloadFile: () => downloadFile,
   emitLog: () => emitLog,
@@ -115,7 +118,9 @@ __export(s3_exports, {
   resolveSecret: () => resolveSecret,
   runConnectionDiagnostics: () => runConnectionDiagnostics,
   runMultipartUploadPool: () => runMultipartUploadPool,
+  runResumableBatch: () => runResumableBatch,
   serializeRemoteManifest: () => serializeRemoteManifest,
+  serializeTransferPlan: () => serializeTransferPlan,
   sortRemoteEntries: () => sortRemoteEntries,
   summarizeClientDiagnostics: () => summarizeClientDiagnostics,
   summarizeTransferPlan: () => summarizeTransferPlan,
@@ -4281,6 +4286,11 @@ function normalizeNonNegative(value, fallback) {
   return Math.floor(value);
 }
 
+// src/transfers/resumableBatch.ts
+var import_node_crypto3 = require("crypto");
+var import_promises4 = require("fs/promises");
+var import_node_path4 = require("path");
+
 // src/transfers/TransferPlan.ts
 function createTransferPlan(input) {
   const plan = {
@@ -4577,6 +4587,180 @@ function cloneTransferJob(job) {
   if (job.resumed !== void 0) clone.resumed = job.resumed;
   if (job.metadata !== void 0) clone.metadata = { ...job.metadata };
   return clone;
+}
+
+// src/transfers/resumableBatch.ts
+function serializeTransferPlan(plan) {
+  return JSON.stringify({
+    createdAt: plan.createdAt.toISOString(),
+    dryRun: plan.dryRun,
+    id: plan.id,
+    ...plan.metadata !== void 0 ? { metadata: plan.metadata } : {},
+    steps: plan.steps,
+    version: 1,
+    warnings: plan.warnings
+  });
+}
+function deserializeTransferPlan(text) {
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch (error) {
+    throw new ConfigurationError({
+      cause: error,
+      message: "Serialized transfer plan is not valid JSON",
+      retryable: false
+    });
+  }
+  if (typeof parsed !== "object" || parsed === null) {
+    throw new ConfigurationError({
+      message: "Serialized transfer plan must be a JSON object",
+      retryable: false
+    });
+  }
+  const candidate = parsed;
+  if (candidate.version !== 1 || typeof candidate.id !== "string" || !Array.isArray(candidate.steps)) {
+    throw new ConfigurationError({
+      details: { version: candidate.version },
+      message: "Serialized transfer plan has an unsupported shape or version",
+      retryable: false
+    });
+  }
+  const createdAt = typeof candidate.createdAt === "string" ? new Date(candidate.createdAt) : /* @__PURE__ */ new Date(NaN);
+  return createTransferPlan({
+    id: candidate.id,
+    now: () => Number.isNaN(createdAt.getTime()) ? /* @__PURE__ */ new Date() : createdAt,
+    steps: candidate.steps,
+    ...typeof candidate.dryRun === "boolean" ? { dryRun: candidate.dryRun } : {},
+    ...Array.isArray(candidate.warnings) ? { warnings: candidate.warnings } : {},
+    ...typeof candidate.metadata === "object" && candidate.metadata !== null ? { metadata: candidate.metadata } : {}
+  });
+}
+function createMemoryTransferBatchStateStore() {
+  const map = /* @__PURE__ */ new Map();
+  return {
+    clear: (planId) => {
+      map.delete(planId);
+    },
+    load: (planId) => map.get(planId),
+    save: (state) => {
+      map.set(state.planId, state);
+    }
+  };
+}
+function createFileSystemTransferBatchStateStore(options) {
+  const directory = options.directory;
+  if (typeof directory !== "string" || directory.length === 0) {
+    throw new ConfigurationError({
+      message: "createFileSystemTransferBatchStateStore requires a non-empty directory option",
+      retryable: false
+    });
+  }
+  const fileFor = (planId) => {
+    const hash = (0, import_node_crypto3.createHash)("sha256").update(planId).digest("hex");
+    return (0, import_node_path4.join)(directory, `${hash}.batch.json`);
+  };
+  return {
+    async clear(planId) {
+      try {
+        await (0, import_promises4.unlink)(fileFor(planId));
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+    },
+    async load(planId) {
+      let text;
+      try {
+        text = await (0, import_promises4.readFile)(fileFor(planId), "utf8");
+      } catch (error) {
+        if (error.code === "ENOENT") return void 0;
+        throw error;
+      }
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed.version !== 1 || parsed.planId !== planId || !Array.isArray(parsed.completedStepIds)) {
+          return void 0;
+        }
+        return parsed;
+      } catch {
+        return void 0;
+      }
+    },
+    async save(state) {
+      await (0, import_promises4.mkdir)(directory, { recursive: true });
+      const target = fileFor(state.planId);
+      const tmp = `${target}.${String(process.pid)}.${String(Date.now())}.tmp`;
+      await (0, import_promises4.writeFile)(tmp, JSON.stringify(state), { encoding: "utf8", mode: 384 });
+      await (0, import_promises4.rename)(tmp, target);
+    }
+  };
+}
+async function runResumableBatch(options) {
+  const { plan, batchStore } = options;
+  const executableSteps = plan.steps.filter((step) => step.action !== "skip");
+  const prior = await batchStore.load(plan.id);
+  const completed = new Set(prior?.completedStepIds ?? []);
+  const previouslyCompletedStepIds = executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id);
+  const pendingSteps = executableSteps.filter((step) => !completed.has(step.id));
+  let saveChain = Promise.resolve();
+  const recordCompletion = (stepId) => {
+    completed.add(stepId);
+    const snapshot = {
+      completedStepIds: executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id),
+      planId: plan.id,
+      updatedAtMs: Date.now(),
+      version: 1
+    };
+    saveChain = saveChain.then(() => batchStore.save(snapshot)).catch(() => void 0);
+  };
+  const jobIdPrefix = `${plan.id}:`;
+  const queue = new TransferQueue({
+    executor: options.executor,
+    onReceipt: (receipt) => {
+      if (receipt.jobId.startsWith(jobIdPrefix)) {
+        recordCompletion(receipt.jobId.slice(jobIdPrefix.length));
+      }
+      options.onReceipt?.(receipt);
+    },
+    ...options.engine !== void 0 ? { engine: options.engine } : {},
+    ...options.client !== void 0 ? { client: options.client } : {},
+    ...options.concurrency !== void 0 ? { concurrency: options.concurrency } : {},
+    ...options.retry !== void 0 ? { retry: options.retry } : {},
+    ...options.timeout !== void 0 ? { timeout: options.timeout } : {},
+    ...options.bandwidthLimit !== void 0 ? { bandwidthLimit: options.bandwidthLimit } : {},
+    ...options.onProgress !== void 0 ? { onProgress: options.onProgress } : {},
+    ...options.onError !== void 0 ? { onError: options.onError } : {}
+  });
+  for (const step of pendingSteps) {
+    queue.add(createStepJob(plan, step));
+  }
+  const summary = await queue.run({
+    ...options.signal !== void 0 ? { signal: options.signal } : {}
+  });
+  await saveChain;
+  const remainingStepIds = executableSteps.filter((step) => !completed.has(step.id)).map((step) => step.id);
+  const complete = remainingStepIds.length === 0;
+  if (complete) {
+    await batchStore.clear(plan.id);
+  }
+  return {
+    complete,
+    completedStepIds: executableSteps.filter((step) => completed.has(step.id)).map((step) => step.id),
+    previouslyCompletedStepIds,
+    remainingStepIds,
+    summary
+  };
+}
+function createStepJob(plan, step) {
+  const job = {
+    id: `${plan.id}:${step.id}`,
+    operation: step.action
+  };
+  if (step.source !== void 0) job.source = { ...step.source };
+  if (step.destination !== void 0) job.destination = { ...step.destination };
+  if (step.expectedBytes !== void 0) job.totalBytes = step.expectedBytes;
+  if (step.metadata !== void 0) job.metadata = { ...step.metadata };
+  return job;
 }
 
 // src/sync/createRemoteBrowser.ts
@@ -5456,12 +5640,12 @@ function isMainModule(importMetaUrl) {
 }
 
 // src/providers/web/S3Provider.ts
-var import_node_crypto4 = require("crypto");
-var import_promises4 = require("fs/promises");
-var import_node_path4 = require("path");
+var import_node_crypto5 = require("crypto");
+var import_promises5 = require("fs/promises");
+var import_node_path5 = require("path");
 
 // src/providers/web/awsSigv4.ts
-var import_node_crypto3 = require("crypto");
+var import_node_crypto4 = require("crypto");
 var UNSIGNED_PAYLOAD = "UNSIGNED-PAYLOAD";
 function signSigV4(input) {
   const now = input.now ?? /* @__PURE__ */ new Date();
@@ -5532,13 +5716,13 @@ function encodeRfc3986(value) {
   );
 }
 function sha256Hex(data) {
-  return (0, import_node_crypto3.createHash)("sha256").update(data).digest("hex");
+  return (0, import_node_crypto4.createHash)("sha256").update(data).digest("hex");
 }
 function hmac(key, data) {
-  return (0, import_node_crypto3.createHmac)("sha256", key).update(data, "utf8").digest();
+  return (0, import_node_crypto4.createHmac)("sha256", key).update(data, "utf8").digest();
 }
 function hmacHex(key, data) {
-  return (0, import_node_crypto3.createHmac)("sha256", key).update(data, "utf8").digest("hex");
+  return (0, import_node_crypto4.createHmac)("sha256", key).update(data, "utf8").digest("hex");
 }
 
 // src/providers/web/multipartUploadPool.ts
@@ -5846,20 +6030,20 @@ function createFileSystemS3MultipartResumeStore(options) {
     });
   }
   const fileFor = (key) => {
-    const hash = (0, import_node_crypto4.createHash)("sha256").update(`${key.bucket}\0${key.jobId}\0${key.path}`).digest("hex");
-    return (0, import_node_path4.join)(directory, `${hash}.json`);
+    const hash = (0, import_node_crypto5.createHash)("sha256").update(`${key.bucket}\0${key.jobId}\0${key.path}`).digest("hex");
+    return (0, import_node_path5.join)(directory, `${hash}.json`);
   };
   return {
     async clear(key) {
       try {
-        await (0, import_promises4.unlink)(fileFor(key));
+        await (0, import_promises5.unlink)(fileFor(key));
       } catch (error) {
         if (error.code !== "ENOENT") throw error;
       }
     },
     async load(key) {
       try {
-        const text = await (0, import_promises4.readFile)(fileFor(key), "utf8");
+        const text = await (0, import_promises5.readFile)(fileFor(key), "utf8");
         const parsed = JSON.parse(text);
         if (typeof parsed !== "object" || parsed === null || typeof parsed.uploadId !== "string" || !Array.isArray(parsed.parts)) {
           return void 0;
@@ -5871,11 +6055,11 @@ function createFileSystemS3MultipartResumeStore(options) {
       }
     },
     async save(key, checkpoint) {
-      await (0, import_promises4.mkdir)(directory, { recursive: true });
+      await (0, import_promises5.mkdir)(directory, { recursive: true });
       const target = fileFor(key);
       const tmp = `${target}.${String(process.pid)}.${String(Date.now())}.tmp`;
-      await (0, import_promises4.writeFile)(tmp, JSON.stringify(checkpoint), { encoding: "utf8", mode: 384 });
-      await (0, import_promises4.rename)(tmp, target);
+      await (0, import_promises5.writeFile)(tmp, JSON.stringify(checkpoint), { encoding: "utf8", mode: 384 });
+      await (0, import_promises5.rename)(tmp, target);
     }
   };
 }
@@ -6592,10 +6776,12 @@ function innerText(xml, tag) {
   createBandwidthThrottle,
   createDefaultRetryPolicy,
   createFileSystemS3MultipartResumeStore,
+  createFileSystemTransferBatchStateStore,
   createFileSystemTransferCheckpointStore,
   createLocalProviderFactory,
   createMemoryProviderFactory,
   createMemoryS3MultipartResumeStore,
+  createMemoryTransferBatchStateStore,
   createMemoryTransferCheckpointStore,
   createOAuthTokenSecretSource,
   createPooledTransferClient,
@@ -6610,6 +6796,7 @@ function innerText(xml, tag) {
   createTransferJobsFromPlan,
   createTransferPlan,
   createTransferResult,
+  deserializeTransferPlan,
   diffRemoteTrees,
   downloadFile,
   emitLog,
@@ -6644,7 +6831,9 @@ function innerText(xml, tag) {
   resolveSecret,
   runConnectionDiagnostics,
   runMultipartUploadPool,
+  runResumableBatch,
   serializeRemoteManifest,
+  serializeTransferPlan,
   sortRemoteEntries,
   summarizeClientDiagnostics,
   summarizeTransferPlan,

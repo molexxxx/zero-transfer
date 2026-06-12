@@ -10,20 +10,21 @@
 function createDropboxProviderFactory(options?): ProviderFactory;
 ```
 
-Defined in: [src/providers/cloud/DropboxProvider.ts:97](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/providers/cloud/DropboxProvider.ts#L97)
+Defined in: [src/providers/cloud/DropboxProvider.ts:128](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/cloud/DropboxProvider.ts#L128)
 
 Creates a Dropbox provider factory.
 
 The bearer token is resolved per-connection from `profile.password`. The
 `profile.host` field is unused; Dropbox connections are identified solely by
-their token. Uploads go to `/2/files/upload` (single-shot); resumable upload
-sessions are not yet supported.
+their token. Large uploads stream through chunked upload sessions
+(`upload_session/start` + `append_v2` + `finish`); payloads at or below the
+threshold use single-shot `/2/files/upload`.
 
 ## Parameters
 
 | Parameter | Type | Description |
 | ------ | ------ | ------ |
-| `options` | [`DropboxProviderOptions`](../interfaces/DropboxProviderOptions.md) | Optional API base URL overrides and fetch implementation. |
+| `options` | [`DropboxProviderOptions`](../interfaces/DropboxProviderOptions.md) | Optional API base URL overrides, upload-session tuning, and fetch implementation. |
 
 ## Returns
 

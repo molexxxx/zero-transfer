@@ -40,6 +40,7 @@ import {
   webStreamToAsyncIterable,
   type HttpFetch,
 } from "../web/httpInternals";
+import { createSequentialPartReader } from "../web/multipartUploadPool";
 
 export type { HttpFetch };
 
@@ -507,64 +508,50 @@ class GcsTransferOperations implements ProviderTransferOperations {
       });
     }
 
+    // Sequential part reader bounds memory at ~two parts (lookahead included)
+    // and guarantees the final chunk always carries the real total - the
+    // previous ad-hoc buffering sent every full-sized chunk with an unknown
+    // total, so payloads that were exact multiples of partSize never
+    // finalized.
+    const reader = createSequentialPartReader({
+      initialChunks: initialBuffer,
+      partSizeBytes: partSize,
+      source: { [Symbol.asyncIterator]: () => iterator },
+    });
+
     let bytesTransferred = 0;
-    let buffer: Uint8Array[] = [...initialBuffer];
-    let bufferSize = initialSize;
-    let sourceExhausted = false;
     let finalItem: GcsObject | undefined;
 
-    const flushChunks = async (final: boolean): Promise<void> => {
-      while (bufferSize >= partSize || (final && bufferSize > 0)) {
-        const take = final ? bufferSize : partSize;
-        const sliced = sliceFromBuffers(buffer, take);
-        buffer = sliced.remaining;
-        bufferSize -= sliced.bytes.byteLength;
-        const chunkStart = bytesTransferred;
-        const chunkEnd = chunkStart + sliced.bytes.byteLength - 1;
-        const totalRange = final ? String(chunkEnd + 1) : "*";
-        const headers: Record<string, string> = {
-          "content-length": String(sliced.bytes.byteLength),
-          "content-range": `bytes ${String(chunkStart)}-${String(chunkEnd)}/${totalRange}`,
-          "content-type": "application/octet-stream",
-        };
+    try {
+      let part = await reader.next();
+      while (part !== undefined) {
+        request.throwIfAborted();
+        // Lookahead: the final chunk must declare the real total size.
+        const nextPart = await reader.next();
+        const totalRange = nextPart === undefined ? String(part.byteEnd) : "*";
         const response = await gcsSessionFetch(this.options, sessionUri, {
           ...(request.signal !== undefined ? { signal: request.signal } : {}),
-          body: sliced.bytes,
-          extraHeaders: headers,
+          body: part.bytes,
+          extraHeaders: {
+            "content-length": String(part.bytes.byteLength),
+            "content-range": `bytes ${String(part.byteStart)}-${String(part.byteEnd - 1)}/${totalRange}`,
+            "content-type": "application/octet-stream",
+          },
         });
         if (response.status === 308) {
           // Resume Incomplete - server accepted bytes; continue.
-          bytesTransferred += sliced.bytes.byteLength;
-          request.reportProgress(bytesTransferred, undefined);
+          bytesTransferred = part.byteEnd;
+          request.reportProgress(bytesTransferred, request.totalBytes);
+          part = nextPart;
           continue;
         }
         if (response.status === 200 || response.status === 201) {
-          bytesTransferred += sliced.bytes.byteLength;
+          bytesTransferred = part.byteEnd;
           request.reportProgress(bytesTransferred, bytesTransferred);
           finalItem = (await response.json()) as GcsObject;
-          return;
-        }
-        throw mapGcsResponseError(response, normalized, await safeReadText(response));
-      }
-    };
-
-    try {
-      await flushChunks(false);
-      while (!sourceExhausted) {
-        request.throwIfAborted();
-        const next = await iterator.next();
-        if (next.done === true) {
-          sourceExhausted = true;
           break;
         }
-        if (next.value.byteLength === 0) continue;
-        buffer.push(next.value);
-        bufferSize += next.value.byteLength;
-        await flushChunks(false);
-        if (finalItem !== undefined) break;
-      }
-      if (finalItem === undefined) {
-        await flushChunks(true);
+        throw mapGcsResponseError(response, normalized, await safeReadText(response));
       }
     } catch (error) {
       // Best-effort abort: DELETE the session URI cancels an in-flight upload.
@@ -781,35 +768,6 @@ function concatChunks(chunks: Uint8Array[], totalSize: number): Uint8Array {
     offset += chunk.byteLength;
   }
   return out;
-}
-
-function sliceFromBuffers(
-  buffers: Uint8Array[],
-  size: number,
-): { bytes: Uint8Array; remaining: Uint8Array[] } {
-  const out = new Uint8Array(size);
-  let offset = 0;
-  let i = 0;
-  while (offset < size && i < buffers.length) {
-    const chunk = buffers[i];
-    if (chunk === undefined) {
-      i += 1;
-      continue;
-    }
-    const remaining = size - offset;
-    if (chunk.byteLength <= remaining) {
-      out.set(chunk, offset);
-      offset += chunk.byteLength;
-      i += 1;
-    } else {
-      out.set(chunk.subarray(0, remaining), offset);
-      const leftover = chunk.subarray(remaining);
-      const next = buffers.slice(i + 1);
-      next.unshift(leftover);
-      return { bytes: out, remaining: next };
-    }
-  }
-  return { bytes: out.subarray(0, offset), remaining: buffers.slice(i) };
 }
 
 interface GcsSessionFetchOptions {

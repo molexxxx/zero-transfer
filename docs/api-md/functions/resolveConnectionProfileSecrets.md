@@ -10,7 +10,7 @@
 function resolveConnectionProfileSecrets(profile, options?): Promise<ResolvedConnectionProfile>;
 ```
 
-Defined in: [src/profiles/resolveConnectionProfileSecrets.ts:61](https://github.com/tonywied17/zero-transfer/blob/7b724e9821289c9e53b5eb587169b59a7d1172f6/src/profiles/resolveConnectionProfileSecrets.ts#L61)
+Defined in: [src/profiles/resolveConnectionProfileSecrets.ts:61](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/profiles/resolveConnectionProfileSecrets.ts#L61)
 
 Resolves credential and TLS material secret sources without mutating the original profile.
 

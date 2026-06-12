@@ -10,7 +10,7 @@
 function createSequentialPartReader(options): MultipartPartReader;
 ```
 
-Defined in: src/providers/web/multipartUploadPool.ts:73
+Defined in: [src/providers/web/multipartUploadPool.ts:73](https://github.com/tonywied17/zero-transfer/blob/8424cd0c7c0be47b226a0bbed0e1e7449fd465e3/src/providers/web/multipartUploadPool.ts#L73)
 
 Creates a mutex-guarded sequential part reader over a byte stream.
 

@@ -28,6 +28,7 @@ path safety utilities used by future protocol adapters.
 | [createDefaultRetryPolicy](functions/createDefaultRetryPolicy.md) | Creates the SDK's recommended retry policy for transfer execution. |
 | [createDropboxProviderFactory](functions/createDropboxProviderFactory.md) | Creates a Dropbox provider factory. |
 | [createFileSystemS3MultipartResumeStore](functions/createFileSystemS3MultipartResumeStore.md) | File-system backed [S3MultipartResumeStore](interfaces/S3MultipartResumeStore.md) that survives process restarts. Each in-flight multipart upload is checkpointed to a single JSON file in `options.directory` after every part. On retry the upload reuses the stored `uploadId` and skips parts that S3 has already accepted. |
+| [createFileSystemTransferBatchStateStore](functions/createFileSystemTransferBatchStateStore.md) | File-system backed [TransferBatchStateStore](interfaces/TransferBatchStateStore.md) that survives process restarts, enabling cross-process batch resume. |
 | [createFileSystemTransferCheckpointStore](functions/createFileSystemTransferCheckpointStore.md) | File-system backed [TransferCheckpointStore](interfaces/TransferCheckpointStore.md) that survives process restarts, enabling cross-process resume. |
 | [createFtpProviderFactory](functions/createFtpProviderFactory.md) | Creates a provider factory for classic FTP connections. |
 | [createFtpsProviderFactory](functions/createFtpsProviderFactory.md) | Creates a provider factory for explicit or implicit FTPS connections. |
@@ -39,6 +40,7 @@ path safety utilities used by future protocol adapters.
 | [createLocalProviderFactory](functions/createLocalProviderFactory.md) | Creates a provider factory backed by the local filesystem. |
 | [createMemoryProviderFactory](functions/createMemoryProviderFactory.md) | Creates a provider factory backed by deterministic in-memory fixture entries. |
 | [createMemoryS3MultipartResumeStore](functions/createMemoryS3MultipartResumeStore.md) | Creates an in-memory [S3MultipartResumeStore](interfaces/S3MultipartResumeStore.md). |
+| [createMemoryTransferBatchStateStore](functions/createMemoryTransferBatchStateStore.md) | Creates an in-memory [TransferBatchStateStore](interfaces/TransferBatchStateStore.md) (tests and single-process retries). |
 | [createMemoryTransferCheckpointStore](functions/createMemoryTransferCheckpointStore.md) | Creates an in-memory [TransferCheckpointStore](interfaces/TransferCheckpointStore.md). |
 | [createOAuthTokenSecretSource](functions/createOAuthTokenSecretSource.md) | Builds a [SecretProvider](type-aliases/SecretProvider.md) that exchanges a refresh callback for cached, auto-renewing access tokens. |
 | [createOneDriveProviderFactory](functions/createOneDriveProviderFactory.md) | Creates a OneDrive/SharePoint provider factory backed by Microsoft Graph. |
@@ -58,6 +60,7 @@ path safety utilities used by future protocol adapters.
 | [createTransferResult](functions/createTransferResult.md) | Creates a final transfer result with duration and average throughput. |
 | [createWebDavProviderFactory](functions/createWebDavProviderFactory.md) | Creates a WebDAV provider factory. |
 | [createWebhookAuditLog](functions/createWebhookAuditLog.md) | Wraps a webhook target as an [MftAuditLog](interfaces/MftAuditLog.md). |
+| [deserializeTransferPlan](functions/deserializeTransferPlan.md) | Parses a plan produced by [serializeTransferPlan](functions/serializeTransferPlan.md). |
 | [diffRemoteTrees](functions/diffRemoteTrees.md) | Compares two remote subtrees and produces an entry-level diff. |
 | [dispatchWebhook](functions/dispatchWebhook.md) | Dispatches a single webhook payload with bounded retries. |
 | [downloadFile](functions/downloadFile.md) | Downloads a single remote file to a local path. |
@@ -109,9 +112,11 @@ path safety utilities used by future protocol adapters.
 | [resolveSecret](functions/resolveSecret.md) | Resolves a secret source into a string or Buffer without logging the value. |
 | [runConnectionDiagnostics](functions/runConnectionDiagnostics.md) | Connects to a profile, captures capability and listing samples, and returns a redaction-safe report. |
 | [runMultipartUploadPool](functions/runMultipartUploadPool.md) | Uploads parts from a reader with bounded concurrency. |
+| [runResumableBatch](functions/runResumableBatch.md) | Executes a transfer plan as a resumable batch job. |
 | [runRoute](functions/runRoute.md) | Executes an MFT route as a single transfer through the supplied client. |
 | [runSshCommand](functions/runSshCommand.md) | Connects, authenticates, runs `command` on a fresh exec channel, drains stdout, and disconnects. The TCP socket, transport, auth session, and channel are all owned by this helper and torn down before it returns. |
 | [serializeRemoteManifest](functions/serializeRemoteManifest.md) | Serializes a manifest to a JSON string suitable for persistence. |
+| [serializeTransferPlan](functions/serializeTransferPlan.md) | Serializes a transfer plan to JSON for persistence. |
 | [signWebhookPayload](functions/signWebhookPayload.md) | Computes the HMAC-SHA256 signature for a webhook payload. |
 | [sortRemoteEntries](functions/sortRemoteEntries.md) | Returns a copy of the supplied entries sorted by the requested key. Directories are grouped before files within ascending sorts, matching common file-manager UX. |
 | [summarizeClientDiagnostics](functions/summarizeClientDiagnostics.md) | Returns a redaction-safe snapshot of the providers registered with a client. |
@@ -203,11 +208,13 @@ path safety utilities used by future protocol adapters.
 | [DispatchWebhookOptions](interfaces/DispatchWebhookOptions.md) | Options accepted by [dispatchWebhook](functions/dispatchWebhook.md). |
 | [DispatchWebhookResult](interfaces/DispatchWebhookResult.md) | Result returned by [dispatchWebhook](functions/dispatchWebhook.md). |
 | [DownloadFileOptions](interfaces/DownloadFileOptions.md) | Options for [downloadFile](functions/downloadFile.md). |
+| [DropboxMultipartOptions](interfaces/DropboxMultipartOptions.md) | Upload-session tuning for the Dropbox provider. |
 | [DropboxProviderOptions](interfaces/DropboxProviderOptions.md) | Options accepted by [createDropboxProviderFactory](functions/createDropboxProviderFactory.md). |
 | [EnvSecretSource](interfaces/EnvSecretSource.md) | Environment variable descriptor for text secrets. |
 | [EvaluateRetentionOptions](interfaces/EvaluateRetentionOptions.md) | Options accepted by [evaluateRetention](functions/evaluateRetention.md). |
 | [FileSecretSource](interfaces/FileSecretSource.md) | File-backed secret descriptor. |
 | [FileSystemS3MultipartResumeStoreOptions](interfaces/FileSystemS3MultipartResumeStoreOptions.md) | Options for [createFileSystemS3MultipartResumeStore](functions/createFileSystemS3MultipartResumeStore.md). |
+| [FileSystemTransferBatchStateStoreOptions](interfaces/FileSystemTransferBatchStateStoreOptions.md) | Options accepted by [createFileSystemTransferBatchStateStore](functions/createFileSystemTransferBatchStateStore.md). |
 | [FileSystemTransferCheckpointStoreOptions](interfaces/FileSystemTransferCheckpointStoreOptions.md) | Options accepted by [createFileSystemTransferCheckpointStore](functions/createFileSystemTransferCheckpointStore.md). |
 | [FileZillaSite](interfaces/FileZillaSite.md) | Imported FileZilla site with the folder hierarchy that contained it. |
 | [FtpFeatures](interfaces/FtpFeatures.md) | Normalized server features returned by an FTP FEAT command. |
@@ -217,6 +224,7 @@ path safety utilities used by future protocol adapters.
 | [FtpsProviderOptions](interfaces/FtpsProviderOptions.md) | Options used to create the FTPS provider factory. |
 | [GcsMultipartOptions](interfaces/GcsMultipartOptions.md) | Resumable-upload session tuning for the GCS provider. |
 | [GcsProviderOptions](interfaces/GcsProviderOptions.md) | Options accepted by [createGcsProviderFactory](functions/createGcsProviderFactory.md). |
+| [GoogleDriveMultipartOptions](interfaces/GoogleDriveMultipartOptions.md) | Resumable-session upload tuning for the Google Drive provider. |
 | [GoogleDriveProviderOptions](interfaces/GoogleDriveProviderOptions.md) | Options accepted by [createGoogleDriveProviderFactory](functions/createGoogleDriveProviderFactory.md). |
 | [HttpProviderOptions](interfaces/HttpProviderOptions.md) | Options accepted by [createHttpProviderFactory](functions/createHttpProviderFactory.md). |
 | [ImportFileZillaSitesResult](interfaces/ImportFileZillaSitesResult.md) | Result returned by [importFileZillaSites](functions/importFileZillaSites.md). |
@@ -288,6 +296,8 @@ path safety utilities used by future protocol adapters.
 | [ResolvedSshProfile](interfaces/ResolvedSshProfile.md) | SSH profile with private-key and known-host material resolved. |
 | [ResolvedTlsProfile](interfaces/ResolvedTlsProfile.md) | TLS profile with certificate-bearing secret sources resolved. |
 | [ResolveSecretOptions](interfaces/ResolveSecretOptions.md) | Injectable dependencies used by tests or host applications during secret resolution. |
+| [ResumableBatchOptions](interfaces/ResumableBatchOptions.md) | Options accepted by [runResumableBatch](functions/runResumableBatch.md). |
+| [ResumableBatchResult](interfaces/ResumableBatchResult.md) | Result returned by [runResumableBatch](functions/runResumableBatch.md). |
 | [RetentionEvaluation](interfaces/RetentionEvaluation.md) | Result returned by [evaluateRetention](functions/evaluateRetention.md). |
 | [RmdirOptions](interfaces/RmdirOptions.md) | Options for removing a remote directory. |
 | [RunConnectionDiagnosticsOptions](interfaces/RunConnectionDiagnosticsOptions.md) | Options accepted by [runConnectionDiagnostics](functions/runConnectionDiagnostics.md). |
@@ -321,6 +331,8 @@ path safety utilities used by future protocol adapters.
 | [TransferAttempt](interfaces/TransferAttempt.md) | Execution attempt retained in a transfer receipt. |
 | [TransferAttemptError](interfaces/TransferAttemptError.md) | Serializable error summary retained in failed attempts. |
 | [TransferBandwidthLimit](interfaces/TransferBandwidthLimit.md) | Optional throughput limit shape that concrete transfer executors may honor. |
+| [TransferBatchState](interfaces/TransferBatchState.md) | Persisted batch progress: which plan steps have completed. |
+| [TransferBatchStateStore](interfaces/TransferBatchStateStore.md) | Persistence contract for batch progress. `clear` is invoked when every executable step has completed; it must tolerate missing entries. |
 | [TransferByteOffsetCheckpointState](interfaces/TransferByteOffsetCheckpointState.md) | Byte-offset checkpoint state used by sequential-append providers. |
 | [TransferByteRange](interfaces/TransferByteRange.md) | Byte range requested from a readable provider endpoint. |
 | [TransferCheckpointEndpoint](interfaces/TransferCheckpointEndpoint.md) | One endpoint half of a [TransferCheckpointKey](interfaces/TransferCheckpointKey.md). |
