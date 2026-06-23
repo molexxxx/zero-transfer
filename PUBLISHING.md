@@ -5,7 +5,7 @@ This repo publishes **13 packages** under [`@zero-transfer/*`](https://www.npmjs
 - `@zero-transfer/sdk` — batteries-included
 - `@zero-transfer/{core,classic,ftp,ftps,sftp,http,webdav,s3,google-drive,dropbox,azure-blob,mft}` — self-contained scoped bundles built from `src/entries/<scope>.ts` via tsup. Each includes the full `@zero-transfer/core` surface plus only its own protocol code. **All scoped packages have zero runtime dependencies** — SFTP is built on a first-party SSH transport stack that ships in-bundle.
 
-All publishing runs through **GitHub Actions OIDC trusted publishing** (no `NPM_TOKEN` secret). You only need git access to `tonywied17/zero-transfer`.
+All publishing runs through **GitHub Actions OIDC trusted publishing** (no `NPM_TOKEN` secret). You only need git access to `molexxxx/zero-transfer`.
 
 ## TL;DR — release in one command
 
@@ -90,7 +90,7 @@ Use this to re-publish without bumping (e.g. a failed tag publish) or to do a dr
 Each of the 13 packages must register this repo as a Trusted Publisher on npmjs.com. Per package, on https://www.npmjs.com/package/@zero-transfer/&lt;name&gt;:
 
 1. **Settings** → **Publishing access** → **Add trusted publisher**
-2. Repository: `tonywied17/zero-transfer`
+2. Repository: `molexxxx/zero-transfer`
 3. Workflow filename: `release.yml`
 4. Environment: _(blank)_
 

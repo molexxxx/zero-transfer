@@ -90,4 +90,4 @@ console.table(summarizeClientDiagnostics(client));
 
 Both helpers respect profile redaction, so reports are safe to log or attach to support tickets.
 
-See [`examples/diagnose-connection.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/diagnose-connection.ts) for an end-to-end run.
+See [`examples/diagnose-connection.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/diagnose-connection.ts) for an end-to-end run.

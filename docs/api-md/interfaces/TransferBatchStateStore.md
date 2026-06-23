@@ -6,7 +6,7 @@
 
 # Interface: TransferBatchStateStore
 
-Defined in: [src/transfers/resumableBatch.ts:142](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/resumableBatch.ts#L142)
+Defined in: [src/transfers/resumableBatch.ts:142](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/resumableBatch.ts#L142)
 
 Persistence contract for batch progress. `clear` is invoked when every
 executable step has completed; it must tolerate missing entries.
@@ -19,7 +19,7 @@ executable step has completed; it must tolerate missing entries.
 clear(planId): void | Promise<void>;
 ```
 
-Defined in: [src/transfers/resumableBatch.ts:148](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/resumableBatch.ts#L148)
+Defined in: [src/transfers/resumableBatch.ts:148](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/resumableBatch.ts#L148)
 
 Removes progress for a plan id.
 
@@ -44,7 +44,7 @@ load(planId):
   | undefined;
 ```
 
-Defined in: [src/transfers/resumableBatch.ts:144](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/resumableBatch.ts#L144)
+Defined in: [src/transfers/resumableBatch.ts:144](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/resumableBatch.ts#L144)
 
 Loads progress for a plan id, or `undefined` when absent.
 
@@ -68,7 +68,7 @@ Loads progress for a plan id, or `undefined` when absent.
 save(state): void | Promise<void>;
 ```
 
-Defined in: [src/transfers/resumableBatch.ts:146](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/resumableBatch.ts#L146)
+Defined in: [src/transfers/resumableBatch.ts:146](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/resumableBatch.ts#L146)
 
 Persists progress for a plan id.
 

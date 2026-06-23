@@ -29,24 +29,24 @@ This package publishes a narrowed surface of **3** exports. These symbols are al
 
 | Symbol                                                                                                                                  | Kind      | Notes              |
 | --------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
-| [`createHttpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createHttpProviderFactory.md) | Function  | See API reference. |
-| [`HttpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/HttpProviderOptions.md)            | Interface | See API reference. |
-| [`HttpFetch`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/HttpFetch.md)                              | Type      | See API reference. |
+| [`createHttpProviderFactory`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/createHttpProviderFactory.md) | Function  | See API reference. |
+| [`HttpProviderOptions`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/HttpProviderOptions.md)            | Interface | See API reference. |
+| [`HttpFetch`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/type-aliases/HttpFetch.md)                              | Type      | See API reference. |
 
 ## Examples
 
 | Example                                                                                                                    | What it shows                     |
 | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| [`examples/signed-url-download.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/signed-url-download.ts) | Signed-URL HTTP download example. |
+| [`examples/signed-url-download.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/signed-url-download.ts) | Signed-URL HTTP download example. |
 
 ## Documentation
 
-- [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/http.md)
-- [Top-level README](https://github.com/tonywied17/zero-transfer/blob/main/README.md)
-- [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)
-- [Capability matrix](https://github.com/tonywied17/zero-transfer/blob/main/README.md#capability-matrix)
-- [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)
+- [Scope page](https://github.com/molexxxx/zero-transfer/blob/main/docs/scopes/http.md)
+- [Top-level README](https://github.com/molexxxx/zero-transfer/blob/main/README.md)
+- [Full API reference](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/README.md)
+- [Capability matrix](https://github.com/molexxxx/zero-transfer/blob/main/README.md#capability-matrix)
+- [Examples](https://github.com/molexxxx/zero-transfer/tree/main/examples)
 
 ## License
 
-MIT © [Tony Wiedman](https://github.com/tonywied17)
+MIT © [Tony Wiedman](https://github.com/molexxxx)

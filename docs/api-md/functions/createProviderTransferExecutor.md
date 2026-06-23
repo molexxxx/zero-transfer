@@ -10,7 +10,7 @@
 function createProviderTransferExecutor(options): TransferExecutor;
 ```
 
-Defined in: [src/transfers/createProviderTransferExecutor.ts:142](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/createProviderTransferExecutor.ts#L142)
+Defined in: [src/transfers/createProviderTransferExecutor.ts:142](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/createProviderTransferExecutor.ts#L142)
 
 Creates a [TransferExecutor](../type-aliases/TransferExecutor.md) that reads from a source provider and writes to a destination provider.
 

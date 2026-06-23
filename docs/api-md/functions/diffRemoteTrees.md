@@ -15,7 +15,7 @@ function diffRemoteTrees(
 options?): Promise<RemoteTreeDiff>;
 ```
 
-Defined in: [src/sync/diffRemoteTrees.ts:116](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/sync/diffRemoteTrees.ts#L116)
+Defined in: [src/sync/diffRemoteTrees.ts:116](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/sync/diffRemoteTrees.ts#L116)
 
 Compares two remote subtrees and produces an entry-level diff.
 

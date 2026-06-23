@@ -6,7 +6,7 @@
 
 # Interface: TransferCheckpointEndpoint
 
-Defined in: [src/transfers/TransferCheckpointStore.ts:38](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L38)
+Defined in: [src/transfers/TransferCheckpointStore.ts:38](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L38)
 
 One endpoint half of a [TransferCheckpointKey](TransferCheckpointKey.md).
 
@@ -14,5 +14,5 @@ One endpoint half of a [TransferCheckpointKey](TransferCheckpointKey.md).
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="path"></a> `path` | `string` | Provider, remote, or local path for the endpoint. | [src/transfers/TransferCheckpointStore.ts:42](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L42) |
-| <a id="provider"></a> `provider?` | `string` | Provider id that owns the endpoint when known. | [src/transfers/TransferCheckpointStore.ts:40](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L40) |
+| <a id="path"></a> `path` | `string` | Provider, remote, or local path for the endpoint. | [src/transfers/TransferCheckpointStore.ts:42](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L42) |
+| <a id="provider"></a> `provider?` | `string` | Provider id that owns the endpoint when known. | [src/transfers/TransferCheckpointStore.ts:40](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L40) |

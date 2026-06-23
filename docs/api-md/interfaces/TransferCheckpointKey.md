@@ -6,7 +6,7 @@
 
 # Interface: TransferCheckpointKey
 
-Defined in: [src/transfers/TransferCheckpointStore.ts:56](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L56)
+Defined in: [src/transfers/TransferCheckpointStore.ts:56](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L56)
 
 Identity of a checkpointed transfer: the source and destination
 provider/path pair.
@@ -22,6 +22,6 @@ accounts both exposing `/data/out.bin`), set
 
 | Property | Type | Description | Defined in |
 | ------ | ------ | ------ | ------ |
-| <a id="destination"></a> `destination` | [`TransferCheckpointEndpoint`](TransferCheckpointEndpoint.md) | Destination endpoint of the transfer. | [src/transfers/TransferCheckpointStore.ts:60](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L60) |
-| <a id="scope"></a> `scope?` | `string` | Optional caller-supplied namespace (for example a host or profile id). | [src/transfers/TransferCheckpointStore.ts:62](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L62) |
-| <a id="source"></a> `source` | [`TransferCheckpointEndpoint`](TransferCheckpointEndpoint.md) | Source endpoint of the transfer. | [src/transfers/TransferCheckpointStore.ts:58](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L58) |
+| <a id="destination"></a> `destination` | [`TransferCheckpointEndpoint`](TransferCheckpointEndpoint.md) | Destination endpoint of the transfer. | [src/transfers/TransferCheckpointStore.ts:60](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L60) |
+| <a id="scope"></a> `scope?` | `string` | Optional caller-supplied namespace (for example a host or profile id). | [src/transfers/TransferCheckpointStore.ts:62](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L62) |
+| <a id="source"></a> `source` | [`TransferCheckpointEndpoint`](TransferCheckpointEndpoint.md) | Source endpoint of the transfer. | [src/transfers/TransferCheckpointStore.ts:58](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L58) |

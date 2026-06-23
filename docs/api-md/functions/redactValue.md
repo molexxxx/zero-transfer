@@ -10,7 +10,7 @@
 function redactValue(value): unknown;
 ```
 
-Defined in: [src/logging/redaction.ts:44](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/logging/redaction.ts#L44)
+Defined in: [src/logging/redaction.ts:44](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/logging/redaction.ts#L44)
 
 Recursively redacts strings, arrays, and plain object values.
 

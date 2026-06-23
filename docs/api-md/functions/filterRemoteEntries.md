@@ -10,7 +10,7 @@
 function filterRemoteEntries(entries, options?): RemoteEntry[];
 ```
 
-Defined in: [src/sync/createRemoteBrowser.ts:149](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/sync/createRemoteBrowser.ts#L149)
+Defined in: [src/sync/createRemoteBrowser.ts:149](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/sync/createRemoteBrowser.ts#L149)
 
 Filters entries using the optional predicate plus an optional hidden-file rule.
 

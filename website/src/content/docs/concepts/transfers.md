@@ -45,7 +45,7 @@ Timeouts have two scopes with deliberately different semantics:
 
 The returned [`TransferReceipt`](../../api/interfaces/transferreceipt/) records every attempt, including the error that ended each failed one, so you can see exactly what happened ("attempt 1 stalled, attempt 2 succeeded") without extra instrumentation.
 
-See [`examples/retry-and-timeouts.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/retry-and-timeouts.ts) for a runnable, offline walkthrough of every knob in this section.
+See [`examples/retry-and-timeouts.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/retry-and-timeouts.ts) for a runnable, offline walkthrough of every knob in this section.
 
 ### Client-wide defaults
 
@@ -95,7 +95,7 @@ Safety comes first, speed second:
 
 Two checkpoint shapes cover every provider: sequential-append providers (SFTP, FTP, local) record a committed-byte watermark, while part-based providers (S3 multipart, Azure staged blocks) record the upload token plus the contiguous prefix of completed parts. Resume is capability-gated (`resumeDownload` on the source, `resumeUpload` on the destination); `mode: "require"` makes an incapable pair an error instead of a silent restart, and `mode: "off"` disables checkpoints entirely. See [`TransferResumeOptions`](../../api/interfaces/transferresumeoptions/).
 
-See [`examples/resume-checkpoints.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/resume-checkpoints.ts) for a runnable, offline walkthrough: a transfer whose connection drops mid-stream, retried and resumed from the committed watermark in a single `engine.execute()` call.
+See [`examples/resume-checkpoints.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/resume-checkpoints.ts) for a runnable, offline walkthrough: a transfer whose connection drops mid-stream, retried and resumed from the committed watermark in a single `engine.execute()` call.
 
 ### Resumable batch jobs
 
@@ -119,7 +119,7 @@ const result = await runResumableBatch({
 console.log(result.complete ? "done" : `${result.remainingStepIds.length} steps left`);
 ```
 
-See [`examples/resumable-batch.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/resumable-batch.ts) for a runnable, offline walkthrough of a flaky batch resuming across two runs.
+See [`examples/resumable-batch.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/resumable-batch.ts) for a runnable, offline walkthrough of a flaky batch resuming across two runs.
 
 ## Throughput
 
@@ -175,4 +175,4 @@ console.table(summarizeTransferPlan(plan));
 
 [`createAtomicDeployPlan`](../../api/functions/createatomicdeployplan/) wraps a sync in a stage → swap → rollback pattern: writes go to a staging directory, an atomic rename promotes the new version, and a captured snapshot lets you roll back if validation fails.
 
-See [`examples/atomic-deploy-with-rollback.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/atomic-deploy-with-rollback.ts) for the full recipe.
+See [`examples/atomic-deploy-with-rollback.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/atomic-deploy-with-rollback.ts) for the full recipe.

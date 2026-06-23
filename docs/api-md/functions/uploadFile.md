@@ -10,7 +10,7 @@
 function uploadFile(options): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/client/operations.ts:83](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/client/operations.ts#L83)
+Defined in: [src/client/operations.ts:83](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/client/operations.ts#L83)
 
 Uploads a single local file to a remote endpoint.
 

@@ -10,7 +10,7 @@
 function createFileSystemTransferBatchStateStore(options): TransferBatchStateStore;
 ```
 
-Defined in: [src/transfers/resumableBatch.ts:179](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/resumableBatch.ts#L179)
+Defined in: [src/transfers/resumableBatch.ts:179](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/resumableBatch.ts#L179)
 
 File-system backed [TransferBatchStateStore](../interfaces/TransferBatchStateStore.md) that survives process
 restarts, enabling cross-process batch resume.

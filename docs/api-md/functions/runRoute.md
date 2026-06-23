@@ -10,7 +10,7 @@
 function runRoute(options): Promise<TransferReceipt>;
 ```
 
-Defined in: [src/mft/runRoute.ts:106](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/mft/runRoute.ts#L106)
+Defined in: [src/mft/runRoute.ts:106](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/mft/runRoute.ts#L106)
 
 Executes an MFT route as a single transfer through the supplied client.
 

@@ -29,30 +29,30 @@ This package publishes a narrowed surface of **8** exports. These symbols are al
 
 | Symbol                                                                                                                                  | Kind      | Notes              |
 | --------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
-| [`createSftpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createSftpProviderFactory.md) | Function  | See API reference. |
-| [`SftpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpProviderOptions.md)            | Interface | See API reference. |
-| [`SftpRawSession`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpRawSession.md)                      | Interface | See API reference. |
-| [`matchKnownHosts`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/matchKnownHosts.md)                     | Function  | See API reference. |
-| [`matchKnownHostsEntry`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/matchKnownHostsEntry.md)           | Function  | See API reference. |
-| [`parseKnownHosts`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/parseKnownHosts.md)                     | Function  | See API reference. |
-| [`KnownHostsEntry`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/KnownHostsEntry.md)                    | Interface | See API reference. |
-| [`KnownHostsMarker`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/KnownHostsMarker.md)                | Type      | See API reference. |
+| [`createSftpProviderFactory`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/createSftpProviderFactory.md) | Function  | See API reference. |
+| [`SftpProviderOptions`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/SftpProviderOptions.md)            | Interface | See API reference. |
+| [`SftpRawSession`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/SftpRawSession.md)                      | Interface | See API reference. |
+| [`matchKnownHosts`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/matchKnownHosts.md)                     | Function  | See API reference. |
+| [`matchKnownHostsEntry`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/matchKnownHostsEntry.md)           | Function  | See API reference. |
+| [`parseKnownHosts`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/parseKnownHosts.md)                     | Function  | See API reference. |
+| [`KnownHostsEntry`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/KnownHostsEntry.md)                    | Interface | See API reference. |
+| [`KnownHostsMarker`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/type-aliases/KnownHostsMarker.md)                | Type      | See API reference. |
 
 ## Examples
 
 | Example                                                                                                                  | What it shows                                                        |
 | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
-| [`examples/sftp-private-key.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/sftp-private-key.ts)     | SFTP private-key authentication example with host-key pinning.       |
-| [`examples/sftp-directory-ops.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/sftp-directory-ops.ts) | SFTP directory operations: list, stat, mkdir, rename, remove, rmdir. |
+| [`examples/sftp-private-key.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/sftp-private-key.ts)     | SFTP private-key authentication example with host-key pinning.       |
+| [`examples/sftp-directory-ops.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/sftp-directory-ops.ts) | SFTP directory operations: list, stat, mkdir, rename, remove, rmdir. |
 
 ## Documentation
 
-- [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/sftp.md)
-- [Top-level README](https://github.com/tonywied17/zero-transfer/blob/main/README.md)
-- [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)
-- [Capability matrix](https://github.com/tonywied17/zero-transfer/blob/main/README.md#capability-matrix)
-- [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)
+- [Scope page](https://github.com/molexxxx/zero-transfer/blob/main/docs/scopes/sftp.md)
+- [Top-level README](https://github.com/molexxxx/zero-transfer/blob/main/README.md)
+- [Full API reference](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/README.md)
+- [Capability matrix](https://github.com/molexxxx/zero-transfer/blob/main/README.md#capability-matrix)
+- [Examples](https://github.com/molexxxx/zero-transfer/tree/main/examples)
 
 ## License
 
-MIT © [Tony Wiedman](https://github.com/tonywied17)
+MIT © [Tony Wiedman](https://github.com/molexxxx)

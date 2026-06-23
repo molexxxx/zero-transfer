@@ -29,23 +29,23 @@ This package publishes a narrowed surface of **2** exports. These symbols are al
 
 | Symbol                                                                                                                                                | Kind      | Notes              |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
-| [`createGoogleDriveProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createGoogleDriveProviderFactory.md) | Function  | See API reference. |
-| [`GoogleDriveProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/GoogleDriveProviderOptions.md)            | Interface | See API reference. |
+| [`createGoogleDriveProviderFactory`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/createGoogleDriveProviderFactory.md) | Function  | See API reference. |
+| [`GoogleDriveProviderOptions`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/GoogleDriveProviderOptions.md)            | Interface | See API reference. |
 
 ## Examples
 
 | Example                                                                                                                                | What it shows                       |
 | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| [`examples/multi-cloud-orchestration.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase. |
+| [`examples/multi-cloud-orchestration.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase. |
 
 ## Documentation
 
-- [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/google-drive.md)
-- [Top-level README](https://github.com/tonywied17/zero-transfer/blob/main/README.md)
-- [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)
-- [Capability matrix](https://github.com/tonywied17/zero-transfer/blob/main/README.md#capability-matrix)
-- [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)
+- [Scope page](https://github.com/molexxxx/zero-transfer/blob/main/docs/scopes/google-drive.md)
+- [Top-level README](https://github.com/molexxxx/zero-transfer/blob/main/README.md)
+- [Full API reference](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/README.md)
+- [Capability matrix](https://github.com/molexxxx/zero-transfer/blob/main/README.md#capability-matrix)
+- [Examples](https://github.com/molexxxx/zero-transfer/tree/main/examples)
 
 ## License
 
-MIT © [Tony Wiedman](https://github.com/tonywied17)
+MIT © [Tony Wiedman](https://github.com/molexxxx)

@@ -10,6 +10,6 @@
 const DEFAULT_CHECKPOINT_TTL_MS: number;
 ```
 
-Defined in: [src/transfers/TransferCheckpointStore.ts:176](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L176)
+Defined in: [src/transfers/TransferCheckpointStore.ts:176](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L176)
 
 Default checkpoint time-to-live: 7 days, matching S3/Azure uncommitted-upload lifetimes.

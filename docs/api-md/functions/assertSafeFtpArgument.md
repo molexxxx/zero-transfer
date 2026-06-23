@@ -10,7 +10,7 @@
 function assertSafeFtpArgument(value, label?): string;
 ```
 
-Defined in: [src/utils/path.ts:26](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/utils/path.ts#L26)
+Defined in: [src/utils/path.ts:26](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/utils/path.ts#L26)
 
 Validates that an FTP command argument cannot inject additional command lines.
 

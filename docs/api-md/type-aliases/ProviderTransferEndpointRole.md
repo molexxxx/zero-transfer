@@ -10,6 +10,6 @@
 type ProviderTransferEndpointRole = "source" | "destination";
 ```
 
-Defined in: [src/transfers/createProviderTransferExecutor.ts:40](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/createProviderTransferExecutor.ts#L40)
+Defined in: [src/transfers/createProviderTransferExecutor.ts:40](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/createProviderTransferExecutor.ts#L40)
 
 Endpoint role used while resolving provider sessions for a transfer job.

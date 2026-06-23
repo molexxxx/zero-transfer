@@ -6,7 +6,7 @@
  *
  * Both files are uploaded with the TypeDoc HTML to GitHub Pages so the
  * README's shield endpoints can read them at:
- *   https://tonywied17.github.io/zero-transfer/badges/<name>.json
+ *   https://molexxxx.github.io/zero-transfer/badges/<name>.json
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";

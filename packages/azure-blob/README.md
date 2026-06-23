@@ -29,24 +29,24 @@ This package publishes a narrowed surface of **3** exports. These symbols are al
 
 | Symbol                                                                                                                                            | Kind      | Notes              |
 | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
-| [`createAzureBlobProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createAzureBlobProviderFactory.md) | Function  | See API reference. |
-| [`AzureBlobProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/AzureBlobProviderOptions.md)            | Interface | See API reference. |
-| [`AzureBlobMultipartOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/AzureBlobMultipartOptions.md)          | Interface | See API reference. |
+| [`createAzureBlobProviderFactory`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/createAzureBlobProviderFactory.md) | Function  | See API reference. |
+| [`AzureBlobProviderOptions`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/AzureBlobProviderOptions.md)            | Interface | See API reference. |
+| [`AzureBlobMultipartOptions`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/AzureBlobMultipartOptions.md)          | Interface | See API reference. |
 
 ## Examples
 
 | Example                                                                                                                                | What it shows                       |
 | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| [`examples/multi-cloud-orchestration.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase. |
+| [`examples/multi-cloud-orchestration.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/multi-cloud-orchestration.ts) | Multi-cloud orchestration showcase. |
 
 ## Documentation
 
-- [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/azure-blob.md)
-- [Top-level README](https://github.com/tonywied17/zero-transfer/blob/main/README.md)
-- [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)
-- [Capability matrix](https://github.com/tonywied17/zero-transfer/blob/main/README.md#capability-matrix)
-- [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)
+- [Scope page](https://github.com/molexxxx/zero-transfer/blob/main/docs/scopes/azure-blob.md)
+- [Top-level README](https://github.com/molexxxx/zero-transfer/blob/main/README.md)
+- [Full API reference](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/README.md)
+- [Capability matrix](https://github.com/molexxxx/zero-transfer/blob/main/README.md#capability-matrix)
+- [Examples](https://github.com/molexxxx/zero-transfer/tree/main/examples)
 
 ## License
 
-MIT © [Tony Wiedman](https://github.com/tonywied17)
+MIT © [Tony Wiedman](https://github.com/molexxxx)

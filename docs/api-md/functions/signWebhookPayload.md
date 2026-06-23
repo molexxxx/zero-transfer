@@ -13,7 +13,7 @@ function signWebhookPayload(
    timestamp?): WebhookSignature;
 ```
 
-Defined in: [src/mft/webhooks.ts:88](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/mft/webhooks.ts#L88)
+Defined in: [src/mft/webhooks.ts:88](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/mft/webhooks.ts#L88)
 
 Computes the HMAC-SHA256 signature for a webhook payload.
 

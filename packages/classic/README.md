@@ -29,31 +29,31 @@ This package publishes a narrowed surface of **6** exports. These symbols are al
 
 | Symbol                                                                                                                                  | Kind      | Notes              |
 | --------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
-| [`createFtpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createFtpProviderFactory.md)   | Function  | See API reference. |
-| [`createFtpsProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createFtpsProviderFactory.md) | Function  | See API reference. |
-| [`createSftpProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createSftpProviderFactory.md) | Function  | See API reference. |
-| [`FtpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpProviderOptions.md)              | Interface | See API reference. |
-| [`FtpsProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpsProviderOptions.md)            | Interface | See API reference. |
-| [`SftpProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/SftpProviderOptions.md)            | Interface | See API reference. |
+| [`createFtpProviderFactory`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/createFtpProviderFactory.md)   | Function  | See API reference. |
+| [`createFtpsProviderFactory`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/createFtpsProviderFactory.md) | Function  | See API reference. |
+| [`createSftpProviderFactory`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/createSftpProviderFactory.md) | Function  | See API reference. |
+| [`FtpProviderOptions`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/FtpProviderOptions.md)              | Interface | See API reference. |
+| [`FtpsProviderOptions`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/FtpsProviderOptions.md)            | Interface | See API reference. |
+| [`SftpProviderOptions`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/SftpProviderOptions.md)            | Interface | See API reference. |
 
 ## Examples
 
 | Example                                                                                                                            | What it shows                                                          |
 | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [`examples/sftp-private-key.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/sftp-private-key.ts)               | SFTP private-key authentication example with host-key pinning.         |
-| [`examples/sftp-directory-ops.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/sftp-directory-ops.ts)           | SFTP directory operations: list, stat, mkdir, rename, remove, rmdir.   |
-| [`examples/ftps-client-certificate.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftps-client-certificate.ts) | FTPS client-certificate (mutual TLS) example with certificate pinning. |
-| [`examples/ftps-directory-ops.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftps-directory-ops.ts)           | FTPS directory operations: list, stat, mkdir, rename, remove, rmdir.   |
-| [`examples/ftp-directory-ops.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftp-directory-ops.ts)             | FTP directory operations: list, stat, mkdir, rename, remove, rmdir.    |
+| [`examples/sftp-private-key.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/sftp-private-key.ts)               | SFTP private-key authentication example with host-key pinning.         |
+| [`examples/sftp-directory-ops.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/sftp-directory-ops.ts)           | SFTP directory operations: list, stat, mkdir, rename, remove, rmdir.   |
+| [`examples/ftps-client-certificate.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/ftps-client-certificate.ts) | FTPS client-certificate (mutual TLS) example with certificate pinning. |
+| [`examples/ftps-directory-ops.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/ftps-directory-ops.ts)           | FTPS directory operations: list, stat, mkdir, rename, remove, rmdir.   |
+| [`examples/ftp-directory-ops.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/ftp-directory-ops.ts)             | FTP directory operations: list, stat, mkdir, rename, remove, rmdir.    |
 
 ## Documentation
 
-- [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/classic.md)
-- [Top-level README](https://github.com/tonywied17/zero-transfer/blob/main/README.md)
-- [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)
-- [Capability matrix](https://github.com/tonywied17/zero-transfer/blob/main/README.md#capability-matrix)
-- [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)
+- [Scope page](https://github.com/molexxxx/zero-transfer/blob/main/docs/scopes/classic.md)
+- [Top-level README](https://github.com/molexxxx/zero-transfer/blob/main/README.md)
+- [Full API reference](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/README.md)
+- [Capability matrix](https://github.com/molexxxx/zero-transfer/blob/main/README.md#capability-matrix)
+- [Examples](https://github.com/molexxxx/zero-transfer/tree/main/examples)
 
 ## License
 
-MIT © [Tony Wiedman](https://github.com/tonywied17)
+MIT © [Tony Wiedman](https://github.com/molexxxx)

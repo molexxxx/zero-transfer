@@ -70,4 +70,4 @@ A rejected request surfaces an [`ApprovalRejectedError`](../../api/classes/appro
 
 Webhook targets must use `https:` - audit payloads and the HMAC signature headers would otherwise cross the network in cleartext. Plain `http:` delivery requires an explicit `allowInsecureUrl: true` opt-in (intended for local development only).
 
-See [`examples/mft-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/mft-route.ts) and [`examples/approval-gated-route.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/approval-gated-route.ts) for runnable end-to-end setups.
+See [`examples/mft-route.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/mft-route.ts) and [`examples/approval-gated-route.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/approval-gated-route.ts) for runnable end-to-end setups.

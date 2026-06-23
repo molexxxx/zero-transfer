@@ -54,11 +54,11 @@ for (const scope of scopes) {
     files: ["dist", "README.md", "LICENSE"],
     repository: {
       type: "git",
-      url: "git+https://github.com/tonywied17/zero-transfer.git",
+      url: "git+https://github.com/molexxxx/zero-transfer.git",
       directory: `packages/${scope.name}`,
     },
-    bugs: { url: "https://github.com/tonywied17/zero-transfer/issues" },
-    homepage: `https://github.com/tonywied17/zero-transfer/tree/main/packages/${scope.name}#readme`,
+    bugs: { url: "https://github.com/molexxxx/zero-transfer/issues" },
+    homepage: `https://github.com/molexxxx/zero-transfer/tree/main/packages/${scope.name}#readme`,
     engines: { node: ">=20.0.0" },
     publishConfig: {
       registry: "https://registry.npmjs.org/",

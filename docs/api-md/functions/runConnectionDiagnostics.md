@@ -10,7 +10,7 @@
 function runConnectionDiagnostics(options): Promise<ConnectionDiagnosticsResult>;
 ```
 
-Defined in: [src/diagnostics/index.ts:127](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/diagnostics/index.ts#L127)
+Defined in: [src/diagnostics/index.ts:127](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/diagnostics/index.ts#L127)
 
 Connects to a profile, captures capability and listing samples, and returns a redaction-safe report.
 

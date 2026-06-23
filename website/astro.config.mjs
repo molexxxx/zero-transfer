@@ -8,7 +8,7 @@ export default defineConfig({
   // Project page on GitHub Pages → served under /zero-transfer/.
   // Override at build time with `SITE_URL` / `BASE_PATH` env vars when
   // deploying somewhere else (custom domain, Cloudflare Pages, Vercel, …).
-  site: process.env.SITE_URL ?? "https://tonywied17.github.io/zero-transfer/",
+  site: process.env.SITE_URL ?? "https://molexxxx.github.io/zero-transfer/",
   base: process.env.BASE_PATH ?? "/zero-transfer/",
   integrations: [
     starlight({
@@ -24,7 +24,7 @@ export default defineConfig({
         {
           icon: "github",
           label: "GitHub",
-          href: "https://github.com/tonywied17/zero-transfer",
+          href: "https://github.com/molexxxx/zero-transfer",
         },
         {
           icon: "npm",
@@ -33,7 +33,7 @@ export default defineConfig({
         },
       ],
       editLink: {
-        baseUrl: "https://github.com/tonywied17/zero-transfer/edit/main/website/",
+        baseUrl: "https://github.com/molexxxx/zero-transfer/edit/main/website/",
       },
       lastUpdated: true,
       tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 4 },

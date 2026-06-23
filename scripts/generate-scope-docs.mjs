@@ -60,8 +60,8 @@ function buildSymbolIndex() {
 
 const symbolIndex = buildSymbolIndex();
 
-const GITHUB_BLOB_URL = "https://github.com/tonywied17/zero-transfer/blob/main";
-const GITHUB_TREE_URL = "https://github.com/tonywied17/zero-transfer/tree/main";
+const GITHUB_BLOB_URL = "https://github.com/molexxxx/zero-transfer/blob/main";
+const GITHUB_TREE_URL = "https://github.com/molexxxx/zero-transfer/tree/main";
 
 /** @param {string} from @param {string} to */
 function relPosix(from, to) {
@@ -250,7 +250,7 @@ for (const scope of scopes) {
     "",
     "## License",
     "",
-    "MIT © [Tony Wiedman](https://github.com/tonywied17)",
+    "MIT © [Tony Wiedman](https://github.com/molexxxx)",
     "",
   ].join("\n");
   const pkgDir = join(repoRoot, "packages", scope.name);

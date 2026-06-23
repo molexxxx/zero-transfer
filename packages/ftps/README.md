@@ -29,26 +29,26 @@ This package publishes a narrowed surface of **4** exports. These symbols are al
 
 | Symbol                                                                                                                                  | Kind      | Notes              |
 | --------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
-| [`createFtpsProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createFtpsProviderFactory.md) | Function  | See API reference. |
-| [`FtpsProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/FtpsProviderOptions.md)            | Interface | See API reference. |
-| [`FtpsMode`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/FtpsMode.md)                                | Type      | See API reference. |
-| [`FtpsDataProtection`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/type-aliases/FtpsDataProtection.md)            | Type      | See API reference. |
+| [`createFtpsProviderFactory`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/createFtpsProviderFactory.md) | Function  | See API reference. |
+| [`FtpsProviderOptions`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/FtpsProviderOptions.md)            | Interface | See API reference. |
+| [`FtpsMode`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/type-aliases/FtpsMode.md)                                | Type      | See API reference. |
+| [`FtpsDataProtection`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/type-aliases/FtpsDataProtection.md)            | Type      | See API reference. |
 
 ## Examples
 
 | Example                                                                                                                            | What it shows                                                          |
 | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [`examples/ftps-client-certificate.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftps-client-certificate.ts) | FTPS client-certificate (mutual TLS) example with certificate pinning. |
-| [`examples/ftps-directory-ops.ts`](https://github.com/tonywied17/zero-transfer/blob/main/examples/ftps-directory-ops.ts)           | FTPS directory operations: list, stat, mkdir, rename, remove, rmdir.   |
+| [`examples/ftps-client-certificate.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/ftps-client-certificate.ts) | FTPS client-certificate (mutual TLS) example with certificate pinning. |
+| [`examples/ftps-directory-ops.ts`](https://github.com/molexxxx/zero-transfer/blob/main/examples/ftps-directory-ops.ts)           | FTPS directory operations: list, stat, mkdir, rename, remove, rmdir.   |
 
 ## Documentation
 
-- [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/ftps.md)
-- [Top-level README](https://github.com/tonywied17/zero-transfer/blob/main/README.md)
-- [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)
-- [Capability matrix](https://github.com/tonywied17/zero-transfer/blob/main/README.md#capability-matrix)
-- [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)
+- [Scope page](https://github.com/molexxxx/zero-transfer/blob/main/docs/scopes/ftps.md)
+- [Top-level README](https://github.com/molexxxx/zero-transfer/blob/main/README.md)
+- [Full API reference](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/README.md)
+- [Capability matrix](https://github.com/molexxxx/zero-transfer/blob/main/README.md#capability-matrix)
+- [Examples](https://github.com/molexxxx/zero-transfer/tree/main/examples)
 
 ## License
 
-MIT © [Tony Wiedman](https://github.com/tonywied17)
+MIT © [Tony Wiedman](https://github.com/molexxxx)

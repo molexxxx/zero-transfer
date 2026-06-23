@@ -29,21 +29,21 @@ This package publishes a narrowed surface of **2** exports. These symbols are al
 
 | Symbol                                                                                                                                        | Kind      | Notes              |
 | --------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------------------ |
-| [`createDropboxProviderFactory`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/functions/createDropboxProviderFactory.md) | Function  | See API reference. |
-| [`DropboxProviderOptions`](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/interfaces/DropboxProviderOptions.md)            | Interface | See API reference. |
+| [`createDropboxProviderFactory`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/functions/createDropboxProviderFactory.md) | Function  | See API reference. |
+| [`DropboxProviderOptions`](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/interfaces/DropboxProviderOptions.md)            | Interface | See API reference. |
 
 ## Examples
 
-_No dedicated example yet - see the [examples directory](https://github.com/tonywied17/zero-transfer/tree/main/examples) for cross-scope showcases._
+_No dedicated example yet - see the [examples directory](https://github.com/molexxxx/zero-transfer/tree/main/examples) for cross-scope showcases._
 
 ## Documentation
 
-- [Scope page](https://github.com/tonywied17/zero-transfer/blob/main/docs/scopes/dropbox.md)
-- [Top-level README](https://github.com/tonywied17/zero-transfer/blob/main/README.md)
-- [Full API reference](https://github.com/tonywied17/zero-transfer/blob/main/docs/api-md/README.md)
-- [Capability matrix](https://github.com/tonywied17/zero-transfer/blob/main/README.md#capability-matrix)
-- [Examples](https://github.com/tonywied17/zero-transfer/tree/main/examples)
+- [Scope page](https://github.com/molexxxx/zero-transfer/blob/main/docs/scopes/dropbox.md)
+- [Top-level README](https://github.com/molexxxx/zero-transfer/blob/main/README.md)
+- [Full API reference](https://github.com/molexxxx/zero-transfer/blob/main/docs/api-md/README.md)
+- [Capability matrix](https://github.com/molexxxx/zero-transfer/blob/main/README.md#capability-matrix)
+- [Examples](https://github.com/molexxxx/zero-transfer/tree/main/examples)
 
 ## License
 
-MIT © [Tony Wiedman](https://github.com/tonywied17)
+MIT © [Tony Wiedman](https://github.com/molexxxx)

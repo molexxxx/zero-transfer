@@ -10,7 +10,7 @@
 function createTransferPlan(input): TransferPlan;
 ```
 
-Defined in: [src/transfers/TransferPlan.ts:102](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferPlan.ts#L102)
+Defined in: [src/transfers/TransferPlan.ts:102](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferPlan.ts#L102)
 
 Creates a transfer plan from dry-run planning input.
 

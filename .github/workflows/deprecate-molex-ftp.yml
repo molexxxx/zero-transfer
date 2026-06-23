@@ -10,7 +10,7 @@ on:
       message:
         description: "Deprecation message"
         required: true
-        default: "molex-ftp is deprecated and no longer maintained. It has been rewritten and expanded as the provider-neutral Zero Transfer SDK. Install @zero-transfer/sdk for the full multi-protocol surface (FTP, FTPS, SFTP, SSH, HTTP, WebDAV, S3, Google Drive, Dropbox, Azure Blob, MFT), or @zero-transfer/ftp for just the classic FTP provider. Repo: https://github.com/tonywied17/zero-transfer"
+        default: "molex-ftp is deprecated and no longer maintained. It has been rewritten and expanded as the provider-neutral Zero Transfer SDK. Install @zero-transfer/sdk for the full multi-protocol surface (FTP, FTPS, SFTP, SSH, HTTP, WebDAV, S3, Google Drive, Dropbox, Azure Blob, MFT), or @zero-transfer/ftp for just the classic FTP provider. Repo: https://github.com/molexxxx/zero-transfer"
       undo:
         description: "Undeprecate instead (pass empty string to npm deprecate)"
         required: false

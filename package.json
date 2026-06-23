@@ -74,12 +74,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tonywied17/zero-transfer.git"
+    "url": "git+https://github.com/molexxxx/zero-transfer.git"
   },
   "bugs": {
-    "url": "https://github.com/tonywied17/zero-transfer/issues"
+    "url": "https://github.com/molexxxx/zero-transfer/issues"
   },
-  "homepage": "https://github.com/tonywied17/zero-transfer#readme",
+  "homepage": "https://github.com/molexxxx/zero-transfer#readme",
   "engines": {
     "node": ">=20.0.0"
   },

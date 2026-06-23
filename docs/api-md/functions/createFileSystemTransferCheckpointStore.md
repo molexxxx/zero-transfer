@@ -10,7 +10,7 @@
 function createFileSystemTransferCheckpointStore(options): TransferCheckpointStore;
 ```
 
-Defined in: [src/transfers/TransferCheckpointStore.ts:308](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L308)
+Defined in: [src/transfers/TransferCheckpointStore.ts:308](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/transfers/TransferCheckpointStore.ts#L308)
 
 File-system backed [TransferCheckpointStore](../interfaces/TransferCheckpointStore.md) that survives process
 restarts, enabling cross-process resume.

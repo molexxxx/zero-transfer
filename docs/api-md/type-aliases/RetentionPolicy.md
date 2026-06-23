@@ -12,6 +12,6 @@ type RetentionPolicy =
   | CountRetentionPolicy;
 ```
 
-Defined in: [src/mft/retention.ts:36](https://github.com/tonywied17/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/mft/retention.ts#L36)
+Defined in: [src/mft/retention.ts:36](https://github.com/molexxxx/zero-transfer/blob/483be946776ae5d15052263833efbd26b98c4f23/src/mft/retention.ts#L36)
 
 Combined retention policy union accepted by [evaluateRetention](../functions/evaluateRetention.md).
